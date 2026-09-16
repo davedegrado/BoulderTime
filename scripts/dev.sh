@@ -16,7 +16,6 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 ASPNETCORE_ENVIRONMENT=Deve
 export PATH="$HOME/.dotnet:$HOME/.dotnet/tools:$PATH"
 LOGS="/tmp/bouldertime"; mkdir -p "$LOGS"
 
-NET=bouldertime-dev
 DB=bt-db; DB_IMAGE=postgres:16-alpine; DB_VOLUME=bt-db-data
 AUTH=bt-auth; AUTH_IMAGE=public.ecr.aws/supabase/gotrue:v2.194.0
 # Local-only secrets. Never reuse these anywhere else.
@@ -25,6 +24,7 @@ ANON_KEY="local-dev-anon-key"
 # Issuer the API expects: {Supabase:Url}/auth/v1. Nothing needs to listen on this port.
 SUPABASE_URL="http://127.0.0.1:54321"
 
+DB_PORT=54322; AUTH_PORT=9999
 export ConnectionStrings__Database="Host=127.0.0.1;Port=54322;Database=postgres;Username=postgres;Password=postgres"
 export Supabase__Url="$SUPABASE_URL" Supabase__JwtSecret="$JWT_SECRET"
 
@@ -37,6 +37,9 @@ fail() {
     echo "== FAILED: $* =="; date -u
     for c in $DB $AUTH; do echo; echo "== docker logs $c =="; docker logs --tail 40 "$c" 2>&1; done
     for f in migrate api web; do [ -f "$LOGS/$f.log" ] && { echo; echo "== $f.log =="; tail -40 "$LOGS/$f.log"; }; done
+    echo; echo "== probes =="
+    (timeout 3 bash -c "</dev/tcp/127.0.0.1/$DB_PORT" && echo "db port $DB_PORT reachable") 2>&1 || echo "db port $DB_PORT NOT reachable"
+    curl -s -m 3 "http://127.0.0.1:$AUTH_PORT/health" || echo "auth health NOT reachable"
     echo; echo "== containers =="; docker ps -a --format '{{.Names}}  {{.Status}}  {{.Image}}' 2>&1
     echo; echo "== resources =="; df -h / | tail -1; free -m | head -2
   } > "$ROOT/dev-log.txt" 2>&1
@@ -54,12 +57,9 @@ case "${1:-}" in
   promote) cd backend && dotnet run --project src/BoulderTime.Api -- dev-promote-all && echo "Reload the app in your browser."; exit 0 ;;
 esac
 
-# ensure_container NAME IMAGE ARGS... : start an existing container, or create it.
-ensure_container() {
-  local name=$1; shift
-  if [ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" = "true" ]; then return 0; fi
-  if docker inspect "$name" >/dev/null 2>&1; then docker start "$name" >/dev/null; else docker run -d --name "$name" "$@" >/dev/null; fi
-}
+# Containers are recreated on every start so configuration changes always apply.
+# Postgres data lives in a named volume and survives this; Auth is stateless.
+recreate() { local name=$1; shift; docker rm -f "$name" >/dev/null 2>&1; docker run -d --name "$name" "$@" >/dev/null; }
 
 step "1/6 Tools"
 command -v docker >/dev/null && docker info >/dev/null 2>&1 || fail "Docker is not available in this environment."
@@ -72,23 +72,26 @@ docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep 'supabase/'
 echo "ok"
 
 step "2/6 Database + Auth (first run downloads two images)"
-docker network inspect $NET >/dev/null 2>&1 || docker network create $NET >/dev/null
-ensure_container $DB --network $NET -p 127.0.0.1:54322:5432 -v $DB_VOLUME:/var/lib/postgresql/data \
-  -e POSTGRES_PASSWORD=postgres $DB_IMAGE || fail "Could not start PostgreSQL"
-for i in $(seq 1 60); do docker exec $DB pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
-docker exec $DB pg_isready -U postgres >/dev/null 2>&1 || fail "PostgreSQL did not become ready"
-docker exec -i $DB psql -v ON_ERROR_STOP=1 -q -U postgres -d postgres < database/dev/auth-init.sql > /dev/null 2>&1 || fail "Auth database setup failed"
+# Host networking: container-to-container bridge networking is unreliable inside Codespaces' Docker-in-Docker,
+# so both services bind to the host's loopback, exactly like a native install.
+docker network rm bouldertime-dev >/dev/null 2>&1
+recreate $DB --network host -v $DB_VOLUME:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres \
+  $DB_IMAGE -c port=$DB_PORT -c listen_addresses=127.0.0.1 || fail "Could not start PostgreSQL"
+for i in $(seq 1 60); do docker exec $DB pg_isready -h 127.0.0.1 -p $DB_PORT -U postgres >/dev/null 2>&1 && break; sleep 1; done
+docker exec $DB pg_isready -h 127.0.0.1 -p $DB_PORT -U postgres >/dev/null 2>&1 || fail "PostgreSQL did not become ready"
+docker exec -i $DB psql -h 127.0.0.1 -p $DB_PORT -v ON_ERROR_STOP=1 -q -U postgres -d postgres < database/dev/auth-init.sql > "$LOGS/auth-init.log" 2>&1 \
+  || fail "Auth database setup failed"
 
-ensure_container $AUTH --network $NET -p 127.0.0.1:9999:9999 \
-  -e GOTRUE_API_HOST=0.0.0.0 -e PORT=9999 \
+recreate $AUTH --network host \
+  -e GOTRUE_API_HOST=127.0.0.1 -e PORT=$AUTH_PORT -e GOTRUE_LOG_LEVEL=debug \
   -e API_EXTERNAL_URL="$SUPABASE_URL/auth/v1" -e GOTRUE_SITE_URL=http://localhost:5173 -e GOTRUE_URI_ALLOW_LIST='*' \
-  -e GOTRUE_DB_DRIVER=postgres -e DATABASE_URL="postgres://supabase_auth_admin:postgres@$DB:5432/postgres?sslmode=disable" \
+  -e GOTRUE_DB_DRIVER=postgres -e DATABASE_URL="postgres://supabase_auth_admin:postgres@127.0.0.1:$DB_PORT/postgres?sslmode=disable" \
   -e GOTRUE_JWT_SECRET="$JWT_SECRET" -e GOTRUE_JWT_ISSUER="$SUPABASE_URL/auth/v1" -e GOTRUE_JWT_AUD=authenticated \
   -e GOTRUE_JWT_EXP=3600 -e GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated -e GOTRUE_JWT_ADMIN_ROLES=service_role \
   -e GOTRUE_DISABLE_SIGNUP=false -e GOTRUE_EXTERNAL_EMAIL_ENABLED=true -e GOTRUE_MAILER_AUTOCONFIRM=true \
   $AUTH_IMAGE || fail "Could not start Supabase Auth"
-for i in $(seq 1 60); do curl -sf http://127.0.0.1:9999/health >/dev/null && break; sleep 1; done
-curl -sf http://127.0.0.1:9999/health >/dev/null || fail "Supabase Auth did not become healthy"
+for i in $(seq 1 120); do curl -sf "http://127.0.0.1:$AUTH_PORT/health" >/dev/null && break; sleep 1; done
+curl -sf "http://127.0.0.1:$AUTH_PORT/health" >/dev/null || fail "Supabase Auth did not become healthy"
 echo "ok"
 
 step "3/6 Database migrations + demo gyms"

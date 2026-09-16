@@ -65,7 +65,8 @@ accepting. This relies on email ownership: **keep "Confirm email" enabled in Sup
 Outgoing invitation emails are not sent yet; invitees see pending invitations on their home screen.
 
 ## ADR-008 · Local development stack without the Supabase CLI
-**Decision.** `scripts/dev.sh` runs PostgreSQL and Supabase Auth (GoTrue, pinned image) directly with Docker, and the
+**Decision.** `scripts/dev.sh` runs PostgreSQL and Supabase Auth (GoTrue, pinned image) directly with Docker using host
+networking (bridge networking between containers proved unreliable in Codespaces), and the
 Vite dev server proxies `/api` to the API and `/supabase/auth/v1` to GoTrue, so one forwarded port serves everything.
 **Why.** The Supabase CLI's full local stack failed to initialise inside GitHub Codespaces in repeated attempts
 (including with a pinned CLI and services disabled). GoTrue is the auth server hosted Supabase runs, so sign-up,
