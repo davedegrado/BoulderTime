@@ -97,7 +97,6 @@ svg { flex-shrink: 0; }
   padding: var(--bt-8) var(--bt-6) var(--bt-10);
   background: var(--bt-charcoal); color: #fff; border-radius: var(--bt-radius-lg);
 }
-.hero__mark { margin-left: -6px; }
 .hero__title { font-size: var(--bt-text-3xl); font-weight: 800; max-width: 14ch; }
 .hero__lede { color: #cfcfcf; max-width: 46ch; font-size: 1.0625rem; }
 .hero__actions { display: flex; flex-wrap: wrap; gap: var(--bt-3); margin-top: var(--bt-2); }

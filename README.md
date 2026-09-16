@@ -1,4 +1,4 @@
-<p align="center"><img src="frontend/public/assets/logo-horizontal.svg" alt="BoulderTime" height="72"></p>
+<p align="center"><img src="frontend/public/assets/logo-horizontal.png" alt="BoulderTime" height="72"></p>
 
 # BoulderTime
 

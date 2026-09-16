@@ -14,7 +14,7 @@ export function HomePage() {
 function GuestHome() {
   return (
     <section className="hero">
-      <div className="hero__mark"><Logo variant="mark" onDark height={120} /></div>
+      <div className="hero__mark"><Logo variant="icon" height={96} /></div>
       <h1 className="hero__title">Every problem on the wall, in your pocket.</h1>
       <p className="hero__lede">
         See what's set at your gym right now, log your sends and attempts, and watch beta for the problem in front of you.

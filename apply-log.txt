@@ -1,0 +1,6 @@
+== APPLICO LE MODIFICHE ==
+Applying: Use official brand assets (icon and horizontal logo); remove redrawn logos
+OK
+== FRONTEND ==
+OK
+== ESITO: ok ==
