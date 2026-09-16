@@ -5,11 +5,9 @@ namespace BoulderTime.Api.Auth;
 
 public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
-    public bool IsAuthenticated => accessor.HttpContext?.User.Identity?.IsAuthenticated == true;
+    public bool IsAuthenticated => UserId is not null;
 
-    public Guid RequireUserId()
-    {
-        var identity = accessor.HttpContext is { } ctx ? IdentityClaims.Read(ctx.User) : null;
-        return identity?.Subject ?? throw new UnauthorizedException();
-    }
+    public Guid? UserId => accessor.HttpContext is { } ctx ? IdentityClaims.Read(ctx.User)?.Subject : null;
+
+    public Guid RequireUserId() => UserId ?? throw new UnauthorizedException();
 }

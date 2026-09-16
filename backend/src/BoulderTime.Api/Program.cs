@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using BoulderTime.Api.Auth;
 using BoulderTime.Api.Cli;
@@ -22,7 +23,8 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
 builder.Services
     .AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    // Enums travel as SCREAMING_SNAKE strings ("OWNER", "PENDING") to match the product vocabulary.
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper, allowIntegerValues: false)));
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p

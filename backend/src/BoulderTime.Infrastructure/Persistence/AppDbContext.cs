@@ -1,6 +1,9 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
+using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Common;
+using BoulderTime.Domain.Gyms;
+using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -17,6 +20,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public const string Schema = "bouldertime";
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Gym> Gyms => Set<Gym>();
+    public DbSet<Sector> Sectors => Set<Sector>();
+    public DbSet<GymStaffMember> GymStaff => Set<GymStaffMember>();
+    public DbSet<StaffInvitation> StaffInvitations => Set<StaffInvitation>();
+    public DbSet<GymCandidate> GymCandidates => Set<GymCandidate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

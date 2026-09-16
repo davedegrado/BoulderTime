@@ -1,4 +1,5 @@
 using BoulderTime.Infrastructure.Persistence;
+using BoulderTime.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Api.Cli;
@@ -6,13 +7,14 @@ namespace BoulderTime.Api.Cli;
 /// <summary>
 /// Operator commands that must never be reachable over HTTP.
 ///   dotnet run --project src/BoulderTime.Api -- migrate
+///   dotnet run --project src/BoulderTime.Api -- seed [--owner you@example.com]
 ///   dotnet run --project src/BoulderTime.Api -- grant-platform-admin you@example.com
 ///   dotnet run --project src/BoulderTime.Api -- revoke-platform-admin you@example.com
 /// </summary>
 public static class AdminCli
 {
     public static bool IsCommand(string[] args) =>
-        args.Length > 0 && args[0] is "migrate" or "grant-platform-admin" or "revoke-platform-admin";
+        args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin";
 
     public static async Task<int> RunAsync(WebApplication app, string[] args)
     {
@@ -24,6 +26,30 @@ public static class AdminCli
             case "migrate":
                 await db.Database.MigrateAsync();
                 Console.WriteLine("Database is up to date.");
+                return 0;
+
+            case "seed":
+                var ownerIndex = Array.IndexOf(args, "--owner");
+                var owner = ownerIndex > 0 && ownerIndex + 1 < args.Length ? args[ownerIndex + 1] : null;
+                try
+                {
+                    Console.WriteLine(await scope.ServiceProvider.GetRequiredService<DemoSeeder>().SeedAsync(owner));
+                    return 0;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.Error.WriteLine(ex.Message);
+                    return 1;
+                }
+
+            case "dev-promote-all":
+                if (!app.Environment.IsDevelopment())
+                {
+                    Console.Error.WriteLine("dev-promote-all is only available in the Development environment.");
+                    return 1;
+                }
+                var promoted = await scope.ServiceProvider.GetRequiredService<DemoSeeder>().PromoteAllForLocalDevelopmentAsync();
+                Console.WriteLine($"Promoted {promoted} user(s) to platform admin and demo-gym owner.");
                 return 0;
 
             case "grant-platform-admin" or "revoke-platform-admin" when args.Length == 2:
@@ -43,7 +69,7 @@ public static class AdminCli
                 return 0;
 
             default:
-                Console.Error.WriteLine("Usage: migrate | grant-platform-admin <email> | revoke-platform-admin <email>");
+                Console.Error.WriteLine("Usage: migrate | seed [--owner <email>] | grant-platform-admin <email> | revoke-platform-admin <email>");
                 return 2;
         }
     }

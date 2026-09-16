@@ -25,6 +25,15 @@ and authorization live in the API; the browser uses Supabase only to sign in. Fu
 /docs       Architecture, decisions, roadmap, brand
 ```
 
+## See it running (GitHub Codespaces, works from a phone)
+
+Open a Codespace on this repository, then in its terminal:
+
+    bash scripts/dev.sh
+
+It starts a local Supabase, applies migrations, loads demo gyms, runs the API and the frontend, and prints a link.
+Create an account in the app, then run `bash scripts/dev.sh promote` to unlock the staff and admin areas.
+
 ## 3. Prerequisites
 
 - Node.js 20+ and npm
@@ -102,8 +111,10 @@ Other scripts: `npm run typecheck`, `npm test`, `npm run build`.
 
 ## 10. Seeding demo data
 
-Demo data (gyms, sectors, boulders, grading systems, users, attempts, videos, announcements) arrives with the
-domains it depends on, starting in Phase 2: `dotnet run --project src/BoulderTime.Api -- seed`.
+    dotnet run --project src/BoulderTime.Api -- seed [--owner you@example.com]
+
+Creates four active demo gyms with sectors (idempotent). `--owner` makes an existing user OWNER of all of them.
+Later phases extend the seed with grading systems, boulders, attempts, videos and announcements.
 
 ## 11. Authentication setup
 

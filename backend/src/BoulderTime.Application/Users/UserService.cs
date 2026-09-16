@@ -1,11 +1,13 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Staff;
+using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Users;
 
-public sealed class UserService(IAppDbContext db)
+public sealed class UserService(IAppDbContext db, IClock clock)
 {
     /// <summary>
     /// Creates the BoulderTime user row for a verified identity on first sight, and keeps the email in sync.
@@ -41,11 +43,24 @@ public sealed class UserService(IAppDbContext db)
         }
     }
 
+    /// <summary>The signed-in account plus what the shell needs: staff memberships and open invitation count.</summary>
     public async Task<CurrentUserDto> GetAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException("User", userId);
-        return CurrentUserDto.From(user);
+        return await ToDtoAsync(user, ct);
+    }
+
+    private async Task<CurrentUserDto> ToDtoAsync(User user, CancellationToken ct)
+    {
+        var now = clock.UtcNow;
+        var gyms = await db.GymStaff.AsNoTracking()
+            .Where(s => s.UserId == user.Id)
+            .Join(db.Gyms, s => s.GymId, g => g.Id, (s, g) => new { s.Role, g })
+            .OrderBy(x => x.g.Name)
+            .ToListAsync(ct);
+        var pending = await db.StaffInvitations.CountAsync(i => i.Email == user.Email && i.Status == InvitationStatus.Pending && i.ExpiresAt > now, ct);
+        return CurrentUserDto.From(user, gyms.Select(x => new MyStaffGymDto(x.g.Id, x.g.Slug, x.g.Name, x.g.City, x.g.LogoUrl, x.Role)).ToList(), pending);
     }
 
     public async Task<CurrentUserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken ct = default)
@@ -60,7 +75,7 @@ public sealed class UserService(IAppDbContext db)
                    ?? throw new NotFoundException("User", userId);
         user.Rename(name);
         await db.SaveChangesAsync(ct);
-        return CurrentUserDto.From(user);
+        return await ToDtoAsync(user, ct);
     }
 
     internal static string DeriveDisplayName(VerifiedIdentity identity)

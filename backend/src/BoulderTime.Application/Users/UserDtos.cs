@@ -1,3 +1,4 @@
+using BoulderTime.Application.Staff;
 using BoulderTime.Domain.Users;
 
 namespace BoulderTime.Application.Users;
@@ -11,9 +12,12 @@ public sealed record CurrentUserDto(
     string DisplayName,
     string? AvatarUrl,
     bool IsPlatformAdmin,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<MyStaffGymDto> StaffGyms,
+    int PendingInvitations)
 {
-    public static CurrentUserDto From(User u) => new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt);
+    public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
+        new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations);
 }
 
 public sealed record UpdateProfileRequest(string? DisplayName);

@@ -1,5 +1,6 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Infrastructure.Persistence;
+using BoulderTime.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddDbContext<AppDbContext>(o => ConfigureDbContext(o, connectionString));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<DemoSeeder>();
         return services;
     }
 

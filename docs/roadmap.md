@@ -2,8 +2,8 @@
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | Foundation: repo, frontend, backend, Supabase auth, base UI, routing, config | **Done** (backend compile + migration pending NuGet access, see below) |
-| 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | Next |
+| 1 | Foundation: repo, frontend, backend, Supabase auth, base UI, routing, config | **Done** — verified in Codespaces (build, migration, 19/19 tests) |
+| 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | **Backend done**; screens next |
 | 3 | Boulders, photos, hold colours, grading systems, official grades, active/removed | |
 | 4 | Attempts, completions, activity, ratings, follows | |
 | 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | |
@@ -12,16 +12,11 @@
 | 8 | Polish: responsive UX, accessibility, states, images, performance | |
 | 9 | Tests, seed data, docs, deployment | |
 
-## Phase 1 verification status
+## How each phase is verified
 
-| Check | Result |
-|---|---|
-| Frontend `tsc` strict typecheck | ✅ passes |
-| Frontend unit tests (Vitest) | ✅ 7 passing |
-| Frontend production build | ✅ passes |
-| Backend compile | ⚠️ All source compiled with warnings-as-errors against local stand-ins for EF Core / JwtBearer / IdentityModel types; not yet compiled against the real NuGet packages (package feed unreachable from the build sandbox) |
-| Backend tests | ⚠️ Written, not yet executed (need NuGet + Docker) |
-| `InitialCreate` migration | ⚠️ Not yet generated (needs `dotnet ef`, see README) |
+Code is prepared outside the repo, then applied in a GitHub Codespace by an `apply.sh` script that builds the backend
+against the real packages, generates the EF migration, runs all backend tests (Testcontainers) and the frontend
+typecheck/tests/build, and commits the log. `bash scripts/dev.sh` then runs the full stack for a hands-on look.
 
 ## Temporary placeholders (must be gone by end of Phase 8)
 

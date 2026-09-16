@@ -8,6 +8,9 @@ public interface ICurrentUser
 {
     bool IsAuthenticated { get; }
 
+    /// <summary>The caller's id, or null for anonymous requests.</summary>
+    Guid? UserId { get; }
+
     /// <exception cref="Common.UnauthorizedException">No authenticated user.</exception>
     Guid RequireUserId();
 }

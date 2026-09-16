@@ -39,3 +39,27 @@ concurrent provisioning) are enforced by unique constraints the in-memory provid
 - **Official vs community grading.** `boulder_grades.source ∈ {STAFF}` for official grades; community input lives in `grade_suggestions` with `UNIQUE(boulder_id, user_id, grade_system_id)` and is aggregated on read.
 - **One tracking row per user/boulder.** `boulder_attempts` with `UNIQUE(user_id, boulder_id)`; ratings likewise, and rating requires an existing attempt row with `attempts > 0`.
 - **Notifications fan out per event, not per entity.** A bulk removal produces one `sector_retraced` event per sector.
+
+## ADR-007 · Gym lifecycle, staff permissions and invitations
+**Gym lifecycle.** Platform admins create gyms in `DRAFT` (optionally from a gym candidate, which becomes `ACCEPTED` and
+is linked). Draft and `ARCHIVED` gyms are invisible to the public and return 404, not 403, to non-members.
+`ACTIVE` gyms are discoverable. Slugs are generated once and never change.
+
+**Permission matrix** (platform admins count as OWNER everywhere):
+
+| Action | STAFF | ADMIN | OWNER |
+|---|---|---|---|
+| View staff & pending invitations | ✓ | ✓ | ✓ |
+| Create/edit/reorder/deactivate sectors | ✓ | ✓ | ✓ |
+| Edit gym profile | | ✓ | ✓ |
+| Invite / revoke STAFF or ADMIN | | ✓ | ✓ |
+| Invite / revoke OWNER; change or remove owners | | | ✓ |
+| Leave the gym | ✓ | ✓ | ✓ (unless last owner) |
+
+A gym always keeps at least one owner. Every check reads `gym_staff` from the database via `GymAccess`.
+
+**Invitations** are addressed to an email, expire after 7 days, and at most one is open per (gym, email), enforced
+by a partial unique index. The invitee accepts in-app after signing in with that email, so accounts can be invited
+before they exist. The first owner of a new gym is assigned through the same flow, so nobody becomes staff without
+accepting. This relies on email ownership: **keep "Confirm email" enabled in Supabase Auth in production.**
+Outgoing invitation emails are not sent yet; invitees see pending invitations on their home screen.

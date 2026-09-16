@@ -1,6 +1,15 @@
-== APPLICO LE MODIFICHE ==
-Applying: Use official brand assets (icon and horizontal logo); remove redrawn logos
+== 1. APPLICO LE MODIFICHE ==
+Applying: Phase 2 backend: gyms, sectors, staff roles, invitations, gym candidates, platform admin; dev stack script
 OK
-== FRONTEND ==
+== 2. STRUMENTI ==
 OK
-== ESITO: ok ==
+== 3. BUILD BACKEND ==
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Admin/AdminService.cs(117,43): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Admin/AdminService.cs(117,95): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Admin/AdminService.cs(47,43): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Admin/AdminService.cs(47,88): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Gyms/GymService.cs(20,43): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Application/Gyms/GymService.cs(20,88): error CS1061: 'DbFunctions' does not contain a definition for 'ILike' and no accessible extension method 'ILike' accepting a first argument of type 'DbFunctions' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+== 6. FRONTEND ==
+OK
+== ESITO: fail ==
