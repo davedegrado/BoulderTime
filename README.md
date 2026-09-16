@@ -31,7 +31,8 @@ Open a Codespace on this repository, then in its terminal:
 
     bash scripts/dev.sh
 
-It starts a local Supabase, applies migrations, loads demo gyms, runs the API and the frontend, and prints a link.
+It starts PostgreSQL and Supabase Auth in Docker, applies migrations, loads demo gyms, runs the API and the frontend,
+and prints a link. (`stop` keeps data, `reset` deletes it.)
 Create an account in the app, then run `bash scripts/dev.sh promote` to unlock the staff and admin areas.
 
 ## 3. Prerequisites

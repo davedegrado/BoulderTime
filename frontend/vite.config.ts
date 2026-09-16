@@ -14,7 +14,8 @@ export default defineConfig({
     // Dev-only: expose the API and local Supabase on the same origin as the app, so one forwarded port is enough.
     proxy: {
       "/api": { target: "http://127.0.0.1:5080", changeOrigin: true },
-      "/supabase": { target: "http://127.0.0.1:54321", changeOrigin: true, rewrite: (path) => path.replace(/^\/supabase/, "") },
+      // Local Supabase Auth (GoTrue) started by scripts/dev.sh. supabase-js calls {url}/auth/v1/*; GoTrue serves those at its root.
+      "/supabase/auth/v1": { target: "http://127.0.0.1:9999", changeOrigin: true, rewrite: (path) => path.replace(/^\/supabase\/auth\/v1/, "") },
     },
   },
   test: {

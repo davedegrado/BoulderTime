@@ -63,3 +63,13 @@ by a partial unique index. The invitee accepts in-app after signing in with that
 before they exist. The first owner of a new gym is assigned through the same flow, so nobody becomes staff without
 accepting. This relies on email ownership: **keep "Confirm email" enabled in Supabase Auth in production.**
 Outgoing invitation emails are not sent yet; invitees see pending invitations on their home screen.
+
+## ADR-008 · Local development stack without the Supabase CLI
+**Decision.** `scripts/dev.sh` runs PostgreSQL and Supabase Auth (GoTrue, pinned image) directly with Docker, and the
+Vite dev server proxies `/api` to the API and `/supabase/auth/v1` to GoTrue, so one forwarded port serves everything.
+**Why.** The Supabase CLI's full local stack failed to initialise inside GitHub Codespaces in repeated attempts
+(including with a pinned CLI and services disabled). GoTrue is the auth server hosted Supabase runs, so sign-up,
+sign-in and token claims (issuer, audience, `sub`, `email`, `user_metadata`) match production; this was verified
+end-to-end with supabase-js through the Vite proxy.
+**Consequence.** Production and staging still use a hosted Supabase project; nothing in the app changes. Local tokens
+are HS256 with a dev-only secret. Local Storage is added in Phase 3 the same way (a pinned container), not via the CLI.

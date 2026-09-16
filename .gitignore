@@ -33,3 +33,5 @@ Thumbs.db
 
 # Local dev stack
 frontend/.env.local
+
+# Diagnostics are committed deliberately by scripts/dev.sh on failure; not ignored.
