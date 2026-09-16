@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CBD15860-55A8-41C0-93B4-6922E85EE6E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoulderTime.Domain", "src\BoulderTime.Domain\BoulderTime.Domain.csproj", "{8CA96C22-B172-4381-A890-E719EE01C492}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoulderTime.Application", "src\BoulderTime.Application\BoulderTime.Application.csproj", "{24B0DB58-1D5F-41A4-B174-2B24FA262987}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoulderTime.Infrastructure", "src\BoulderTime.Infrastructure\BoulderTime.Infrastructure.csproj", "{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoulderTime.Api", "src\BoulderTime.Api\BoulderTime.Api.csproj", "{24319B18-10BA-40CD-8AFC-EBED00CC33D3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{42902DA4-D216-428D-91FE-07DA872AE055}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoulderTime.Tests", "tests\BoulderTime.Tests\BoulderTime.Tests.csproj", "{2D9BDB67-14CA-42C5-A94C-79DFAC763E94}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8CA96C22-B172-4381-A890-E719EE01C492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CA96C22-B172-4381-A890-E719EE01C492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CA96C22-B172-4381-A890-E719EE01C492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CA96C22-B172-4381-A890-E719EE01C492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24B0DB58-1D5F-41A4-B174-2B24FA262987}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24B0DB58-1D5F-41A4-B174-2B24FA262987}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24B0DB58-1D5F-41A4-B174-2B24FA262987}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24B0DB58-1D5F-41A4-B174-2B24FA262987}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24319B18-10BA-40CD-8AFC-EBED00CC33D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24319B18-10BA-40CD-8AFC-EBED00CC33D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24319B18-10BA-40CD-8AFC-EBED00CC33D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24319B18-10BA-40CD-8AFC-EBED00CC33D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D9BDB67-14CA-42C5-A94C-79DFAC763E94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D9BDB67-14CA-42C5-A94C-79DFAC763E94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D9BDB67-14CA-42C5-A94C-79DFAC763E94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D9BDB67-14CA-42C5-A94C-79DFAC763E94}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8CA96C22-B172-4381-A890-E719EE01C492} = {CBD15860-55A8-41C0-93B4-6922E85EE6E6}
+		{24B0DB58-1D5F-41A4-B174-2B24FA262987} = {CBD15860-55A8-41C0-93B4-6922E85EE6E6}
+		{F36F6C3F-D4A4-4B4D-8E26-0CF25898B347} = {CBD15860-55A8-41C0-93B4-6922E85EE6E6}
+		{24319B18-10BA-40CD-8AFC-EBED00CC33D3} = {CBD15860-55A8-41C0-93B4-6922E85EE6E6}
+		{2D9BDB67-14CA-42C5-A94C-79DFAC763E94} = {42902DA4-D216-428D-91FE-07DA872AE055}
+	EndGlobalSection
+EndGlobal

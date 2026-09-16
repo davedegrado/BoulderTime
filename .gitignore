@@ -1,0 +1,32 @@
+# Secrets & local env
+.env
+.env.*
+!.env.example
+*.local
+appsettings.*.local.json
+secrets.json
+
+# Node / Vite
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+
+# Supabase CLI
+database/supabase/.branches/
+database/supabase/.temp/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

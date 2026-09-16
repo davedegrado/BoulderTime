@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\BoulderTime.Domain\BoulderTime.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- EF Core abstractions only (DbSet/LINQ). The PostgreSQL provider lives in Infrastructure. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+</Project>
