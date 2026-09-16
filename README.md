@@ -131,9 +131,13 @@ Later phases extend the seed with grading systems, boulders, attempts, videos an
 
 ## 12. Storage setup
 
-Buckets and access policies (avatars, gym images, boulder photos, official beta, community videos) are created in
-Phase 3 via `database/supabase/storage.sql`. Uploads will use short-lived signed URLs issued by the API; binaries are
-never stored in PostgreSQL.
+Run `database/supabase/storage.sql` once in the hosted project to create the buckets (boulder images, gym images,
+avatars) with size and type limits. Set `Storage__Provider=Supabase` and `Supabase__ServiceRoleKey` on the API.
+
+Uploads work the same way in every environment: the API checks permissions and returns a short-lived signed upload
+URL; the browser shrinks the photo and uploads it directly; the API then verifies the object exists before saving
+the boulder. Binaries are never stored in PostgreSQL. In development (`Storage__Provider=Local`) the API itself plays
+the role of Storage using a local folder.
 
 ## 13. Development workflow
 

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { EyeOff, Layers, MailPlus, Users } from "lucide-react";
+import { EyeOff, History, Layers, MailPlus, Mountain, Users } from "lucide-react";
+import { useBoulders } from "@/features/boulders/api";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGymInvitations, useStaff } from "@/features/staff/api";
@@ -9,6 +10,8 @@ export function ManageOverview() {
   const sectors = useSectors(gym.id);
   const staff = useStaff(gym.id);
   const invitations = useGymInvitations(gym.id);
+  const active = useBoulders(gym.id, { status: "ACTIVE" });
+  const removed = useBoulders(gym.id, { status: "REMOVED" });
   const base = `/manage/${gym.slug}`;
   const count = (n: number | undefined) => (n === undefined ? "–" : n);
   const activeSectors = sectors.data?.filter((s) => s.isActive).length;
@@ -24,6 +27,16 @@ export function ManageOverview() {
         </div>
       )}
       <div className="stats">
+        <Link to={`${base}/boulders`} className="stat">
+          <Mountain className="stat__icon" aria-hidden />
+          <span className="stat__value">{count(active.data?.pages[0]?.total)}</span>
+          <span className="stat__label">Boulders on the wall</span>
+        </Link>
+        <Link to={`${base}/boulders`} className="stat">
+          <History className="stat__icon" aria-hidden />
+          <span className="stat__value">{count(removed.data?.pages[0]?.total)}</span>
+          <span className="stat__label">Removed boulders</span>
+        </Link>
         <Link to={`${base}/sectors`} className="stat">
           <Layers className="stat__icon" aria-hidden />
           <span className="stat__value">{count(activeSectors)}</span>
@@ -40,7 +53,7 @@ export function ManageOverview() {
           <span className="stat__label">Open invitations</span>
         </Link>
       </div>
-      <p className="section__footnote">Boulders, video moderation and reports appear here as those features arrive.</p>
+      <p className="section__footnote">Video moderation and reports appear here as those features arrive.</p>
     </div>
   );
 }

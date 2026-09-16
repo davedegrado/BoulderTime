@@ -50,10 +50,13 @@ describe("Gym page", () => {
       { id: "s1", gymId: "g1", name: "Cave", description: null, imageUrl: null, sortOrder: 0, isActive: true },
       { id: "s2", gymId: "g1", name: "Slab", description: "Technical", imageUrl: null, sortOrder: 1, isActive: true },
     ]);
+    reply("GET", "/api/gyms/g1/grade-systems", []);
+    reply("GET", "/api/gyms/g1/boulders", { items: [], page: 1, pageSize: 24, total: 0, hasMore: false });
     renderAt("/gyms/crimp-factory", "/gyms/:slug", <GymPage />);
 
     expect(await screen.findByRole("heading", { name: "Crimp Factory" })).toBeInTheDocument();
-    expect(await screen.findByText("Cave")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Sectors" }));
+    expect(await screen.findByText("Technical")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /manage/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Info" }));
@@ -63,10 +66,14 @@ describe("Gym page", () => {
   it("shows Manage and a draft notice to staff", async () => {
     reply("GET", "/api/gyms/crimp-factory", { ...gym, status: "DRAFT", viewerRole: "STAFF" });
     reply("GET", "/api/gyms/g1/sectors", []);
+    reply("GET", "/api/gyms/g1/grade-systems", []);
+    reply("GET", "/api/gyms/g1/boulders", { items: [], page: 1, pageSize: 24, total: 0, hasMore: false });
     renderAt("/gyms/crimp-factory", "/gyms/:slug", <GymPage />);
 
     expect(await screen.findByRole("link", { name: /manage/i })).toHaveAttribute("href", "/manage/crimp-factory");
     expect(screen.getByText(/only staff can see this/i)).toBeInTheDocument();
+    expect(await screen.findByText("No boulders on the wall yet")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Sectors" }));
     expect(await screen.findByText("No sectors yet")).toBeInTheDocument();
   });
 });

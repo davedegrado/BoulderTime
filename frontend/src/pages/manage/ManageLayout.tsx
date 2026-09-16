@@ -35,7 +35,9 @@ export function ManageLayout() {
   const base = `/manage/${slug}`;
   const items = [
     { to: base, label: "Overview", end: true },
+    { to: `${base}/boulders`, label: "Boulders" },
     { to: `${base}/sectors`, label: "Sectors" },
+    { to: `${base}/grading`, label: "Grading" },
     { to: `${base}/staff`, label: "Staff" },
     ...(atLeast(role, "ADMIN") ? [{ to: `${base}/settings`, label: "Settings" }] : []),
   ];

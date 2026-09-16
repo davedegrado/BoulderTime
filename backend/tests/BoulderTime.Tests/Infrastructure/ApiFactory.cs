@@ -9,12 +9,17 @@ namespace BoulderTime.Tests.Infrastructure;
 
 public sealed class ApiFactory(PostgresFixture postgres) : WebApplicationFactory<Program>
 {
+    /// <summary>Per-factory folder for the local object storage used in tests.</summary>
+    public string StorageRoot { get; } = Path.Combine(Path.GetTempPath(), "bouldertime-tests", Guid.NewGuid().ToString("N"));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Database", postgres.ConnectionString);
         builder.UseSetting("Supabase:Url", TestTokens.SupabaseUrl);
         builder.UseSetting("Supabase:JwtSecret", TestTokens.Secret);
+        builder.UseSetting("Storage:Provider", "Local");
+        builder.UseSetting("Storage:Local:RootPath", StorageRoot);
     }
 
     /// <summary>Creates the schema from the current model. Replaced by MigrateAsync once migrations are committed.</summary>

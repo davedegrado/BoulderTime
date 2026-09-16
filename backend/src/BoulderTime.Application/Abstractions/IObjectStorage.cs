@@ -1,0 +1,37 @@
+namespace BoulderTime.Application.Abstractions;
+
+public static class StorageBuckets
+{
+    public const string BoulderImages = "boulder-images";
+    public const string GymImages = "gym-images";
+    public const string Avatars = "avatars";
+    public const string OfficialBeta = "official-beta";       // Phase 5
+    public const string CommunityVideos = "community-videos"; // Phase 5
+}
+
+/// <summary>
+/// Permission for the client to upload one object directly to storage. Binaries never pass through the
+/// database and, in production, never through the API either.
+/// </summary>
+public sealed record UploadTicket(
+    string Bucket,
+    string Path,
+    string UploadUrl,
+    string Method,
+    IReadOnlyDictionary<string, string> Headers,
+    long MaxBytes,
+    DateTimeOffset ExpiresAt);
+
+/// <summary>Object storage (Supabase Storage in production, a local folder in development and tests).</summary>
+public interface IObjectStorage
+{
+    Task<UploadTicket> CreateUploadTicketAsync(string bucket, string path, string contentType, long maxBytes, CancellationToken ct = default);
+
+    Task<bool> ExistsAsync(string bucket, string path, CancellationToken ct = default);
+
+    /// <summary>Server-side write, used for seeding.</summary>
+    Task PutAsync(string bucket, string path, Stream content, string contentType, CancellationToken ct = default);
+
+    /// <summary>URL a browser can load for an object in a public bucket.</summary>
+    string PublicUrl(string bucket, string path);
+}

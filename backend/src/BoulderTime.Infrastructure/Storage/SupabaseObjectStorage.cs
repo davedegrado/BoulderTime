@@ -1,0 +1,57 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using BoulderTime.Application.Abstractions;
+using Microsoft.Extensions.Configuration;
+
+namespace BoulderTime.Infrastructure.Storage;
+
+/// <summary>
+/// Supabase Storage via its REST API, authenticated with the service-role key (server-only).
+/// Endpoints (supabase/storage, src/http/routes/object):
+///   POST /object/upload/sign/{bucket}/{path} → { url: "/object/upload/sign/...?token=…" } — signed upload URL (valid 2 h)
+///   HEAD /object/{bucket}/{path}            — existence check
+///   POST /object/{bucket}/{path}            — server-side upload
+///   GET  /object/public/{bucket}/{path}     — public read
+/// </summary>
+public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration configuration, IClock clock) : IObjectStorage
+{
+    public const string HttpClientName = "supabase-storage";
+    private string BaseUrl => $"{configuration["Supabase:Url"]!.TrimEnd('/')}/storage/v1";
+
+    public async Task<UploadTicket> CreateUploadTicketAsync(string bucket, string path, string contentType, long maxBytes, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{BaseUrl}/object/upload/sign/{bucket}/{Encode(path)}", new { }, ct);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<SignedUpload>(cancellationToken: ct)
+                   ?? throw new InvalidOperationException("Supabase Storage returned an empty signed upload response.");
+        return new UploadTicket(bucket, path, $"{BaseUrl}{body.Url}", "PUT",
+            new Dictionary<string, string> { ["Content-Type"] = contentType }, maxBytes, clock.UtcNow.AddHours(2));
+    }
+
+    public async Task<bool> ExistsAsync(string bucket, string path, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Head, $"{BaseUrl}/object/{bucket}/{Encode(path)}");
+        using var response = await http.SendAsync(request, ct);
+        if (response.IsSuccessStatusCode) return true;
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest) return false;
+        response.EnsureSuccessStatusCode();
+        return false;
+    }
+
+    public async Task PutAsync(string bucket, string path, Stream content, string contentType, CancellationToken ct = default)
+    {
+        using var body = new StreamContent(content);
+        body.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/object/{bucket}/{Encode(path)}") { Content = body };
+        request.Headers.Add("x-upsert", "true");
+        using var response = await http.SendAsync(request, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public string PublicUrl(string bucket, string path) => $"{BaseUrl}/object/public/{bucket}/{Encode(path)}";
+
+    private static string Encode(string path) => string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
+
+    private sealed record SignedUpload(string Url);
+}

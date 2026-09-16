@@ -1,4 +1,6 @@
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Candidates;
+using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
@@ -18,6 +20,10 @@ public interface IAppDbContext
     DbSet<GymStaffMember> GymStaff { get; }
     DbSet<StaffInvitation> StaffInvitations { get; }
     DbSet<GymCandidate> GymCandidates { get; }
+    DbSet<GradeSystem> GradeSystems { get; }
+    DbSet<GradeValue> GradeValues { get; }
+    DbSet<Boulder> Boulders { get; }
+    DbSet<BoulderGrade> BoulderGrades { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

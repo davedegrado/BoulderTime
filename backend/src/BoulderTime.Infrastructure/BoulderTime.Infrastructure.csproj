@@ -3,6 +3,13 @@
     <ProjectReference Include="..\BoulderTime.Application\BoulderTime.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Server-side only: HttpClientFactory, options binding and hosting abstractions. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Seeding/DemoPhotos/*.jpg" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />

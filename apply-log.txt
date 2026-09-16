@@ -1,7 +1,14 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 2 screens: explore, gym page, gym suggestions, invitations, staff area, platform admin
+Applying: Phase 3: boulders, grading systems, hold colours, photo uploads, bulk removal and history
 OK
-== 2. FRONTEND: typecheck, test, build ==
-      Tests  19 passed (19)
+== 2. STRUMENTI ==
+OK
+== 3. BUILD BACKEND ==
+OK
+== 4. MIGRAZIONE ==
+OK
+== 5. TEST BACKEND ==
+Passed!  - Failed:     0, Passed:    61, Skipped:     0, Total:    61, Duration: 26 s - BoulderTime.Tests.dll (net8.0)
+== 6. FRONTEND ==
 OK
 == ESITO: ok ==

@@ -23,6 +23,135 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("HoldColor")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("hold_color");
+
+                    b.Property<string>("PhotoPath")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("photo_path");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("removed_at");
+
+                    b.Property<Guid?>("RemovedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("removed_by_user_id");
+
+                    b.Property<Guid>("SectorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sector_id");
+
+                    b.Property<Guid?>("SetterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("setter_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_boulders");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_boulders_created_by_user_id");
+
+                    b.HasIndex("RemovedByUserId")
+                        .HasDatabaseName("ix_boulders_removed_by_user_id");
+
+                    b.HasIndex("SetterUserId")
+                        .HasDatabaseName("ix_boulders_setter_user_id");
+
+                    b.HasIndex("SectorId", "Status")
+                        .HasDatabaseName("ix_boulders_sector_id_status");
+
+                    b.HasIndex("GymId", "Status", "CreatedAt")
+                        .HasDatabaseName("ix_boulders_gym_id_status_created_at");
+
+                    b.ToTable("boulders", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.BoulderGrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<Guid>("GradeSystemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grade_system_id");
+
+                    b.Property<Guid>("GradeValueId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grade_value_id");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("source");
+
+                    b.HasKey("Id")
+                        .HasName("pk_boulder_grades");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_boulder_grades_created_by_user_id");
+
+                    b.HasIndex("GradeSystemId")
+                        .HasDatabaseName("ix_boulder_grades_grade_system_id");
+
+                    b.HasIndex("GradeValueId")
+                        .HasDatabaseName("ix_boulder_grades_grade_value_id");
+
+                    b.HasIndex("BoulderId", "GradeSystemId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_boulder_grades_boulder_id_grade_system_id")
+                        .HasFilter("source = 'Staff'");
+
+                    b.ToTable("boulder_grades", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -98,6 +227,95 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_gym_candidates_status_created_at");
 
                     b.ToTable("gym_candidates", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Grading.GradeSystem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_grade_systems");
+
+                    b.HasIndex("GymId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_grade_systems_gym_id_name");
+
+                    b.HasIndex("GymId", "SortOrder")
+                        .HasDatabaseName("ix_grade_systems_gym_id_sort_order");
+
+                    b.ToTable("grade_systems", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Grading.GradeValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ColorHex")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("color_hex");
+
+                    b.Property<Guid>("GradeSystemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grade_system_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("label");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer")
+                        .HasColumnName("rank");
+
+                    b.HasKey("Id")
+                        .HasName("pk_grade_values");
+
+                    b.HasIndex("GradeSystemId", "Rank")
+                        .HasDatabaseName("ix_grade_values_grade_system_id_rank");
+
+                    b.ToTable("grade_values", "bouldertime");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Gyms.Gym", b =>
@@ -410,6 +628,71 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("users", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_boulders_users_created_by_user_id");
+
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulders_gyms_gym_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("RemovedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_boulders_users_removed_by_user_id");
+
+                    b.HasOne("BoulderTime.Domain.Gyms.Sector", null)
+                        .WithMany()
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulders_sectors_sector_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("SetterUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_boulders_users_setter_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.BoulderGrade", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_grades_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_boulder_grades_users_created_by_user_id");
+
+                    b.HasOne("BoulderTime.Domain.Grading.GradeSystem", null)
+                        .WithMany()
+                        .HasForeignKey("GradeSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_grades_grade_systems_grade_system_id");
+
+                    b.HasOne("BoulderTime.Domain.Grading.GradeValue", null)
+                        .WithMany()
+                        .HasForeignKey("GradeValueId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_grades_grade_values_grade_value_id");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>
                 {
                     b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
@@ -430,6 +713,26 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_gym_candidates_users_submitted_by_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Grading.GradeSystem", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grade_systems_gyms_gym_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Grading.GradeValue", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Grading.GradeSystem", null)
+                        .WithMany()
+                        .HasForeignKey("GradeSystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_grade_values_grade_systems_grade_system_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Gyms.Sector", b =>

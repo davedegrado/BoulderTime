@@ -35,3 +35,6 @@ Thumbs.db
 frontend/.env.local
 
 # Diagnostics are committed deliberately by scripts/dev.sh on failure; not ignored.
+
+# Local object storage used in development
+backend/.local-storage/

@@ -17,6 +17,10 @@ import { ManageOverview } from "@/pages/manage/ManageOverview";
 import { ManageSectors } from "@/pages/manage/ManageSectors";
 import { ManageStaff } from "@/pages/manage/ManageStaff";
 import { ManageSettings } from "@/pages/manage/ManageSettings";
+import { ManageBoulders } from "@/pages/manage/ManageBoulders";
+import { BoulderEditorPage } from "@/pages/manage/BoulderEditorPage";
+import { ManageGrading } from "@/pages/manage/ManageGrading";
+import { BoulderPage } from "@/pages/BoulderPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { AdminCandidates } from "@/pages/admin/AdminCandidates";
@@ -34,12 +38,17 @@ export const router = createBrowserRouter([
       { path: "explore", element: <ExplorePage /> },
       { path: "gyms/suggest", element: <RequireAuth><SuggestGymPage /></RequireAuth> },
       { path: "gyms/:slug", element: <GymPage /> },
+      { path: "boulders/:id", element: <BoulderPage /> },
       {
         path: "manage/:slug",
         element: <RequireAuth><ManageLayout /></RequireAuth>,
         children: [
           { index: true, element: <ManageOverview /> },
+          { path: "boulders", element: <ManageBoulders /> },
+          { path: "boulders/new", element: <BoulderEditorPage /> },
+          { path: "boulders/:boulderId/edit", element: <BoulderEditorPage /> },
           { path: "sectors", element: <ManageSectors /> },
+          { path: "grading", element: <ManageGrading /> },
           { path: "staff", element: <ManageStaff /> },
           { path: "settings", element: <ManageSettings /> },
         ],

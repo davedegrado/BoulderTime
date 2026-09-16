@@ -8,13 +8,20 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { ApiError } from "@/lib/apiError";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { gymStatusLabel } from "@/lib/format";
+import { useBoulders, type BoulderFilters } from "@/features/boulders/api";
+import { useGradeSystems } from "@/features/grading/api";
+import { BoulderCard } from "@/features/boulders/BoulderCard";
+import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
+import { Button } from "@/components/Button";
+import { Mountain } from "lucide-react";
 
-type Tab = "sectors" | "info";
+type Tab = "boulders" | "sectors" | "info";
+const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", info: "Info" };
 
 export function GymPage() {
   const { slug = "" } = useParams();
   const gym = useGym(slug);
-  const [tab, setTab] = useState<Tab>("sectors");
+  const [tab, setTab] = useState<Tab>("boulders");
 
   if (gym.isPending) return <LoadingState label="Loading gym" />;
   if (gym.isError) return gym.error instanceof ApiError && gym.error.isNotFound ? <NotFoundPage /> : <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
@@ -40,14 +47,44 @@ export function GymPage() {
       </header>
 
       <div className="tabs" role="tablist" aria-label="Gym sections">
-        {(["sectors", "info"] as Tab[]).map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} className="tabs__tab" onClick={() => setTab(t)}>
-            {t === "sectors" ? "Sectors" : "Info"}
-          </button>
+        {(["boulders", "sectors", "info"] as Tab[]).map((t) => (
+          <button key={t} role="tab" aria-selected={tab === t} className="tabs__tab" onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
         ))}
       </div>
 
-      <div className="page__pad">{tab === "sectors" ? <SectorsTab gymId={g.id} /> : <InfoTab gym={g} />}</div>
+      <div className="page__pad">
+        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : <InfoTab gym={g} />}
+      </div>
+    </div>
+  );
+}
+
+function BouldersTab({ gymId }: { gymId: string }) {
+  const [filters, setFilters] = useState<BoulderFilters>({});
+  const sectors = useSectors(gymId);
+  const systems = useGradeSystems(gymId);
+  const boulders = useBoulders(gymId, filters);
+  const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
+  const total = boulders.data?.pages[0]?.total ?? 0;
+  const filtered = Object.values(filters).some(Boolean);
+
+  return (
+    <div className="stack">
+      <BoulderFiltersBar filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
+      {boulders.isPending ? <LoadingState label="Loading boulders" />
+        : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
+        : items.length === 0 ? (
+          <EmptyState icon={<Mountain />}
+            title={filtered ? "No boulders match these filters" : "No boulders on the wall yet"}
+            body={filtered ? "Try another sector, grade or hold colour." : "This gym hasn't added its current boulders yet."}
+            action={filtered ? <Button variant="secondary" onClick={() => setFilters({})}>Clear filters</Button> : undefined} />
+        ) : (
+          <>
+            <p className="section__meta">{total} {total === 1 ? "boulder" : "boulders"}</p>
+            <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>Show more</Button>}
+          </>
+        )}
     </div>
   );
 }

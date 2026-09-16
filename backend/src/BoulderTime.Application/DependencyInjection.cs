@@ -1,4 +1,6 @@
 using BoulderTime.Application.Admin;
+using BoulderTime.Application.Boulders;
+using BoulderTime.Application.Grading;
 using BoulderTime.Application.Candidates;
 using BoulderTime.Application.Gyms;
 using BoulderTime.Application.Staff;
@@ -19,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<InvitationService>();
         services.AddScoped<GymCandidateService>();
         services.AddScoped<AdminService>();
+        services.AddScoped<GradingService>();
+        services.AddScoped<BoulderService>();
         return services;
     }
 }
