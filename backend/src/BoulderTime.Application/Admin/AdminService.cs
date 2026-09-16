@@ -43,8 +43,8 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
         var text = Input.Trimmed(query);
         if (text.Length > 0)
         {
-            var pattern = Input.LikeContains(text);
-            q = q.Where(g => EF.Functions.ILike(g.Name, pattern, @"\") || EF.Functions.ILike(g.City, pattern, @"\"));
+            var pattern = Input.LikeContains(text.ToLowerInvariant());
+            q = q.Where(g => EF.Functions.Like(g.Name.ToLower(), pattern, @"\") || EF.Functions.Like(g.City.ToLower(), pattern, @"\"));
         }
 
         var total = await q.CountAsync(ct);
@@ -113,8 +113,8 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
         var text = Input.Trimmed(query);
         if (text.Length > 0)
         {
-            var pattern = Input.LikeContains(text);
-            q = q.Where(u => EF.Functions.ILike(u.DisplayName, pattern, @"\") || EF.Functions.ILike(u.Email, pattern, @"\"));
+            var pattern = Input.LikeContains(text.ToLowerInvariant());
+            q = q.Where(u => EF.Functions.Like(u.DisplayName.ToLower(), pattern, @"\") || EF.Functions.Like(u.Email.ToLower(), pattern, @"\"));
         }
         var total = await q.CountAsync(ct);
         var rows = await q.OrderByDescending(u => u.CreatedAt).Skip((p - 1) * size).Take(size)

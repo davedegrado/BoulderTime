@@ -16,8 +16,8 @@ public sealed class GymService(IAppDbContext db, GymAccess access)
         var text = Input.Trimmed(query);
         if (text.Length > 0)
         {
-            var pattern = Input.LikeContains(text);
-            q = q.Where(g => EF.Functions.ILike(g.Name, pattern, @"\") || EF.Functions.ILike(g.City, pattern, @"\"));
+            var pattern = Input.LikeContains(text.ToLowerInvariant());
+            q = q.Where(g => EF.Functions.Like(g.Name.ToLower(), pattern, @"\") || EF.Functions.Like(g.City.ToLower(), pattern, @"\"));
         }
 
         var total = await q.CountAsync(ct);
