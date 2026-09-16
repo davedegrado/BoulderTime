@@ -1,8 +1,10 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
-import { Home, Compass, Activity, Bell, UserRound, LogIn } from "lucide-react";
+import { Home, Compass, Activity, Bell, UserRound, LogIn, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/auth/AuthProvider";
+import { useCurrentUser } from "@/features/users/api";
+import { GymAvatar } from "@/components/GymAvatar";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -20,7 +22,10 @@ const NAV: NavItem[] = [
 
 export function AppShell() {
   const { session } = useAuth();
+  const me = useCurrentUser();
   const items = NAV.filter((i) => session || !i.requiresAuth);
+  const staffGyms = me.data?.staffGyms ?? [];
+  const isAdmin = me.data?.isPlatformAdmin ?? false;
 
   return (
     <div className="shell">
@@ -38,6 +43,23 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
+        {(staffGyms.length > 0 || isAdmin) && (
+          <nav className="sidebar__nav" aria-label="Manage">
+            <p className="sidebar__heading">Manage</p>
+            {staffGyms.map((g) => (
+              <NavLink key={g.gymId} to={`/manage/${g.slug}`} className="sidebar__link">
+                <GymAvatar name={g.name} logoUrl={g.logoUrl} size={24} />
+                <span className="sidebar__text">{g.name}</span>
+              </NavLink>
+            ))}
+            {isAdmin && (
+              <NavLink to="/admin" className="sidebar__link">
+                <ShieldCheck aria-hidden />
+                <span>Admin</span>
+              </NavLink>
+            )}
+          </nav>
+        )}
         {!session && (
           <Link to="/sign-in" className="btn btn--primary btn--block sidebar__cta">
             <LogIn aria-hidden /><span>Sign in</span>

@@ -1,5 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChevronRight, LogOut, Plus, ShieldCheck } from "lucide-react";
+import { GymAvatar } from "@/components/GymAvatar";
+import { roleLabel } from "@/lib/format";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser, useUpdateProfile } from "@/features/users/api";
 import { ApiError, errorMessage } from "@/lib/apiError";
@@ -68,6 +71,36 @@ export function ProfilePage() {
         </form>
       </section>
 
+      {(user.staffGyms.length > 0 || user.isPlatformAdmin) && (
+        <section className="section" aria-labelledby="manage-title">
+          <h2 id="manage-title" className="section__title">Manage</h2>
+          <ul className="list">
+            {user.staffGyms.map((g) => (
+              <li key={g.gymId}>
+                <Link to={`/manage/${g.slug}`} className="list__row list__row--link">
+                  <GymAvatar name={g.name} logoUrl={g.logoUrl} size={40} />
+                  <div className="list__main">
+                    <p className="list__title">{g.name}</p>
+                    <p className="list__sub">{roleLabel[g.role]}</p>
+                  </div>
+                  <ChevronRight className="list__chevron" aria-hidden />
+                </Link>
+              </li>
+            ))}
+            {user.isPlatformAdmin && (
+              <li>
+                <Link to="/admin" className="list__row list__row--link">
+                  <span className="list__badge-icon"><ShieldCheck aria-hidden /></span>
+                  <div className="list__main"><p className="list__title">BoulderTime admin</p></div>
+                  <ChevronRight className="list__chevron" aria-hidden />
+                </Link>
+              </li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      <Link to="/gyms/suggest" className="btn btn--secondary"><Plus aria-hidden /><span>Suggest a gym</span></Link>
       <Button variant="ghost" icon={<LogOut aria-hidden />} onClick={onSignOut}>Sign out</Button>
     </div>
   );

@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
+import type { GymRole } from "@/lib/format";
+
+export interface StaffGym {
+  gymId: string;
+  slug: string;
+  name: string;
+  city: string;
+  logoUrl: string | null;
+  role: GymRole;
+}
 
 export interface CurrentUser {
   id: string;
@@ -9,6 +19,8 @@ export interface CurrentUser {
   avatarUrl: string | null;
   isPlatformAdmin: boolean;
   createdAt: string;
+  staffGyms: StaffGym[];
+  pendingInvitations: number;
 }
 
 export interface UpdateProfileInput {
@@ -19,7 +31,7 @@ export const userKeys = {
   me: ["users", "me"] as const,
 };
 
-/** The signed-in user's BoulderTime profile. The API provisions it on first call. */
+/** The signed-in user's BoulderTime profile, staff memberships and pending invitation count. */
 export function useCurrentUser() {
   const { session } = useAuth();
   return useQuery({

@@ -1,14 +1,7 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Fix: use EF Core Like instead of Npgsql-only ILike in the Application layer
+Applying: Phase 2 screens: explore, gym page, gym suggestions, invitations, staff area, platform admin
 OK
-== 2. STRUMENTI ==
-OK
-== 3. BUILD BACKEND ==
-OK
-== 4. MIGRAZIONE ==
-OK
-== 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 28 s - BoulderTime.Tests.dll (net8.0)
-== 6. FRONTEND ==
+== 2. FRONTEND: typecheck, test, build ==
+      Tests  19 passed (19)
 OK
 == ESITO: ok ==
