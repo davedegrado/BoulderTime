@@ -181,3 +181,32 @@ describe("Moderation queue", () => {
     expect(calls.some((c) => c.method === "POST" && c.path === "/api/videos/v1/approve")).toBe(true);
   });
 });
+
+describe("Video previews", () => {
+  it("shows a frame of the video when there is no captured thumbnail", async () => {
+    reply("GET", "/api/boulders/b1/videos", {
+      approved: { items: [{ id: "old", boulderId: "b1", author: person("u9", "Anna"), videoUrl: "/old.mov", thumbnailUrl: null, caption: null, status: "APPROVED", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: false }], page: 1, pageSize: 12, total: 1, hasMore: false },
+      mineInReview: [],
+    });
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
+    const tile = await screen.findByRole("button", { name: /play video by anna/i });
+    const frame = tile.querySelector("video")!;
+    expect(frame.getAttribute("src")).toBe("/old.mov#t=0.5");
+    expect(frame.muted).toBe(true);
+  });
+
+  it("previews the chosen video before sending it", async () => {
+    reply("GET", "/api/boulders/b1/videos", { approved: { items: [], page: 1, pageSize: 12, total: 0, hasMore: false }, mineInReview: [] });
+    URL.createObjectURL = vi.fn(() => "blob:preview");
+    URL.revokeObjectURL = vi.fn();
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
+    await screen.findByRole("button", { name: "Choose a video" });
+
+    const file = new File([new Uint8Array(10)], "send.mov", { type: "video/quicktime" });
+    await userEvent.upload(document.querySelector("input[type=file]") as HTMLInputElement, file);
+
+    const preview = screen.getByLabelText("Preview of the selected video");
+    expect(preview).toHaveAttribute("src", "blob:preview");
+    expect(screen.getByRole("button", { name: "Send for review" })).toBeInTheDocument();
+  });
+});

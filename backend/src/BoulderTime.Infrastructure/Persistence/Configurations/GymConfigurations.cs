@@ -31,6 +31,7 @@ internal sealed class GymConfiguration : IEntityTypeConfiguration<Gym>
         b.Property(g => g.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.HasIndex(g => new { g.Status, g.Name });
         b.HasIndex(g => new { g.Status, g.City });
+        b.HasIndex(g => new { g.Latitude, g.Longitude }); // map bounds queries
     }
 }
 

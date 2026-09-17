@@ -12,9 +12,19 @@ namespace BoulderTime.Api.Controllers;
 [Produces("application/json")]
 public sealed class GymsController(GymService gyms, SectorService sectors, StaffService staff) : ControllerBase
 {
+    /// <param name="lat">With <paramref name="lng"/>: order results by distance from this position.</param>
     [HttpGet, AllowAnonymous]
-    public Task<PagedResult<GymSummaryDto>> Search([FromQuery] string? q, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
-        gyms.SearchAsync(q, page, pageSize, ct);
+    public Task<PagedResult<GymSummaryDto>> Search([FromQuery] string? q, [FromQuery] int? page, [FromQuery] int? pageSize,
+        [FromQuery] double? lat, [FromQuery] double? lng, CancellationToken ct) =>
+        gyms.SearchAsync(q, page, pageSize, ct, lat is { } la && lng is { } lo ? (la, lo) : null);
+
+    /// <summary>Gym pins inside a map viewport.</summary>
+    [HttpGet("map"), AllowAnonymous]
+    public Task<IReadOnlyList<GymPinDto>> Map([FromQuery] double south, [FromQuery] double west, [FromQuery] double north, [FromQuery] double east, CancellationToken ct) =>
+        gyms.PinsAsync(south, west, north, east, ct);
+
+    [HttpGet("{gymId:guid}/geocode"), Authorize]
+    public Task<GeocodeResultDto> Geocode(Guid gymId, [FromQuery] string? q, CancellationToken ct) => gyms.GeocodeAsync(gymId, q, ct);
 
     [HttpGet("{slug}"), AllowAnonymous]
     public Task<GymDetailDto> GetBySlug(string slug, CancellationToken ct) => gyms.GetBySlugAsync(slug, ct);

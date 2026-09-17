@@ -706,3 +706,27 @@ svg { flex-shrink: 0; }
 
 /* Respect users who prefer less motion in scroll behaviours too. */
 @media (prefers-reduced-motion: reduce) { .video-rail, .rail { scroll-behavior: auto; } }
+
+/* ---------- Maps ---------- */
+.map-card { position: relative; margin: 0 calc(-1 * var(--bt-4)); }
+@media (min-width: 720px) { .map-card { margin: 0; border-radius: var(--bt-radius-lg); overflow: hidden; border: 1px solid var(--bt-line); } }
+.gym-map { width: 100%; height: 46vh; min-height: 280px; max-height: 520px; background: var(--bt-surface-2); z-index: 0; }
+.gym-map--picker { height: 280px; min-height: 0; border-radius: var(--bt-radius-md); border: 1px solid var(--bt-line); }
+.gym-map--static { height: 180px; min-height: 0; border-radius: var(--bt-radius-md); overflow: hidden; }
+.gym-map--loading { display: grid; place-items: center; color: var(--bt-ink-3); }
+.gym-map--loading svg { width: 36px; height: 36px; }
+.map-card__locate { position: absolute; right: 12px; bottom: 28px; z-index: 500; display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--bt-surface); color: var(--bt-ink); box-shadow: var(--bt-shadow-raised); cursor: pointer; }
+.map-card__locate svg { width: 22px; height: 22px; }
+.map-card__note { padding: var(--bt-2) var(--bt-4); font-size: var(--bt-text-sm); color: var(--bt-ink-2); background: var(--bt-surface); }
+.gym-pin { background: none; border: 0; }
+.gym-pin__body { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); background: var(--bt-orange); box-shadow: 0 2px 6px rgb(0 0 0 / 0.35); border: 2px solid #fff; overflow: hidden; }
+.gym-pin__body > * { transform: rotate(45deg); }
+.gym-pin__body span { font-weight: 800; font-size: 13px; color: var(--bt-charcoal); font-family: var(--bt-font); }
+.gym-pin__body img { width: 100%; height: 100%; object-fit: cover; }
+.pin-popup { display: flex; flex-direction: column; gap: 2px; font-family: var(--bt-font); min-width: 140px; }
+.pin-popup a { margin-top: 6px; font-weight: 700; color: var(--bt-orange-ink); }
+.leaflet-container { font-family: var(--bt-font); }
+.leaflet-control-attribution { font-size: 10px; }
+.gym-grid__item { display: flex; flex-direction: column; gap: 2px; }
+.video-thumb__live, .video-thumb__live video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.uploader__preview { max-height: 320px; }

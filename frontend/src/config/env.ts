@@ -22,4 +22,7 @@ export const env = {
   supabaseAnonKey: required("VITE_SUPABASE_ANON_KEY"),
   /** "" means same origin. */
   apiBaseUrl: required("VITE_API_BASE_URL").replace(/\/+$/, ""),
+  /** Map tiles. OpenStreetMap's tiles are for light use only; set a tile provider for production (see docs). */
+  mapTileUrl: import.meta.env.VITE_MAP_TILE_URL?.trim() || "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  mapAttribution: import.meta.env.VITE_MAP_ATTRIBUTION?.trim() || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 } as const;

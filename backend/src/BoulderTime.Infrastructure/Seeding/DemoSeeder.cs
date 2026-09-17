@@ -18,18 +18,19 @@ namespace BoulderTime.Infrastructure.Seeding;
 /// </summary>
 public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage storage)
 {
-    private sealed record DemoGym(string Name, string Slug, string City, string Address, string Description, string[] Sectors, GradeSystemType[] Grading);
+    private sealed record DemoGym(string Name, string Slug, string City, string Address, string Description, string[] Sectors, GradeSystemType[] Grading,
+        double Latitude = 0, double Longitude = 0);
 
     private static readonly DemoGym[] DemoGyms =
     [
         new("Crimp Factory", "demo-crimp-factory", "Milano", "Via Tortona 31", "Two floors of bouldering in a former textile mill. Steep cave, big slab, and a dedicated kids' wall.",
-            ["Main Hall", "Cave", "Slab", "Kids Wall"], [GradeSystemType.Color, GradeSystemType.Fontainebleau]),
+            ["Main Hall", "Cave", "Slab", "Kids Wall"], [GradeSystemType.Color, GradeSystemType.Fontainebleau], 45.4526, 9.1623),
         new("Volume Lab", "demo-volume-lab", "Torino", "Corso Regina Margherita 120", "Competition-style setting with big volumes and coordination moves. Resets every week.",
-            ["Comp Wall", "Overhang", "Beginners", "Room 2"], [GradeSystemType.Fontainebleau, GradeSystemType.VScale]),
+            ["Comp Wall", "Overhang", "Beginners", "Room 2"], [GradeSystemType.Fontainebleau, GradeSystemType.VScale], 45.0781, 7.6696),
         new("Sloper Social", "demo-sloper-social", "Bologna", "Via del Pratello 8", "A community gym with a café, a training board area and a relaxed atmosphere.",
-            ["Front Room", "Training Boards", "Slab Corner"], [GradeSystemType.Color]),
+            ["Front Room", "Training Boards", "Slab Corner"], [GradeSystemType.Color], 44.4949, 11.3325),
         new("Granite House", "demo-granite-house", "Trento", "Via Brennero 64", "Mountain-town gym with setting inspired by the Dolomites. Great for technical climbers.",
-            ["Arena", "Roof", "Vertical"], [GradeSystemType.Fontainebleau]),
+            ["Arena", "Roof", "Vertical"], [GradeSystemType.Fontainebleau], 46.0833, 11.1165),
     ];
 
     /// <summary>Embedded illustrations; the file name carries the hold colour drawn in the picture.</summary>
@@ -60,6 +61,11 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 for (var i = 0; i < d.Sectors.Length; i++)
                     db.Sectors.Add(Sector.Create(gym.Id, d.Sectors[i], null, i));
                 created++;
+                await db.SaveChangesAsync(ct);
+            }
+            if (gym.Latitude is null && d.Latitude != 0)
+            {
+                gym.SetLocation(d.Latitude, d.Longitude); // demo gyms created before locations existed get a pin too
                 await db.SaveChangesAsync(ct);
             }
             await SeedGradingAsync(gym.Id, d.Grading, ct);

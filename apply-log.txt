@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 8: avatars, gym logo and cover, boulder thumbnails, installable app, lazy routes, accessibility and error handling
+Applying: Explore map with gym locations, geocoding and nearest-first results; reliable video previews
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +8,23 @@ OK
 == 4. MIGRAZIONE ==
 OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   117, Skipped:     0, Total:   117, Duration: 1 m 7 s - BoulderTime.Tests.dll (net8.0)
+[xUnit.net 00:00:43.95]     BoulderTime.Tests.Gyms.GymMapTests.Map_returns_pins_only_for_active_gyms_with_coordinates_inside_the_viewport [FAIL]
+Failed!  - Failed:     1, Passed:   120, Skipped:     0, Total:   121, Duration: 1 m 11 s - BoulderTime.Tests.dll (net8.0)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:43.95]     BoulderTime.Tests.Gyms.GymMapTests.Map_returns_pins_only_for_active_gyms_with_coordinates_inside_the_viewport [FAIL]
+  Failed BoulderTime.Tests.Gyms.GymMapTests.Map_returns_pins_only_for_active_gyms_with_coordinates_inside_the_viewport [13 ms]
+  Error Message:
+   System.ArgumentOutOfRangeException : Index and length must refer to a location within the string. (Parameter 'length')
+  Stack Trace:
+     at System.String.ThrowSubstringArgumentOutOfRange(Int32 startIndex, Int32 length)
+   at System.String.Substring(Int32 startIndex, Int32 length)
+   at BoulderTime.Tests.Gyms.GymMapTests.<>c__DisplayClass5_0.<<GymAt>b__0>d.MoveNext() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Gyms/GymMapTests.cs:line 30
+--- End of stack trace from previous location ---
+   at BoulderTime.Tests.Infrastructure.ApiFactory.WithDbAsync[T](Func`2 work) in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Infrastructure/ApiFactory.cs:line 53
+   at BoulderTime.Tests.Infrastructure.ApiFactory.WithDbAsync[T](Func`2 work) in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Infrastructure/ApiFactory.cs:line 53
+   at BoulderTime.Tests.Gyms.GymMapTests.Map_returns_pins_only_for_active_gyms_with_coordinates_inside_the_viewport() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Gyms/GymMapTests.cs:line 45
+--- End of stack trace from previous location ---
 == 6. FRONTEND ==
 OK
-== ESITO: ok ==
+== ESITO: fail ==

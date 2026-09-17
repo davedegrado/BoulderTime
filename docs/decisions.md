@@ -254,3 +254,21 @@ when a video upload starts. Main chunk 534 → 474 KB (130 KB gzipped).
 moves to the main region (announced by screen readers). The video viewer traps focus and restores it on close.
 Touch targets are at least 44 px. Unexpected render errors and failed chunk loads show a recoverable error screen
 instead of a blank page.
+
+## ADR-017 · Gym map and video previews
+**Gym locations.** `gyms.latitude/longitude` (WGS84, optional, both or neither, indexed). Staff (ADMIN+) set them in gym
+settings: "Find from address" calls the API, which geocodes through `IGeocoder` (OpenStreetMap Nominatim: ≤1 request/s,
+identified User-Agent, optional contact email; `Geocoding:Provider=None` disables it), then they drag the pin onto the
+entrance. The result is only a suggestion; nothing is geocoded automatically or in bulk.
+
+**Explore.** A Leaflet map centred on the browser's position (asked once; last position remembered on the device; Italy
+when denied). Pins come from `GET /api/gyms/map?south&west&north&east` (active gyms with coordinates, max 500, handles
+the antimeridian). With a position, `GET /api/gyms?lat&lng` orders results by distance (equirectangular ordering in
+SQL, Haversine `distanceKm` on the page) with unlocated gyms last. Leaflet loads lazily, only where a map is shown.
+
+**Tiles.** Default OpenStreetMap tiles are for light use only. Production must set `VITE_MAP_TILE_URL` and
+`VITE_MAP_ATTRIBUTION` to a tile provider (e.g. MapTiler, Stadia, Carto).
+
+**Video previews.** (1) The uploader plays the chosen file before sending. (2) Thumbnail capture now briefly plays the
+muted inline video before seeking, which iOS Safari requires to decode frames, and rejects black frames. (3) Videos
+without a thumbnail show a live frame (`#t=0.5`, metadata preload, loaded only when near the viewport) instead of an icon.

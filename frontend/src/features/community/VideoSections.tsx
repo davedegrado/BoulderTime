@@ -23,7 +23,16 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const toast = useToast();
+
+  // Preview the chosen file locally before it's sent.
+  useEffect(() => {
+    if (!file) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   async function send() {
     if (!file) return;
@@ -47,6 +56,9 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
         <Button variant="secondary" icon={<Upload aria-hidden />} onClick={() => input.current?.click()}>Choose a video</Button>
       ) : (
         <>
+          {previewUrl && (
+            <video className="player uploader__preview" src={previewUrl} controls playsInline muted preload="metadata" aria-label="Preview of the selected video" />
+          )}
           <p className="list__sub">{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</p>
           <TextField label="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={300} hint="Optional" />
           {progress !== null && (
@@ -99,11 +111,36 @@ export function BetaSection({ boulderId, isStaff }: { boulderId: string; isStaff
   );
 }
 
+/**
+ * For videos without a captured thumbnail: shows a frame of the video itself. Only metadata and the first frames are
+ * fetched, and only once the tile scrolls near the viewport. "#t=0.5" makes iOS Safari paint that frame.
+ */
+function FramePreview({ src }: { src: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [visible, setVisible] = useState(typeof IntersectionObserver === "undefined");
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (visible || !ref.current) return;
+    const io = new IntersectionObserver(([e]) => { if (e?.isIntersecting) { setVisible(true); io.disconnect(); } }, { rootMargin: "200px" });
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [visible]);
+  return (
+    <span ref={ref} className="video-thumb__live">
+      {visible && !failed
+        ? <video src={`${src}#t=0.5`} muted playsInline preload="metadata" tabIndex={-1} aria-hidden onError={() => setFailed(true)} />
+        : <span className="video-thumb__placeholder" aria-hidden><VideoIcon /></span>}
+    </span>
+  );
+}
+
 function Thumb({ video, onOpen, status }: { video: Video; onOpen: () => void; status?: ReactNode }) {
   return (
     <button type="button" className="video-thumb" onClick={onOpen} aria-label={`Play video by ${video.author.displayName}${video.caption ? `: ${video.caption}` : ""}`}>
       <span className="video-thumb__frame">
-        {video.thumbnailUrl ? <img src={video.thumbnailUrl} alt="" loading="lazy" /> : <span className="video-thumb__placeholder" aria-hidden><VideoIcon /></span>}
+        {video.thumbnailUrl
+          ? <img src={video.thumbnailUrl} alt="" loading="lazy" />
+          : <FramePreview src={video.videoUrl} />}
         <span className="video-thumb__play" aria-hidden><Play /></span>
         {status}
       </span>

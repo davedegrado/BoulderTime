@@ -16,7 +16,8 @@ public sealed record AdminGymDto(Guid Id, string Slug, string Name, string City,
 
 public sealed record AdminUserDto(Guid Id, string DisplayName, string Email, bool IsPlatformAdmin, int StaffGyms, DateTimeOffset CreatedAt);
 
-public sealed record CreateGymRequest(string? Name, string? City, string? Address, string? Website, string? Email, string? Phone, string? Description, Guid? CandidateId);
+public sealed record CreateGymRequest(string? Name, string? City, string? Address, string? Website, string? Email, string? Phone, string? Description, Guid? CandidateId,
+    double? Latitude = null, double? Longitude = null);
 public sealed record SetGymStatusRequest(GymStatus? Status);
 public sealed record InviteOwnerRequest(string? Email);
 
@@ -66,6 +67,7 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
     {
         await access.RequirePlatformAdminAsync(ct);
         GymValidation.ValidateProfile(r.Name, r.City, r.Description, r.Address, r.Website, r.Email, r.Phone);
+        GymValidation.ValidateLocation(r.Latitude, r.Longitude);
 
         GymCandidate? candidate = null;
         if (r.CandidateId is { } candidateId)
@@ -76,6 +78,7 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
 
         var gym = Gym.Create(r.Name!, await UniqueSlugAsync(r.Name!, ct), r.City!);
         gym.UpdateProfile(r.Name!, r.Description, r.Address, r.City!, r.Website, r.Email, r.Phone);
+        if (r.Latitude is not null) gym.SetLocation(r.Latitude, r.Longitude);
         db.Gyms.Add(gym);
         if (candidate is not null)
         {

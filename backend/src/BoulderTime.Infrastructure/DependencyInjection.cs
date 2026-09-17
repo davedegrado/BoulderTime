@@ -2,6 +2,7 @@ using BoulderTime.Application.Abstractions;
 using BoulderTime.Infrastructure.Persistence;
 using BoulderTime.Infrastructure.Seeding;
 using BoulderTime.Infrastructure.Storage;
+using BoulderTime.Infrastructure.Geocoding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,14 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<DemoSeeder>();
         AddStorage(services, configuration);
+        if ((configuration["Geocoding:Provider"] ?? "Nominatim").Equals("None", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<IGeocoder, DisabledGeocoder>();
+        else
+            services.AddHttpClient<IGeocoder, NominatimGeocoder>(c =>
+            {
+                c.Timeout = TimeSpan.FromSeconds(10);
+                c.DefaultRequestHeaders.UserAgent.ParseAdd("BoulderTime/1.0 (+https://github.com/davedegrado/BoulderTime)");
+            });
         return services;
     }
 

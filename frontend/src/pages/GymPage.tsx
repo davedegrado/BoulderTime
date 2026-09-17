@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
 import { useGym, useSectors, type GymDetail } from "@/features/gyms/api";
@@ -20,6 +20,8 @@ import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
+
+const StaticGymMap = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.StaticGymMap })));
 
 type Tab = "boulders" | "sectors" | "updates" | "ranking" | "info";
 const TABS: Tab[] = ["boulders", "sectors", "updates", "ranking", "info"];
@@ -169,6 +171,11 @@ function InfoTab({ gym }: { gym: GymDetail }) {
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([gym.name, gym.address, gym.city].filter(Boolean).join(", "))}`;
   return (
     <div className="stack">
+      {gym.latitude != null && gym.longitude != null && (
+        <Suspense fallback={<div className="gym-map gym-map--static gym-map--loading" />}>
+          <StaticGymMap lat={gym.latitude} lng={gym.longitude} name={gym.name} />
+        </Suspense>
+      )}
       {gym.description && <p className="prose">{gym.description}</p>}
       <ul className="list">
         <li className="list__row">

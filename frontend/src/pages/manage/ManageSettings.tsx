@@ -1,5 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Lock, Save } from "lucide-react";
+import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
+import { Lock, MapPin, Save, Search } from "lucide-react";
+import { geocodeGym } from "@/features/gyms/api";
+
+const LocationPicker = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.LocationPicker })));
 import { ImagePicker } from "@/components/ImagePicker";
 import { GymAvatar } from "@/components/GymAvatar";
 import { useSetGymImage } from "@/features/images/api";
@@ -24,6 +27,23 @@ export function ManageSettings() {
     website: gym.website ?? "", email: gym.email ?? "", phone: gym.phone ?? "",
   });
   const [form, setForm] = useState<UpdateGymInput>(fromGym);
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(gym.latitude != null && gym.longitude != null ? { lat: gym.latitude, lng: gym.longitude } : null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeNote, setGeocodeNote] = useState<string | null>(null);
+
+  async function findFromAddress() {
+    setGeocoding(true);
+    setGeocodeNote(null);
+    try {
+      const r = await geocodeGym(gym.id, [form.address, form.city].filter(Boolean).join(", "));
+      setPosition({ lat: r.latitude, lng: r.longitude });
+      setGeocodeNote(`Found: ${r.displayName}. Drag the pin if it's not exactly on your entrance.`);
+    } catch (e) {
+      setGeocodeNote(e instanceof ApiError && e.isNotFound ? "Couldn't find that address. Tap the map to place the pin." : errorMessage(e));
+    } finally {
+      setGeocoding(false);
+    }
+  }
   useEffect(() => setForm(fromGym()), [gym]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!atLeast(role, "ADMIN")) {
@@ -35,7 +55,8 @@ export function ManageSettings() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    update.mutate(form, {
+    const location = position ? { latitude: position.lat, longitude: position.lng } : gym.latitude != null ? { clearLocation: true } : {};
+    update.mutate({ ...form, ...location }, {
       onSuccess: () => toast.success("Gym profile saved"),
       onError: (error) => { if (!(error instanceof ApiError && error.isValidation)) toast.error(errorMessage(error)); },
     });
@@ -65,6 +86,19 @@ export function ManageSettings() {
         <TextField label="Website" type="url" inputMode="url" placeholder="https://" value={form.website} onChange={set("website")} error={err?.fieldError("website")} />
         <TextField label="Email" type="email" inputMode="email" value={form.email} onChange={set("email")} error={err?.fieldError("email")} />
         <TextField label="Phone" type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} error={err?.fieldError("phone")} />
+      </div>
+      <div className="editor__section">
+        <span className="field__label"><MapPin aria-hidden className="title-icon" /> Location on the map</span>
+        <span className="field__hint">Climbers find you on the Explore map. Look it up from the address, then drag the pin onto your entrance.</span>
+        <div className="form__actions">
+          <Button variant="secondary" icon={<Search aria-hidden />} loading={geocoding} onClick={findFromAddress} disabled={!form.address && !form.city}>Find from address</Button>
+          {position && <Button variant="ghost" onClick={() => setPosition(null)}>Remove pin</Button>}
+        </div>
+        {geocodeNote && <p className="field__hint" role="status">{geocodeNote}</p>}
+        <Suspense fallback={<div className="gym-map gym-map--picker gym-map--loading" />}>
+          <LocationPicker value={position} onChange={setPosition} />
+        </Suspense>
+        {position && <p className="list__sub">{position.lat.toFixed(5)}, {position.lng.toFixed(5)}</p>}
       </div>
       <TextAreaField label="Description" rows={5} value={form.description} onChange={set("description")} error={err?.fieldError("description")} hint="What makes your gym special? Shown on your public page." />
       <Button type="submit" icon={<Save aria-hidden />} loading={update.isPending}>Save changes</Button>

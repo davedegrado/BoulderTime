@@ -11,7 +11,13 @@ export interface GymSummary {
   logoUrl: string | null;
   coverImageUrl: string | null;
   status: GymStatus;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm?: number | null;
 }
+
+export interface GymPin { id: string; slug: string; name: string; city: string; logoUrl: string | null; latitude: number; longitude: number }
+export interface Bounds { south: number; west: number; north: number; east: number }
 
 export interface GymDetail extends GymSummary {
   description: string | null;
@@ -44,6 +50,9 @@ export interface UpdateGymInput {
   website: string;
   email: string;
   phone: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  clearLocation?: boolean;
 }
 
 export const gymKeys = {
@@ -55,15 +64,32 @@ export const gymKeys = {
 
 const PAGE_SIZE = 20;
 
-export function useGymSearch(query: string) {
+export function useGymSearch(query: string, near?: { lat: number; lng: number } | null) {
+  const nearKey = near ? `${near.lat.toFixed(2)},${near.lng.toFixed(2)}` : "";
   return useInfiniteQuery({
-    queryKey: gymKeys.search(query),
+    queryKey: [...gymKeys.search(query), nearKey],
     queryFn: ({ pageParam, signal }) =>
-      api.get<PagedResult<GymSummary>>(`/api/gyms?q=${encodeURIComponent(query)}&page=${pageParam}&pageSize=${PAGE_SIZE}`, { signal }),
+      api.get<PagedResult<GymSummary>>(`/api/gyms?q=${encodeURIComponent(query)}&page=${pageParam}&pageSize=${PAGE_SIZE}${near ? `&lat=${near.lat}&lng=${near.lng}` : ""}`, { signal }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
   });
+}
+
+export function useGymPins(bounds: Bounds | null) {
+  // Rounded so small pans reuse the cache.
+  const key = bounds ? [bounds.south, bounds.west, bounds.north, bounds.east].map((n) => n.toFixed(2)).join(",") : "";
+  return useQuery({
+    queryKey: ["gyms", "pins", key],
+    queryFn: ({ signal }) => api.get<GymPin[]>(`/api/gyms/map?south=${bounds!.south}&west=${bounds!.west}&north=${bounds!.north}&east=${bounds!.east}`, { signal }),
+    enabled: !!bounds,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function geocodeGym(gymId: string, query: string) {
+  return api.get<{ latitude: number; longitude: number; displayName: string }>(`/api/gyms/${gymId}/geocode?q=${encodeURIComponent(query)}`);
 }
 
 export function useGym(slug: string) {

@@ -30,6 +30,9 @@ public class Gym : IAuditable
     public string? LogoPath { get; private set; }
     public string? CoverImageUrl { get; private set; }
     public string? CoverImagePath { get; private set; }
+    /// <summary>WGS84 position for the map. Optional: gyms without coordinates don't appear as pins.</summary>
+    public double? Latitude { get; private set; }
+    public double? Longitude { get; private set; }
     public GymStatus Status { get; private set; } = GymStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -73,6 +76,16 @@ public class Gym : IAuditable
     }
 
     public void SetStatus(GymStatus status) => Status = status;
+
+    /// <summary>Both values or neither.</summary>
+    public void SetLocation(double? latitude, double? longitude)
+    {
+        if ((latitude is null) != (longitude is null)) throw new ArgumentException("Latitude and longitude go together.");
+        if (latitude is < -90 or > 90) throw new ArgumentOutOfRangeException(nameof(latitude));
+        if (longitude is < -180 or > 180) throw new ArgumentOutOfRangeException(nameof(longitude));
+        Latitude = latitude is null ? null : Math.Round(latitude.Value, 6);
+        Longitude = longitude is null ? null : Math.Round(longitude.Value, 6);
+    }
 
     public bool IsPubliclyVisible => Status == GymStatus.Active;
 

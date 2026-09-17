@@ -5,6 +5,13 @@ namespace BoulderTime.Application.Gyms;
 
 internal static class GymValidation
 {
+    public static void ValidateLocation(double? latitude, double? longitude) =>
+        new Validator()
+            .Check((latitude is null) == (longitude is null), "latitude", "Set both latitude and longitude.")
+            .Check(latitude is null or (>= -90 and <= 90), "latitude", "Latitude must be between -90 and 90.")
+            .Check(longitude is null or (>= -180 and <= 180), "longitude", "Longitude must be between -180 and 180.")
+            .ThrowIfInvalid();
+
     public static void ValidateProfile(string? name, string? city, string? description, string? address, string? website, string? email, string? phone)
     {
         new Validator()
