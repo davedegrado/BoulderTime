@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bell, CalendarDays, CheckCircle2, Clapperboard, Flag, Megaphone, MessageSquare, Pencil, RefreshCw, Wrench, XCircle } from "lucide-react";
+import { Bell, CalendarDays, CheckCircle2, Clapperboard, Flag, Megaphone, MessageSquare, Mountain, Pencil, RefreshCw, Sparkles, Wrench, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Announcement, NotificationType } from "@/features/notifications/api";
 import { announcementTypeLabel } from "@/features/notifications/api";
@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 export const notificationIcon: Record<NotificationType, LucideIcon> = {
   GYM_ANNOUNCEMENT: Megaphone, SECTOR_RETRACED: RefreshCw, BOULDER_UPDATED: Pencil, OFFICIAL_BETA: Clapperboard,
   BOULDER_COMMENTS: MessageSquare, VIDEO_APPROVED: CheckCircle2, VIDEO_REJECTED: XCircle, REPORT_REVIEWED: Flag,
+  NEW_BOULDERS_IN_SECTOR: Sparkles, NEW_BOULDERS_AT_GYM: Mountain,
 };
 
 export function relativeTime(iso: string, now = Date.now()): string {

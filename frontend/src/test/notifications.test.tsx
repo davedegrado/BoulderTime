@@ -94,3 +94,18 @@ describe("Staff updates", () => {
     await waitFor(() => expect(calls.find((c) => c.method === "POST")?.body).toMatchObject({ type: "ANNOUNCEMENT", sectorId: "s1", notifyFollowers: true, content: "Fresh problems on Friday." }));
   });
 });
+
+describe("New boulder notifications", () => {
+  it("render with their own icon and open the gym when collapsed", async () => {
+    reply("GET", "/api/notifications", { items: [
+      note("n9", { type: "NEW_BOULDERS_IN_SECTOR", category: "SECTOR_UPDATES", title: "5 new boulders in Cave", body: "Crimp Factory · latest: 6A · Blue holds", link: "/gyms/crimp", count: 5 }),
+    ], page: 1, pageSize: 30, total: 1, hasMore: false });
+    reply("POST", "/api/notifications/n9/read", {});
+    renderAt("/notifications", "/notifications", <NotificationsPage />);
+
+    const item = await screen.findByRole("button", { name: /5 new boulders in cave/i });
+    expect(within(item).getByText("Crimp Factory · latest: 6A · Blue holds")).toBeInTheDocument();
+    await userEvent.click(item);
+    expect(calls.some((c) => c.path === "/api/notifications/n9/read")).toBe(true);
+  });
+});

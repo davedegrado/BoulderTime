@@ -7,8 +7,8 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 
 const CATEGORIES: { key: keyof NotificationSettings; label: string; description: string }[] = [
-  { key: "gymUpdates", label: "Gym updates", description: "Announcements, events, schedule changes and competitions from gyms you follow." },
-  { key: "sectorUpdates", label: "Sector retraces", description: "When a sector you follow — or one with boulders you follow — is reset." },
+  { key: "gymUpdates", label: "Gym updates", description: "New boulders, announcements, events and schedule changes at gyms you follow." },
+  { key: "sectorUpdates", label: "Sector updates", description: "New boulders in sectors you follow, and retraces of sectors you follow or with boulders you follow." },
   { key: "boulderUpdates", label: "Boulder updates", description: "Changes, new official beta and comments on boulders you follow or are projecting." },
   { key: "myContent", label: "Your videos and reports", description: "When your videos are reviewed or your reports are handled." },
 ];

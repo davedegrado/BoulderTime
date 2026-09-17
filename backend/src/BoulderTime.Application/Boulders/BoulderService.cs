@@ -95,7 +95,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 
     public async Task<BoulderDetailDto> CreateAsync(Guid gymId, SaveBoulderRequest r, CancellationToken ct = default)
     {
-        await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
+        var (gym, _) = await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
         var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, ct);
         var userId = currentUser.RequireUserId();
 
@@ -103,6 +103,15 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         db.Boulders.Add(boulder);
         foreach (var (systemId, valueId) in valid.Grades)
             db.BoulderGrades.Add(BoulderGrade.Official(boulder.Id, systemId, valueId, userId, clock.UtcNow));
+
+        // Notifications commit with the boulder. Summary: grade in the gym's primary system + hold colour, e.g. "6A · Blue holds".
+        var sector = await db.Sectors.AsNoTracking().FirstAsync(x => x.Id == valid.SectorId, ct);
+        var valueIds = valid.Grades.Select(g => g.ValueId).ToList();
+        var primaryGrade = await db.GradeValues.AsNoTracking().Where(v => valueIds.Contains(v.Id))
+            .Join(db.GradeSystems, v => v.GradeSystemId, s => s.Id, (v, s) => new { v.Label, s.SortOrder })
+            .OrderBy(x => x.SortOrder).Select(x => x.Label).FirstOrDefaultAsync(ct);
+        var summary = primaryGrade is null ? $"{valid.HoldColor} holds" : $"{primaryGrade} · {valid.HoldColor} holds";
+        await notifications.BoulderCreatedAsync(boulder, gym, sector, summary, userId, ct);
         await db.SaveChangesAsync(ct);
         return await GetAsync(boulder.Id, ct);
     }

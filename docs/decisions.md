@@ -165,6 +165,7 @@ the actor is never notified; audiences are de-duplicated (one notification per p
 | Event | Audience |
 |---|---|
 | Gym announcement with "notify followers" | gym followers ∪ followers of the targeted sector |
+| New boulder | sector followers → "New boulder in Cave"; gym followers who don't follow that sector → "New boulder at Crimp Factory". Both collapse while unread ("5 new boulders in Cave"); muting a sector also mutes it via the gym |
 | Bulk removal with "notify followers" | per sector: sector followers ∪ followers of the removed boulders in it — **one notification per sector per person** |
 | Boulder corrected (grade, sector, holds, photo) | boulder followers |
 | New official beta (new file, not caption edits) | boulder followers ∪ climbers projecting it |
@@ -172,8 +173,9 @@ the actor is never notified; audiences are de-duplicated (one notification per p
 | Video approved / rejected | uploader |
 | Report resolved / dismissed | reporter |
 
-Creating boulders does not notify per boulder; staff announce new circuits with an update instead. Edits to an
-announcement never re-notify.
+New boulders notify immediately but collapse per sector (for sector followers) and per gym (for gym followers), so a
+setting session yields one notification per person, whose link widens from the boulder to the gym's boulder list once
+several are folded in. Edits to an announcement never re-notify.
 
 **Collapse.** Events with a `collapse_key` update the existing unread notification (count, title, time) instead of
 inserting another; once read, the next event starts a new one.

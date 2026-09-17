@@ -55,6 +55,32 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
         }
     }
 
+    /// <summary>
+    /// A new boulder. Sector followers get "New boulder in Cave"; gym followers who don't follow that sector get
+    /// "New boulder at Crimp Factory". Both collapse while unread ("5 new boulders in Cave"), so a setting session
+    /// produces one notification per person instead of one per boulder. Someone who follows the sector but muted it
+    /// gets nothing through the gym either.
+    /// </summary>
+    public async Task BoulderCreatedAsync(Boulder boulder, Gym gym, Sector sector, string summary, Guid actorId, CancellationToken ct)
+    {
+        var sectorFollowers = await db.SectorFollows.Where(f => f.SectorId == sector.Id).Select(f => new { f.UserId, f.NotificationsEnabled }).ToListAsync(ct);
+        var boulderLink = $"/boulders/{boulder.Id}";
+        var gymLink = $"/gyms/{gym.Slug}";
+
+        await PublishAsync(sectorFollowers.Where(f => f.NotificationsEnabled).Select(f => f.UserId), actorId, NotificationType.NewBouldersInSector,
+            $"New boulder in {sector.Name}", $"{gym.Name} · {summary}", RelatedEntityType.Boulder, boulder.Id, gym.Id, boulderLink,
+            collapseKey: $"new-boulders:sector:{sector.Id}", ct,
+            collapsed: n => ($"{n} new boulders in {sector.Name}", $"{gym.Name} · latest: {summary}", gymLink, RelatedEntityType.Sector, sector.Id));
+
+        var sectorFollowerIds = sectorFollowers.Select(f => f.UserId).ToHashSet();
+        var gymAudience = (await db.GymFollows.Where(f => f.GymId == gym.Id && f.NotificationsEnabled).Select(f => f.UserId).ToListAsync(ct))
+            .Where(u => !sectorFollowerIds.Contains(u));
+        await PublishAsync(gymAudience, actorId, NotificationType.NewBouldersAtGym,
+            $"New boulder at {gym.Name}", $"{sector.Name} · {summary}", RelatedEntityType.Boulder, boulder.Id, gym.Id, boulderLink,
+            collapseKey: $"new-boulders:gym:{gym.Id}", ct,
+            collapsed: n => ($"{n} new boulders at {gym.Name}", $"Latest in {sector.Name}: {summary}", gymLink, RelatedEntityType.Gym, gym.Id));
+    }
+
     public async Task BoulderUpdatedAsync(Boulder boulder, Gym gym, string sectorName, string whatChanged, Guid actorId, CancellationToken ct)
     {
         var audience = await BoulderFollowersAsync(boulder.Id, ct);
@@ -80,7 +106,7 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
         await PublishAsync(audience, comment.UserId, NotificationType.BoulderComments, $"{authorName} commented on a boulder you follow",
             Excerpt(comment.Content), RelatedEntityType.Boulder, boulder.Id, boulder.GymId, $"/boulders/{boulder.Id}",
             collapseKey: $"comments:{boulder.Id}", ct,
-            collapsedTitle: count => $"{count} new comments on a boulder you follow");
+            collapsed: count => ($"{count} new comments on a boulder you follow", Excerpt(comment.Content), null, null, null));
     }
 
     public Task VideoReviewedAsync(BoulderVideo video, Guid gymId, Guid reviewerId, CancellationToken ct) =>
@@ -101,7 +127,7 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
 
     private async Task PublishAsync(IEnumerable<Guid> audience, Guid? actorId, NotificationType type, string title, string? body,
         RelatedEntityType relatedType, Guid relatedId, Guid? gymId, string link, string? collapseKey, CancellationToken ct,
-        Func<int, string>? collapsedTitle = null)
+        Func<int, (string Title, string? Body, string? Link, RelatedEntityType? RelatedType, Guid? RelatedId)>? collapsed = null)
     {
         var recipients = audience.Where(u => u != actorId).Distinct().ToList();
         if (recipients.Count == 0) return;
@@ -120,7 +146,10 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
         foreach (var userId in recipients)
         {
             if (open.TryGetValue(userId, out var existing))
-                existing.Collapse(collapsedTitle?.Invoke(existing.Count + 1) ?? title, body, now);
+            {
+                var c = collapsed?.Invoke(existing.Count + 1);
+                existing.Collapse(c?.Title ?? title, c is null ? body : c.Value.Body, now, c?.Link, c?.RelatedType, c?.RelatedId);
+            }
             else
                 db.Notifications.Add(Notification.Create(userId, type, title, body, relatedType, relatedId, gymId, link, collapseKey, now));
         }

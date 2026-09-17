@@ -10,6 +10,10 @@ public enum NotificationType
     VideoApproved = 5,
     VideoRejected = 6,
     ReportReviewed = 7,
+    /// <summary>New boulders in a sector the user follows.</summary>
+    NewBouldersInSector = 8,
+    /// <summary>New boulders at a gym the user follows (for people who don't follow that boulder's sector).</summary>
+    NewBouldersAtGym = 9,
 }
 
 /// <summary>User-facing preference buckets. Every notification type belongs to exactly one.</summary>
@@ -52,21 +56,26 @@ public class Notification
         CollapseKey = collapseKey, CreatedAt = now,
     };
 
-    /// <summary>Folds another event into this unread notification and bumps it to the top.</summary>
-    public void Collapse(string title, string? body, DateTimeOffset now)
+    /// <summary>
+    /// Folds another event into this unread notification and bumps it to the top. When several events are folded,
+    /// the link can widen (e.g. from one boulder to the gym's boulder list).
+    /// </summary>
+    public void Collapse(string title, string? body, DateTimeOffset now, string? link = null, RelatedEntityType? relatedType = null, Guid? relatedId = null)
     {
         Count++;
         Title = Truncate(title, TitleMaxLength)!;
         Body = Truncate(body, BodyMaxLength);
         CreatedAt = now;
+        if (link is not null) Link = link;
+        if (relatedType is { } t && relatedId is { } id) { RelatedEntityType = t; RelatedEntityId = id; }
     }
 
     public void MarkRead(DateTimeOffset now) => ReadAt ??= now;
 
     public static NotificationCategory CategoryOf(NotificationType type) => type switch
     {
-        NotificationType.GymAnnouncement => NotificationCategory.GymUpdates,
-        NotificationType.SectorRetraced => NotificationCategory.SectorUpdates,
+        NotificationType.GymAnnouncement or NotificationType.NewBouldersAtGym => NotificationCategory.GymUpdates,
+        NotificationType.SectorRetraced or NotificationType.NewBouldersInSector => NotificationCategory.SectorUpdates,
         NotificationType.BoulderUpdated or NotificationType.OfficialBeta or NotificationType.BoulderComments => NotificationCategory.BoulderUpdates,
         _ => NotificationCategory.MyContent,
     };

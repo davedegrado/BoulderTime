@@ -8,7 +8,8 @@ import { putWithProgress } from "@/features/community/api";
 
 export type NotificationType =
   | "GYM_ANNOUNCEMENT" | "SECTOR_RETRACED" | "BOULDER_UPDATED" | "OFFICIAL_BETA"
-  | "BOULDER_COMMENTS" | "VIDEO_APPROVED" | "VIDEO_REJECTED" | "REPORT_REVIEWED";
+  | "BOULDER_COMMENTS" | "VIDEO_APPROVED" | "VIDEO_REJECTED" | "REPORT_REVIEWED"
+  | "NEW_BOULDERS_IN_SECTOR" | "NEW_BOULDERS_AT_GYM";
 export type NotificationCategory = "GYM_UPDATES" | "SECTOR_UPDATES" | "BOULDER_UPDATES" | "MY_CONTENT";
 
 export interface AppNotification {

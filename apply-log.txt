@@ -1,14 +1,14 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 6: notifications, gym announcements and events, follow targeting, collapse, preferences
+Applying: Notify sector and gym followers about new boulders, collapsed per sector and per gym
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-OK
+già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    92, Skipped:     0, Total:    92, Duration: 1 m 1 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    96, Skipped:     0, Total:    96, Duration: 58 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==
