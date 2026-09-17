@@ -67,10 +67,10 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     if (Object.keys(local).length) return;
 
     try {
-      const photoPath = file ? await uploadBoulderPhoto(gym.id, file, setStage) : initial!.photoPath;
+      const uploaded = file ? await uploadBoulderPhoto(gym.id, file, setStage) : { path: initial!.photoPath, thumbnailPath: null };
       setStage("saving");
       const input: SaveBoulderInput = {
-        sectorId, photoPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
+        sectorId, photoPath: uploaded.path, thumbnailPath: uploaded.thumbnailPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
         grades: Object.entries(grades).filter(([, v]) => v).map(([gradeSystemId, gradeValueId]) => ({ gradeSystemId, gradeValueId })),
       };
       if (initial) {

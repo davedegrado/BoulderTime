@@ -97,6 +97,9 @@ API on `http://localhost:5080`, Swagger UI at `/swagger` (Development only), hea
 
 Other scripts: `npm run typecheck`, `npm test`, `npm run build`.
 
+The installable app (service worker, offline shell) is only active in production builds. To try it locally:
+`npm run build && npm run preview`.
+
 ## 9. Running migrations
 
     cd backend

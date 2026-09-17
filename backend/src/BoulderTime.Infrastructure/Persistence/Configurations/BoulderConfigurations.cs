@@ -45,6 +45,7 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.PhotoPath).HasMaxLength(512).IsRequired();
+        b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.HoldColor).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         // Restrict everywhere: boulders are never deleted, and nothing may cascade into climbing history.

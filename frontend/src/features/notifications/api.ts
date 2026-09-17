@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
 import type { PagedResult } from "@/lib/paging";
 import type { Person } from "@/features/community/api";
-import { prepareBoulderPhoto } from "@/features/boulders/imageResize";
+import { prepareImage } from "@/features/boulders/imageResize";
 import { putWithProgress } from "@/features/community/api";
 
 export type NotificationType =
@@ -134,7 +134,7 @@ export function useAnnouncementMutations(gymId: string) {
 }
 
 export async function uploadAnnouncementImage(gymId: string, file: File): Promise<string> {
-  const blob = await prepareBoulderPhoto(file);
+  const blob = await prepareImage(file);
   const ticket = await api.post<{ path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number }>(
     `/api/gyms/${gymId}/announcement-images`, { contentType: blob.type || file.type, sizeBytes: blob.size });
   await putWithProgress(ticket, blob);

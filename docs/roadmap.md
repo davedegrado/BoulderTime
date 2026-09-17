@@ -9,8 +9,8 @@
 | 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | **Done** |
 | 6 | Notifications, announcements, subscriptions, preferences | **Done** |
 | 7 | Leaderboards | **Done** |
-| 8 | Polish: responsive UX, accessibility, states, images, performance | Next |
-| 9 | Tests, seed data, docs, deployment | |
+| 8 | Polish: responsive UX, accessibility, states, images, performance | **Done** |
+| 9 | Tests, seed data, docs, deployment | Next |
 
 ## How each phase is verified
 

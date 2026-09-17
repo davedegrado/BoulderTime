@@ -1,10 +1,39 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Installable app + offline shell. Only active in production builds (never in the dev server, to avoid stale caches).
+    VitePWA({
+      registerType: "autoUpdate",
+      manifest: false, // public/manifest.webmanifest is the source of truth
+      injectRegister: null, // registered in main.tsx
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+        globIgnores: ["**/app-icon-1024.png", "**/app-icon-512.png"], // store/maskable sizes: not needed offline
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            // Public images (boulder photos, gym images, avatars): immutable paths, so cache-first is safe.
+            urlPattern: ({ url }) => url.pathname.startsWith("/api/storage/files/") || url.pathname.includes("/storage/v1/object/public/"),
+            handler: "CacheFirst",
+            options: { cacheName: "bt-images", expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
+            urlPattern: ({ url }) => url.origin === "https://fonts.googleapis.com" || url.origin === "https://fonts.gstatic.com",
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "bt-fonts", expiration: { maxEntries: 20 } },
+          },
+          // API data (personal, per account) is deliberately NOT cached by the service worker.
+        ],
+      },
+    }),
+  ],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     port: 5173,

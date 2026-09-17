@@ -25,7 +25,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
 
         return boulders.Select(b => new BoulderSummaryDto(
             b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId, ""), b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
-            storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.HoldColor, grades.GetValueOrDefault(b.Id, []),
+            storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath), b.HoldColor, grades.GetValueOrDefault(b.Id, []),
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id)))
             .ToList();
     }

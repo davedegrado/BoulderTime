@@ -20,6 +20,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         b.Property(u => u.DisplayName).HasMaxLength(User.DisplayNameMaxLength).IsRequired();
         b.Property(u => u.AvatarUrl).HasMaxLength(2048);
+        b.Property(u => u.AvatarPath).HasMaxLength(512);
         b.Property(u => u.IsPlatformAdmin).HasDefaultValue(false);
         b.Property(u => u.ProfileVisibility).HasConversion<string>().HasMaxLength(32).HasDefaultValue(ProfileVisibility.Public);
         b.Property(u => u.CreatedAt).IsRequired();

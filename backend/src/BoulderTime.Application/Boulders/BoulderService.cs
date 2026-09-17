@@ -15,6 +15,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
+    public const long MaxThumbnailBytes = 512 * 1024;
     private static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp",
@@ -83,12 +84,14 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
     public async Task<UploadTicket> CreatePhotoUploadAsync(Guid gymId, PhotoUploadRequest r, CancellationToken ct = default)
     {
         await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
+        var thumbnail = r.Thumbnail == true;
+        var max = thumbnail ? MaxThumbnailBytes : MaxPhotoBytes;
         new Validator()
             .Check(r.ContentType is not null && PhotoTypes.ContainsKey(r.ContentType), "contentType", "Upload a JPEG, PNG or WebP photo.")
-            .Check(r.SizeBytes is > 0 and <= MaxPhotoBytes, "sizeBytes", $"Photos must be under {MaxPhotoBytes / 1024 / 1024} MB.")
+            .Check(r.SizeBytes is > 0 && r.SizeBytes <= max, "sizeBytes", thumbnail ? "Thumbnails must be under 512 KB." : $"Photos must be under {MaxPhotoBytes / 1024 / 1024} MB.")
             .ThrowIfInvalid();
-        var path = $"{PhotoPrefix(gymId)}{Guid.NewGuid():N}.{PhotoTypes[r.ContentType!]}";
-        return await storage.CreateUploadTicketAsync(StorageBuckets.BoulderImages, path, r.ContentType!.ToLowerInvariant(), MaxPhotoBytes, ct);
+        var path = $"{PhotoPrefix(gymId)}{Guid.NewGuid():N}{(thumbnail ? ".thumb" : "")}.{PhotoTypes[r.ContentType!]}";
+        return await storage.CreateUploadTicketAsync(StorageBuckets.BoulderImages, path, r.ContentType!.ToLowerInvariant(), max, ct) with { Resumable = null };
     }
 
     // ---------- Write ----------
@@ -99,7 +102,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, ct);
         var userId = currentUser.RequireUserId();
 
-        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId);
+        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath);
         db.Boulders.Add(boulder);
         foreach (var (systemId, valueId) in valid.Grades)
             db.BoulderGrades.Add(BoulderGrade.Official(boulder.Id, systemId, valueId, userId, clock.UtcNow));
@@ -128,7 +131,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         if (boulder.SectorId != valid.SectorId) changes.Add("moved to another sector");
         if (boulder.HoldColor != valid.HoldColor) changes.Add("hold colour corrected");
         if (boulder.PhotoPath != valid.PhotoPath) changes.Add("new photo");
-        boulder.Update(valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId);
+        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId);
         var current = await db.BoulderGrades.Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff).ToListAsync(ct);
         if (!current.Select(g => (g.GradeSystemId, g.GradeValueId)).ToHashSet().SetEquals(valid.Grades)) changes.Insert(0, "grade changed");
         foreach (var g in current.Where(g => !valid.Grades.Contains((g.GradeSystemId, g.GradeValueId))))
@@ -144,6 +147,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             await notifications.BoulderUpdatedAsync(boulder, gym, sectorName, string.Join(", ", changes), userId, ct);
         }
         await db.SaveChangesAsync(ct);
+        foreach (var old in obsolete) await storage.DeleteAsync(StorageBuckets.BoulderImages, old, ct);
         return await GetAsync(boulderId, ct);
     }
 
@@ -197,7 +201,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 
     // ---------- Helpers ----------
 
-    private sealed record ValidBoulder(Guid SectorId, string PhotoPath, HoldColor HoldColor, Guid? SetterUserId, HashSet<(Guid SystemId, Guid ValueId)> Grades);
+    private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId, HashSet<(Guid SystemId, Guid ValueId)> Grades);
 
     private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, CancellationToken ct)
     {
@@ -212,11 +216,21 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         if (!await db.Sectors.AnyAsync(s => s.Id == r.SectorId && s.GymId == gymId && s.IsActive, ct))
             v.Check(false, "sectorId", "Choose an active sector of this gym.");
 
+        string? thumbnail = null;
         if (photo != currentPhotoPath)
         {
-            var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\');
+            var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
             if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
                 v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+
+            var thumb = Input.Trimmed(r.ThumbnailPath);
+            if (thumb.Length > 0)
+            {
+                var thumbOk = thumb.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && thumb.Contains(".thumb.") && !thumb.Contains("..")
+                              && await storage.ExistsAsync(StorageBuckets.BoulderImages, thumb, ct);
+                if (thumbOk) thumbnail = thumb;
+                else v.Check(false, "thumbnailPath", "The photo upload didn't complete. Upload it again.");
+            }
         }
 
         var choices = r.Grades!;
@@ -238,7 +252,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             v.Check(false, "setterUserId", "The setter must be on this gym's staff.");
 
         v.ThrowIfInvalid();
-        return new ValidBoulder(r.SectorId!.Value, photo, r.HoldColor!.Value, r.SetterUserId,
+        // When the photo is unchanged, the domain keeps the existing thumbnail.
+        return new ValidBoulder(r.SectorId!.Value, photo, thumbnail, r.HoldColor!.Value, r.SetterUserId,
             choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet());
     }
 

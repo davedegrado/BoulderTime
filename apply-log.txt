@@ -1,14 +1,14 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 7: per-gym leaderboards (points, sends, highest grade) by week, month, year and all time
+Applying: Phase 8: avatars, gym logo and cover, boulder thumbnails, installable app, lazy routes, accessibility and error handling
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-già presente
+OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   113, Skipped:     0, Total:   113, Duration: 1 m 12 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   117, Skipped:     0, Total:   117, Duration: 1 m 7 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

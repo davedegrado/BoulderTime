@@ -1,4 +1,6 @@
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import { RouteErrorPage } from "@/pages/RouteErrorPage";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { HomePage } from "@/pages/HomePage";
@@ -9,28 +11,30 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ExplorePage } from "@/pages/ExplorePage";
 import { GymPage } from "@/pages/GymPage";
-import { SuggestGymPage } from "@/pages/SuggestGymPage";
-import { ManageLayout } from "@/pages/manage/ManageLayout";
-import { ManageOverview } from "@/pages/manage/ManageOverview";
-import { ManageSectors } from "@/pages/manage/ManageSectors";
-import { ManageStaff } from "@/pages/manage/ManageStaff";
-import { ManageSettings } from "@/pages/manage/ManageSettings";
-import { ManageBoulders } from "@/pages/manage/ManageBoulders";
-import { BoulderEditorPage } from "@/pages/manage/BoulderEditorPage";
-import { ManageGrading } from "@/pages/manage/ManageGrading";
-import { ManageModeration } from "@/pages/manage/ManageModeration";
-import { AdminReports } from "@/pages/admin/AdminReports";
-import { ManageAnnouncements } from "@/pages/manage/ManageAnnouncements";
 import { NotificationsPage } from "@/pages/NotificationsPage";
-import { NotificationSettingsPage } from "@/pages/NotificationSettingsPage";
 import { BoulderPage } from "@/pages/BoulderPage";
 import { ActivityPage } from "@/pages/ActivityPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
-import { AdminLayout } from "@/pages/admin/AdminLayout";
-import { AdminDashboard } from "@/pages/admin/AdminDashboard";
-import { AdminCandidates } from "@/pages/admin/AdminCandidates";
-import { AdminGyms } from "@/pages/admin/AdminGyms";
-import { AdminUsers } from "@/pages/admin/AdminUsers";
+
+// Staff, admin and rarely used screens are split into separate chunks so climbers download less.
+const ManageLayout = lazy(() => import("@/pages/manage/ManageLayout").then((m) => ({ default: m.ManageLayout })));
+const ManageOverview = lazy(() => import("@/pages/manage/ManageOverview").then((m) => ({ default: m.ManageOverview })));
+const ManageSectors = lazy(() => import("@/pages/manage/ManageSectors").then((m) => ({ default: m.ManageSectors })));
+const ManageStaff = lazy(() => import("@/pages/manage/ManageStaff").then((m) => ({ default: m.ManageStaff })));
+const ManageSettings = lazy(() => import("@/pages/manage/ManageSettings").then((m) => ({ default: m.ManageSettings })));
+const ManageBoulders = lazy(() => import("@/pages/manage/ManageBoulders").then((m) => ({ default: m.ManageBoulders })));
+const BoulderEditorPage = lazy(() => import("@/pages/manage/BoulderEditorPage").then((m) => ({ default: m.BoulderEditorPage })));
+const ManageGrading = lazy(() => import("@/pages/manage/ManageGrading").then((m) => ({ default: m.ManageGrading })));
+const ManageModeration = lazy(() => import("@/pages/manage/ManageModeration").then((m) => ({ default: m.ManageModeration })));
+const ManageAnnouncements = lazy(() => import("@/pages/manage/ManageAnnouncements").then((m) => ({ default: m.ManageAnnouncements })));
+const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })));
+const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard })));
+const AdminCandidates = lazy(() => import("@/pages/admin/AdminCandidates").then((m) => ({ default: m.AdminCandidates })));
+const AdminGyms = lazy(() => import("@/pages/admin/AdminGyms").then((m) => ({ default: m.AdminGyms })));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers").then((m) => ({ default: m.AdminUsers })));
+const AdminReports = lazy(() => import("@/pages/admin/AdminReports").then((m) => ({ default: m.AdminReports })));
+const NotificationSettingsPage = lazy(() => import("@/pages/NotificationSettingsPage").then((m) => ({ default: m.NotificationSettingsPage })));
+const SuggestGymPage = lazy(() => import("@/pages/SuggestGymPage").then((m) => ({ default: m.SuggestGymPage })));
 
 export const router = createBrowserRouter([
   { path: "/sign-in", element: <SignInPage /> },
@@ -38,6 +42,7 @@ export const router = createBrowserRouter([
   { path: "/auth/callback", element: <AuthCallbackPage /> },
   {
     element: <AppShell />,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
       { path: "explore", element: <ExplorePage /> },

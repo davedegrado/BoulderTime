@@ -233,3 +233,24 @@ position (1, 2, 2, 4). The API returns the top N (default 50, max 100) plus the 
 
 **No stored leaderboards.** Computed from `boulder_attempts` on request (cached 60 s on the client). If a gym's volume
 makes this slow, the same service can read from a materialised view without changing the API.
+
+## ADR-016 · Polish: images, installable app, performance, accessibility
+**Images.** Avatars (`avatars`, `users/{id}/avatar/…`, square 512 px) and gym logo/cover (`gym-images`,
+`gyms/{id}/logo|cover/…`; logo square 512 px, cover ≤1600 px; ADMIN+) use upload tickets and are prepared on the device.
+The API checks each object exists under the owner's folder, stores the public URL plus the storage path, and deletes
+replaced files. Boulder photos now also get a ≤480 px `.thumb.` version generated on the device; lists use it and the
+detail page uses the full photo. Thumbnails are best-effort (the boulder saves without one) and can never be used as
+the main photo.
+
+**Installable app.** `vite-plugin-pwa` generates a service worker in production builds only (not the dev server):
+precached app shell (~1.1 MB, large store icons excluded), cache-first public images (immutable paths, 30 days), and
+navigation fallback to the shell. **API responses are deliberately not cached**: they are personal, and a shared phone
+must never show one account's data to another. An offline banner explains that already-loaded content still shows.
+
+**Performance.** Staff, admin and rarely used screens are lazy-loaded route chunks; the tus upload client loads only
+when a video upload starts. Main chunk 534 → 474 KB (130 KB gzipped).
+
+**Accessibility & robustness.** After client-side navigation the document title follows the page heading and focus
+moves to the main region (announced by screen readers). The video viewer traps focus and restores it on close.
+Touch targets are at least 44 px. Unexpected render errors and failed chunk loads show a recoverable error screen
+instead of a blank page.

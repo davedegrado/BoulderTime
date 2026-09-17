@@ -12,6 +12,7 @@ public sealed record RatingSummaryDto(double? Average, int Count);
 /// <summary>The signed-in viewer's own tracking of a boulder; null when anonymous or never tracked.</summary>
 public sealed record ViewerProgressDto(int Attempts, bool Completed, DateTimeOffset? CompletedAt, int? Rating);
 
+/// <param name="PhotoUrl">Card image: the small thumbnail when available, otherwise the full photo.</param>
 public sealed record BoulderSummaryDto(
     Guid Id, Guid GymId, string GymName, Guid SectorId, string SectorName, string PhotoUrl,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades,
@@ -28,8 +29,9 @@ public sealed record BoulderDetailDto(
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
+/// <param name="ThumbnailPath">Optional small version of the photo for lists (generated on the device).</param>
 public sealed record SaveBoulderRequest(
-    Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId);
+    Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null);
 
 /// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
 public enum ProgressFilter { All, Untried, Projects, Completed }
@@ -45,4 +47,4 @@ public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool
 public sealed record RemoveBouldersResult(int Removed, IReadOnlyList<SectorRemovalDto> Sectors);
 public sealed record SectorRemovalDto(Guid SectorId, string SectorName, int Removed);
 
-public sealed record PhotoUploadRequest(string? ContentType, long? SizeBytes);
+public sealed record PhotoUploadRequest(string? ContentType, long? SizeBytes, bool? Thumbnail = false);

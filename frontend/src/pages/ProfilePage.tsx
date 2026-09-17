@@ -11,11 +11,14 @@ import { TextField } from "@/components/TextField";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { Avatar } from "@/components/Avatar";
+import { ImagePicker } from "@/components/ImagePicker";
+import { useSetAvatar } from "@/features/images/api";
 
 export function ProfilePage() {
   const { signOut } = useAuth();
   const me = useCurrentUser();
   const update = useUpdateProfile();
+  const setAvatar = useSetAvatar();
   const toast = useToast();
   const [displayName, setDisplayName] = useState("");
 
@@ -64,6 +67,10 @@ export function ProfilePage() {
 
       <section className="section card" aria-labelledby="edit-profile">
         <h2 id="edit-profile" className="section__title">Edit profile</h2>
+        <ImagePicker label="Profile photo" hint="Square crop, shown on comments and leaderboards." hasImage={!!user.avatarUrl} busy={setAvatar.isPending}
+          preview={<Avatar name={user.displayName} url={user.avatarUrl} size={72} />}
+          onPick={(f) => setAvatar.mutate(f, { onSuccess: () => toast.success("Photo updated"), onError: (e) => toast.error(errorMessage(e)) })}
+          onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success("Photo removed"), onError: (e) => toast.error(errorMessage(e)) })} />
         <form className="form" onSubmit={onSubmit} noValidate>
           <TextField label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={fieldError} maxLength={40} />
           <TextField label="Email" value={user.email} readOnly disabled hint="Your sign-in email can't be changed here." />

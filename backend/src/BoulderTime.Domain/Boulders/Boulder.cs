@@ -19,6 +19,8 @@ public class Boulder : IAuditable
     public Guid SectorId { get; private set; }
     /// <summary>Object path in the boulder-images bucket, e.g. gyms/{gymId}/boulders/{guid}.jpg.</summary>
     public string PhotoPath { get; private set; } = string.Empty;
+    /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
+    public string? ThumbnailPath { get; private set; }
     public HoldColor HoldColor { get; private set; }
     public Guid? SetterUserId { get; private set; }
     public BoulderStatus Status { get; private set; } = BoulderStatus.Active;
@@ -31,18 +33,27 @@ public class Boulder : IAuditable
 
     private Boulder() { }
 
-    public static Boulder Create(Guid gymId, Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId, Guid? createdBy) => new()
+    public static Boulder Create(Guid gymId, Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId, Guid? createdBy, string? thumbnailPath = null) => new()
     {
-        Id = Guid.NewGuid(), GymId = gymId, SectorId = sectorId, PhotoPath = photoPath, HoldColor = holdColor,
+        Id = Guid.NewGuid(), GymId = gymId, SectorId = sectorId, PhotoPath = photoPath, ThumbnailPath = thumbnailPath, HoldColor = holdColor,
         SetterUserId = setterUserId, CreatedByUserId = createdBy, Status = BoulderStatus.Active,
     };
 
-    public void Update(Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId)
+    /// <returns>Storage paths that are no longer referenced after the update.</returns>
+    public IReadOnlyList<string> Update(Guid sectorId, string photoPath, string? thumbnailPath, HoldColor holdColor, Guid? setterUserId)
     {
+        var obsolete = new List<string>();
+        if (photoPath != PhotoPath)
+        {
+            obsolete.Add(PhotoPath);
+            if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
+            ThumbnailPath = thumbnailPath;
+        }
         SectorId = sectorId;
         PhotoPath = photoPath;
         HoldColor = holdColor;
         SetterUserId = setterUserId;
+        return obsolete;
     }
 
     /// <returns>False if it was already removed (idempotent bulk operations).</returns>

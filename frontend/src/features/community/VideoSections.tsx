@@ -210,9 +210,24 @@ function VideoViewer({ videos, index, signedIn, canLoadMore, onLoadMore, onIndex
     else if (canLoadMore) { advanceAfterLoad.current = true; onLoadMore(); }
   }, [index, videos.length, canLoadMore, onIndex, onLoadMore]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
+    return () => opener?.focus?.(); // return focus to the thumbnail that opened the viewer
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Tab" && dialogRef.current) {
+        // Keep keyboard focus inside the viewer while it's open.
+        const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), video, a[href], select, textarea, input"));
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (first && last) {
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft" && index > 0) onIndex(index - 1);
       if (e.key === "ArrowRight") next();
@@ -224,7 +239,7 @@ function VideoViewer({ videos, index, signedIn, canLoadMore, onLoadMore, onIndex
   }, [index, next, onClose, onIndex]);
 
   return (
-    <div className="viewer" role="dialog" aria-modal="true" aria-label={`Video ${index + 1} of ${videos.length}`}>
+    <div ref={dialogRef} className="viewer" role="dialog" aria-modal="true" aria-label={`Video ${index + 1} of ${videos.length}`}>
       <div className="viewer__top">
         <span className="viewer__count">{index + 1} / {videos.length}{canLoadMore ? "+" : ""}</span>
         <button ref={closeRef} type="button" className="viewer__close" onClick={onClose} aria-label="Close video"><X aria-hidden /></button>

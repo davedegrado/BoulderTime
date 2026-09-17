@@ -27,7 +27,9 @@ public class Gym : IAuditable
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
     public string? LogoUrl { get; private set; }
+    public string? LogoPath { get; private set; }
     public string? CoverImageUrl { get; private set; }
+    public string? CoverImagePath { get; private set; }
     public GymStatus Status { get; private set; } = GymStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -52,10 +54,22 @@ public class Gym : IAuditable
         Phone = Clean(phone);
     }
 
-    public void SetImages(string? logoUrl, string? coverImageUrl)
+    /// <returns>The replaced storage path, if any, so the old file can be deleted.</returns>
+    public string? SetLogo(string? url, string? path)
     {
-        LogoUrl = Clean(logoUrl);
-        CoverImageUrl = Clean(coverImageUrl);
+        var previous = LogoPath != path ? LogoPath : null;
+        LogoUrl = Clean(url);
+        LogoPath = Clean(path);
+        return previous;
+    }
+
+    /// <returns>The replaced storage path, if any, so the old file can be deleted.</returns>
+    public string? SetCover(string? url, string? path)
+    {
+        var previous = CoverImagePath != path ? CoverImagePath : null;
+        CoverImageUrl = Clean(url);
+        CoverImagePath = Clean(path);
+        return previous;
     }
 
     public void SetStatus(GymStatus status) => Status = status;

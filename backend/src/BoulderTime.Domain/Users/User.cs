@@ -20,6 +20,8 @@ public class User : IAuditable
 
     public string DisplayName { get; private set; } = string.Empty;
     public string? AvatarUrl { get; private set; }
+    /// <summary>Storage path when the avatar was uploaded to BoulderTime (null for provider avatars such as Google).</summary>
+    public string? AvatarPath { get; private set; }
 
     /// <summary>
     /// Platform-wide administrator. Set only via the server-side CLI — never from token claims or client input.
@@ -53,6 +55,15 @@ public class User : IAuditable
     }
 
     public void Rename(string displayName) => DisplayName = SanitizeDisplayName(displayName);
+
+    /// <returns>The previously uploaded avatar path, so the old file can be deleted.</returns>
+    public string? SetAvatar(string? url, string? path)
+    {
+        var previous = AvatarPath != path ? AvatarPath : null;
+        AvatarUrl = url;
+        AvatarPath = path;
+        return previous;
+    }
 
     public void GrantPlatformAdmin() => IsPlatformAdmin = true;
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;

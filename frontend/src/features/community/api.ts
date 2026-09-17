@@ -1,5 +1,4 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload as TusUpload } from "tus-js-client";
 import { captureVideoThumbnail } from "@/features/community/videoThumbnail";
 import { api } from "@/lib/api";
 import { ApiError, defaultMessage } from "@/lib/apiError";
@@ -77,7 +76,9 @@ export const RESUMABLE_RETRY_DELAYS = [0, 1000, 3000, 5000, 10000, 20000];
  * Uploads a file in chunks over the tus protocol. If the connection drops, each chunk is retried and the upload
  * continues from the last byte the server confirmed — it never restarts from zero.
  */
-export function uploadResumable(ticket: UploadTicket & { resumable: ResumableUpload }, file: Blob, onProgress?: (fraction: number) => void): Promise<void> {
+export async function uploadResumable(ticket: UploadTicket & { resumable: ResumableUpload }, file: Blob, onProgress?: (fraction: number) => void): Promise<void> {
+  // Loaded on demand: only people who actually upload a video download the tus client.
+  const { Upload: TusUpload } = await import("tus-js-client");
   return new Promise((resolve, reject) => {
     const r = ticket.resumable;
     const upload = new TusUpload(file, {

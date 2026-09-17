@@ -6,6 +6,9 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { GymAvatar } from "@/components/GymAvatar";
 import { useUnreadCount } from "@/features/notifications/api";
+import { OfflineBanner, RouteAnnouncer } from "@/components/AppChrome";
+import { Suspense } from "react";
+import { LoadingState } from "@/components/States";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -78,8 +81,12 @@ export function AppShell() {
         {!session && <Link to="/sign-in" className="topbar__signin">Sign in</Link>}
       </header>
 
+      <RouteAnnouncer />
+      <OfflineBanner />
       <main id="main" className="main" tabIndex={-1}>
-        <Outlet />
+        <Suspense fallback={<LoadingState />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <nav className="tabbar" aria-label="Primary">
