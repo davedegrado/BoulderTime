@@ -124,6 +124,18 @@ else
   URL="http://localhost:5173"
 fi
 printf "\n  Open BoulderTime:  \033[1;4m%s\033[0m\n\n" "$URL"
+if [ -n "${CODESPACE_NAME:-}" ]; then
+  # Codespaces usually forwards the port automatically; when it doesn't, the link downloads a file instead of opening.
+  if gh codespace ports visibility 5173:public -c "$CODESPACE_NAME" >/dev/null 2>&1; then
+    echo "  Port 5173 is public."
+  else
+    cat <<'HINT'
+  If the link downloads a file instead of opening the app, the port isn't forwarded yet:
+    1. Menu (three lines, top left) -> View -> Command Palette -> "Forward a Port" -> 5173
+    2. Ports tab -> row 5173 -> globe icon (and Port Visibility -> Public if it still downloads)
+HINT
+  fi
+fi
 echo "  1. Create an account (any email and an 8+ character password; no confirmation needed locally)."
 echo "  2. To unlock staff and admin areas:  bash scripts/dev.sh promote"
 echo "  Logs: $LOGS   ·   Stop: bash scripts/dev.sh stop"

@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Fix map test helper: only trim the generated slug when it is too long
+Applying: Explore: list and map tabs with list by default; dev.sh explains port forwarding
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   121, Skipped:     0, Total:   121, Duration: 1 m 9 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   121, Skipped:     0, Total:   121, Duration: 1 m 15 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  55 passed (55)
+      Tests  56 passed (56)
 OK
 == ESITO: ok ==

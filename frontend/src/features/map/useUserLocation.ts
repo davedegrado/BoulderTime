@@ -11,7 +11,7 @@ const CACHE_KEY = "bt:last-location";
  * The browser's position (asks permission once; needs HTTPS). The last known position is remembered on this device
  * so the map opens in the right place immediately next time.
  */
-export function useUserLocation(auto = true) {
+export function useUserLocation(auto = false) {
   const [state, setState] = useState<LocationState>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null") as { lat: number; lng: number } | null;

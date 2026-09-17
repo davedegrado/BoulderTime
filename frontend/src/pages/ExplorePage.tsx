@@ -1,6 +1,6 @@
-import { lazy, Suspense, useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Compass, LocateFixed, Map as MapIcon, Plus, SearchX } from "lucide-react";
+import { Compass, List, LocateFixed, Map as MapIcon, Plus, SearchX } from "lucide-react";
 import { useGymPins, useGymSearch, type Bounds } from "@/features/gyms/api";
 import { GymCard } from "@/features/gyms/GymCard";
 import { useUserLocation } from "@/features/map/useUserLocation";
@@ -9,25 +9,38 @@ import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useDebounced } from "@/lib/useDebounced";
 
-// Leaflet is loaded only when the map is shown.
+// Leaflet loads only when the map view is opened.
 const GymMap = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.GymMap })));
+
+type View = "list" | "map";
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
+  const view: View = params.get("view") === "map" ? "map" : "list";
   const [text, setText] = useState(params.get("q") ?? "");
   const query = useDebounced(text.trim(), 300);
+  // The position is only requested when the map is opened; a previously known one still sorts the list.
   const { location, locate } = useUserLocation();
   const here = location.status === "found" ? { lat: location.lat, lng: location.lng } : null;
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
-  const pins = useGymPins(bounds);
+  const pins = useGymPins(view === "map" ? bounds : null);
   const search = useGymSearch(query, here);
 
-  const onBounds = useCallback((b: Bounds) => setBounds(b), []);
+  useEffect(() => { if (view === "map") locate(); }, [view, locate]);
 
-  function onChange(value: string) {
+  const onBounds = useCallback((b: Bounds) => setBounds(b), []);
+  const setView = (next: View) => setParams((p) => { next === "map" ? p.set("view", "map") : p.delete("view"); return p; }, { replace: true });
+
+  function onQuery(value: string) {
     setText(value);
-    setParams(value ? { q: value } : {}, { replace: true });
+    setParams((p) => { value ? p.set("q", value) : p.delete("q"); return p; }, { replace: true });
+  }
+
+  function showOnMap(gym: { latitude: number | null; longitude: number | null }) {
+    if (gym.latitude === null || gym.longitude === null) return;
+    setFocus({ lat: gym.latitude, lng: gym.longitude, zoom: 15 });
+    setView("map");
   }
 
   const gyms = search.data?.pages.flatMap((p) => p.items) ?? [];
@@ -37,25 +50,29 @@ export function ExplorePage() {
     <div className="page">
       <header className="page__header">
         <h1 className="page__title">Explore gyms</h1>
-        <p className="page__subtitle">Find where to climb near you, or search by gym name or city.</p>
+        <p className="page__subtitle">Search by gym name or city, or switch to the map to see what's around you.</p>
       </header>
 
-      <section className="map-card" aria-label="Map of gyms">
-        <Suspense fallback={<div className="gym-map gym-map--loading"><MapIcon aria-hidden /></div>}>
-          <GymMap pins={pins.data ?? []} userPosition={here} focus={focus} onBounds={onBounds} />
-        </Suspense>
-        <button type="button" className="map-card__locate" onClick={() => { locate(); if (here) setFocus({ ...here, zoom: 13 }); }}
-          aria-label="Center the map on my position">
-          <LocateFixed aria-hidden />
-        </button>
-        {location.status === "denied" && (
-          <p className="map-card__note">Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.</p>
-        )}
-      </section>
+      <SearchField label="Search gyms" placeholder="Gym name or city" value={text} onChange={onQuery} />
 
-      <SearchField label="Search gyms" placeholder="Gym name or city" value={text} onChange={onChange} />
+      <div className="chips" role="radiogroup" aria-label="View">
+        <button role="radio" aria-checked={view === "list"} className="chip" onClick={() => setView("list")}><List aria-hidden /> List</button>
+        <button role="radio" aria-checked={view === "map"} className="chip" onClick={() => setView("map")}><MapIcon aria-hidden /> Map</button>
+      </div>
 
-      {search.isPending ? (
+      {view === "map" ? (
+        <section className="map-card" aria-label="Map of gyms">
+          <Suspense fallback={<div className="gym-map gym-map--loading"><MapIcon aria-hidden /></div>}>
+            <GymMap pins={pins.data ?? []} userPosition={here} focus={focus} onBounds={onBounds} />
+          </Suspense>
+          <button type="button" className="map-card__locate" onClick={() => { locate(); if (here) setFocus({ ...here, zoom: 13 }); }}
+            aria-label="Center the map on my position">
+            <LocateFixed aria-hidden />
+          </button>
+          {location.status === "locating" && <p className="map-card__note">Finding your position…</p>}
+          {location.status === "denied" && <p className="map-card__note">Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.</p>}
+        </section>
+      ) : search.isPending ? (
         <LoadingState label="Finding gyms" />
       ) : search.isError ? (
         <ErrorState error={search.error} onRetry={() => search.refetch()} />
@@ -76,7 +93,7 @@ export function ExplorePage() {
               <div key={g.id} className="gym-grid__item">
                 <GymCard gym={g} />
                 {g.latitude !== null && g.longitude !== null && (
-                  <button type="button" className="text-btn" onClick={() => { setFocus({ lat: g.latitude!, lng: g.longitude!, zoom: 15 }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                  <button type="button" className="text-btn" onClick={() => showOnMap(g)}>
                     <MapIcon aria-hidden /> Show on map{g.distanceKm != null && ` · ${g.distanceKm < 10 ? g.distanceKm.toFixed(1) : Math.round(g.distanceKm)} km`}
                   </button>
                 )}

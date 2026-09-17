@@ -47,16 +47,31 @@ function mockGeolocation(result: "granted" | "denied") {
 
 beforeEach(() => { calls.length = 0; mapProps.length = 0; localStorage.clear(); });
 
-describe("Explore map", () => {
-  it("centres on the user's position, loads pins for the viewport and lists nearest gyms first", async () => {
+describe("Explore", () => {
+  it("opens on the list and only loads the map (and asks for location) when you switch to it", async () => {
     mockGeolocation("granted");
     renderAt("/explore", "/explore", <ExplorePage />);
+
+    expect(await screen.findByText("Crimp Factory")).toBeInTheDocument();
+    expect(screen.queryByTestId("map")).not.toBeInTheDocument();
+    expect(calls.some((c) => c.startsWith("/api/gyms/map"))).toBe(false);
+    expect(calls.some((c) => c.includes("lat="))).toBe(false);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Map" }));
+    expect(await screen.findByTestId("map")).toBeInTheDocument();
+    await waitFor(() => expect(calls).toContain("/api/gyms/map?south=44&west=8&north=46&east=10"));
+  });
+
+  it("centres on the user's position, loads pins for the viewport and lists nearest gyms first", async () => {
+    mockGeolocation("granted");
+    renderAt("/explore?view=map", "/explore", <ExplorePage />);
 
     expect(await screen.findByText("1 pins")).toBeInTheDocument();
     await waitFor(() => expect(calls).toContain("/api/gyms/map?south=44&west=8&north=46&east=10"));
     await waitFor(() => expect(calls.some((c) => c.startsWith("/api/gyms?q=&page=1&pageSize=20&lat=45.4642&lng=9.19"))).toBe(true));
     expect(mapProps.at(-1)!.userPosition).toEqual({ lat: 45.4642, lng: 9.19 });
 
+    await userEvent.click(screen.getByRole("radio", { name: "List" }));
     expect(await screen.findByText(/nearest first/)).toBeInTheDocument();
     const crimp = screen.getByText("Crimp Factory").closest(".gym-grid__item")! as HTMLElement;
     const showOnMap = within(crimp).getByRole("button", { name: /show on map · 1\.2 km/i });
@@ -65,12 +80,13 @@ describe("Explore map", () => {
 
     window.scrollTo = vi.fn();
     await userEvent.click(showOnMap);
+    expect(await screen.findByTestId("map")).toBeInTheDocument(); // switches back to the map, focused on that gym
     expect(mapProps.at(-1)!.focus).toEqual({ lat: 45.45, lng: 9.16, zoom: 15 });
   });
 
   it("falls back to Italy and explains how to enable location when it's denied", async () => {
     mockGeolocation("denied");
-    renderAt("/explore", "/explore", <ExplorePage />);
+    renderAt("/explore?view=map", "/explore", <ExplorePage />);
     expect(await screen.findByText(/location is off, so the map shows italy/i)).toBeInTheDocument();
     expect(mapProps[0]!.userPosition).toBeNull();
   });
