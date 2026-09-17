@@ -74,6 +74,7 @@ describe("Home", () => {
       projects: [summary("p1", { viewer: { attempts: 7, completed: false, completedAt: null, rating: null } })],
       freshToTry: [],
       recentCompletions: [{ boulder: summary("r1", { status: "REMOVED" }), attempts: 3, completed: true, completedAt: "2026-09-12T00:00:00Z", updatedAt: "2026-09-12T00:00:00Z", rating: 4 }],
+      updates: [],
     });
     renderAt("/", "/", <HomePage />);
 

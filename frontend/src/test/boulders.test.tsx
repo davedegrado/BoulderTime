@@ -95,7 +95,7 @@ describe("Staff boulder management", () => {
     await userEvent.click(screen.getByRole("button", { name: "Remove 2?" }));
 
     const post = calls.find((c) => c.path === "/api/gyms/g1/boulders/remove");
-    expect(post?.body).toEqual({ boulderIds: ["b1", "b2"] });
+    expect(post?.body).toEqual({ boulderIds: ["b1", "b2"], notifyFollowers: true });
     expect(await screen.findByText(/2 boulders removed/)).toBeInTheDocument();
   });
 

@@ -38,6 +38,7 @@ export function ManageLayout() {
     { to: `${base}/boulders`, label: "Boulders" },
     { to: `${base}/sectors`, label: "Sectors" },
     { to: `${base}/grading`, label: "Grading" },
+    { to: `${base}/announcements`, label: "Updates" },
     { to: `${base}/moderation`, label: "Moderation" },
     { to: `${base}/staff`, label: "Staff" },
     ...(atLeast(role, "ADMIN") ? [{ to: `${base}/settings`, label: "Settings" }] : []),

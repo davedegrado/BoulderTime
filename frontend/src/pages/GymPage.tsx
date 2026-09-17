@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
 import { useGym, useSectors, type GymDetail } from "@/features/gyms/api";
 import { GymAvatar } from "@/components/GymAvatar";
@@ -13,18 +13,23 @@ import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
-import { Bell, BellRing, Heart, Mountain } from "lucide-react";
+import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
+import { useAnnouncements } from "@/features/notifications/api";
+import { AnnouncementCard } from "@/features/notifications/NotificationBits";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 
-type Tab = "boulders" | "sectors" | "info";
-const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", info: "Info" };
+type Tab = "boulders" | "sectors" | "updates" | "info";
+const TABS: Tab[] = ["boulders", "sectors", "updates", "info"];
+const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", updates: "Updates", info: "Info" };
 
 export function GymPage() {
   const { slug = "" } = useParams();
   const gym = useGym(slug);
-  const [tab, setTab] = useState<Tab>("boulders");
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = TABS.includes(params.get("tab") as Tab) ? (params.get("tab") as Tab) : "boulders";
+  const setTab = (t: Tab) => setParams(t === "boulders" ? {} : { tab: t }, { replace: true });
 
   if (gym.isPending) return <LoadingState label="Loading gym" />;
   if (gym.isError) return gym.error instanceof ApiError && gym.error.isNotFound ? <NotFoundPage /> : <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
@@ -53,13 +58,13 @@ export function GymPage() {
       </header>
 
       <div className="tabs" role="tablist" aria-label="Gym sections">
-        {(["boulders", "sectors", "info"] as Tab[]).map((t) => (
+        {TABS.map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} className="tabs__tab" onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
         ))}
       </div>
 
       <div className="page__pad">
-        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : <InfoTab gym={g} />}
+        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : <InfoTab gym={g} />}
       </div>
     </div>
   );
@@ -110,6 +115,20 @@ function BouldersTab({ gymId }: { gymId: string }) {
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>Show more</Button>}
           </>
         )}
+    </div>
+  );
+}
+
+function UpdatesTab({ gymId }: { gymId: string }) {
+  const updates = useAnnouncements(gymId);
+  const items = updates.data?.pages.flatMap((p) => p.items) ?? [];
+  if (updates.isPending) return <LoadingState label="Loading updates" />;
+  if (updates.isError) return <ErrorState error={updates.error} onRetry={() => updates.refetch()} />;
+  if (items.length === 0) return <EmptyState icon={<Megaphone />} title="No updates yet" body="Events, new circuits and schedule changes will show up here." />;
+  return (
+    <div className="stack">
+      {items.map((a) => <AnnouncementCard key={a.id} a={a} />)}
+      {updates.hasNextPage && <Button variant="secondary" onClick={() => updates.fetchNextPage()} loading={updates.isFetchingNextPage}>Older updates</Button>}
     </div>
   );
 }

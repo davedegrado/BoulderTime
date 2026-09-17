@@ -30,7 +30,7 @@ public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulde
 /// Both live in PRIVATE buckets; every URL handed out is short-lived and only issued to viewers allowed to see the video:
 /// approved videos → anyone who can see the boulder; pending/rejected → the uploader and the gym's staff.
 /// </summary>
-public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader)
+public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
 {
     public const long MaxVideoBytes = 100 * 1024 * 1024;
     public const int MaxVideosPerUserPerBoulder = 3;
@@ -81,8 +81,14 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         ValidateCaption(r.Caption, BoulderBeta.CaptionMaxLength);
 
         string? replaced = null;
+        var isNewVideo = beta is null || beta.StoragePath != path;
         if (beta is null) db.BoulderBetas.Add(beta = BoulderBeta.Create(boulderId, userId, path, r.Caption));
         else replaced = beta.Replace(userId, path, r.Caption);
+        if (isNewVideo)
+        {
+            var sectorName = await db.Sectors.AsNoTracking().Where(x => x.Id == scope.Boulder.SectorId).Select(x => x.Name).FirstAsync(ct);
+            await notifications.OfficialBetaAsync(scope.Boulder, scope.Gym, sectorName, userId, ct);
+        }
         await db.SaveChangesAsync(ct);
         if (replaced is not null) await storage.DeleteAsync(StorageBuckets.OfficialBeta, replaced, ct);
         return await ToBetaAsync(beta, ct);
@@ -190,10 +196,11 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     {
         var reviewer = currentUser.RequireUserId();
         var video = await db.BoulderVideos.FirstOrDefaultAsync(v => v.Id == videoId, ct) ?? throw new NotFoundException("Video", videoId);
-        await boulders.RequireStaffAsync(video.BoulderId, GymRole.Staff, ct);
+        var scope = await boulders.RequireStaffAsync(video.BoulderId, GymRole.Staff, ct);
         if (video.UserId == reviewer)
             throw new ForbiddenException("You can't review your own video. Another staff member has to.", "own_video");
         decide(video, reviewer, clock.UtcNow);
+        await notifications.VideoReviewedAsync(video, scope.Gym.Id, reviewer, ct);
         await db.SaveChangesAsync(ct);
         return (await ToVideosAsync([video], ct))[0];
     }

@@ -152,3 +152,32 @@ same step. Pending counts appear on the staff overview and the admin dashboard.
 
 **Known limitation.** iPhone videos (HEVC in .mov) may not play in every desktop browser. Transcoding to H.264 MP4 needs a
 media pipeline and is deferred.
+
+## ADR-012 · Notifications and gym announcements
+**In-app notifications** `notifications(user_id, type, title, body, related_entity_type, related_entity_id, gym_id, link,
+collapse_key, count, read_at, created_at)`. Push delivery (web push / native) is a future channel on the same records.
+
+**Targeting is centralised** in `NotificationPublisher`, which adds notifications to the same unit of work as the change
+that caused them (one `SaveChanges`, so an announcement and its notifications commit together). Rules for every event:
+the actor is never notified; audiences are de-duplicated (one notification per person per event); follow-level
+`notifications_enabled` and the user's category switches (`notification_settings`) are respected.
+
+| Event | Audience |
+|---|---|
+| Gym announcement with "notify followers" | gym followers ∪ followers of the targeted sector |
+| Bulk removal with "notify followers" | per sector: sector followers ∪ followers of the removed boulders in it — **one notification per sector per person** |
+| Boulder corrected (grade, sector, holds, photo) | boulder followers |
+| New official beta (new file, not caption edits) | boulder followers ∪ climbers projecting it |
+| New comment | boulder followers — collapsed into one unread item per boulder ("3 new comments") |
+| Video approved / rejected | uploader |
+| Report resolved / dismissed | reporter |
+
+Creating boulders does not notify per boulder; staff announce new circuits with an update instead. Edits to an
+announcement never re-notify.
+
+**Collapse.** Events with a `collapse_key` update the existing unread notification (count, title, time) instead of
+inserting another; once read, the next event starts a new one.
+
+**Announcements** `gym_announcements(type, title, content, image_path, event_date, sector_id, notify_followers)`.
+Events and competitions require a date. Images use the public `gym-images` bucket with the same upload-ticket flow.
+Public for visible gyms; published and edited by STAFF+. Home shows the latest updates from followed gyms.

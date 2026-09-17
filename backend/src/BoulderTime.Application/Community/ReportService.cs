@@ -31,7 +31,7 @@ public sealed record ModerationSummaryDto(int PendingVideos, int PendingReports)
 /// Reports on comments, videos and boulders. Staff (STAFF+) moderate their own gym's reports; platform admins moderate all.
 /// A user has at most one open report per item, and can't report content they can't see.
 /// </summary>
-public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, ICurrentUser currentUser, IClock clock)
+public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications)
 {
     public async Task<ReportDto> CreateAsync(CreateReportRequest r, CancellationToken ct = default)
     {
@@ -104,7 +104,10 @@ public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymA
                 case ReportEntityType.Video:
                     var video = await db.BoulderVideos.FirstOrDefaultAsync(v => v.Id == report.EntityId, ct);
                     if (video is not null && video.UserId != reviewer)
+                    {
                         video.Reject(reviewer, clock.UtcNow, string.IsNullOrWhiteSpace(r.Note) ? "Removed after a report." : r.Note.Trim());
+                        await notifications.VideoReviewedAsync(video, report.GymId, reviewer, ct);
+                    }
                     else if (video is not null)
                         throw new ForbiddenException("You can't moderate your own video.", "own_video");
                     break;
@@ -114,6 +117,8 @@ public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymA
         }
 
         report.Close(status, reviewer, r.Note, clock.UtcNow);
+        var boulderId = (await ToDtosAsync([report], ct))[0].BoulderId;
+        await notifications.ReportReviewedAsync(report, boulderId, reviewer, ct);
         await db.SaveChangesAsync(ct);
         return (await ToDtosAsync([report], ct))[0];
     }

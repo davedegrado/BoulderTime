@@ -1,6 +1,7 @@
 using BoulderTime.Application.Admin;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Grading;
+using BoulderTime.Application.Notifications;
 using BoulderTime.Application.Candidates;
 using BoulderTime.Application.Climbing;
 using BoulderTime.Application.Community;
@@ -35,6 +36,9 @@ public static class DependencyInjection
         services.AddScoped<GradeSuggestionService>();
         services.AddScoped<VideoService>();
         services.AddScoped<ReportService>();
+        services.AddScoped<NotificationPublisher>();
+        services.AddScoped<NotificationService>();
+        services.AddScoped<AnnouncementService>();
         return services;
     }
 }

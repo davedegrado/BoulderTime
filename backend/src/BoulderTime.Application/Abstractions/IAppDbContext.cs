@@ -3,6 +3,7 @@ using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Climbing;
 using BoulderTime.Domain.Community;
 using BoulderTime.Domain.Follows;
+using BoulderTime.Domain.Notifications;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
@@ -38,6 +39,9 @@ public interface IAppDbContext
     DbSet<BoulderBeta> BoulderBetas { get; }
     DbSet<BoulderVideo> BoulderVideos { get; }
     DbSet<Report> Reports { get; }
+    DbSet<Notification> Notifications { get; }
+    DbSet<NotificationSettings> NotificationSettings { get; }
+    DbSet<GymAnnouncement> GymAnnouncements { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

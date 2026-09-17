@@ -11,7 +11,7 @@ namespace BoulderTime.Application.Boulders;
 /// Boulder lifecycle. Viewing active boulders is public for visible gyms; a removed boulder stays readable by id
 /// forever (climbing history links to it). Creating, editing, removing and restoring need STAFF+.
 /// </summary>
-public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader)
+public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
@@ -115,13 +115,25 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, ct);
         var userId = currentUser.RequireUserId();
 
+        var changes = new List<string>();
+        if (boulder.SectorId != valid.SectorId) changes.Add("moved to another sector");
+        if (boulder.HoldColor != valid.HoldColor) changes.Add("hold colour corrected");
+        if (boulder.PhotoPath != valid.PhotoPath) changes.Add("new photo");
         boulder.Update(valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId);
         var current = await db.BoulderGrades.Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff).ToListAsync(ct);
+        if (!current.Select(g => (g.GradeSystemId, g.GradeValueId)).ToHashSet().SetEquals(valid.Grades)) changes.Insert(0, "grade changed");
         foreach (var g in current.Where(g => !valid.Grades.Contains((g.GradeSystemId, g.GradeValueId))))
             db.BoulderGrades.Remove(g);
         await db.SaveChangesAsync(ct); // free (boulder, system) slots before re-adding changed grades
         foreach (var (systemId, valueId) in valid.Grades.Where(v => !current.Any(g => g.GradeSystemId == v.SystemId && g.GradeValueId == v.ValueId)))
             db.BoulderGrades.Add(BoulderGrade.Official(boulderId, systemId, valueId, userId, clock.UtcNow));
+
+        if (changes.Count > 0 && boulder.Status == BoulderStatus.Active)
+        {
+            var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == boulder.GymId, ct);
+            var sectorName = await db.Sectors.AsNoTracking().Where(x => x.Id == valid.SectorId).Select(x => x.Name).FirstAsync(ct);
+            await notifications.BoulderUpdatedAsync(boulder, gym, sectorName, string.Join(", ", changes), userId, ct);
+        }
         await db.SaveChangesAsync(ct);
         return await GetAsync(boulderId, ct);
     }
@@ -146,14 +158,20 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var userId = currentUser.RequireUserId();
         var now = clock.UtcNow;
         var removed = boulders.Where(b => b.Remove(userId, now)).ToList();
-        await db.SaveChangesAsync(ct);
 
         var sectorIds = removed.Select(b => b.SectorId).Distinct().ToList();
-        var names = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
-        // Phase 6 hooks in here: one "sector retraced" notification per sector, never one per boulder.
-        var bySector = removed.GroupBy(b => b.SectorId)
-            .Select(g => new SectorRemovalDto(g.Key, names.GetValueOrDefault(g.Key, ""), g.Count()))
-            .OrderBy(s => s.SectorName).ToList();
+        var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, ct);
+        var groups = removed.GroupBy(b => b.SectorId).OrderBy(g => sectors.GetValueOrDefault(g.Key)?.Name).ToList();
+        if (r.NotifyFollowers == true && groups.Count > 0)
+        {
+            // One "sector retraced" notification per sector per person — never one per boulder.
+            var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == gymId, ct);
+            await notifications.SectorsRetracedAsync(gym,
+                groups.Select(g => (sectors[g.Key], (IReadOnlyList<Guid>)g.Select(b => b.Id).ToList())).ToList(), userId, ct);
+        }
+        await db.SaveChangesAsync(ct);
+
+        var bySector = groups.Select(g => new SectorRemovalDto(g.Key, sectors.GetValueOrDefault(g.Key)?.Name ?? "", g.Count())).ToList();
         return new RemoveBouldersResult(removed.Count, bySector);
     }
 

@@ -6,6 +6,7 @@ import { useHome } from "@/features/climbing/api";
 import { InvitationsCard } from "@/features/staff/InvitationsCard";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { HistoryRow } from "@/features/climbing/ClimbingBits";
+import { AnnouncementCard } from "@/features/notifications/NotificationBits";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Logo } from "@/components/Logo";
@@ -79,6 +80,13 @@ function SignedInHome() {
           </ul>
         )}
       </section>
+
+      {h.updates.length > 0 && (
+        <section aria-labelledby="updates-title" className="section">
+          <h2 id="updates-title" className="section__title">Gym updates</h2>
+          <div className="stack">{h.updates.slice(0, 3).map((a) => <AnnouncementCard key={a.id} a={a} showGym />)}</div>
+        </section>
+      )}
 
       {h.projects.length > 0 && (
         <section aria-labelledby="projects-title" className="section">

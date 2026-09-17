@@ -7,6 +7,7 @@ import { boulderKeys } from "@/features/boulders/api";
 import type { GymDetail, GymSummary, Sector } from "@/features/gyms/api";
 import { gymKeys } from "@/features/gyms/api";
 import type { GradeSystemType } from "@/features/grading/api";
+import type { Announcement } from "@/features/notifications/api";
 
 export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null }
 export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number }
@@ -18,7 +19,7 @@ export interface Profile {
   followedGyms: GymSummary[]; recentCompletions: HistoryItem[];
 }
 export interface HomeGym { gym: GymSummary; isFavorite: boolean; activeBoulders: number; newThisWeek: number }
-export interface Home { stats: ClimbingStats; gyms: HomeGym[]; projects: BoulderSummary[]; freshToTry: BoulderSummary[]; recentCompletions: HistoryItem[] }
+export interface Home { stats: ClimbingStats; gyms: HomeGym[]; projects: BoulderSummary[]; freshToTry: BoulderSummary[]; recentCompletions: HistoryItem[]; updates: Announcement[] }
 export type HistoryFilter = "ALL" | "COMPLETED" | "PROJECTS";
 
 export const climbingKeys = {

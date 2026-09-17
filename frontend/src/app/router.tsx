@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router-dom";
-import { Bell } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { HomePage } from "@/pages/HomePage";
@@ -8,7 +7,6 @@ import { SignUpPage } from "@/pages/SignUpPage";
 import { AuthCallbackPage } from "@/pages/AuthCallbackPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
-import { UpcomingPage } from "@/pages/UpcomingPage";
 import { ExplorePage } from "@/pages/ExplorePage";
 import { GymPage } from "@/pages/GymPage";
 import { SuggestGymPage } from "@/pages/SuggestGymPage";
@@ -22,6 +20,9 @@ import { BoulderEditorPage } from "@/pages/manage/BoulderEditorPage";
 import { ManageGrading } from "@/pages/manage/ManageGrading";
 import { ManageModeration } from "@/pages/manage/ManageModeration";
 import { AdminReports } from "@/pages/admin/AdminReports";
+import { ManageAnnouncements } from "@/pages/manage/ManageAnnouncements";
+import { NotificationsPage } from "@/pages/NotificationsPage";
+import { NotificationSettingsPage } from "@/pages/NotificationSettingsPage";
 import { BoulderPage } from "@/pages/BoulderPage";
 import { ActivityPage } from "@/pages/ActivityPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
           { path: "sectors", element: <ManageSectors /> },
           { path: "grading", element: <ManageGrading /> },
           { path: "moderation", element: <ManageModeration /> },
+          { path: "announcements", element: <ManageAnnouncements /> },
           { path: "staff", element: <ManageStaff /> },
           { path: "settings", element: <ManageSettings /> },
         ],
@@ -71,7 +73,8 @@ export const router = createBrowserRouter([
       },
       { path: "activity", element: <RequireAuth><ActivityPage /></RequireAuth> },
       { path: "users/:id", element: <UserProfilePage /> },
-      { path: "notifications", element: <RequireAuth><UpcomingPage icon={<Bell />} title="Notifications" body="Gym, sector and boulder updates arrive in Phase 6." /></RequireAuth> },
+      { path: "notifications", element: <RequireAuth><NotificationsPage /></RequireAuth> },
+      { path: "notifications/settings", element: <RequireAuth><NotificationSettingsPage /></RequireAuth> },
       { path: "profile", element: <RequireAuth><ProfilePage /></RequireAuth> },
       { path: "*", element: <NotFoundPage /> },
     ],

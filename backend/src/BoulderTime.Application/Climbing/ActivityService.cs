@@ -34,10 +34,11 @@ public sealed record HomeGymDto(GymSummaryDto Gym, bool IsFavorite, int ActiveBo
 public sealed record HomeDto(
     ClimbingStatsDto Stats, IReadOnlyList<HomeGymDto> Gyms,
     IReadOnlyList<BoulderSummaryDto> Projects, IReadOnlyList<BoulderSummaryDto> FreshToTry,
-    IReadOnlyList<ClimbHistoryItemDto> RecentCompletions);
+    IReadOnlyList<ClimbHistoryItemDto> RecentCompletions,
+    IReadOnlyList<Notifications.AnnouncementDto> Updates);
 
 /// <summary>Personal climbing history, statistics, public profiles and the Home screen. All computed on read.</summary>
-public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader)
+public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements)
 {
     public const int Weeks = 12;
 
@@ -117,7 +118,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
                 .Select(x => new HomeGymDto(GymSummaryDto.From(x.g), x.IsFavorite, x.Active, x.Fresh)).ToList(),
             await reader.SummariesAsync(projects, ct),
             await reader.SummariesAsync(fresh, ct),
-            await ToHistoryAsync(userId, recent, ct));
+            await ToHistoryAsync(userId, recent, ct),
+            await announcements.ForFollowedGymsAsync(userId, 5, ct));
     }
 
     internal async Task<ClimbingStatsDto> StatsAsync(Guid userId, CancellationToken ct)

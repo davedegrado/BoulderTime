@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 5: comments, likes, community grades, official beta, community videos, reports and moderation
+Applying: Phase 6: notifications, gym announcements and events, follow targeting, collapse, preferences
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    84, Skipped:     0, Total:    84, Duration: 50 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    92, Skipped:     0, Total:    92, Duration: 1 m 1 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

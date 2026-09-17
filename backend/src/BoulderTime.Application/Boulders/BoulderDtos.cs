@@ -38,7 +38,8 @@ public sealed record BoulderQuery(
     BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
     ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize);
 
-public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds);
+/// <param name="NotifyFollowers">Send one "sector retraced" notification per affected sector to its followers.</param>
+public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool? NotifyFollowers = false);
 
 /// <summary>Result of a (bulk) removal, grouped by sector so a single "sector retraced" update can follow.</summary>
 public sealed record RemoveBouldersResult(int Removed, IReadOnlyList<SectorRemovalDto> Sectors);

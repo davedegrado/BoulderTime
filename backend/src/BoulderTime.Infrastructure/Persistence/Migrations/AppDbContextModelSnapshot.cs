@@ -985,6 +985,186 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("sectors", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<DateTimeOffset?>("EventDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("event_date");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("image_path");
+
+                    b.Property<bool>("NotifyFollowers")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notify_followers");
+
+                    b.Property<Guid?>("SectorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sector_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gym_announcements");
+
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("ix_gym_announcements_created_by_user_id");
+
+                    b.HasIndex("SectorId")
+                        .HasDatabaseName("ix_gym_announcements_sector_id");
+
+                    b.HasIndex("GymId", "CreatedAt")
+                        .HasDatabaseName("ix_gym_announcements_gym_id_created_at");
+
+                    b.ToTable("gym_announcements", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("body");
+
+                    b.Property<string>("CollapseKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("collapse_key");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer")
+                        .HasColumnName("count");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("link");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<Guid>("RelatedEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("related_entity_id");
+
+                    b.Property<string>("RelatedEntityType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("related_entity_type");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(140)
+                        .HasColumnType("character varying(140)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("CollapseKey", "UserId")
+                        .HasDatabaseName("ix_notifications_collapse_key_user_id")
+                        .HasFilter("read_at IS NULL AND collapse_key IS NOT NULL");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_user_id_created_at");
+
+                    b.HasIndex("UserId", "ReadAt")
+                        .HasDatabaseName("ix_notifications_user_id_read_at");
+
+                    b.ToTable("notifications", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.NotificationSettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<bool>("BoulderUpdates")
+                        .HasColumnType("boolean")
+                        .HasColumnName("boulder_updates");
+
+                    b.Property<bool>("GymUpdates")
+                        .HasColumnType("boolean")
+                        .HasColumnName("gym_updates");
+
+                    b.Property<bool>("MyContent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("my_content");
+
+                    b.Property<bool>("SectorUpdates")
+                        .HasColumnType("boolean")
+                        .HasColumnName("sector_updates");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_notification_settings");
+
+                    b.ToTable("notification_settings", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Staff.GymStaffMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1479,6 +1659,49 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_sectors_gyms_gym_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_gym_announcements_users_created_by_user_id");
+
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_gym_announcements_gyms_gym_id");
+
+                    b.HasOne("BoulderTime.Domain.Gyms.Sector", null)
+                        .WithMany()
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_gym_announcements_sectors_sector_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.NotificationSettings", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_settings_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Staff.GymStaffMember", b =>

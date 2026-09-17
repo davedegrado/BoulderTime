@@ -19,6 +19,7 @@ export function ManageBoulders() {
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastRemoval, setLastRemoval] = useState<RemoveResult | null>(null);
+  const [notifyFollowers, setNotifyFollowers] = useState(true);
   const sectors = useSectors(gym.id);
   const systems = useGradeSystems(gym.id);
   const boulders = useBoulders(gym.id, filters);
@@ -36,7 +37,7 @@ export function ManageBoulders() {
   const selectAllLoaded = () => setSelected(new Set(items.map((b) => b.id)));
 
   function removeSelected() {
-    remove.mutate([...selected], {
+    remove.mutate({ boulderIds: [...selected], notifyFollowers }, {
       onSuccess: (result) => { setLastRemoval(result); stopSelecting(); },
       onError: (e) => toast.error(errorMessage(e)),
     });
@@ -68,7 +69,12 @@ export function ManageBoulders() {
           <History aria-hidden />
           <div>
             <p><strong>{lastRemoval.removed} {lastRemoval.removed === 1 ? "boulder" : "boulders"} removed</strong> — {lastRemoval.sectors.map((s) => `${s.sectorName} (${s.removed})`).join(", ")}.</p>
-            <p className="list__sub">They stay in climbers' history. Announcing a retrace to sector followers arrives with notifications.</p>
+            <p className="list__sub">They stay in climbers' history.{notifyFollowers ? " Followers got one notification per sector." : ""}</p>
+            {lastRemoval.sectors[0] && (
+              <Link className="section__link" to={`/manage/${gym.slug}/announcements?new=1&sectorId=${lastRemoval.sectors[0].sectorId}&title=${encodeURIComponent(`${lastRemoval.sectors[0].sectorName} has been retraced`)}`}>
+                Write an update about it
+              </Link>
+            )}
           </div>
           <button type="button" className="icon-btn" onClick={() => setLastRemoval(null)} aria-label="Dismiss"><X aria-hidden /></button>
         </div>
@@ -112,6 +118,10 @@ export function ManageBoulders() {
       {selecting && (
         <div className="selection-bar" role="region" aria-label="Selection">
           <span className="selection-bar__count">{selected.size} selected</span>
+          <label className="selection-bar__notify">
+            <input type="checkbox" checked={notifyFollowers} onChange={(e) => setNotifyFollowers(e.target.checked)} />
+            <span>Notify followers</span>
+          </label>
           <Button variant="on-dark" onClick={selectAllLoaded}>All</Button>
           <Button variant="on-dark" onClick={stopSelecting}>Cancel</Button>
           <ConfirmButton variant="danger" icon={<Trash2 aria-hidden />} confirmLabel={`Remove ${selected.size}?`}

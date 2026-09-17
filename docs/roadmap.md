@@ -7,8 +7,8 @@
 | 3 | Boulders, photos, hold colours, grading systems, official grades, active/removed | |
 | 4 | Attempts, completions, activity, ratings, follows | **Done** |
 | 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | **Done** |
-| 6 | Notifications, announcements, subscriptions, preferences | Next |
-| 7 | Leaderboards | |
+| 6 | Notifications, announcements, subscriptions, preferences | **Done** |
+| 7 | Leaderboards | Next |
 | 8 | Polish: responsive UX, accessibility, states, images, performance | |
 | 9 | Tests, seed data, docs, deployment | |
 
@@ -18,9 +18,6 @@ Code is prepared outside the repo, then applied in a GitHub Codespace by an `app
 against the real packages, generates the EF migration, runs all backend tests (Testcontainers) and the frontend
 typecheck/tests/build, and commits the log. `bash scripts/dev.sh` then runs the full stack for a hands-on look.
 
-## Temporary placeholders (must be gone by end of Phase 8)
+## Temporary placeholders
 
-| Route | Replaced in |
-|---|---|
-| `/explore` | Phase 2 |
-| `/notifications` | Phase 6 |
+None — every navigation destination is implemented.

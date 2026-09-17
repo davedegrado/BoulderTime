@@ -17,7 +17,7 @@ public sealed record SaveCommentRequest(string? Content);
 /// Flat comments. Everyone sees visible comments; staff of the gym also see hidden ones (marked) so they can unhide.
 /// Authors edit or delete their own; staff hide/unhide. Likes are one per user.
 /// </summary>
-public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser, IClock clock)
+public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications)
 {
     public async Task<PagedResult<CommentDto>> ListAsync(Guid boulderId, int? page, int? pageSize, CancellationToken ct = default)
     {
@@ -39,6 +39,8 @@ public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICu
         var content = Validate(r.Content);
         var comment = Comment.Create(boulderId, userId, content);
         db.Comments.Add(comment);
+        var authorName = await db.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.DisplayName).FirstAsync(ct);
+        await notifications.CommentAsync(comment, scope.Boulder, authorName, ct);
         await db.SaveChangesAsync(ct);
         return (await ToDtosAsync([comment], scope.IsStaff, ct))[0];
     }

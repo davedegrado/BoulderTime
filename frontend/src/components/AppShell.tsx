@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { GymAvatar } from "@/components/GymAvatar";
+import { useUnreadCount } from "@/features/notifications/api";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -26,6 +27,10 @@ export function AppShell() {
   const items = NAV.filter((i) => session || !i.requiresAuth);
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
+  const unread = useUnreadCount().data?.unread ?? 0;
+  const badge = (to: string) => to === "/notifications" && unread > 0
+    ? <span className="nav-badge" aria-label={`${unread} unread`}>{unread > 99 ? "99+" : unread}</span>
+    : null;
 
   return (
     <div className="shell">
@@ -40,6 +45,7 @@ export function AppShell() {
             <NavLink key={to} to={to} end={to === "/"} className="sidebar__link">
               <Icon aria-hidden />
               <span>{label === "Alerts" ? "Notifications" : label}</span>
+              {badge(to)}
             </NavLink>
           ))}
         </nav>
@@ -79,7 +85,7 @@ export function AppShell() {
       <nav className="tabbar" aria-label="Primary">
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === "/"} className="tabbar__link">
-            <Icon aria-hidden />
+            <span className="tabbar__icon"><Icon aria-hidden />{badge(to)}</span>
             <span>{label}</span>
           </NavLink>
         ))}

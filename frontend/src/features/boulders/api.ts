@@ -105,7 +105,11 @@ export function useUpdateBoulder(boulderId: string) {
 
 export function useRemoveBoulders(gymId: string) {
   const invalidate = useInvalidateBoulders();
-  return useMutation({ mutationFn: (boulderIds: string[]) => api.post<RemoveResult>(`/api/gyms/${gymId}/boulders/remove`, { boulderIds }), onSuccess: invalidate });
+  return useMutation({
+    mutationFn: ({ boulderIds, notifyFollowers }: { boulderIds: string[]; notifyFollowers: boolean }) =>
+      api.post<RemoveResult>(`/api/gyms/${gymId}/boulders/remove`, { boulderIds, notifyFollowers }),
+    onSuccess: invalidate,
+  });
 }
 
 export function useRestoreBoulder() {
