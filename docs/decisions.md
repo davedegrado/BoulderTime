@@ -214,3 +214,22 @@ folder as the video, and served through signed URLs like the video. `thumbnail_p
 decode the file (e.g. some HEVC .mov on desktop) or capture times out, the video uploads without one and the UI shows a
 placeholder. Replacing or deleting a video deletes its thumbnail. Server-side frame extraction would need a media
 pipeline and remains deferred together with transcoding.
+
+## ADR-015 · Per-gym leaderboards computed on read
+**Scope.** Leaderboards are per gym. Grades of different gyms (or a colour grade vs a Font grade) aren't honestly
+comparable, so there is no global ranking.
+
+**Metrics.** `POINTS` (difficulty-weighted), `COMPLETED` (number of sends), `HIGHEST` (hardest send in the gym's primary
+scale). **Periods:** `WEEK` (from Monday, UTC), `MONTH`, `YEAR`, `ALL`. A send counts in the period of its completion
+date, including boulders removed since. Only public profiles appear (the viewer always sees their own position).
+
+**Scoring is isolated** behind `IClimbScoring`. Default `RankBasedScoring`: a send is worth
+`10 + 90 × rank / (scale size − 1)` points in the gym's primary system (first active system), falling back to the next
+system if the boulder has no grade in it. Normalising by scale size keeps a 6-colour scale and a 23-step Font scale on
+the same 10–100 range. Attempts don't change points (flash/redpoint aren't tracked).
+
+**Ranking.** Primary value per metric, then points/sends, then who got there first. Equal primary values share a
+position (1, 2, 2, 4). The API returns the top N (default 50, max 100) plus the viewer's own entry when outside it.
+
+**No stored leaderboards.** Computed from `boulder_attempts` on request (cached 60 s on the client). If a gym's volume
+makes this slow, the same service can read from a materialised view without changing the API.

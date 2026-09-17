@@ -16,13 +16,14 @@ import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
 import { AnnouncementCard } from "@/features/notifications/NotificationBits";
+import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 
-type Tab = "boulders" | "sectors" | "updates" | "info";
-const TABS: Tab[] = ["boulders", "sectors", "updates", "info"];
-const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", updates: "Updates", info: "Info" };
+type Tab = "boulders" | "sectors" | "updates" | "ranking" | "info";
+const TABS: Tab[] = ["boulders", "sectors", "updates", "ranking", "info"];
+const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", updates: "Updates", ranking: "Ranking", info: "Info" };
 
 export function GymPage() {
   const { slug = "" } = useParams();
@@ -64,7 +65,7 @@ export function GymPage() {
       </div>
 
       <div className="page__pad">
-        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : <InfoTab gym={g} />}
+        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : tab === "ranking" ? <LeaderboardTab gymId={g.id} /> : <InfoTab gym={g} />}
       </div>
     </div>
   );

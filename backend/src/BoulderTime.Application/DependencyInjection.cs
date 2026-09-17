@@ -1,6 +1,7 @@
 using BoulderTime.Application.Admin;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Grading;
+using BoulderTime.Application.Leaderboards;
 using BoulderTime.Application.Notifications;
 using BoulderTime.Application.Candidates;
 using BoulderTime.Application.Climbing;
@@ -39,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<NotificationPublisher>();
         services.AddScoped<NotificationService>();
         services.AddScoped<AnnouncementService>();
+        services.AddSingleton<IClimbScoring, RankBasedScoring>();
+        services.AddScoped<LeaderboardService>();
         return services;
     }
 }
