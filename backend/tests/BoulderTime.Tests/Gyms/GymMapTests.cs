@@ -27,7 +27,9 @@ public sealed class GymMapTests(PostgresFixture postgres) : IAsyncLifetime
     private Task<Gym> GymAt(string name, double? lat, double? lng, GymStatus status = GymStatus.Active) =>
         _f.Db(async db =>
         {
-            var g = Gym.Create(name, $"{name.ToLowerInvariant().Replace(' ', '-')}-{Guid.NewGuid():N}"[..40], "City");
+            // Unique slug, trimmed only when it exceeds the column limit (a short name produced a shorter string than the cut).
+            var slug = $"{name.ToLowerInvariant().Replace(' ', '-')}-{Guid.NewGuid():N}";
+            var g = Gym.Create(name, slug.Length > 40 ? slug[..40] : slug, "City");
             g.SetStatus(status);
             if (lat is not null) g.SetLocation(lat, lng);
             db.Gyms.Add(g);
