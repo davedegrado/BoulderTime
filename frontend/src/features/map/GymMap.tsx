@@ -5,13 +5,11 @@ import "leaflet/dist/leaflet.css";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { env } from "@/config/env";
 import type { Bounds, GymPin } from "@/features/gyms/api";
-import { initials } from "@/lib/format";
+import { buildPinHtml } from "@/features/map/pinHtml";
 
 /** Brand pin as an HTML marker (no image assets, so no bundler icon-path issues). */
 function pinIcon(name: string, logoUrl: string | null) {
-  const safeLogo = logoUrl && /^(https?:\/\/|\/)[^"'<>\s]*$/.test(logoUrl) ? logoUrl : null; // markers are HTML: only plain URLs
-  const inner = safeLogo ? `<img src="${safeLogo}" alt="" />` : `<span>${initials(name).replace(/[<>&"']/g, "")}</span>`;
-  return L.divIcon({ className: "gym-pin", html: `<div class="gym-pin__body">${inner}</div>`, iconSize: [40, 48], iconAnchor: [20, 46], popupAnchor: [0, -42] });
+  return L.divIcon({ className: "gym-pin", html: buildPinHtml(name, logoUrl), iconSize: [40, 50], iconAnchor: [20, 50], popupAnchor: [0, -46] });
 }
 
 export const ITALY = { lat: 42.5, lng: 12.5, zoom: 6 };
@@ -84,7 +82,7 @@ export function LocationPicker({ value, onChange }: { value: { lat: number; lng:
       <PickerEvents onPick={onChange} />
       <Recenter center={value} zoom={16} />
       {value && (
-        <Marker position={[value.lat, value.lng]} draggable icon={pinIcon("•", null)}
+        <Marker position={[value.lat, value.lng]} draggable icon={pinIcon("+", null)}
           eventHandlers={{ dragend: (e) => { const ll = (e.target as L.Marker).getLatLng(); onChange({ lat: ll.lat, lng: ll.lng }); } }} />
       )}
     </MapContainer>

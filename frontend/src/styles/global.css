@@ -719,10 +719,12 @@ svg { flex-shrink: 0; }
 .map-card__locate svg { width: 22px; height: 22px; }
 .map-card__note { padding: var(--bt-2) var(--bt-4); font-size: var(--bt-text-sm); color: var(--bt-ink-2); background: var(--bt-surface); }
 .gym-pin { background: none; border: 0; }
-.gym-pin__body { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); background: var(--bt-orange); box-shadow: 0 2px 6px rgb(0 0 0 / 0.35); border: 2px solid #fff; overflow: hidden; }
-.gym-pin__body > * { transform: rotate(45deg); }
-.gym-pin__body span { font-weight: 800; font-size: 13px; color: var(--bt-charcoal); font-family: var(--bt-font); }
-.gym-pin__body img { width: 100%; height: 100%; object-fit: cover; }
+/* Upright circle + pointer: no nested rotations, so the logo or initials are always fully visible. */
+.gym-pin__body { position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--bt-orange); border: 2px solid #fff; box-shadow: 0 2px 6px rgb(0 0 0 / 0.35); overflow: hidden; }
+.gym-pin__initials { font-family: var(--bt-font); font-weight: 800; font-size: 14px; line-height: 1; color: var(--bt-charcoal); }
+.gym-pin__logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gym-pin__tail { position: absolute; left: 50%; bottom: 0; width: 0; height: 0; margin-left: -7px; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 12px solid #fff; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.3)); }
+.gym-pin__tail::after { content: ""; position: absolute; left: -5px; top: -12px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 9px solid var(--bt-orange); }
 .pin-popup { display: flex; flex-direction: column; gap: 2px; font-family: var(--bt-font); min-width: 140px; }
 .pin-popup a { margin-top: 6px; font-weight: 700; color: var(--bt-orange-ink); }
 .leaflet-container { font-family: var(--bt-font); }
