@@ -18,8 +18,12 @@ public sealed class VideoAndReportTests(PostgresFixture postgres) : IAsyncLifeti
     public Task InitializeAsync() => _f.ResetDatabaseAsync();
     public async Task DisposeAsync() => await _f.DisposeAsync();
 
-    private static async Task<List<VideoDto>> VideosAs(HttpClient client, Guid boulderId) =>
-        (await (await client.GetAsync($"/api/boulders/{boulderId}/videos")).ReadAsync<List<VideoDto>>())!;
+    /// <summary>Everything a viewer sees for a boulder: approved videos plus their own videos in review.</summary>
+    private static async Task<List<VideoDto>> VideosAs(HttpClient client, Guid boulderId)
+    {
+        var dto = (await (await client.GetAsync($"/api/boulders/{boulderId}/videos")).ReadAsync<BoulderVideosDto>())!;
+        return dto.Approved.Items.Concat(dto.MineInReview).ToList();
+    }
 
     [Fact]
     public async Task Community_video_is_private_until_approved_and_changes_require_reapproval()

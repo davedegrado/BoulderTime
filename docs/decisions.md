@@ -200,3 +200,17 @@ after an interruption it asks the server for the confirmed offset (HEAD) and con
 
 Photos keep the single PUT: after client-side downscaling they are 1–2 MB. Upload tickets now last 2 hours in both
 environments. The app asks users to keep the screen open while uploading, since mobile browsers pause background tabs.
+
+## ADR-014 · Video thumbnails and browsing many videos
+**Browsing.** Approved community videos are paged by the API (12 per page, newest approval first) and shown as a
+horizontal thumbnail rail (swipe or arrow buttons, "Show more" tile). Players are only created when a video is opened,
+in a full-screen viewer with previous/next (keyboard arrows and Escape on desktop); reaching the end loads the next page
+and advances automatically. The viewer's own pending/rejected videos are returned separately (`mineInReview`) and shown
+with their status, so they never mix with published videos.
+
+**Thumbnails are captured on the uploading device**: a frame ~1 s in (or a third of short clips), max 480 px JPEG,
+uploaded with a small single-PUT ticket (`*_THUMBNAIL` kinds, JPEG/WebP ≤ 1 MB) into the same PRIVATE bucket and boulder
+folder as the video, and served through signed URLs like the video. `thumbnail_path` is optional: if the browser can't
+decode the file (e.g. some HEVC .mov on desktop) or capture times out, the video uploads without one and the UI shows a
+placeholder. Replacing or deleting a video deletes its thumbnail. Server-side frame extraction would need a media
+pipeline and remains deferred together with transcoding.

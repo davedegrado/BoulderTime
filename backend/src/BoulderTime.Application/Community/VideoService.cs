@@ -8,19 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Community;
 
-public enum VideoKind { Community = 0, Beta = 1 }
+public enum VideoKind { Community = 0, Beta = 1, CommunityThumbnail = 2, BetaThumbnail = 3 }
 
 public sealed record VideoUploadRequest(VideoKind? Kind, string? ContentType, long? SizeBytes);
 
-public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? Caption, PersonDto UploadedBy, DateTimeOffset UpdatedAt);
-public sealed record SaveBetaRequest(string? StoragePath, string? Caption);
+public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? ThumbnailUrl, string? Caption, PersonDto UploadedBy, DateTimeOffset UpdatedAt);
+public sealed record SaveBetaRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null);
 
 public sealed record VideoDto(
-    Guid Id, Guid BoulderId, PersonDto Author, string VideoUrl, string? Caption, VideoStatus Status,
+    Guid Id, Guid BoulderId, PersonDto Author, string VideoUrl, string? ThumbnailUrl, string? Caption, VideoStatus Status,
     string? RejectionReason, DateTimeOffset CreatedAt, bool IsMine);
 
-public sealed record SubmitVideoRequest(string? StoragePath, string? Caption);
-public sealed record ModifyVideoRequest(string? StoragePath, string? Caption);
+/// <summary>Approved videos are paged (a popular boulder can have many); the viewer's own unapproved videos come separately.</summary>
+public sealed record BoulderVideosDto(PagedResult<VideoDto> Approved, IReadOnlyList<VideoDto> MineInReview);
+
+public sealed record SubmitVideoRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null);
+public sealed record ModifyVideoRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null);
 public sealed record RejectVideoRequest(string? Reason);
 
 public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulder);
@@ -33,6 +36,8 @@ public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulde
 public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
 {
     public const long MaxVideoBytes = 100 * 1024 * 1024;
+    public const long MaxThumbnailBytes = 1024 * 1024;
+    private static readonly Dictionary<string, string> ThumbnailTypes = new(StringComparer.OrdinalIgnoreCase) { ["image/jpeg"] = "jpg", ["image/webp"] = "webp" };
     public const int MaxVideosPerUserPerBoulder = 3;
     public static readonly TimeSpan ReadUrlLifetime = TimeSpan.FromHours(1);
     private static readonly Dictionary<string, string> VideoTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -40,10 +45,13 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         ["video/mp4"] = "mp4", ["video/quicktime"] = "mov", ["video/webm"] = "webm",
     };
 
-    public static string Prefix(Guid gymId, Guid boulderId, VideoKind kind) =>
-        $"gyms/{gymId}/boulders/{boulderId}/{(kind == VideoKind.Beta ? "beta" : "videos")}/";
+    private static bool IsBeta(VideoKind kind) => kind is VideoKind.Beta or VideoKind.BetaThumbnail;
+    private static bool IsThumbnail(VideoKind kind) => kind is VideoKind.CommunityThumbnail or VideoKind.BetaThumbnail;
 
-    private static string Bucket(VideoKind kind) => kind == VideoKind.Beta ? StorageBuckets.OfficialBeta : StorageBuckets.CommunityVideos;
+    public static string Prefix(Guid gymId, Guid boulderId, VideoKind kind) =>
+        $"gyms/{gymId}/boulders/{boulderId}/{(IsBeta(kind) ? "beta" : "videos")}/";
+
+    private static string Bucket(VideoKind kind) => IsBeta(kind) ? StorageBuckets.OfficialBeta : StorageBuckets.CommunityVideos;
 
     // ---------- Uploads ----------
 
@@ -51,9 +59,21 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     {
         currentUser.RequireUserId();
         var kind = r.Kind ?? VideoKind.Community;
-        var scope = kind == VideoKind.Beta
+        if (!Enum.IsDefined(kind)) throw new ValidationException("kind", "Unknown upload kind.");
+        var scope = IsBeta(kind)
             ? await boulders.RequireStaffAsync(boulderId, GymRole.Staff, ct)
             : await boulders.RequireVisibleAsync(boulderId, ct);
+
+        if (IsThumbnail(kind))
+        {
+            new Validator()
+                .Check(r.ContentType is not null && ThumbnailTypes.ContainsKey(r.ContentType), "contentType", "Thumbnails must be JPEG or WebP.")
+                .Check(r.SizeBytes is > 0 and <= MaxThumbnailBytes, "sizeBytes", "Thumbnails must be under 1 MB.")
+                .ThrowIfInvalid();
+            var thumbPath = $"{Prefix(scope.Gym.Id, boulderId, kind)}{Guid.NewGuid():N}.thumb.{ThumbnailTypes[r.ContentType!]}";
+            return await storage.CreateUploadTicketAsync(Bucket(kind), thumbPath, r.ContentType!.ToLowerInvariant(), MaxThumbnailBytes, ct) with { Resumable = null };
+        }
+
         new Validator()
             .Check(r.ContentType is not null && VideoTypes.ContainsKey(r.ContentType), "contentType", "Upload an MP4, MOV or WebM video.")
             .Check(r.SizeBytes is > 0 and <= MaxVideoBytes, "sizeBytes", $"Videos must be under {MaxVideoBytes / 1024 / 1024} MB.")
@@ -78,19 +98,20 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         var beta = await db.BoulderBetas.FirstOrDefaultAsync(b => b.BoulderId == boulderId, ct);
         var path = Input.Trimmed(r.StoragePath);
         if (path != beta?.StoragePath) await RequireUploadedAsync(VideoKind.Beta, scope, path, ct);
+        var thumb = await OptionalThumbnailAsync(VideoKind.BetaThumbnail, scope, r.ThumbnailPath, beta?.ThumbnailPath, ct);
         ValidateCaption(r.Caption, BoulderBeta.CaptionMaxLength);
 
-        string? replaced = null;
+        IReadOnlyList<string> replaced = [];
         var isNewVideo = beta is null || beta.StoragePath != path;
-        if (beta is null) db.BoulderBetas.Add(beta = BoulderBeta.Create(boulderId, userId, path, r.Caption));
-        else replaced = beta.Replace(userId, path, r.Caption);
+        if (beta is null) db.BoulderBetas.Add(beta = BoulderBeta.Create(boulderId, userId, path, thumb, r.Caption));
+        else replaced = beta.Replace(userId, path, thumb, r.Caption);
         if (isNewVideo)
         {
             var sectorName = await db.Sectors.AsNoTracking().Where(x => x.Id == scope.Boulder.SectorId).Select(x => x.Name).FirstAsync(ct);
             await notifications.OfficialBetaAsync(scope.Boulder, scope.Gym, sectorName, userId, ct);
         }
         await db.SaveChangesAsync(ct);
-        if (replaced is not null) await storage.DeleteAsync(StorageBuckets.OfficialBeta, replaced, ct);
+        foreach (var old in replaced) await storage.DeleteAsync(StorageBuckets.OfficialBeta, old, ct);
         return await ToBetaAsync(beta, ct);
     }
 
@@ -102,20 +123,34 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         db.BoulderBetas.Remove(beta);
         await db.SaveChangesAsync(ct);
         await storage.DeleteAsync(StorageBuckets.OfficialBeta, beta.StoragePath, ct);
+        if (beta.ThumbnailPath is not null) await storage.DeleteAsync(StorageBuckets.OfficialBeta, beta.ThumbnailPath, ct);
     }
 
     // ---------- Community videos ----------
 
-    /// <summary>Approved videos, plus the viewer's own in any state. Staff see pending ones in the moderation queue instead.</summary>
-    public async Task<IReadOnlyList<VideoDto>> ListAsync(Guid boulderId, CancellationToken ct = default)
+    public const int VideosPageSize = 12;
+
+    /// <summary>
+    /// Approved videos, newest first and paged. The viewer's own pending/rejected videos are returned separately so they
+    /// can be shown with their review status. Staff review pending videos in the moderation queue.
+    /// </summary>
+    public async Task<BoulderVideosDto> ListAsync(Guid boulderId, int? page, int? pageSize, CancellationToken ct = default)
     {
         await boulders.RequireVisibleAsync(boulderId, ct);
-        var viewerId = currentUser.UserId;
-        var videos = await db.BoulderVideos.AsNoTracking()
-            .Where(v => v.BoulderId == boulderId && (v.Status == VideoStatus.Approved || v.UserId == viewerId))
-            .OrderByDescending(v => v.UserId == viewerId).ThenByDescending(v => v.CreatedAt)
-            .ToListAsync(ct);
-        return await ToVideosAsync(videos, ct);
+        var (p, size) = Paging.Normalize(page, pageSize, VideosPageSize);
+        var approved = db.BoulderVideos.AsNoTracking().Where(v => v.BoulderId == boulderId && v.Status == VideoStatus.Approved);
+        var total = await approved.CountAsync(ct);
+        var rows = await approved.OrderByDescending(v => v.ReviewedAt).ThenByDescending(v => v.CreatedAt).Skip((p - 1) * size).Take(size).ToListAsync(ct);
+
+        IReadOnlyList<VideoDto> mine = [];
+        if (currentUser.UserId is { } uid && p == 1)
+        {
+            var own = await db.BoulderVideos.AsNoTracking()
+                .Where(v => v.BoulderId == boulderId && v.UserId == uid && v.Status != VideoStatus.Approved)
+                .OrderByDescending(v => v.UpdatedAt).ToListAsync(ct);
+            mine = await ToVideosAsync(own, ct);
+        }
+        return new BoulderVideosDto(new PagedResult<VideoDto>(await ToVideosAsync(rows, ct), p, size, total), mine);
     }
 
     public async Task<VideoDto> SubmitAsync(Guid boulderId, SubmitVideoRequest r, CancellationToken ct = default)
@@ -124,11 +159,12 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         var scope = await boulders.RequireVisibleAsync(boulderId, ct);
         var path = Input.Trimmed(r.StoragePath);
         await RequireUploadedAsync(VideoKind.Community, scope, path, ct);
+        var thumb = await OptionalThumbnailAsync(VideoKind.CommunityThumbnail, scope, r.ThumbnailPath, null, ct);
         ValidateCaption(r.Caption, BoulderVideo.CaptionMaxLength);
         if (await db.BoulderVideos.CountAsync(v => v.BoulderId == boulderId && v.UserId == userId, ct) >= MaxVideosPerUserPerBoulder)
             throw new ConflictException($"You can post up to {MaxVideosPerUserPerBoulder} videos per boulder. Delete one to add another.", "too_many_videos");
 
-        var video = BoulderVideo.Submit(boulderId, userId, path, r.Caption);
+        var video = BoulderVideo.Submit(boulderId, userId, path, thumb, r.Caption);
         db.BoulderVideos.Add(video);
         await db.SaveChangesAsync(ct);
         return (await ToVideosAsync([video], ct))[0];
@@ -142,12 +178,17 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         if (video.UserId != userId) throw new NotFoundException("Video", videoId);
         var scope = await boulders.RequireVisibleAsync(video.BoulderId, ct);
         var path = r.StoragePath is null ? null : Input.Trimmed(r.StoragePath);
-        if (path is not null && path != video.StoragePath) await RequireUploadedAsync(VideoKind.Community, scope, path, ct);
+        string? thumb = null;
+        if (path is not null && path != video.StoragePath)
+        {
+            await RequireUploadedAsync(VideoKind.Community, scope, path, ct);
+            thumb = await OptionalThumbnailAsync(VideoKind.CommunityThumbnail, scope, r.ThumbnailPath, null, ct);
+        }
         if (r.Caption is not null) ValidateCaption(r.Caption, BoulderVideo.CaptionMaxLength);
 
-        var replaced = video.Modify(r.Caption, path);
+        var replaced = video.Modify(r.Caption, path, thumb);
         await db.SaveChangesAsync(ct);
-        if (replaced is not null) await storage.DeleteAsync(StorageBuckets.CommunityVideos, replaced, ct);
+        foreach (var old in replaced) await storage.DeleteAsync(StorageBuckets.CommunityVideos, old, ct);
         return (await ToVideosAsync([video], ct))[0];
     }
 
@@ -160,6 +201,7 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         db.BoulderVideos.Remove(video);
         await db.SaveChangesAsync(ct);
         await storage.DeleteAsync(StorageBuckets.CommunityVideos, video.StoragePath, ct);
+        if (video.ThumbnailPath is not null) await storage.DeleteAsync(StorageBuckets.CommunityVideos, video.ThumbnailPath, ct);
     }
 
     // ---------- Moderation ----------
@@ -214,6 +256,18 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
             throw new ValidationException("storagePath", "The video upload didn't complete. Upload it again.");
     }
 
+    /// <summary>A thumbnail is optional; when given it must be an uploaded image in the same boulder folder.</summary>
+    private async Task<string?> OptionalThumbnailAsync(VideoKind kind, BoulderScope scope, string? requested, string? current, CancellationToken ct)
+    {
+        var path = Input.Trimmed(requested);
+        if (path.Length == 0) return null;
+        if (path == current) return path;
+        var ok = path.StartsWith(Prefix(scope.Gym.Id, scope.Boulder.Id, kind), StringComparison.Ordinal) && path.Contains(".thumb.")
+                 && !path.Contains("..") && await storage.ExistsAsync(Bucket(kind), path, ct);
+        if (!ok) throw new ValidationException("thumbnailPath", "The thumbnail upload didn't complete. Upload the video again.");
+        return path;
+    }
+
     private static void ValidateCaption(string? caption, int max)
     {
         if (Input.Trimmed(caption).Length > max) throw new ValidationException("caption", $"Keep the caption to {max} characters or fewer.");
@@ -223,7 +277,8 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     {
         var person = await db.Users.AsNoTracking().Where(u => u.Id == beta.UploadedByUserId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstAsync(ct);
         var url = await storage.CreateReadUrlAsync(StorageBuckets.OfficialBeta, beta.StoragePath, ReadUrlLifetime, ct);
-        return new BetaDto(beta.Id, beta.BoulderId, url, beta.Caption, person, beta.UpdatedAt);
+        var thumb = beta.ThumbnailPath is null ? null : await storage.CreateReadUrlAsync(StorageBuckets.OfficialBeta, beta.ThumbnailPath, ReadUrlLifetime, ct);
+        return new BetaDto(beta.Id, beta.BoulderId, url, thumb, beta.Caption, person, beta.UpdatedAt);
     }
 
     private async Task<IReadOnlyList<VideoDto>> ToVideosAsync(IReadOnlyList<BoulderVideo> videos, CancellationToken ct)
@@ -236,7 +291,8 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         foreach (var v in videos)
         {
             var url = await storage.CreateReadUrlAsync(StorageBuckets.CommunityVideos, v.StoragePath, ReadUrlLifetime, ct);
-            result.Add(new VideoDto(v.Id, v.BoulderId, authors.GetValueOrDefault(v.UserId, new PersonDto(v.UserId, "Climber", null)), url,
+            var thumb = v.ThumbnailPath is null ? null : await storage.CreateReadUrlAsync(StorageBuckets.CommunityVideos, v.ThumbnailPath, ReadUrlLifetime, ct);
+            result.Add(new VideoDto(v.Id, v.BoulderId, authors.GetValueOrDefault(v.UserId, new PersonDto(v.UserId, "Climber", null)), url, thumb,
                 v.Caption, v.Status, v.UserId == viewer ? v.RejectionReason : null, v.CreatedAt, v.UserId == viewer));
         }
         return result;

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload as TusUpload } from "tus-js-client";
+import { captureVideoThumbnail } from "@/features/community/videoThumbnail";
 import { api } from "@/lib/api";
 import { ApiError, defaultMessage } from "@/lib/apiError";
 import type { PagedResult } from "@/lib/paging";
@@ -22,8 +23,9 @@ export interface SystemConsensus {
 export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemConsensus[] }
 
 export type VideoStatus = "PENDING" | "APPROVED" | "REJECTED";
-export interface Beta { id: string; boulderId: string; videoUrl: string; caption: string | null; uploadedBy: Person; updatedAt: string }
-export interface Video { id: string; boulderId: string; author: Person; videoUrl: string; caption: string | null; status: VideoStatus; rejectionReason: string | null; createdAt: string; isMine: boolean }
+export interface Beta { id: string; boulderId: string; videoUrl: string; thumbnailUrl: string | null; caption: string | null; uploadedBy: Person; updatedAt: string }
+export interface Video { id: string; boulderId: string; author: Person; videoUrl: string; thumbnailUrl: string | null; caption: string | null; status: VideoStatus; rejectionReason: string | null; createdAt: string; isMine: boolean }
+export interface BoulderVideos { approved: PagedResult<Video>; mineInReview: Video[] }
 export interface ModerationVideo { video: Video; boulder: BoulderSummary }
 
 export type ReportEntityType = "COMMENT" | "VIDEO" | "BOULDER";
@@ -99,13 +101,32 @@ export function uploadResumable(ticket: UploadTicket & { resumable: ResumableUpl
   });
 }
 
-export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<string> {
+export interface UploadedVideo { path: string; thumbnailPath: string | null }
+
+/**
+ * Uploads a video (resumable) plus a poster frame captured on the device. A thumbnail that can't be produced or
+ * uploaded never blocks the video itself.
+ */
+export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<UploadedVideo> {
   if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, "Videos must be under 100 MB. Trim it and try again.");
   const contentType = file.type || "video/mp4";
   const ticket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`, { kind, contentType, sizeBytes: file.size });
   if (ticket.resumable) await uploadResumable({ ...ticket, resumable: ticket.resumable }, file, onProgress);
   else await putWithProgress(ticket, file, onProgress);
-  return ticket.path;
+
+  let thumbnailPath: string | null = null;
+  try {
+    const thumb = await captureVideoThumbnail(file);
+    if (thumb) {
+      const thumbTicket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`,
+        { kind: kind === "BETA" ? "BETA_THUMBNAIL" : "COMMUNITY_THUMBNAIL", contentType: "image/jpeg", sizeBytes: thumb.size });
+      await putWithProgress(thumbTicket, thumb);
+      thumbnailPath = thumbTicket.path;
+    }
+  } catch {
+    thumbnailPath = null;
+  }
+  return { path: ticket.path, thumbnailPath };
 }
 
 // ---- Comments ----
@@ -157,21 +178,26 @@ export function useBeta(boulderId: string) {
 export function useSaveBeta(boulderId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { storagePath: string; caption: string } | null) =>
+    mutationFn: (input: { storagePath: string; caption: string; thumbnailPath: string | null } | null) =>
       input ? api.put<Beta>(`/api/boulders/${boulderId}/beta`, input) : api.delete(`/api/boulders/${boulderId}/beta`),
     onSuccess: () => qc.invalidateQueries({ queryKey: communityKeys.beta(boulderId) }),
   });
 }
 
 export function useVideos(boulderId: string) {
-  return useQuery({ queryKey: communityKeys.videos(boulderId), queryFn: ({ signal }) => api.get<Video[]>(`/api/boulders/${boulderId}/videos`, { signal }) });
+  return useInfiniteQuery({
+    queryKey: communityKeys.videos(boulderId),
+    queryFn: ({ pageParam, signal }) => api.get<BoulderVideos>(`/api/boulders/${boulderId}/videos?page=${pageParam}&pageSize=12`, { signal }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.approved.hasMore ? last.approved.page + 1 : undefined),
+  });
 }
 
 export function useVideoMutations(boulderId: string) {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: communityKeys.videos(boulderId) });
   return {
-    submit: useMutation({ mutationFn: (input: { storagePath: string; caption: string }) => api.post<Video>(`/api/boulders/${boulderId}/videos`, input), onSuccess: invalidate }),
+    submit: useMutation({ mutationFn: (input: { storagePath: string; caption: string; thumbnailPath: string | null }) => api.post<Video>(`/api/boulders/${boulderId}/videos`, input), onSuccess: invalidate }),
     remove: useMutation({ mutationFn: (id: string) => api.delete(`/api/videos/${id}`), onSuccess: invalidate }),
   };
 }

@@ -1,14 +1,14 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Resumable chunked video uploads (tus) for Supabase Storage and local development
+Applying: Community videos: device-captured thumbnails, paged thumbnail rail, full-screen viewer
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-già presente
+OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    98, Skipped:     0, Total:    98, Duration: 59 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   101, Skipped:     0, Total:   101, Duration: 1 m 8 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

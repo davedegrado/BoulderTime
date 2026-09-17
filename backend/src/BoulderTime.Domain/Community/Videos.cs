@@ -11,23 +11,36 @@ public class BoulderBeta : IAuditable
     public Guid BoulderId { get; private set; }
     public Guid UploadedByUserId { get; private set; }
     public string StoragePath { get; private set; } = string.Empty;
+    /// <summary>Poster frame captured by the uploading device; optional (some formats can't be decoded in the browser).</summary>
+    public string? ThumbnailPath { get; private set; }
     public string? Caption { get; private set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
     private BoulderBeta() { }
 
-    public static BoulderBeta Create(Guid boulderId, Guid userId, string storagePath, string? caption) =>
-        new() { Id = Guid.NewGuid(), BoulderId = boulderId, UploadedByUserId = userId, StoragePath = storagePath, Caption = Clean(caption) };
+    public static BoulderBeta Create(Guid boulderId, Guid userId, string storagePath, string? thumbnailPath, string? caption) =>
+        new() { Id = Guid.NewGuid(), BoulderId = boulderId, UploadedByUserId = userId, StoragePath = storagePath, ThumbnailPath = Clean(thumbnailPath), Caption = Clean(caption) };
 
-    /// <returns>The previous storage path when the video file changed, so the old object can be deleted.</returns>
-    public string? Replace(Guid userId, string storagePath, string? caption)
+    /// <returns>Storage paths that are no longer referenced (old video and/or thumbnail), so they can be deleted.</returns>
+    public IReadOnlyList<string> Replace(Guid userId, string storagePath, string? thumbnailPath, string? caption)
     {
-        var previous = StoragePath != storagePath ? StoragePath : null;
+        var obsolete = new List<string>();
+        if (StoragePath != storagePath)
+        {
+            obsolete.Add(StoragePath);
+            if (ThumbnailPath is not null && ThumbnailPath != thumbnailPath) obsolete.Add(ThumbnailPath);
+            ThumbnailPath = Clean(thumbnailPath);
+        }
+        else if (thumbnailPath is not null && thumbnailPath != ThumbnailPath)
+        {
+            if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
+            ThumbnailPath = Clean(thumbnailPath);
+        }
         UploadedByUserId = userId;
         StoragePath = storagePath;
         Caption = Clean(caption);
-        return previous;
+        return obsolete;
     }
 
     private static string? Clean(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim();
@@ -53,6 +66,7 @@ public class BoulderVideo : IAuditable
     public Guid BoulderId { get; private set; }
     public Guid UserId { get; private set; }
     public string StoragePath { get; private set; } = string.Empty;
+    public string? ThumbnailPath { get; private set; }
     public string? Caption { get; private set; }
     public VideoStatus Status { get; private set; } = VideoStatus.Pending;
     public string? RejectionReason { get; private set; }
@@ -63,24 +77,26 @@ public class BoulderVideo : IAuditable
 
     private BoulderVideo() { }
 
-    public static BoulderVideo Submit(Guid boulderId, Guid userId, string storagePath, string? caption) =>
-        new() { Id = Guid.NewGuid(), BoulderId = boulderId, UserId = userId, StoragePath = storagePath, Caption = Clean(caption) };
+    public static BoulderVideo Submit(Guid boulderId, Guid userId, string storagePath, string? thumbnailPath, string? caption) =>
+        new() { Id = Guid.NewGuid(), BoulderId = boulderId, UserId = userId, StoragePath = storagePath, ThumbnailPath = Clean(thumbnailPath), Caption = Clean(caption) };
 
-    /// <summary>Changing caption or file resets review. Returns the replaced storage path, if the file changed.</summary>
-    public string? Modify(string? caption, string? storagePath)
+    /// <summary>Changing caption or file resets review. Returns storage paths that are no longer referenced.</summary>
+    public IReadOnlyList<string> Modify(string? caption, string? storagePath, string? thumbnailPath)
     {
-        string? previous = null;
+        var obsolete = new List<string>();
         if (storagePath is not null && storagePath != StoragePath)
         {
-            previous = StoragePath;
+            obsolete.Add(StoragePath);
+            if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
             StoragePath = storagePath;
+            ThumbnailPath = Clean(thumbnailPath);
         }
         if (caption is not null) Caption = Clean(caption);
         Status = VideoStatus.Pending;
         RejectionReason = null;
         ReviewedAt = null;
         ReviewedByUserId = null;
-        return previous;
+        return obsolete;
     }
 
     public void Approve(Guid reviewerId, DateTimeOffset now) => Review(reviewerId, now, VideoStatus.Approved, null);

@@ -60,6 +60,7 @@ internal sealed class BoulderBetaConfiguration : IEntityTypeConfiguration<Boulde
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.StoragePath).HasMaxLength(512).IsRequired();
+        b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.Caption).HasMaxLength(BoulderBeta.CaptionMaxLength);
         b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<User>().WithMany().HasForeignKey(x => x.UploadedByUserId).OnDelete(DeleteBehavior.Restrict);
@@ -75,6 +76,7 @@ internal sealed class BoulderVideoConfiguration : IEntityTypeConfiguration<Bould
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.StoragePath).HasMaxLength(512).IsRequired();
+        b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.Caption).HasMaxLength(BoulderVideo.CaptionMaxLength);
         b.Property(x => x.RejectionReason).HasMaxLength(BoulderVideo.ReasonMaxLength);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();

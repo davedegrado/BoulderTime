@@ -67,7 +67,8 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
     public async Task<IActionResult> DeleteBeta(Guid boulderId, CancellationToken ct) { await videos.DeleteBetaAsync(boulderId, ct); return NoContent(); }
 
     [HttpGet("api/boulders/{boulderId:guid}/videos"), AllowAnonymous]
-    public Task<IReadOnlyList<VideoDto>> ListVideos(Guid boulderId, CancellationToken ct) => videos.ListAsync(boulderId, ct);
+    public Task<BoulderVideosDto> ListVideos(Guid boulderId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
+        videos.ListAsync(boulderId, page, pageSize, ct);
 
     [HttpPost("api/boulders/{boulderId:guid}/videos"), Authorize]
     public async Task<ActionResult<VideoDto>> SubmitVideo(Guid boulderId, [FromBody] SubmitVideoRequest request, CancellationToken ct) =>

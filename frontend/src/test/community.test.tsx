@@ -103,23 +103,61 @@ describe("Community grade", () => {
 });
 
 describe("Community videos", () => {
-  it("tells uploaders their video is pending or why it was rejected", async () => {
-    reply("GET", "/api/boulders/b1/videos", [
-      { id: "v1", boulderId: "b1", author: person("u1", "Me"), videoUrl: "/v1.mp4", caption: null, status: "PENDING", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: true },
-      { id: "v2", boulderId: "b1", author: person("u1", "Me"), videoUrl: "/v2.mp4", caption: null, status: "REJECTED", rejectionReason: "Wrong boulder", createdAt: "2026-09-09T10:00:00Z", isMine: true },
-    ]);
+  const vid = (id: string, over: object = {}) => ({ id, boulderId: "b1", author: person("u9", `Climber ${id}`), videoUrl: `/${id}.mp4`, thumbnailUrl: `/${id}.jpg`, caption: null, status: "APPROVED", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: false, ...over });
+
+  it("shows your videos in review separately with their status", async () => {
+    reply("GET", "/api/boulders/b1/videos", {
+      approved: { items: [], page: 1, pageSize: 12, total: 0, hasMore: false },
+      mineInReview: [
+        vid("v1", { author: person("u1", "Me"), status: "PENDING", isMine: true }),
+        vid("v2", { author: person("u1", "Me"), status: "REJECTED", rejectionReason: "Wrong boulder", isMine: true }),
+      ],
+    });
     renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
 
-    expect(await screen.findByText(/waiting for the gym's approval/i)).toBeInTheDocument();
-    expect(screen.getByText("Not approved: Wrong boulder")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Choose a video" })).toBeInTheDocument();
+    expect(await screen.findByText("Your videos in review")).toBeInTheDocument();
+    expect(screen.getByText("In review")).toBeInTheDocument();
+    expect(screen.getByText("Not approved")).toBeInTheDocument();
+    expect(screen.getByText("No community videos yet.")).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole("button", { name: /play video by me/i })[1]!);
+    expect(within(screen.getByRole("dialog")).getByText("Not approved: Wrong boulder")).toBeInTheDocument();
+  });
+
+  it("lists approved videos as thumbnails, opens one at a time and pages in more when you reach the end", async () => {
+    const page1 = Array.from({ length: 12 }, (_, i) => vid(`a${i}`));
+    reply("GET", "/api/boulders/b1/videos", (() => {
+      let call = 0;
+      return () => (++call === 1
+        ? { approved: { items: page1, page: 1, pageSize: 12, total: 13, hasMore: true }, mineInReview: [] }
+        : { approved: { items: [vid("a12")], page: 2, pageSize: 12, total: 13, hasMore: false }, mineInReview: [] });
+    })());
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
+
+    expect(await screen.findByRole("heading", { name: "Community videos (13)" })).toBeInTheDocument();
+    const rail = screen.getByLabelText("Approved videos");
+    expect(within(rail).getAllByRole("button", { name: /play video/i })).toHaveLength(12);
+    expect(within(rail).getByRole("button", { name: "Show 1 more" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scroll videos right" })).toBeInTheDocument();
+    expect(document.querySelectorAll("video")).toHaveLength(0); // no players until you open one
+
+    await userEvent.click(within(rail).getByRole("button", { name: /climber a11/i }));
+    const dialog = screen.getByRole("dialog", { name: "Video 12 of 12" });
+    expect(dialog.querySelectorAll("video")).toHaveLength(1);
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Next video" }));
+    expect(await screen.findByRole("dialog", { name: "Video 13 of 13" })).toBeInTheDocument();
+    expect(screen.getByText("Climber a12", { selector: ".list__title" })).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 
 describe("Moderation queue", () => {
   const gym = { id: "g1", slug: "crimp", name: "Crimp", city: "Milano", logoUrl: null, coverImageUrl: null, status: "ACTIVE", description: null, address: null, website: null, email: null, phone: null, createdAt: "2026-01-01T00:00:00Z", viewerRole: "STAFF", follow: null, followerCount: 0 };
   const boulder = { id: "b1", gymId: "g1", gymName: "Crimp", sectorId: "s1", sectorName: "Cave", photoUrl: "/b.jpg", holdColor: "BLUE", grades: [], status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, rating: { average: null, count: 0 }, viewer: null };
-  const video = (id: string, authorId: string) => ({ video: { id, boulderId: "b1", author: person(authorId, authorId === "me" ? "Me" : "Anna"), videoUrl: `/${id}.mp4`, caption: null, status: "PENDING", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: authorId === "me" }, boulder });
+  const video = (id: string, authorId: string) => ({ video: { id, boulderId: "b1", author: person(authorId, authorId === "me" ? "Me" : "Anna"), videoUrl: `/${id}.mp4`, thumbnailUrl: null, caption: null, status: "PENDING", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: authorId === "me" }, boulder });
 
   it("approves others' videos, never your own, and asks for a reason to reject", async () => {
     reply("GET", "/api/gyms/crimp", gym);
