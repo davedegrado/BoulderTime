@@ -1,6 +1,8 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Domain.Boulders;
+using BoulderTime.Domain.Climbing;
+using BoulderTime.Domain.Follows;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
@@ -155,7 +157,46 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
         var users = await db.Users.ToListAsync(ct);
         foreach (var user in users) user.GrantPlatformAdmin();
         await db.SaveChangesAsync(ct);
-        foreach (var user in users) await SeedAsync(user.Email, ct);
+        foreach (var user in users)
+        {
+            await SeedAsync(user.Email, ct);
+            await SeedActivityAsync(user.Id, ct);
+        }
         return users.Count;
+    }
+
+    /// <summary>
+    /// LOCAL DEVELOPMENT ONLY: gives an account with no climbing history some follows, sends, projects and ratings
+    /// on the demo gyms so Home and Activity show real content. Never touches accounts that already have activity.
+    /// </summary>
+    private async Task SeedActivityAsync(Guid userId, CancellationToken ct)
+    {
+        if (await db.BoulderAttempts.AnyAsync(a => a.UserId == userId, ct)) return;
+        var now = clock.UtcNow;
+        var slugs = DemoGyms.Select(g => g.Slug).ToList();
+        var gyms = await db.Gyms.Where(g => slugs.Contains(g.Slug)).OrderBy(g => g.Name).ToListAsync(ct);
+        foreach (var gym in gyms)
+        {
+            if (await db.GymFollows.AnyAsync(f => f.UserId == userId && f.GymId == gym.Id, ct)) continue;
+            var follow = GymFollow.Create(userId, gym.Id, now);
+            follow.Update(isFavorite: gym.Slug == "demo-crimp-factory", notificationsEnabled: true);
+            db.GymFollows.Add(follow);
+        }
+
+        var crimp = gyms.FirstOrDefault(g => g.Slug == "demo-crimp-factory");
+        if (crimp is not null)
+        {
+            var boulders = await db.Boulders.Where(b => b.GymId == crimp.Id && b.Status == BoulderStatus.Active)
+                .OrderBy(b => b.Id).Take(10).ToListAsync(ct);
+            for (var i = 0; i < boulders.Count; i++)
+            {
+                var attempt = BoulderAttempt.Start(userId, boulders[i].Id);
+                var sent = i < 6;
+                attempt.Record(sent ? 1 + i % 4 : 3 + i, sent, now);
+                db.BoulderAttempts.Add(attempt);
+                if (sent) db.BoulderRatings.Add(BoulderRating.Create(userId, boulders[i].Id, 3 + i % 3));
+            }
+        }
+        await db.SaveChangesAsync(ct);
     }
 }

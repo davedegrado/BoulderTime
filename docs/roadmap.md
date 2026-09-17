@@ -5,8 +5,8 @@
 | 1 | Foundation: repo, frontend, backend, Supabase auth, base UI, routing, config | **Done** — verified in Codespaces (build, migration, 19/19 tests) |
 | 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | **Backend done**; screens next |
 | 3 | Boulders, photos, hold colours, grading systems, official grades, active/removed | |
-| 4 | Attempts, completions, activity, ratings, follows | Next |
-| 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | |
+| 4 | Attempts, completions, activity, ratings, follows | **Done** |
+| 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | Next |
 | 6 | Notifications, announcements, subscriptions, preferences | |
 | 7 | Leaderboards | |
 | 8 | Polish: responsive UX, accessibility, states, images, performance | |
@@ -23,5 +23,4 @@ typecheck/tests/build, and commits the log. `bash scripts/dev.sh` then runs the 
 | Route | Replaced in |
 |---|---|
 | `/explore` | Phase 2 |
-| `/activity` | Phase 4 |
 | `/notifications` | Phase 6 |

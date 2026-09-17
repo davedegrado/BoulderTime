@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class SectorService(IAppDbContext db, GymAccess access)
+public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUser currentUser)
 {
     /// <summary>Public: active sectors of an active gym. Staff also see inactive sectors (and non-public gyms).</summary>
     public async Task<IReadOnlyList<SectorDto>> ListAsync(Guid gymId, CancellationToken ct = default)
@@ -18,7 +18,13 @@ public sealed class SectorService(IAppDbContext db, GymAccess access)
         var q = db.Sectors.AsNoTracking().Where(s => s.GymId == gymId);
         if (!isStaff) q = q.Where(s => s.IsActive);
         var sectors = await q.OrderBy(s => s.SortOrder).ThenBy(s => s.Name).ToListAsync(ct);
-        return sectors.Select(SectorDto.From).ToList();
+        var followed = new HashSet<Guid>();
+        if (currentUser.UserId is { } uid)
+        {
+            var ids = sectors.Select(s => s.Id).ToList();
+            followed = (await db.SectorFollows.AsNoTracking().Where(f => f.UserId == uid && ids.Contains(f.SectorId)).Select(f => f.SectorId).ToListAsync(ct)).ToHashSet();
+        }
+        return sectors.Select(s => SectorDto.From(s, followed.Contains(s.Id))).ToList();
     }
 
     public async Task<SectorDto> CreateAsync(Guid gymId, CreateSectorRequest r, CancellationToken ct = default)
@@ -62,7 +68,7 @@ public sealed class SectorService(IAppDbContext db, GymAccess access)
 
         for (var i = 0; i < ids.Count; i++) sectors.First(s => s.Id == ids[i]).MoveTo(i);
         await db.SaveChangesAsync(ct);
-        return sectors.OrderBy(s => s.SortOrder).Select(SectorDto.From).ToList();
+        return sectors.OrderBy(s => s.SortOrder).Select(s => SectorDto.From(s)).ToList();
     }
 
     private static void Validate(string? name, string? description) =>

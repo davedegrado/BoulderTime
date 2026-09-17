@@ -102,3 +102,23 @@ implementation with HMAC-signed tickets, used in development and in tests so the
 
 **System-loaded data.** `created_by_user_id` is nullable on boulders and grades: demo seeds and future imports have no
 user. Bulk removal returns counts per sector so Phase 6 can send one "sector retraced" update per sector.
+
+## ADR-010 · Climbing progress, ratings, follows and activity
+**Tracking.** `boulder_attempts(user_id, boulder_id, attempts, completed, completed_at)` with `UNIQUE(user_id, boulder_id)`
+and a check constraint `0 ≤ attempts ≤ 999`. Completing implies at least one attempt; un-completing clears `completed_at`.
+A row with zero attempts and no completion is deleted (the API answers 204). Tracking works on removed boulders so
+climbers can log or correct sessions after a retrace. Every FK into history is `RESTRICT`.
+
+**Ratings.** `boulder_ratings(user_id, boulder_id, rating)` with `UNIQUE(user_id, boulder_id)` and `CHECK 1–5`.
+Rating requires an existing attempt; clearing tracking removes the rating. Averages are computed on read.
+
+**Follows.** `gym_follows` (with `is_favorite`, any number of favourites), `sector_follows`, `boulder_follows`, each unique
+per user and independent. Every follow stores `notifications_enabled` for Phase 6 targeting. PUT/DELETE are idempotent.
+
+**Activity is computed on read.** Stats, a 12-week completion chart, history and Home queries run against
+`boulder_attempts`. **Highest grade is per grading system**, using `grade_values.rank`; grades from different systems
+are never compared. The shared `BoulderReader` builds boulder cards (grades, community rating, viewer progress) with a
+fixed number of queries for any list size.
+
+**Client saving.** Attempt taps update the screen immediately and are saved once after 700 ms of inactivity (or on
+leaving the page), so fast tapping never produces out-of-order writes.

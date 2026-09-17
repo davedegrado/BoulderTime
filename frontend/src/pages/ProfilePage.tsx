@@ -100,7 +100,11 @@ export function ProfilePage() {
         </section>
       )}
 
-      <Link to="/gyms/suggest" className="btn btn--secondary"><Plus aria-hidden /><span>Suggest a gym</span></Link>
+      <div className="form__actions">
+        <Link to={`/users/${user.id}`} className="btn btn--secondary"><span>View public profile</span></Link>
+        <Link to="/activity" className="btn btn--secondary"><span>Your activity</span></Link>
+      </div>
+      <Link to="/gyms/suggest" className="btn btn--ghost"><Plus aria-hidden /><span>Suggest a gym</span></Link>
       <Button variant="ghost" icon={<LogOut aria-hidden />} onClick={onSignOut}>Sign out</Button>
     </div>
   );

@@ -13,7 +13,10 @@ import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
-import { Mountain } from "lucide-react";
+import { Bell, BellRing, Heart, Mountain } from "lucide-react";
+import { useFollowGym, useFollowSector } from "@/features/climbing/api";
+import { FollowButton } from "@/features/climbing/ClimbingBits";
+import { useAuth } from "@/auth/AuthProvider";
 
 type Tab = "boulders" | "sectors" | "info";
 const TAB_LABEL: Record<Tab, string> = { boulders: "Boulders", sectors: "Sectors", info: "Info" };
@@ -36,12 +39,15 @@ export function GymPage() {
           <div className="gym-hero__row">
             <div className="gym-hero__text">
               <h1 className="page__title">{g.name}</h1>
-              <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}</p>
+              <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${g.followerCount} ${g.followerCount === 1 ? "follower" : "followers"}`}</p>
               {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · only staff can see this</Badge>}
             </div>
-            {g.viewerRole && (
-              <Link to={`/manage/${g.slug}`} className="btn btn--secondary"><Settings2 aria-hidden /><span>Manage</span></Link>
-            )}
+            <div className="gym-hero__actions">
+              <GymFollowControls gym={g} />
+              {g.viewerRole && (
+                <Link to={`/manage/${g.slug}`} className="btn btn--secondary"><Settings2 aria-hidden /><span>Manage</span></Link>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -56,6 +62,25 @@ export function GymPage() {
         {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : <InfoTab gym={g} />}
       </div>
     </div>
+  );
+}
+
+function GymFollowControls({ gym }: { gym: GymDetail }) {
+  const { session } = useAuth();
+  const follow = useFollowGym(gym);
+  if (!session) return <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="btn btn--primary"><Bell aria-hidden /><span>Follow</span></Link>;
+  const state = gym.follow ?? { isFollowing: false, isFavorite: false };
+  return (
+    <>
+      <FollowButton following={state.isFollowing} onToggle={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })} />
+      {state.isFollowing && (
+        <button type="button" className={`icon-btn fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
+          aria-label={state.isFavorite ? "Remove from favourites" : "Add to favourites"}
+          onClick={() => follow.mutate({ isFollowing: true, isFavorite: !state.isFavorite })}>
+          <Heart aria-hidden />
+        </button>
+      )}
+    </>
   );
 }
 
@@ -91,6 +116,8 @@ function BouldersTab({ gymId }: { gymId: string }) {
 
 function SectorsTab({ gymId }: { gymId: string }) {
   const sectors = useSectors(gymId);
+  const { session } = useAuth();
+  const followSector = useFollowSector(gymId);
   if (sectors.isPending) return <LoadingState label="Loading sectors" />;
   if (sectors.isError) return <ErrorState error={sectors.error} onRetry={() => sectors.refetch()} />;
   if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title="No sectors yet" body="This gym hasn't set up its sectors on BoulderTime." />;
@@ -105,6 +132,13 @@ function SectorsTab({ gymId }: { gymId: string }) {
             {s.description && <p className="list__sub">{s.description}</p>}
           </div>
           {!s.isActive && <Badge>Hidden</Badge>}
+          {session && s.isActive && (
+            <button type="button" className={`icon-btn ${s.isFollowing ? "is-following" : ""}`} aria-pressed={s.isFollowing}
+              aria-label={s.isFollowing ? `Unfollow ${s.name}` : `Follow ${s.name}`}
+              onClick={() => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing })}>
+              {s.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+            </button>
+          )}
         </li>
       ))}
     </ul>

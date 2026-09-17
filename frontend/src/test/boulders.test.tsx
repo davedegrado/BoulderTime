@@ -36,7 +36,7 @@ const grades = [
   { gradeSystemId: "col", systemName: "Colour", systemType: "COLOR", gradeValueId: "vy", label: "Yellow", rank: 1, colorHex: "#F5C400" },
   { gradeSystemId: "font", systemName: "Fontainebleau", systemType: "FONTAINEBLEAU", gradeValueId: "v6a", label: "6A", rank: 5, colorHex: null },
 ];
-const boulder = (id: string, over: object = {}) => ({ id, gymId: "g1", sectorId: "s1", sectorName: "Cave", photoUrl: `/img/${id}.jpg`, holdColor: "BLUE", grades, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, ...over });
+const boulder = (id: string, over: object = {}) => ({ id, gymId: "g1", gymName: "Crimp Factory", rating: { average: null, count: 0 }, viewer: null, sectorId: "s1", sectorName: "Cave", photoUrl: `/img/${id}.jpg`, holdColor: "BLUE", grades, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, ...over });
 const page = (items: unknown[]) => ({ items, page: 1, pageSize: 24, total: items.length, hasMore: false });
 
 beforeEach(() => { routes.clear(); calls.length = 0; });
@@ -60,7 +60,7 @@ describe("Boulder list (climber)", () => {
 
 describe("Boulder page", () => {
   it("keeps removed boulders readable with a history notice and no edit for climbers", async () => {
-    reply("GET", "/api/boulders/b1", { ...boulder("b1", { status: "REMOVED", removedAt: "2026-09-12T10:00:00Z" }), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: { userId: "u9", displayName: "Marco", avatarUrl: null }, viewerRole: null });
+    reply("GET", "/api/boulders/b1", { ...boulder("b1", { status: "REMOVED", removedAt: "2026-09-12T10:00:00Z" }), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: { userId: "u9", displayName: "Marco", avatarUrl: null }, viewerRole: null, isFollowing: false });
     renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
 
     expect(await screen.findByText(/this boulder was removed/i)).toBeInTheDocument();

@@ -7,24 +7,36 @@ namespace BoulderTime.Application.Boulders;
 /// <summary>An official grade, labelled with its system so clients never confuse a colour GRADE with hold colour.</summary>
 public sealed record BoulderGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, Guid GradeValueId, string Label, int Rank, string? ColorHex);
 
+public sealed record RatingSummaryDto(double? Average, int Count);
+
+/// <summary>The signed-in viewer's own tracking of a boulder; null when anonymous or never tracked.</summary>
+public sealed record ViewerProgressDto(int Attempts, bool Completed, DateTimeOffset? CompletedAt, int? Rating);
+
 public sealed record BoulderSummaryDto(
-    Guid Id, Guid GymId, Guid SectorId, string SectorName, string PhotoUrl,
+    Guid Id, Guid GymId, string GymName, Guid SectorId, string SectorName, string PhotoUrl,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades,
-    BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt);
+    BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt,
+    RatingSummaryDto Rating, ViewerProgressDto? Viewer);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
 public sealed record BoulderDetailDto(
     Guid Id, Guid GymId, string GymSlug, string GymName, Guid SectorId, string SectorName, string PhotoUrl, string PhotoPath,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades, PersonDto? Setter,
-    BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt, GymRole? ViewerRole);
+    BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt, GymRole? ViewerRole,
+    RatingSummaryDto Rating, ViewerProgressDto? Viewer, bool IsFollowing);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
 public sealed record SaveBoulderRequest(
     Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId);
 
-public sealed record BoulderQuery(BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId, int? Page, int? PageSize);
+/// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
+public enum ProgressFilter { All, Untried, Projects, Completed }
+
+public sealed record BoulderQuery(
+    BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
+    ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize);
 
 public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds);
 

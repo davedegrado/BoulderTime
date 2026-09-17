@@ -90,6 +90,7 @@ describe("Explore", () => {
 describe("Home", () => {
   it("shows a pending invitation and accepts it", async () => {
     reply("GET", "/api/users/me", me({ pendingInvitations: 1 }));
+    reply("GET", "/api/users/me/home", { stats: { completed: 0, projects: 0, totalAttempts: 0, completedThisMonth: 0 }, gyms: [], projects: [], freshToTry: [], recentCompletions: [] });
     reply("GET", "/api/users/me/invitations", [
       { id: "i1", gymId: "g1", gymSlug: "crimp-factory", gymName: "Crimp Factory", gymCity: "Milano", role: "ADMIN", invitedBy: "Marco", expiresAt: new Date(Date.now() + 3 * 86400000).toISOString() },
     ]);

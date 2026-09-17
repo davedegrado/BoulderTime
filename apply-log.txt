@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 3: boulders, grading systems, hold colours, photo uploads, bulk removal and history
+Applying: Phase 4: attempts, completions, ratings, follows, activity, public profiles and home
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    61, Skipped:     0, Total:    61, Duration: 26 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    71, Skipped:     0, Total:    71, Duration: 32 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

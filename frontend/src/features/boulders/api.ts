@@ -11,18 +11,24 @@ export type BoulderStatus = "ACTIVE" | "REMOVED";
 
 export interface BoulderGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gradeValueId: string; label: string; rank: number; colorHex: string | null }
 
+export interface RatingSummary { average: number | null; count: number }
+export interface ViewerProgress { attempts: number; completed: boolean; completedAt: string | null; rating: number | null }
+
 export interface BoulderSummary {
-  id: string; gymId: string; sectorId: string; sectorName: string; photoUrl: string;
+  id: string; gymId: string; gymName: string; sectorId: string; sectorName: string; photoUrl: string;
   holdColor: HoldColor; grades: BoulderGrade[]; status: BoulderStatus; createdAt: string; removedAt: string | null;
+  rating: RatingSummary; viewer: ViewerProgress | null;
 }
 
 export interface BoulderDetail extends BoulderSummary {
   gymSlug: string; gymName: string; photoPath: string;
   setter: { userId: string; displayName: string; avatarUrl: string | null } | null;
   viewerRole: GymRole | null;
+  isFollowing: boolean;
 }
 
-export interface BoulderFilters { status?: BoulderStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string }
+export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";
+export interface BoulderFilters { status?: BoulderStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string }
 
 export interface SaveBoulderInput {
   sectorId: string; photoPath: string; holdColor: HoldColor;

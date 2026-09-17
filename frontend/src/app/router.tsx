@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-import { Activity, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { HomePage } from "@/pages/HomePage";
@@ -21,6 +21,8 @@ import { ManageBoulders } from "@/pages/manage/ManageBoulders";
 import { BoulderEditorPage } from "@/pages/manage/BoulderEditorPage";
 import { ManageGrading } from "@/pages/manage/ManageGrading";
 import { BoulderPage } from "@/pages/BoulderPage";
+import { ActivityPage } from "@/pages/ActivityPage";
+import { UserProfilePage } from "@/pages/UserProfilePage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { AdminCandidates } from "@/pages/admin/AdminCandidates";
@@ -63,7 +65,8 @@ export const router = createBrowserRouter([
           { path: "users", element: <AdminUsers /> },
         ],
       },
-      { path: "activity", element: <RequireAuth><UpcomingPage icon={<Activity />} title="Activity" body="Your climbing history arrives in Phase 4." /></RequireAuth> },
+      { path: "activity", element: <RequireAuth><ActivityPage /></RequireAuth> },
+      { path: "users/:id", element: <UserProfilePage /> },
       { path: "notifications", element: <RequireAuth><UpcomingPage icon={<Bell />} title="Notifications" body="Gym, sector and boulder updates arrive in Phase 6." /></RequireAuth> },
       { path: "profile", element: <RequireAuth><ProfilePage /></RequireAuth> },
       { path: "*", element: <NotFoundPage /> },

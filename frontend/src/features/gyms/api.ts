@@ -21,6 +21,8 @@ export interface GymDetail extends GymSummary {
   phone: string | null;
   createdAt: string;
   viewerRole: GymRole | null;
+  follow: { isFollowing: boolean; isFavorite: boolean; notificationsEnabled: boolean } | null;
+  followerCount: number;
 }
 
 export interface Sector {
@@ -31,6 +33,7 @@ export interface Sector {
   imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
+  isFollowing: boolean;
 }
 
 export interface UpdateGymInput {

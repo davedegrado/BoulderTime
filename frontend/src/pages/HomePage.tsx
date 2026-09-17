@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Compass, Plus, ShieldCheck } from "lucide-react";
+import { ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
+import { useHome } from "@/features/climbing/api";
 import { InvitationsCard } from "@/features/staff/InvitationsCard";
-import { ErrorState, LoadingState } from "@/components/States";
+import { BoulderCard } from "@/features/boulders/BoulderCard";
+import { HistoryRow } from "@/features/climbing/ClimbingBits";
+import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Logo } from "@/components/Logo";
 import { roleLabel } from "@/lib/format";
@@ -32,20 +35,74 @@ function GuestHome() {
 
 function SignedInHome() {
   const me = useCurrentUser();
+  const home = useHome();
 
-  if (me.isPending) return <LoadingState label="Loading your profile" />;
+  if (me.isPending || home.isPending) return <LoadingState label="Loading your climbing" />;
   if (me.isError) return <ErrorState error={me.error} onRetry={() => me.refetch()} />;
+  if (home.isError) return <ErrorState error={home.error} onRetry={() => home.refetch()} />;
 
   const user = me.data;
+  const h = home.data;
   const firstName = user.displayName.split(" ")[0];
+
   return (
     <div className="page">
       <header className="page__header">
         <h1 className="page__title">Hey {firstName}</h1>
-        <p className="page__subtitle">Ready for a session?</p>
+        <p className="page__subtitle">
+          {h.stats.completedThisMonth > 0 ? `${h.stats.completedThisMonth} sent this month. Keep it going.` : "Ready for a session?"}
+        </p>
       </header>
 
       <InvitationsCard count={user.pendingInvitations} />
+
+      <section aria-labelledby="gyms-title" className="section">
+        <h2 id="gyms-title" className="section__title">Your gyms</h2>
+        {h.gyms.length === 0 ? (
+          <EmptyState icon={<Compass />} title="You aren't following any gyms yet."
+            body="Follow the gyms you climb at to see new boulders and your projects here."
+            action={<Link to="/explore" className="btn btn--primary"><Compass aria-hidden /><span>Find a gym</span></Link>} />
+        ) : (
+          <ul className="list">
+            {h.gyms.map((g) => (
+              <li key={g.gym.id}>
+                <Link to={`/gyms/${g.gym.slug}`} className="list__row list__row--link">
+                  <GymAvatar name={g.gym.name} logoUrl={g.gym.logoUrl} size={44} />
+                  <div className="list__main">
+                    <p className="list__title">{g.gym.name} {g.isFavorite && <Heart className="inline-fav" aria-label="Favourite" />}</p>
+                    <p className="list__sub">{g.activeBoulders} boulders{g.newThisWeek > 0 && ` · ${g.newThisWeek} new this week`}</p>
+                  </div>
+                  <ChevronRight className="list__chevron" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {h.projects.length > 0 && (
+        <section aria-labelledby="projects-title" className="section">
+          <h2 id="projects-title" className="section__title">Keep trying</h2>
+          <div className="rail">{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+        </section>
+      )}
+
+      {h.freshToTry.length > 0 && (
+        <section aria-labelledby="fresh-title" className="section">
+          <h2 id="fresh-title" className="section__title">Fresh on the wall</h2>
+          <div className="rail">{h.freshToTry.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+        </section>
+      )}
+
+      {h.recentCompletions.length > 0 && (
+        <section aria-labelledby="recent-title" className="section">
+          <div className="section__row">
+            <h2 id="recent-title" className="section__title">Recent sends</h2>
+            <Link to="/activity" className="section__link">All activity</Link>
+          </div>
+          <ul className="history">{h.recentCompletions.map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>
+        </section>
+      )}
 
       {(user.staffGyms.length > 0 || user.isPlatformAdmin) && (
         <section aria-labelledby="work-title" className="section">
@@ -79,20 +136,7 @@ function SignedInHome() {
         </section>
       )}
 
-      <section aria-labelledby="discover-title" className="section">
-        <h2 id="discover-title" className="section__title">Find your gym</h2>
-        <div className="cta-card">
-          <Compass className="cta-card__icon" aria-hidden />
-          <div className="cta-card__text">
-            <p className="list__title">Explore gyms on BoulderTime</p>
-            <p className="list__sub">Search by name or city and see their sectors.</p>
-          </div>
-          <div className="cta-card__actions">
-            <Link to="/explore" className="btn btn--primary"><span>Explore</span></Link>
-            <Link to="/gyms/suggest" className="btn btn--ghost"><Plus aria-hidden /><span>Suggest a gym</span></Link>
-          </div>
-        </div>
-      </section>
+      <Link to="/gyms/suggest" className="btn btn--ghost"><Plus aria-hidden /><span>Suggest a gym</span></Link>
     </div>
   );
 }

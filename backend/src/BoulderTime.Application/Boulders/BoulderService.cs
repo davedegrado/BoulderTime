@@ -11,7 +11,7 @@ namespace BoulderTime.Application.Boulders;
 /// Boulder lifecycle. Viewing active boulders is public for visible gyms; a removed boulder stays readable by id
 /// forever (climbing history links to it). Creating, editing, removing and restoring need STAFF+.
 /// </summary>
-public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, IClock clock)
+public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader)
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
@@ -39,19 +39,22 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         if (q.SectorId is { } sectorId) query = query.Where(b => b.SectorId == sectorId);
         if (q.HoldColor is { } hold) query = query.Where(b => b.HoldColor == hold);
         if (q.GradeValueId is { } valueId) query = query.Where(b => db.BoulderGrades.Any(g => g.BoulderId == b.Id && g.GradeValueId == valueId));
+        if (q.MinRating is { } min and >= 1 and <= 5)
+            query = query.Where(b => db.BoulderRatings.Where(r => r.BoulderId == b.Id).Average(r => (double?)r.Rating) >= min);
+        if (currentUser.UserId is { } uid && q.Progress is { } progress && progress != ProgressFilter.All)
+        {
+            query = progress switch
+            {
+                ProgressFilter.Completed => query.Where(b => db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid && a.Completed)),
+                ProgressFilter.Projects => query.Where(b => db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid && !a.Completed && a.Attempts > 0)),
+                _ => query.Where(b => !db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid)),
+            };
+        }
 
         var total = await query.CountAsync(ct);
         var boulders = await (status == BoulderStatus.Removed ? query.OrderByDescending(b => b.RemovedAt) : query.OrderByDescending(b => b.CreatedAt))
             .Skip((page - 1) * size).Take(size).ToListAsync(ct);
-
-        var grades = await LoadGradesAsync(boulders.Select(b => b.Id).ToList(), ct);
-        var sectorIds = boulders.Select(b => b.SectorId).Distinct().ToList();
-        var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
-
-        var items = boulders.Select(b => new BoulderSummaryDto(
-            b.Id, b.GymId, b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""), storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath),
-            b.HoldColor, grades.GetValueOrDefault(b.Id, []), b.Status, b.CreatedAt, b.RemovedAt)).ToList();
-        return new PagedResult<BoulderSummaryDto>(items, page, size, total);
+        return new PagedResult<BoulderSummaryDto>(await reader.SummariesAsync(boulders, ct), page, size, total);
     }
 
     public async Task<BoulderDetailDto> GetAsync(Guid boulderId, CancellationToken ct = default)
@@ -62,14 +65,17 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         if (!gym.IsPubliclyVisible && role is null) throw new NotFoundException("Boulder", boulderId);
 
         var sector = await db.Sectors.AsNoTracking().Where(s => s.Id == b.SectorId).Select(s => s.Name).FirstAsync(ct);
-        var grades = (await LoadGradesAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
+        var grades = (await reader.GradesAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
+        var rating = (await reader.RatingsAsync([b.Id], ct)).GetValueOrDefault(b.Id, BoulderReader.NoRatings);
+        var viewer = (await reader.ViewerAsync([b.Id], currentUser.UserId, ct)).GetValueOrDefault(b.Id);
+        var following = currentUser.UserId is { } uid && await db.BoulderFollows.AnyAsync(f => f.BoulderId == b.Id && f.UserId == uid, ct);
         PersonDto? setter = null;
         if (b.SetterUserId is { } setterId)
             setter = await db.Users.AsNoTracking().Where(u => u.Id == setterId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstOrDefaultAsync(ct);
 
         return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
-            b.Status, b.CreatedAt, b.RemovedAt, role);
+            b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following);
     }
 
     // ---------- Photo upload ----------
@@ -209,19 +215,4 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet());
     }
 
-    private async Task<Dictionary<Guid, IReadOnlyList<BoulderGradeDto>>> LoadGradesAsync(List<Guid> boulderIds, CancellationToken ct)
-    {
-        if (boulderIds.Count == 0) return [];
-        var rows = await db.BoulderGrades.AsNoTracking()
-            .Where(g => boulderIds.Contains(g.BoulderId) && g.Source == GradeSource.Staff)
-            .Join(db.GradeSystems, g => g.GradeSystemId, s => s.Id, (g, s) => new { g, s })
-            .Join(db.GradeValues, x => x.g.GradeValueId, v => v.Id, (x, v) => new { x.g.BoulderId, System = x.s, Value = v })
-            .ToListAsync(ct);
-        return rows
-            .GroupBy(x => x.BoulderId)
-            .ToDictionary(g => g.Key, g => (IReadOnlyList<BoulderGradeDto>)g
-                .OrderBy(x => x.System.SortOrder)
-                .Select(x => new BoulderGradeDto(x.System.Id, x.System.Name, x.System.Type, x.Value.Id, x.Value.Label, x.Value.Rank, x.Value.ColorHex))
-                .ToList());
-    }
 }

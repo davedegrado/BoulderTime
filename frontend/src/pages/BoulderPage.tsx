@@ -1,6 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, History, Layers, Pencil, UserRound } from "lucide-react";
 import { useBoulder } from "@/features/boulders/api";
+import { ProgressTracker } from "@/features/climbing/ProgressTracker";
+import { FollowButton, RatingSummaryText } from "@/features/climbing/ClimbingBits";
+import { useFollowBoulder } from "@/features/climbing/api";
+import { useAuth } from "@/auth/AuthProvider";
 import { GradeBadge, HoldBadge } from "@/features/boulders/BoulderBits";
 import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -10,6 +14,8 @@ import { formatDate } from "@/lib/format";
 export function BoulderPage() {
   const { id } = useParams();
   const boulder = useBoulder(id);
+  const { session } = useAuth();
+  const follow = useFollowBoulder(id ?? "");
 
   if (boulder.isPending) return <LoadingState label="Loading boulder" />;
   if (boulder.isError) return boulder.error instanceof ApiError && boulder.error.isNotFound ? <NotFoundPage /> : <ErrorState error={boulder.error} onRetry={() => boulder.refetch()} />;
@@ -43,10 +49,16 @@ export function BoulderPage() {
               </p>
             )}
           </div>
-          {b.viewerRole && (
-            <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="btn btn--secondary"><Pencil aria-hidden /><span>Edit</span></Link>
-          )}
+          <div className="boulder-page__actions">
+            {session && <FollowButton following={b.isFollowing} onToggle={() => follow.mutate(!b.isFollowing)} />}
+            {b.viewerRole && (
+              <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="btn btn--secondary"><Pencil aria-hidden /><span>Edit</span></Link>
+            )}
+          </div>
         </header>
+        <p className="boulder-page__rating"><RatingSummaryText rating={b.rating} /></p>
+
+        <ProgressTracker key={b.id} boulder={b} />
 
         <ul className="list">
           <li className="list__row">
@@ -69,7 +81,7 @@ export function BoulderPage() {
         </ul>
 
         <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>More boulders at {b.gymName}</span></Link>
-        <p className="section__footnote">Tracking attempts, ratings, beta videos and comments arrive in the next phases.</p>
+        <p className="section__footnote">Beta videos, community grades and comments arrive in the next phase.</p>
       </div>
     </article>
   );

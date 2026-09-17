@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class GymService(IAppDbContext db, GymAccess access)
+public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser currentUser)
 {
     /// <summary>Public discovery: active gyms only, matched on name or city.</summary>
     public async Task<PagedResult<GymSummaryDto>> SearchAsync(string? query, int? page, int? pageSize, CancellationToken ct = default)
@@ -33,7 +33,15 @@ public sealed class GymService(IAppDbContext db, GymAccess access)
                   ?? throw new NotFoundException("Gym", slug);
         var role = await access.GetRoleAsync(gym.Id, ct);
         if (!gym.IsPubliclyVisible && role is null) throw new NotFoundException("Gym", slug);
-        return GymDetailDto.From(gym, role);
+
+        Follows.GymFollowState? follow = null;
+        if (currentUser.UserId is { } uid)
+        {
+            var f = await db.GymFollows.AsNoTracking().FirstOrDefaultAsync(x => x.GymId == gym.Id && x.UserId == uid, ct);
+            follow = f is null ? new(false, false, false) : new(true, f.IsFavorite, f.NotificationsEnabled);
+        }
+        var followers = await db.GymFollows.CountAsync(x => x.GymId == gym.Id, ct);
+        return GymDetailDto.From(gym, role) with { Follow = follow, FollowerCount = followers };
     }
 
     public async Task<GymDetailDto> UpdateAsync(Guid gymId, UpdateGymRequest r, CancellationToken ct = default)
