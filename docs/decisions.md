@@ -122,3 +122,33 @@ fixed number of queries for any list size.
 
 **Client saving.** Attempt taps update the screen immediately and are saved once after 700 ms of inactivity (or on
 leaving the page), so fast tapping never produces out-of-order writes.
+
+## ADR-011 · Community content and moderation
+**Comments** are flat. `comments(status VISIBLE|HIDDEN)`; authors edit/delete their own (delete is hard, likes cascade);
+gym staff hide/unhide (kept for audit and reports). Hidden comments are shown only to their author and the gym's staff.
+`comment_likes` has primary key `(comment_id, user_id)`.
+
+**Grade suggestions** `grade_suggestions` with `UNIQUE(boulder_id, user_id, grade_system_id)`, referencing grade values.
+Suggesting requires an attempt (like ratings) so the community grade reflects people who tried the boulder. Values must
+be active values of this gym's active systems. Consensus is computed on read by `GradeConsensus.Pick` — most votes,
+ties broken toward the median then the lower grade — isolated so the rule can change. Official grades are never modified.
+
+**Videos live in private buckets** (`official-beta`, `community-videos`) and are only served through short-lived signed
+URLs (1 h) issued per request to viewers allowed to see them: approved → anyone who can see the boulder;
+pending/rejected → the uploader (and gym staff via the moderation queue). Supabase: `POST /object/sign/{bucket}/{path}`.
+Local development signs read URLs with HMAC and serves them with HTTP range support; read and upload tokens are not
+interchangeable.
+
+**Official beta** `boulder_betas` — one per boulder (unique), staff only, no moderation. Replacing deletes the old file.
+**Community videos** `boulder_videos(status PENDING|APPROVED|REJECTED, rejection_reason, reviewed_by, reviewed_at)`.
+Any change by the author resets to PENDING; the author can always delete. **Nobody reviews their own video** — enforced
+in the domain and the service, for staff and platform admins alike. Rejection requires a reason shown only to the author.
+Limits: MP4/MOV/WebM, 100 MB, 3 videos per user per boulder. No server-side transcoding yet (see limitations).
+
+**Reports** `reports(entity_type, entity_id, gym_id, reason, status)` with a partial unique index on open reports per
+(reporter, entity). `gym_id` is stored at creation so staff moderate their gym's reports and platform admins all reports.
+Users can only report content they can see. Resolving with `REMOVE_CONTENT` hides the comment or rejects the video in the
+same step. Pending counts appear on the staff overview and the admin dashboard.
+
+**Known limitation.** iPhone videos (HEVC in .mov) may not play in every desktop browser. Transcoding to H.264 MP4 needs a
+media pipeline and is deferred.

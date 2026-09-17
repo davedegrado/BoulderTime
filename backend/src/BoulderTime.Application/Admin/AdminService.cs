@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Admin;
 
-public sealed record AdminDashboardDto(int TotalGyms, int ActiveGyms, int PendingGymCandidates, int Users);
+public sealed record AdminDashboardDto(int TotalGyms, int ActiveGyms, int PendingGymCandidates, int Users, int PendingReports);
 
 public sealed record AdminGymDto(Guid Id, string Slug, string Name, string City, GymStatus Status, int StaffCount, int OwnerCount, int PendingInvitations, DateTimeOffset CreatedAt);
 
@@ -29,8 +29,8 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
             await db.Gyms.CountAsync(ct),
             await db.Gyms.CountAsync(g => g.Status == GymStatus.Active, ct),
             await db.GymCandidates.CountAsync(c => c.Status == GymCandidateStatus.Pending, ct),
-            await db.Users.CountAsync(ct));
-        // Pending reports are added to the dashboard with the moderation domain (Phase 5).
+            await db.Users.CountAsync(ct),
+            await db.Reports.CountAsync(r => r.Status == Domain.Community.ReportStatus.Pending, ct));
     }
 
     public async Task<PagedResult<AdminGymDto>> ListGymsAsync(string? query, GymStatus? status, int? page, int? pageSize, CancellationToken ct = default)

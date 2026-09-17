@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { EyeOff, History, Layers, MailPlus, Mountain, Users } from "lucide-react";
+import { EyeOff, Flag, History, Layers, MailPlus, Mountain, Users, Video } from "lucide-react";
+import { useModerationSummary } from "@/features/community/api";
 import { useBoulders } from "@/features/boulders/api";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
@@ -12,6 +13,7 @@ export function ManageOverview() {
   const invitations = useGymInvitations(gym.id);
   const active = useBoulders(gym.id, { status: "ACTIVE" });
   const removed = useBoulders(gym.id, { status: "REMOVED" });
+  const moderation = useModerationSummary(gym.id);
   const base = `/manage/${gym.slug}`;
   const count = (n: number | undefined) => (n === undefined ? "–" : n);
   const activeSectors = sectors.data?.filter((s) => s.isActive).length;
@@ -27,6 +29,16 @@ export function ManageOverview() {
         </div>
       )}
       <div className="stats">
+        <Link to={`${base}/moderation`} className={`stat ${moderation.data?.pendingVideos ? "stat--attention" : ""}`}>
+          <Video className="stat__icon" aria-hidden />
+          <span className="stat__value">{count(moderation.data?.pendingVideos)}</span>
+          <span className="stat__label">Videos awaiting approval</span>
+        </Link>
+        <Link to={`${base}/moderation`} className={`stat ${moderation.data?.pendingReports ? "stat--attention" : ""}`}>
+          <Flag className="stat__icon" aria-hidden />
+          <span className="stat__value">{count(moderation.data?.pendingReports)}</span>
+          <span className="stat__label">Open reports</span>
+        </Link>
         <Link to={`${base}/boulders`} className="stat">
           <Mountain className="stat__icon" aria-hidden />
           <span className="stat__value">{count(active.data?.pages[0]?.total)}</span>
@@ -53,7 +65,6 @@ export function ManageOverview() {
           <span className="stat__label">Open invitations</span>
         </Link>
       </div>
-      <p className="section__footnote">Video moderation and reports appear here as those features arrive.</p>
     </div>
   );
 }

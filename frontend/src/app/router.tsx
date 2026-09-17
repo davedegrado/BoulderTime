@@ -20,6 +20,8 @@ import { ManageSettings } from "@/pages/manage/ManageSettings";
 import { ManageBoulders } from "@/pages/manage/ManageBoulders";
 import { BoulderEditorPage } from "@/pages/manage/BoulderEditorPage";
 import { ManageGrading } from "@/pages/manage/ManageGrading";
+import { ManageModeration } from "@/pages/manage/ManageModeration";
+import { AdminReports } from "@/pages/admin/AdminReports";
 import { BoulderPage } from "@/pages/BoulderPage";
 import { ActivityPage } from "@/pages/ActivityPage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
@@ -51,6 +53,7 @@ export const router = createBrowserRouter([
           { path: "boulders/:boulderId/edit", element: <BoulderEditorPage /> },
           { path: "sectors", element: <ManageSectors /> },
           { path: "grading", element: <ManageGrading /> },
+          { path: "moderation", element: <ManageModeration /> },
           { path: "staff", element: <ManageStaff /> },
           { path: "settings", element: <ManageSettings /> },
         ],
@@ -61,6 +64,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <AdminDashboard /> },
           { path: "candidates", element: <AdminCandidates /> },
+          { path: "reports", element: <AdminReports /> },
           { path: "gyms", element: <AdminGyms /> },
           { path: "users", element: <AdminUsers /> },
         ],

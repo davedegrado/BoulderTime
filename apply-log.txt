@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Phase 4: attempts, completions, ratings, follows, activity, public profiles and home
+Applying: Phase 5: comments, likes, community grades, official beta, community videos, reports and moderation
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    71, Skipped:     0, Total:    71, Duration: 32 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    84, Skipped:     0, Total:    84, Duration: 50 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

@@ -32,6 +32,7 @@ public sealed class LocalObjectStorage : IObjectStorage
     }
 
     public sealed record TicketPayload(string Bucket, string Path, string ContentType, long MaxBytes, long ExpiresUnix);
+    public sealed record ReadPayload(string Bucket, string Path, long ExpiresUnix, string Purpose);
 
     public Task<UploadTicket> CreateUploadTicketAsync(string bucket, string path, string contentType, long maxBytes, CancellationToken ct = default)
     {
@@ -45,16 +46,55 @@ public sealed class LocalObjectStorage : IObjectStorage
     /// <summary>Verifies signature and expiry. Returns null for any invalid token.</summary>
     public TicketPayload? ReadTicket(string token)
     {
+        var payload = Verify(token);
+        if (payload is null) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(payload);
+            if (doc.RootElement.TryGetProperty("Purpose", out _)) return null; // a read URL is not an upload ticket
+            var ticket = JsonSerializer.Deserialize<TicketPayload>(payload);
+            return ticket is not null && ticket.ExpiresUnix > _clock.UtcNow.ToUnixTimeSeconds() ? ticket : null;
+        }
+        catch (JsonException) { return null; }
+    }
+
+    private byte[]? Verify(string token)
+    {
         var parts = token.Split('.');
         if (parts.Length != 2) return null;
         try
         {
             var payload = FromB64(parts[0]);
-            if (!CryptographicOperations.FixedTimeEquals(HMACSHA256.HashData(_key, payload), FromB64(parts[1]))) return null;
-            var ticket = JsonSerializer.Deserialize<TicketPayload>(payload);
-            return ticket is not null && ticket.ExpiresUnix > _clock.UtcNow.ToUnixTimeSeconds() ? ticket : null;
+            return CryptographicOperations.FixedTimeEquals(HMACSHA256.HashData(_key, payload), FromB64(parts[1])) ? payload : null;
         }
-        catch (Exception e) when (e is FormatException or JsonException) { return null; }
+        catch (FormatException) { return null; }
+    }
+
+    public Task<string> CreateReadUrlAsync(string bucket, string path, TimeSpan lifetime, CancellationToken ct = default)
+    {
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new ReadPayload(bucket, path, (_clock.UtcNow + lifetime).ToUnixTimeSeconds(), "read"));
+        return Task.FromResult($"/api/storage/signed/{B64(payload)}.{B64(HMACSHA256.HashData(_key, payload))}");
+    }
+
+    public ReadPayload? ReadSignedUrl(string token)
+    {
+        var payload = Verify(token);
+        if (payload is null) return null;
+        try
+        {
+            // Require the purpose to be explicitly present, so an upload ticket can never act as a read URL.
+            using var doc = JsonDocument.Parse(payload);
+            if (!doc.RootElement.TryGetProperty("Purpose", out var purpose) || purpose.GetString() != "read") return null;
+            var read = JsonSerializer.Deserialize<ReadPayload>(payload);
+            return read is not null && read.ExpiresUnix > _clock.UtcNow.ToUnixTimeSeconds() ? read : null;
+        }
+        catch (JsonException) { return null; }
+    }
+
+    public Task DeleteAsync(string bucket, string path, CancellationToken ct = default)
+    {
+        if (Resolve(bucket, path) is { } file && File.Exists(file)) File.Delete(file);
+        return Task.CompletedTask;
     }
 
     public Task<bool> ExistsAsync(string bucket, string path, CancellationToken ct = default) =>

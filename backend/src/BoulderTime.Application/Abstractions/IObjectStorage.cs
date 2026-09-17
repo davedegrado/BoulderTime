@@ -5,8 +5,10 @@ public static class StorageBuckets
     public const string BoulderImages = "boulder-images";
     public const string GymImages = "gym-images";
     public const string Avatars = "avatars";
-    public const string OfficialBeta = "official-beta";       // Phase 5
-    public const string CommunityVideos = "community-videos"; // Phase 5
+    /// <summary>Private: served through short-lived signed URLs.</summary>
+    public const string OfficialBeta = "official-beta";
+    /// <summary>Private: pending and rejected videos must not be reachable by URL.</summary>
+    public const string CommunityVideos = "community-videos";
 }
 
 /// <summary>
@@ -34,4 +36,10 @@ public interface IObjectStorage
 
     /// <summary>URL a browser can load for an object in a public bucket.</summary>
     string PublicUrl(string bucket, string path);
+
+    /// <summary>Short-lived URL for an object in a PRIVATE bucket. Only issued to viewers who are allowed to see it.</summary>
+    Task<string> CreateReadUrlAsync(string bucket, string path, TimeSpan lifetime, CancellationToken ct = default);
+
+    /// <summary>Deletes an object if it exists.</summary>
+    Task DeleteAsync(string bucket, string path, CancellationToken ct = default);
 }

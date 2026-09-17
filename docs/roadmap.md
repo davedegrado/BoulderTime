@@ -6,8 +6,8 @@
 | 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | **Backend done**; screens next |
 | 3 | Boulders, photos, hold colours, grading systems, official grades, active/removed | |
 | 4 | Attempts, completions, activity, ratings, follows | **Done** |
-| 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | Next |
-| 6 | Notifications, announcements, subscriptions, preferences | |
+| 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | **Done** |
+| 6 | Notifications, announcements, subscriptions, preferences | Next |
 | 7 | Leaderboards | |
 | 8 | Polish: responsive UX, accessibility, states, images, performance | |
 | 9 | Tests, seed data, docs, deployment | |

@@ -13,6 +13,8 @@ namespace BoulderTime.Infrastructure.Storage;
 ///   HEAD /object/{bucket}/{path}            — existence check
 ///   POST /object/{bucket}/{path}            — server-side upload
 ///   GET  /object/public/{bucket}/{path}     — public read
+///   POST /object/sign/{bucket}/{path}        { expiresIn } → { signedURL: "/object/sign/...?token=…" } — private read
+///   DELETE /object/{bucket}/{path}           — delete
 /// </summary>
 public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration configuration, IClock clock) : IObjectStorage
 {
@@ -50,6 +52,24 @@ public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration config
     }
 
     public string PublicUrl(string bucket, string path) => $"{BaseUrl}/object/public/{bucket}/{Encode(path)}";
+
+    public async Task<string> CreateReadUrlAsync(string bucket, string path, TimeSpan lifetime, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{BaseUrl}/object/sign/{bucket}/{Encode(path)}", new { expiresIn = (int)lifetime.TotalSeconds }, ct);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<SignedRead>(cancellationToken: ct)
+                   ?? throw new InvalidOperationException("Supabase Storage returned an empty signed URL response.");
+        return $"{BaseUrl}{body.SignedURL}";
+    }
+
+    public async Task DeleteAsync(string bucket, string path, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{BaseUrl}/object/{bucket}/{Encode(path)}", ct);
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest) return; // already gone
+        response.EnsureSuccessStatusCode();
+    }
+
+    private sealed record SignedRead(string SignedURL);
 
     private static string Encode(string path) => string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
 

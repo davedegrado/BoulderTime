@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Inbox, MapPinned, Users } from "lucide-react";
+import { Building2, Flag, Inbox, MapPinned, Users } from "lucide-react";
 import { useAdminDashboard } from "@/features/admin/api";
 import { ErrorState, LoadingState } from "@/components/States";
 
@@ -15,6 +15,11 @@ export function AdminDashboard() {
           <Inbox className="stat__icon" aria-hidden />
           <span className="stat__value">{d.pendingGymCandidates}</span>
           <span className="stat__label">Pending gym suggestions</span>
+        </Link>
+        <Link to="/admin/reports" className={`stat ${d.pendingReports > 0 ? "stat--attention" : ""}`}>
+          <Flag className="stat__icon" aria-hidden />
+          <span className="stat__value">{d.pendingReports}</span>
+          <span className="stat__label">Open reports</span>
         </Link>
         <Link to="/admin/gyms" className="stat">
           <Building2 className="stat__icon" aria-hidden />
@@ -32,7 +37,6 @@ export function AdminDashboard() {
           <span className="stat__label">Users</span>
         </Link>
       </div>
-      <p className="section__footnote">Pending reports join this dashboard with moderation (Phase 5).</p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ using BoulderTime.Application.Common;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Climbing;
+using BoulderTime.Domain.Community;
 using BoulderTime.Domain.Follows;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Common;
@@ -38,6 +39,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<GymFollow> GymFollows => Set<GymFollow>();
     public DbSet<SectorFollow> SectorFollows => Set<SectorFollow>();
     public DbSet<BoulderFollow> BoulderFollows => Set<BoulderFollow>();
+    public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<CommentLike> CommentLikes => Set<CommentLike>();
+    public DbSet<GradeSuggestion> GradeSuggestions => Set<GradeSuggestion>();
+    public DbSet<BoulderBeta> BoulderBetas => Set<BoulderBeta>();
+    public DbSet<BoulderVideo> BoulderVideos => Set<BoulderVideo>();
+    public DbSet<Report> Reports => Set<Report>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

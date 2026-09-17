@@ -5,7 +5,7 @@ import type { CandidateStatus, GymStatus } from "@/lib/format";
 import type { GymDetail } from "@/features/gyms/api";
 import type { GymCandidate } from "@/features/candidates/api";
 
-export interface AdminDashboard { totalGyms: number; activeGyms: number; pendingGymCandidates: number; users: number }
+export interface AdminDashboard { totalGyms: number; activeGyms: number; pendingGymCandidates: number; users: number; pendingReports: number }
 export interface AdminGym { id: string; slug: string; name: string; city: string; status: GymStatus; staffCount: number; ownerCount: number; pendingInvitations: number; createdAt: string }
 export interface AdminUser { id: string; displayName: string; email: string; isPlatformAdmin: boolean; staffGyms: number; createdAt: string }
 export interface CreateGymInput { name: string; city: string; address?: string; website?: string; email?: string; phone?: string; description?: string; candidateId?: string }

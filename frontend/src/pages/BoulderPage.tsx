@@ -5,6 +5,10 @@ import { ProgressTracker } from "@/features/climbing/ProgressTracker";
 import { FollowButton, RatingSummaryText } from "@/features/climbing/ClimbingBits";
 import { useFollowBoulder } from "@/features/climbing/api";
 import { useAuth } from "@/auth/AuthProvider";
+import { CommentsSection } from "@/features/community/CommentsSection";
+import { CommunityGradeSection } from "@/features/community/CommunityGradeSection";
+import { BetaSection, CommunityVideosSection } from "@/features/community/VideoSections";
+import { ReportButton } from "@/features/community/ReportButton";
 import { GradeBadge, HoldBadge } from "@/features/boulders/BoulderBits";
 import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -80,8 +84,15 @@ export function BoulderPage() {
           </li>
         </ul>
 
-        <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>More boulders at {b.gymName}</span></Link>
-        <p className="section__footnote">Beta videos, community grades and comments arrive in the next phase.</p>
+        <BetaSection boulderId={b.id} isStaff={!!b.viewerRole} />
+        <CommunityVideosSection boulderId={b.id} />
+        <CommunityGradeSection boulderId={b.id} />
+        <CommentsSection boulderId={b.id} />
+
+        <div className="form__actions">
+          <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>More boulders at {b.gymName}</span></Link>
+          {session && <ReportButton entityType="BOULDER" entityId={b.id} label="Report a problem with this boulder" />}
+        </div>
       </div>
     </article>
   );

@@ -3,6 +3,7 @@ using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Grading;
 using BoulderTime.Application.Candidates;
 using BoulderTime.Application.Climbing;
+using BoulderTime.Application.Community;
 using BoulderTime.Application.Follows;
 using BoulderTime.Application.Gyms;
 using BoulderTime.Application.Staff;
@@ -29,6 +30,11 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<FollowService>();
         services.AddScoped<ActivityService>();
+        services.AddScoped<BoulderAccess>();
+        services.AddScoped<CommentService>();
+        services.AddScoped<GradeSuggestionService>();
+        services.AddScoped<VideoService>();
+        services.AddScoped<ReportService>();
         return services;
     }
 }

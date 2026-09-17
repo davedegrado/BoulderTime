@@ -1,6 +1,7 @@
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Climbing;
+using BoulderTime.Domain.Community;
 using BoulderTime.Domain.Follows;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
@@ -31,6 +32,12 @@ public interface IAppDbContext
     DbSet<GymFollow> GymFollows { get; }
     DbSet<SectorFollow> SectorFollows { get; }
     DbSet<BoulderFollow> BoulderFollows { get; }
+    DbSet<Comment> Comments { get; }
+    DbSet<CommentLike> CommentLikes { get; }
+    DbSet<GradeSuggestion> GradeSuggestions { get; }
+    DbSet<BoulderBeta> BoulderBetas { get; }
+    DbSet<BoulderVideo> BoulderVideos { get; }
+    DbSet<Report> Reports { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

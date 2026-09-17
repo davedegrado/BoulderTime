@@ -21,6 +21,7 @@ export function AdminLayout() {
       <SubNav label="Admin sections" items={[
         { to: "/admin", label: "Dashboard", end: true },
         { to: "/admin/candidates", label: "Suggestions" },
+        { to: "/admin/reports", label: "Reports" },
         { to: "/admin/gyms", label: "Gyms" },
         { to: "/admin/users", label: "Users" },
       ]} />
