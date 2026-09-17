@@ -183,3 +183,20 @@ inserting another; once read, the next event starts a new one.
 **Announcements** `gym_announcements(type, title, content, image_path, event_date, sector_id, notify_followers)`.
 Events and competitions require a date. Images use the public `gym-images` bucket with the same upload-ticket flow.
 Public for visible gyms; published and edited by STAFF+. Home shows the latest updates from followed gyms.
+
+## ADR-013 · Resumable video uploads (tus)
+**Problem.** A single PUT of a 30–50 MB phone video fails easily on mobile networks and through proxies (observed in
+development: 6.8 MB succeeded, larger iPhone clips were cut off), and any drop restarts the upload from zero.
+
+**Decision.** Upload tickets for videos include a `resumable` descriptor for the tus 1.0 protocol (creation + core):
+endpoint, headers, metadata and chunk size. The browser uses `tus-js-client` with 6 MB chunks and automatic retries;
+after an interruption it asks the server for the confirmed offset (HEAD) and continues from there.
+- **Supabase Storage:** `POST/PATCH/HEAD {url}/storage/v1/upload/resumable/sign` authorised by `x-signature` = the token of
+  the signed upload URL; metadata `bucketName`, `objectName`, `contentType`; Supabase requires exactly 6 MB chunks
+  (supabase/storage `src/http/routes/tus`).
+- **Local development:** the API implements the same subset at `/api/storage/tus`, verifying the signed ticket on every
+  request, matching bucket/object/type, enforcing total size and chunk offsets, and storing the object only when the
+  last byte arrives. The whole flow (including resume and wrong-offset rejection) is covered by integration tests.
+
+Photos keep the single PUT: after client-side downscaling they are 1–2 MB. Upload tickets now last 2 hours in both
+environments. The app asks users to keep the screen open while uploading, since mobile browsers pause background tabs.

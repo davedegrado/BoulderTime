@@ -22,7 +22,20 @@ public sealed record UploadTicket(
     string Method,
     IReadOnlyDictionary<string, string> Headers,
     long MaxBytes,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    ResumableUpload? Resumable = null);
+
+/// <summary>
+/// Resumable upload over the tus 1.0 protocol: the file is sent in chunks and an interrupted upload continues from the
+/// last received byte. Used for videos, which are too large to send reliably in one request on mobile networks.
+/// Supabase Storage: POST {url}/storage/v1/upload/resumable/sign with header x-signature = signed upload token,
+/// metadata bucketName/objectName/contentType, 6 MB chunks.
+/// </summary>
+public sealed record ResumableUpload(
+    string Endpoint,
+    IReadOnlyDictionary<string, string> Headers,
+    IReadOnlyDictionary<string, string> Metadata,
+    int ChunkSize);
 
 /// <summary>Object storage (Supabase Storage in production, a local folder in development and tests).</summary>
 public interface IObjectStorage

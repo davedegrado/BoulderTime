@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Upload as TusUpload } from "tus-js-client";
 import { api } from "@/lib/api";
 import { ApiError, defaultMessage } from "@/lib/apiError";
 import type { PagedResult } from "@/lib/paging";
@@ -39,7 +40,8 @@ export const reportReasonLabel: Record<ReportReason, string> = {
   INAPPROPRIATE: "Inappropriate content", WRONG_BOULDER: "Wrong boulder", SPAM: "Spam", MISLEADING: "Misleading", OTHER: "Other",
 };
 
-interface UploadTicket { path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number }
+interface ResumableUpload { endpoint: string; headers: Record<string, string>; metadata: Record<string, string>; chunkSize: number }
+interface UploadTicket { path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; resumable?: ResumableUpload | null }
 
 export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
@@ -66,11 +68,43 @@ export function putWithProgress(ticket: UploadTicket, body: Blob, onProgress?: (
   });
 }
 
+/** Delays between automatic retries of a failed chunk (e.g. the phone briefly losing signal). */
+export const RESUMABLE_RETRY_DELAYS = [0, 1000, 3000, 5000, 10000, 20000];
+
+/**
+ * Uploads a file in chunks over the tus protocol. If the connection drops, each chunk is retried and the upload
+ * continues from the last byte the server confirmed — it never restarts from zero.
+ */
+export function uploadResumable(ticket: UploadTicket & { resumable: ResumableUpload }, file: Blob, onProgress?: (fraction: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const r = ticket.resumable;
+    const upload = new TusUpload(file, {
+      endpoint: new URL(r.endpoint, window.location.origin).href,
+      headers: r.headers,
+      metadata: r.metadata,
+      chunkSize: r.chunkSize,
+      retryDelays: RESUMABLE_RETRY_DELAYS,
+      // Every ticket targets a fresh object, so there's nothing to resume across sessions.
+      storeFingerprintForResuming: false,
+      onProgress: (sent, total) => onProgress?.(total ? sent / total : 0),
+      onSuccess: () => resolve(),
+      onError: (error) => {
+        const status = (error as { originalResponse?: { getStatus(): number } }).originalResponse?.getStatus() ?? 0;
+        reject(new ApiError(status, null, status === 0
+          ? "The upload was interrupted. Check your connection and try again."
+          : status === 413 ? "The video is too large." : "The upload failed. Try again."));
+      },
+    });
+    upload.start();
+  });
+}
+
 export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<string> {
   if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, "Videos must be under 100 MB. Trim it and try again.");
   const contentType = file.type || "video/mp4";
   const ticket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`, { kind, contentType, sizeBytes: file.size });
-  await putWithProgress(ticket, file, onProgress);
+  if (ticket.resumable) await uploadResumable({ ...ticket, resumable: ticket.resumable }, file, onProgress);
+  else await putWithProgress(ticket, file, onProgress);
   return ticket.path;
 }
 

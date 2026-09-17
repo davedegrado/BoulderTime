@@ -61,6 +61,84 @@ public sealed class LocalStorageController(IServiceProvider services) : Controll
         }
     }
 
+    // ---------- tus 1.0 resumable uploads (creation + core), mirroring Supabase's /upload/resumable/sign ----------
+
+    private const string TusVersion = "1.0.0";
+
+    [HttpPost("tus")]
+    public async Task<IActionResult> TusCreate(CancellationToken ct)
+    {
+        if (Storage is not { } storage) return NotFound();
+        Response.Headers["Tus-Resumable"] = TusVersion;
+        var token = Request.Headers["x-signature"].ToString();
+        var ticket = storage.ReadTicket(token);
+        if (ticket is null) return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", detail: "This upload link is invalid or has expired.");
+        if (!long.TryParse(Request.Headers["Upload-Length"], out var length) || length <= 0)
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Invalid request", detail: "Upload-Length is required.");
+        if (length > ticket.MaxBytes)
+            return Problem(statusCode: StatusCodes.Status413PayloadTooLarge, title: "Too large", detail: "The file is too large.");
+
+        var metadata = ParseMetadata(Request.Headers["Upload-Metadata"].ToString());
+        if (metadata.GetValueOrDefault("bucketName") != ticket.Bucket || metadata.GetValueOrDefault("objectName") != ticket.Path
+            || !string.Equals(metadata.GetValueOrDefault("contentType"), ticket.ContentType, StringComparison.OrdinalIgnoreCase))
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", detail: "The upload doesn't match its link.");
+
+        var state = await storage.CreateTusAsync(ticket, token, length, ct);
+        Response.Headers.Location = $"/api/storage/tus/{state.Id}";
+        return StatusCode(StatusCodes.Status201Created);
+    }
+
+    [HttpHead("tus/{id}")]
+    public async Task<IActionResult> TusHead(string id, CancellationToken ct)
+    {
+        if (Storage is not { } storage) return NotFound();
+        Response.Headers["Tus-Resumable"] = TusVersion;
+        Response.Headers.CacheControl = "no-store";
+        var state = await storage.FindTusAsync(id, Request.Headers["x-signature"].ToString(), ct);
+        if (state is null) return NotFound();
+        Response.Headers["Upload-Offset"] = state.Offset.ToString();
+        Response.Headers["Upload-Length"] = state.Length.ToString();
+        return Ok();
+    }
+
+    [HttpPatch("tus/{id}")]
+    [RequestSizeLimit(LocalObjectStorage.ResumableChunkSize + 1024 * 1024)]
+    public async Task<IActionResult> TusPatch(string id, CancellationToken ct)
+    {
+        if (Storage is not { } storage) return NotFound();
+        Response.Headers["Tus-Resumable"] = TusVersion;
+        var token = Request.Headers["x-signature"].ToString();
+        if (storage.ReadTicket(token) is null) return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", detail: "This upload link is invalid or has expired.");
+        var state = await storage.FindTusAsync(id, token, ct);
+        if (state is null) return NotFound();
+        if (!string.Equals(Request.ContentType, "application/offset+octet-stream", StringComparison.OrdinalIgnoreCase))
+            return StatusCode(StatusCodes.Status415UnsupportedMediaType);
+        if (!long.TryParse(Request.Headers["Upload-Offset"], out var offset))
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Invalid request", detail: "Upload-Offset is required.");
+
+        var (result, next) = await storage.AppendTusAsync(state, offset, Request.Body, LocalObjectStorage.ResumableChunkSize + 1024 * 1024, ct);
+        Response.Headers["Upload-Offset"] = next.Offset.ToString();
+        return result switch
+        {
+            LocalObjectStorage.TusAppendResult.OffsetMismatch => StatusCode(StatusCodes.Status409Conflict),
+            LocalObjectStorage.TusAppendResult.TooLarge => StatusCode(StatusCodes.Status413PayloadTooLarge),
+            _ => NoContent(),
+        };
+    }
+
+    /// <summary>tus Upload-Metadata: comma-separated "key base64value" pairs.</summary>
+    private static Dictionary<string, string> ParseMetadata(string header)
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var pair in header.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = pair.Split(' ', 2);
+            try { result[parts[0]] = parts.Length == 2 ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(parts[1])) : ""; }
+            catch (FormatException) { /* ignore malformed pair */ }
+        }
+        return result;
+    }
+
     [HttpGet("files/{bucket}/{**path}")]
     public IActionResult Read(string bucket, string path)
     {

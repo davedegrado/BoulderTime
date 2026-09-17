@@ -15,6 +15,7 @@ namespace BoulderTime.Infrastructure.Storage;
 ///   GET  /object/public/{bucket}/{path}     — public read
 ///   POST /object/sign/{bucket}/{path}        { expiresIn } → { signedURL: "/object/sign/...?token=…" } — private read
 ///   DELETE /object/{bucket}/{path}           — delete
+///   POST/PATCH/HEAD /upload/resumable/sign   — tus resumable upload authorised by header x-signature (src/http/routes/tus)
 /// </summary>
 public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration configuration, IClock clock) : IObjectStorage
 {
@@ -27,8 +28,14 @@ public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration config
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadFromJsonAsync<SignedUpload>(cancellationToken: ct)
                    ?? throw new InvalidOperationException("Supabase Storage returned an empty signed upload response.");
+        var token = System.Web.HttpUtility.ParseQueryString(new Uri($"{BaseUrl}{body.Url}").Query)["token"]
+                    ?? throw new InvalidOperationException("Supabase Storage returned a signed upload URL without a token.");
+        var resumable = new ResumableUpload($"{BaseUrl}/upload/resumable/sign",
+            new Dictionary<string, string> { ["x-signature"] = token, ["x-upsert"] = "false" },
+            new Dictionary<string, string> { ["bucketName"] = bucket, ["objectName"] = path, ["contentType"] = contentType },
+            ChunkSize: 6 * 1024 * 1024); // Supabase requires exactly 6 MB chunks for resumable uploads
         return new UploadTicket(bucket, path, $"{BaseUrl}{body.Url}", "PUT",
-            new Dictionary<string, string> { ["Content-Type"] = contentType }, maxBytes, clock.UtcNow.AddHours(2));
+            new Dictionary<string, string> { ["Content-Type"] = contentType }, maxBytes, clock.UtcNow.AddHours(2), resumable);
     }
 
     public async Task<bool> ExistsAsync(string bucket, string path, CancellationToken ct = default)

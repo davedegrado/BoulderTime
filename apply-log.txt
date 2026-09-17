@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Notify sector and gym followers about new boulders, collapsed per sector and per gym
+Applying: Resumable chunked video uploads (tus) for Supabase Storage and local development
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:    96, Skipped:     0, Total:    96, Duration: 58 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    98, Skipped:     0, Total:    98, Duration: 59 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
 OK
 == ESITO: ok ==

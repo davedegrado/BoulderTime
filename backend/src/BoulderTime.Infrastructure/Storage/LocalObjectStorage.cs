@@ -17,7 +17,8 @@ public sealed class LocalObjectStorage : IObjectStorage
         StorageBuckets.BoulderImages, StorageBuckets.GymImages, StorageBuckets.Avatars,
     };
 
-    private static readonly TimeSpan TicketLifetime = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan TicketLifetime = TimeSpan.FromHours(2); // same as Supabase signed upload URLs
+    public const int ResumableChunkSize = 6 * 1024 * 1024;
     private readonly string _root;
     private readonly byte[] _key;
     private readonly IClock _clock;
@@ -39,8 +40,12 @@ public sealed class LocalObjectStorage : IObjectStorage
         var expires = _clock.UtcNow + TicketLifetime;
         var payload = JsonSerializer.SerializeToUtf8Bytes(new TicketPayload(bucket, path, contentType, maxBytes, expires.ToUnixTimeSeconds()));
         var token = $"{B64(payload)}.{B64(HMACSHA256.HashData(_key, payload))}";
+        var resumable = new ResumableUpload("/api/storage/tus",
+            new Dictionary<string, string> { ["x-signature"] = token },
+            new Dictionary<string, string> { ["bucketName"] = bucket, ["objectName"] = path, ["contentType"] = contentType },
+            ResumableChunkSize);
         return Task.FromResult(new UploadTicket(bucket, path, $"/api/storage/upload/{token}", "PUT",
-            new Dictionary<string, string> { ["Content-Type"] = contentType }, maxBytes, expires));
+            new Dictionary<string, string> { ["Content-Type"] = contentType }, maxBytes, expires, resumable));
     }
 
     /// <summary>Verifies signature and expiry. Returns null for any invalid token.</summary>
@@ -119,6 +124,92 @@ public sealed class LocalObjectStorage : IObjectStorage
         var full = Path.GetFullPath(Path.Combine(bucketRoot, path));
         return full.StartsWith(bucketRoot, StringComparison.Ordinal) ? full : null;
     }
+
+    // ---------- tus resumable uploads (development stand-in for Supabase's /upload/resumable) ----------
+
+    public sealed record TusState(string Id, string Bucket, string Path, string ContentType, long Length, long Offset, string TokenHash);
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> TusLocks = new();
+    private string TusDir => Path.Combine(_root, ".tus");
+    private static string Hash(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+    public async Task<TusState> CreateTusAsync(TicketPayload ticket, string token, long length, CancellationToken ct)
+    {
+        Directory.CreateDirectory(TusDir);
+        var state = new TusState(Guid.NewGuid().ToString("N"), ticket.Bucket, ticket.Path, ticket.ContentType, length, 0, Hash(token));
+        await File.WriteAllBytesAsync(Path.Combine(TusDir, state.Id + ".bin"), [], ct);
+        await SaveTusAsync(state, ct);
+        return state;
+    }
+
+    /// <summary>Loads an upload if it exists and the caller presents the same signed token that created it.</summary>
+    public async Task<TusState?> FindTusAsync(string id, string? token, CancellationToken ct)
+    {
+        if (token is null || id.Length != 32 || !id.All(Uri.IsHexDigit)) return null;
+        var file = Path.Combine(TusDir, id + ".json");
+        if (!File.Exists(file)) return null;
+        var state = JsonSerializer.Deserialize<TusState>(await File.ReadAllBytesAsync(file, ct));
+        return state is not null && CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(state.TokenHash), Encoding.UTF8.GetBytes(Hash(token))) ? state : null;
+    }
+
+    public enum TusAppendResult { Ok, OffsetMismatch, TooLarge }
+
+    /// <summary>Appends one chunk at the expected offset. When the last byte arrives, the object is stored and temp files removed.</summary>
+    public async Task<(TusAppendResult Result, TusState State)> AppendTusAsync(TusState state, long offset, Stream body, long maxChunk, CancellationToken ct)
+    {
+        var gate = TusLocks.GetOrAdd(state.Id, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(ct);
+        try
+        {
+            var current = await FindStateUnlockedAsync(state.Id, ct) ?? state;
+            if (offset != current.Offset) return (TusAppendResult.OffsetMismatch, current);
+
+            var data = Path.Combine(TusDir, state.Id + ".bin");
+            long written = 0;
+            await using (var output = new FileStream(data, FileMode.Append, FileAccess.Write))
+            {
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await body.ReadAsync(buffer, ct)) > 0)
+                {
+                    written += read;
+                    if (written > maxChunk || current.Offset + written > current.Length)
+                    {
+                        output.SetLength(current.Offset); // drop the partial chunk
+                        return (TusAppendResult.TooLarge, current);
+                    }
+                    await output.WriteAsync(buffer.AsMemory(0, read), ct);
+                }
+            }
+
+            var next = current with { Offset = current.Offset + written };
+            if (next.Offset == next.Length)
+            {
+                await using (var input = File.OpenRead(data)) await PutAsync(next.Bucket, next.Path, input, next.ContentType, ct);
+                File.Delete(data);
+                File.Delete(Path.Combine(TusDir, state.Id + ".json"));
+                TusLocks.TryRemove(state.Id, out _);
+            }
+            else
+            {
+                await SaveTusAsync(next, ct);
+            }
+            return (TusAppendResult.Ok, next);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private async Task<TusState?> FindStateUnlockedAsync(string id, CancellationToken ct)
+    {
+        var file = Path.Combine(TusDir, id + ".json");
+        return File.Exists(file) ? JsonSerializer.Deserialize<TusState>(await File.ReadAllBytesAsync(file, ct)) : null;
+    }
+
+    private Task SaveTusAsync(TusState state, CancellationToken ct) =>
+        File.WriteAllBytesAsync(Path.Combine(TusDir, state.Id + ".json"), JsonSerializer.SerializeToUtf8Bytes(state), ct);
 
     private static string B64(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     private static byte[] FromB64(string s)

@@ -54,6 +54,7 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
               <span className="progress__fill" style={{ width: `${progress * 100}%` }} />
             </div>
           )}
+          {progress !== null && <p className="field__hint">Keep this screen open until it finishes. Short signal drops resume automatically.</p>}
           <div className="form__actions">
             <Button onClick={send} loading={progress !== null || busy}>{progress !== null ? `Uploading ${Math.round(progress * 100)}%` : submitLabel}</Button>
             <Button variant="ghost" onClick={() => setFile(null)} disabled={progress !== null}>Cancel</Button>
