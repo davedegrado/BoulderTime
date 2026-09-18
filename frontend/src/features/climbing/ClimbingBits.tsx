@@ -24,7 +24,7 @@ export function StarInput({ value, onChange, disabled }: { value: number | null;
   return (
     <div className="star-input" role="radiogroup" aria-label={t("Your rating")}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={plural(n, "{count} star", "{count} stars")}
+        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={plural(n, t("{count} star"), t("{count} stars"))}
           className={`star-input__star ${value !== null && n <= value ? "is-on" : ""}`} disabled={disabled}
           onClick={() => onChange(value === n ? null : n)}>
           <Star aria-hidden />
@@ -34,11 +34,11 @@ export function StarInput({ value, onChange, disabled }: { value: number | null;
   );
 }
 
-export function FollowButton({ following, onToggle, label = "Follow", loading }: { following: boolean; onToggle: () => void; label?: string; loading?: boolean }) {
+export function FollowButton({ following, onToggle, label = t("Follow"), loading }: { following: boolean; onToggle: () => void; label?: string; loading?: boolean }) {
   return (
     <Button variant={following ? "secondary" : "primary"} icon={following ? <BellRing aria-hidden /> : <Bell aria-hidden />} onClick={onToggle}
       aria-pressed={following} loading={loading}>
-      {following ? "Following" : label}
+      {following ? t("Following") : label}
     </Button>
   );
 }
@@ -58,7 +58,7 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
           <p className="list__sub">{b.sectorName} · {b.gymName}</p>
           <p className="history-row__meta">
             {item.completed && item.completedAt ? t("Completed {date}", { date: formatDate(item.completedAt) }) : t("Last tried {date}", { date: formatDate(item.updatedAt) })}
-            {` · ${plural(item.attempts, "{count} attempt", "{count} attempts")}`}
+            {` · ${plural(item.attempts, t("{count} attempt"), t("{count} attempts"))}`}
           </p>
           <div className="history-row__tags">
             <HoldBadge color={b.holdColor} compact />

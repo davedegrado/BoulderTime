@@ -32,7 +32,7 @@ export function NotificationSettingsPage() {
       <section className="card stack" aria-label={t("Categories")}>
         {settings.isPending ? <LoadingState /> : settings.isError ? <ErrorState error={settings.error} onRetry={() => settings.refetch()} />
           : CATEGORIES.map((c) => (
-            <Toggle key={c.key} label={c.label} description={c.description} checked={settings.data[c.key]}
+            <Toggle key={c.key} label={t(c.label)} description={t(c.description)} checked={settings.data[c.key]}
               onChange={(v) => update.mutate({ [c.key]: v }, { onError })} />
           ))}
       </section>
@@ -43,13 +43,13 @@ export function NotificationSettingsPage() {
         {follows.isPending ? <LoadingState /> : follows.isError ? <ErrorState error={follows.error} onRetry={() => follows.refetch()} /> : (
           <div className="stack">
             {[
-              { title: "Gyms", kind: "gyms" as const, rows: follows.data.gyms.map((g) => ({ id: g.gym.id, label: g.gym.name, sub: g.isFavorite ? "Favourite" : g.gym.city, on: g.notificationsEnabled, to: `/gyms/${g.gym.slug}` })) },
-              { title: "Sectors", kind: "sectors" as const, rows: follows.data.sectors.map((s) => ({ id: s.sectorId, label: s.sectorName, sub: s.gymName, on: s.notificationsEnabled, to: `/gyms/${s.gymSlug}` })) },
-              { title: "Boulders", kind: "boulders" as const, rows: follows.data.boulders.map((b) => ({ id: b.boulderId, label: `${b.sectorName}`, sub: b.gymName, on: b.notificationsEnabled, to: `/boulders/${b.boulderId}` })) },
+              { title: t("Gyms"), kind: "gyms" as const, rows: follows.data.gyms.map((g) => ({ id: g.gym.id, label: g.gym.name, sub: g.isFavorite ? t("Favourite") : g.gym.city, on: g.notificationsEnabled, to: `/gyms/${g.gym.slug}` })) },
+              { title: t("Sectors"), kind: "sectors" as const, rows: follows.data.sectors.map((s) => ({ id: s.sectorId, label: s.sectorName, sub: s.gymName, on: s.notificationsEnabled, to: `/gyms/${s.gymSlug}` })) },
+              { title: t("Boulders"), kind: "boulders" as const, rows: follows.data.boulders.map((b) => ({ id: b.boulderId, label: `${b.sectorName}`, sub: b.gymName, on: b.notificationsEnabled, to: `/boulders/${b.boulderId}` })) },
             ].map((group) => (
               <div key={group.kind} className="stack">
                 <h3 className="section__meta">{group.title}</h3>
-                {group.rows.length === 0 ? <p className="list__sub">You aren't following any {group.title.toLowerCase()}.</p> : (
+                {group.rows.length === 0 ? <p className="list__sub">{t("You aren't following any {what}.", { what: group.title.toLowerCase() })}</p> : (
                   <ul className="list">
                     {group.rows.map((r) => (
                       <li key={r.id} className="list__row">

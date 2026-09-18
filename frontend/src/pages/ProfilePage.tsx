@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, LogOut, Plus, ShieldCheck } from "lucide-react";
 import { GymAvatar } from "@/components/GymAvatar";
-import { roleLabel } from "@/lib/format";
+import { formatDate, roleLabel } from "@/lib/format";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser, useUpdateProfile } from "@/features/users/api";
 import { ApiError, errorMessage } from "@/lib/apiError";
@@ -41,7 +41,7 @@ export function ProfilePage() {
     update.mutate(
       { displayName: displayName.trim() },
       {
-        onSuccess: () => toast.success("Profile saved"),
+        onSuccess: () => toast.success(t("Profile saved")),
         onError: (err) => {
           if (!(err instanceof ApiError && err.isValidation)) toast.error(errorMessage(err));
         },
@@ -63,7 +63,7 @@ export function ProfilePage() {
         <Avatar name={user.displayName} url={user.avatarUrl} size={72} />
         <div>
           <h1 className="page__title">{user.displayName}</h1>
-          <p className="page__subtitle">Climbing since {new Date(user.createdAt).toLocaleDateString(undefined, { month: "long", year: "numeric" })}</p>
+          <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(user.createdAt, { month: "long", year: "numeric" }) })}</p>
           {user.isPlatformAdmin && <p className="badge"><ShieldCheck aria-hidden /> {t("BoulderTime admin")}</p>}
         </div>
       </header>
@@ -72,8 +72,8 @@ export function ProfilePage() {
         <h2 id="edit-profile" className="section__title">{t("Edit profile")}</h2>
         <ImagePicker label={t("Profile photo")} hint={t("Square crop, shown on comments and leaderboards.")} hasImage={!!user.avatarUrl} busy={setAvatar.isPending}
           preview={<Avatar name={user.displayName} url={user.avatarUrl} size={72} />}
-          onPick={(f) => setAvatar.mutate(f, { onSuccess: () => toast.success("Photo updated"), onError: (e) => toast.error(errorMessage(e)) })}
-          onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success("Photo removed"), onError: (e) => toast.error(errorMessage(e)) })} />
+          onPick={(f) => setAvatar.mutate(f, { onSuccess: () => toast.success(t("Photo updated")), onError: (e) => toast.error(errorMessage(e)) })}
+          onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success(t("Photo removed")), onError: (e) => toast.error(errorMessage(e)) })} />
         <form className="form" onSubmit={onSubmit} noValidate>
           <TextField label={t("Display name")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={fieldError} maxLength={40} />
           <TextField label={t("Email")} value={user.email} readOnly disabled hint={t("Your sign-in email can't be changed here.")} />

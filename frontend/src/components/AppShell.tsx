@@ -48,7 +48,7 @@ export function AppShell() {
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === "/"} className="sidebar__link">
               <Icon aria-hidden />
-              <span>{label === "Alerts" ? "Notifications" : label}</span>
+              <span>{t(label === "Alerts" ? "Notifications" : label)}</span>
               {badge(to)}
             </NavLink>
           ))}
@@ -94,7 +94,7 @@ export function AppShell() {
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === "/"} className="tabbar__link">
             <span className="tabbar__icon"><Icon aria-hidden />{badge(to)}</span>
-            <span>{label}</span>
+            <span>{t(label)}</span>
           </NavLink>
         ))}
         {!session && (

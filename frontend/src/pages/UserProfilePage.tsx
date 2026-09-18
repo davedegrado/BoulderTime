@@ -17,7 +17,7 @@ export function UserProfilePage() {
         <Avatar name={p.displayName} url={p.avatarUrl} size={72} />
         <div>
           <h1 className="page__title">{p.displayName}</h1>
-          <p className="page__subtitle">Climbing since {formatDate(p.memberSince, { month: "long", year: "numeric" })}</p>
+          <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
         </div>
       </div>
       {p.followedGyms.length > 0 && (

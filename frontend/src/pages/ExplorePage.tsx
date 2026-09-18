@@ -80,14 +80,14 @@ export function ExplorePage() {
       ) : gyms.length === 0 ? (
         <EmptyState
           icon={query ? <SearchX /> : <Compass />}
-          title={query ? t("No gyms match “{query}”", { query }) : "No gyms on BoulderTime yet"}
+          title={query ? t("No gyms match “{query}”", { query }) : t("No gyms on BoulderTime yet")}
           body={t("Is your gym missing? Suggest it and we'll reach out to them.")}
           action={<Link to="/gyms/suggest" className="btn btn--primary"><Plus aria-hidden /><span>{t("Suggest a gym")}</span></Link>}
         />
       ) : (
         <section className="section" aria-live="polite">
           <p className="section__meta">
-            {plural(total, "{count} gym", "{count} gyms")}{query && ` ${t("for “{query}”", { query })}`}{here && !query ? ` · ${t("nearest first")}` : ""}
+            {plural(total, t("{count} gym"), t("{count} gyms"))}{query && ` ${t("for “{query}”", { query })}`}{here && !query ? ` · ${t("nearest first")}` : ""}
           </p>
           <div className="gym-grid">
             {gyms.map((g) => (
@@ -95,7 +95,7 @@ export function ExplorePage() {
                 <GymCard gym={g} />
                 {g.latitude !== null && g.longitude !== null && (
                   <button type="button" className="text-btn" onClick={() => showOnMap(g)}>
-                    <MapIcon aria-hidden /> Show on map{g.distanceKm != null && ` · ${g.distanceKm < 10 ? g.distanceKm.toFixed(1) : Math.round(g.distanceKm)} km`}
+                    <MapIcon aria-hidden /> {t("Show on map")}{g.distanceKm != null && ` · ${g.distanceKm < 10 ? g.distanceKm.toFixed(1) : Math.round(g.distanceKm)} km`}
                   </button>
                 )}
               </div>

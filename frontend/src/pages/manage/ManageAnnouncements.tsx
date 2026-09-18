@@ -102,7 +102,7 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
       m.update.mutate({ ...input, id: initial.id }, { onSuccess: () => { toast.success(t("Update saved")); onDone(); }, onError });
     } else {
       m.create.mutate({ ...input, notifyFollowers: notify }, {
-        onSuccess: (a) => { toast.success(a.notifiedFollowers ? t("Published and followers notified") : "Published"); onDone(); },
+        onSuccess: (a) => { toast.success(a.notifiedFollowers ? t("Published and followers notified") : t("Published")); onDone(); },
         onError,
       });
     }

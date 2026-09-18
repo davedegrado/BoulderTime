@@ -4,7 +4,7 @@ import { errorMessage } from "@/lib/apiError";
 import { Button } from "@/components/Button";
 import { t } from "@/i18n/i18n";
 
-export function LoadingState({ label = "Loading" }: { label?: string }) {
+export function LoadingState({ label = t("Loading") }: { label?: string }) {
   return (
     <div className="state" role="status" aria-live="polite">
       <Loader2 className="state__spinner" aria-hidden />

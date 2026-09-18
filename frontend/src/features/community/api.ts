@@ -71,7 +71,7 @@ export function putWithProgress(ticket: UploadTicket, body: Blob, onProgress?: (
     xhr.open(ticket.method, ticket.uploadUrl);
     for (const [k, v] of Object.entries(ticket.headers)) xhr.setRequestHeader(k, v);
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(e.loaded / e.total);
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new ApiError(xhr.status, null, "The upload failed. Try again.")));
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new ApiError(xhr.status, null, t("The upload failed. Try again."))));
     xhr.onerror = () => reject(new ApiError(0, null, defaultMessage(0)));
     xhr.send(body);
   });
@@ -102,7 +102,7 @@ export async function uploadResumable(ticket: UploadTicket & { resumable: Resuma
       onError: (error) => {
         const status = (error as { originalResponse?: { getStatus(): number } }).originalResponse?.getStatus() ?? 0;
         reject(new ApiError(status, null, status === 0
-          ? "The upload was interrupted. Check your connection and try again."
+          ? t("The upload was interrupted. Check your connection and try again.")
           : status === 413 ? "The video is too large." : "The upload failed. Try again."));
       },
     });
@@ -117,7 +117,7 @@ export interface UploadedVideo { path: string; thumbnailPath: string | null }
  * uploaded never blocks the video itself.
  */
 export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<UploadedVideo> {
-  if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, "Videos must be under 100 MB. Trim it and try again.");
+  if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, t("Videos must be under 100 MB. Trim it and try again."));
   const contentType = file.type || "video/mp4";
   const ticket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`, { kind, contentType, sizeBytes: file.size });
   if (ticket.resumable) await uploadResumable({ ...ticket, resumable: ticket.resumable }, file, onProgress);

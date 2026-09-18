@@ -73,10 +73,10 @@ export function ManageSettings() {
     <section className="card stack form--wide" aria-labelledby="images-title">
       <h2 id="images-title" className="section__title">{t("Images")}</h2>
       <ImagePicker label={t(t("Logo"))} hint={t(t("Square, at least 256 × 256 px."))} hasImage={!!gym.logoUrl} busy={setLogo.isPending}
-        preview={<GymAvatar name={gym.name} logoUrl={gym.logoUrl} size={72} />} {...imageHandlers(setLogo, "Logo")} />
+        preview={<GymAvatar name={gym.name} logoUrl={gym.logoUrl} size={72} />} {...imageHandlers(setLogo, t("Logo"))} />
       <ImagePicker label={t(t("Cover photo"))} hint={t(t("Wide photo of your walls, shown at the top of your gym page."))} hasImage={!!gym.coverImageUrl} busy={setCover.isPending}
         preview={gym.coverImageUrl ? <img className="image-picker__cover" src={gym.coverImageUrl} alt="" /> : <span className="image-picker__cover image-picker__cover--empty" aria-hidden />}
-        {...imageHandlers(setCover, "Cover")} />
+        {...imageHandlers(setCover, t("Cover"))} />
     </section>
     <form className="card form form--wide" onSubmit={onSubmit} noValidate>
       <h2 className="section__title">{t("Gym profile")}</h2>

@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Italian for the staff and admin areas
+Applying: Translate the strings the earlier passes missed; profile says 'On BoulderTime since'; coverage test
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 21 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 17 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  65 passed (65)
+      Tests  66 passed (66)
 OK
 == ESITO: ok ==

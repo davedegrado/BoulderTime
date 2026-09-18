@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
+import { t } from "@/i18n/i18n";
 
 export function AuthLayout({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
@@ -17,13 +18,13 @@ export function AuthLayout({ title, children, footer }: { title: string; childre
 }
 
 export function OrDivider() {
-  return <div className="divider" role="separator"><span>or use email</span></div>;
+  return <div className="divider" role="separator"><span>{t("or use email")}</span></div>;
 }
 
 export function GoogleButton({ onClick, loading, disabled }: { onClick: () => void; loading?: boolean; disabled?: boolean }) {
   return (
     <Button variant="secondary" block onClick={onClick} loading={loading} disabled={disabled} icon={<GoogleGlyph />}>
-      Continue with Google
+      {t("Continue with Google")}
     </Button>
   );
 }

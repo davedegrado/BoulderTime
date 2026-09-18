@@ -99,8 +99,8 @@ export function BetaSection({ boulderId, isStaff }: { boulderId: string; isStaff
         </>
       ) : <p className="list__sub">{t("No official beta yet.")}</p>}
       {isStaff && (replacing || !beta.data ? (
-        <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? "Replace beta" : "Publish beta"} busy={save.isPending}
-          onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => { setReplacing(false); toast.success("Official beta published"); })} />
+        <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? t("Replace beta") : t("Publish beta")} busy={save.isPending}
+          onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => { setReplacing(false); toast.success(t("Official beta published")); })} />
       ) : (
         <div className="form__actions">
           <Button variant="secondary" onClick={() => setReplacing(true)}>{t("Replace")}</Button>
@@ -193,7 +193,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
               </div>
             )}
             {approved.length === 0 ? (
-              <EmptyState icon={<VideoIcon />} title={t("No community videos yet.")} body={session ? "Post your send — it goes live after the gym approves it." : undefined} />
+              <EmptyState icon={<VideoIcon />} title={t("No community videos yet.")} body={session ? t("Post your send — it goes live after the gym approves it.") : undefined} />
             ) : (
               <div className="video-rail" ref={rail} aria-label={t("Approved videos")}>
                 {approved.map((v, i) => <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "approved", index: i })} />)}
@@ -209,7 +209,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
 
       {session && (
         <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel={t("Send for review")} busy={m.submit.isPending}
-          onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success("Sent! It appears once the gym approves it."))} />
+          onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success(t("Sent! It appears once the gym approves it.")))} />
       )}
 
       {open && list[open.index] && (

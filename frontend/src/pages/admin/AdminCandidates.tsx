@@ -17,7 +17,7 @@ const FILTERS: { value: CandidateStatus | ""; label: string }[] = [
   { value: "CONTACTED", label: t("Contacted") },
   { value: "ACCEPTED", label: t("Accepted") },
   { value: "REJECTED", label: t("Rejected") },
-  { value: "", label: "All" },
+  { value: "", label: t("All") },
 ];
 
 export function AdminCandidates() {

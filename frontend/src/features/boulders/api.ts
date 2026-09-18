@@ -6,6 +6,7 @@ import type { GymRole } from "@/lib/format";
 import type { GradeSystemType } from "@/features/grading/api";
 import type { HoldColor } from "@/features/boulders/holdColors";
 import { prepareImage } from "@/features/boulders/imageResize";
+import { t } from "@/i18n/i18n";
 
 export type BoulderStatus = "ACTIVE" | "REMOVED";
 
@@ -77,7 +78,7 @@ async function putToTicket(ticket: UploadTicket, blob: Blob) {
   } catch {
     throw new ApiError(0, null, defaultMessage(0));
   }
-  if (!res.ok) throw new ApiError(res.status, null, "The photo upload failed. Try again.");
+  if (!res.ok) throw new ApiError(res.status, null, t("The photo upload failed. Try again."));
 }
 
 /**

@@ -60,10 +60,10 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const local: Record<string, string> = {};
-    if (!file && !initial) local.photoPath = "Add a photo of the boulder.";
-    if (!sectorId) local.sectorId = "Choose a sector.";
-    if (!holdColor) local.holdColor = "Choose the hold colour.";
-    if (!Object.values(grades).some(Boolean)) local.grades = "Give the boulder at least one official grade.";
+    if (!file && !initial) local.photoPath = t("Add a photo of the boulder.");
+    if (!sectorId) local.sectorId = t("Choose a sector.");
+    if (!holdColor) local.holdColor = t("Choose the hold colour.");
+    if (!Object.values(grades).some(Boolean)) local.grades = t("Give the boulder at least one official grade.");
     setErrors(local);
     if (Object.keys(local).length) return;
 
@@ -96,7 +96,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   if (sectors.isPending || systems.isPending) return <LoadingState />;
 
   const busy = stage !== "idle";
-  const busyLabel = stage === "processing" ? t("Preparing photo…") : stage === "uploading" ? t("Uploading photo…") : stage === "saving" ? "Saving…" : "";
+  const busyLabel = stage === "processing" ? t("Preparing photo…") : stage === "uploading" ? t("Uploading photo…") : stage === "saving" ? t("Saving…") : "";
 
   return (
     <form className="editor" onSubmit={onSubmit} noValidate>
@@ -110,7 +110,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       <section className="editor__section" aria-labelledby="photo-label">
         <p id="photo-label" className="field__label">Photo *</p>
         <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.click()}>
-          {preview ? <img src={preview} alt="Selected boulder" /> : (
+          {preview ? <img src={preview} alt={t("Selected boulder")} /> : (
             <span className="photo-picker__empty"><Camera aria-hidden /><span>{t("Take or choose a photo")}</span></span>
           )}
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}

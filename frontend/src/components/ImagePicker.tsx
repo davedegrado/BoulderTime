@@ -26,7 +26,7 @@ export function ImagePicker({ label, hint, preview, hasImage, busy, onPick, onRe
           onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); e.target.value = ""; }} />
         <div className="form__actions">
           <Button variant="secondary" icon={<ImagePlus aria-hidden />} loading={busy} onClick={() => input.current?.click()}>
-            {hasImage ? "Change" : "Upload"}
+            {hasImage ? t("Change") : t("Upload")}
           </Button>
           {hasImage && <Button variant="ghost" icon={<Trash2 aria-hidden />} disabled={busy} onClick={onRemove}>{t("Remove")}</Button>}
         </div>

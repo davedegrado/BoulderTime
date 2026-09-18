@@ -1,3 +1,4 @@
+import { t } from "@/i18n/i18n";
 /** Mirrors the RFC 7807 ProblemDetails shape every API error uses. */
 export interface ProblemDetails {
   type?: string;
@@ -56,16 +57,16 @@ export async function toApiError(response: Response): Promise<ApiError> {
 }
 
 export function defaultMessage(status: number): string {
-  if (status === 0) return "Can't reach BoulderTime. Check your connection and try again.";
-  if (status === 401) return "Your session has ended. Sign in again to continue.";
-  if (status === 403) return "You don't have permission to do that.";
-  if (status === 404) return "That page or item doesn't exist.";
-  if (status >= 500) return "Something went wrong on our side. Try again in a moment.";
-  return "The request couldn't be completed.";
+  if (status === 0) return t("Can't reach BoulderTime. Check your connection and try again.");
+  if (status === 401) return t("Your session has ended. Sign in again to continue.");
+  if (status === 403) return t("You don't have permission to do that.");
+  if (status === 404) return t("That page or item doesn't exist.");
+  if (status >= 500) return t("Something went wrong on our side. Try again in a moment.");
+  return t("The request couldn't be completed.");
 }
 
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error && error.message) return error.message;
-  return "Something went wrong.";
+  return t("Something went wrong.");
 }

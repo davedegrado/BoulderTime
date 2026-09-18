@@ -68,8 +68,8 @@ function ReportCard({ report: r, showGym }: { report: Report; showGym: boolean }
                 {r.entityType === "COMMENT" ? t("Hide comment") : t("Reject video")}
               </Button>
             )}
-            <Button variant="secondary" icon={<CheckCircle2 aria-hidden />} loading={close.isPending} onClick={() => act({}, "Marked as resolved")}>{t(t("Resolved"))}</Button>
-            <Button variant="ghost" icon={<XCircle aria-hidden />} loading={close.isPending} onClick={() => act({ dismiss: true }, "Report dismissed")}>{t(t("Dismiss"))}</Button>
+            <Button variant="secondary" icon={<CheckCircle2 aria-hidden />} loading={close.isPending} onClick={() => act({}, t("Marked as resolved"))}>{t(t("Resolved"))}</Button>
+            <Button variant="ghost" icon={<XCircle aria-hidden />} loading={close.isPending} onClick={() => act({ dismiss: true }, t("Report dismissed"))}>{t(t("Dismiss"))}</Button>
           </div>
         </>
       )}

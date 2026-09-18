@@ -84,7 +84,7 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
       <FollowButton following={state.isFollowing} onToggle={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })} />
       {state.isFollowing && (
         <button type="button" className={`icon-btn fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
-          aria-label={state.isFavorite ? "Remove from favourites" : "Add to favourites"}
+          aria-label={state.isFavorite ? t("Remove from favourites") : t("Add to favourites")}
           onClick={() => follow.mutate({ isFollowing: true, isFavorite: !state.isFavorite })}>
           <Heart aria-hidden />
         </button>
@@ -109,8 +109,8 @@ function BouldersTab({ gymId }: { gymId: string }) {
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (
           <EmptyState icon={<Mountain />}
-            title={filtered ? "No boulders match these filters" : "No boulders on the wall yet"}
-            body={filtered ? "Try another sector, grade or hold colour." : "This gym hasn't added its current boulders yet."}
+            title={filtered ? t("No boulders match these filters") : t("No boulders on the wall yet")}
+            body={filtered ? t("Try another sector, grade or hold colour.") : t("This gym hasn't added its current boulders yet.")}
             action={filtered ? <Button variant="secondary" onClick={() => setFilters({})}>{t("Clear filters")}</Button> : undefined} />
         ) : (
           <>

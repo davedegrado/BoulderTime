@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { t } from "@/i18n/i18n";
 
 interface AuthContextValue {
   session: Session | null;
@@ -87,10 +88,10 @@ export function useAuth(): AuthContextValue {
 
 export function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "That email and password don't match an account.";
-  if (m.includes("email not confirmed")) return "Confirm your email first — check your inbox for the link.";
-  if (m.includes("already registered")) return "An account with this email already exists. Sign in instead.";
-  if (m.includes("password should be")) return "Use a password with at least 8 characters.";
-  if (m.includes("rate limit")) return "Too many attempts. Wait a minute and try again.";
+  if (m.includes("invalid login credentials")) return t("That email and password don't match an account.");
+  if (m.includes("email not confirmed")) return t("Confirm your email first — check your inbox for the link.");
+  if (m.includes("already registered")) return t("An account with this email already exists. Sign in instead.");
+  if (m.includes("password should be")) return t("Use a password with at least 8 characters.");
+  if (m.includes("rate limit")) return t("Too many attempts. Wait a minute and try again.");
   return message;
 }

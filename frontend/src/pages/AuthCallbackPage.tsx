@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { safeNext } from "@/auth/RequireAuth";
 import { EmptyState, LoadingState } from "@/components/States";
 import { AlertTriangle } from "lucide-react";
+import { t } from "@/i18n/i18n";
 
 /**
  * Landing page for OAuth and email-confirmation redirects.
@@ -29,11 +30,11 @@ export function AuthCallbackPage() {
     return (
       <EmptyState
         icon={<AlertTriangle />}
-        title="Sign-in didn't complete"
-        body={providerError ?? "The sign-in link may have expired or been opened in a different browser."}
+        title={t("Sign-in didn't complete")}
+        body={providerError ?? t("The sign-in link may have expired or been opened in a different browser.")}
         action={<Link to="/sign-in" className="btn btn--primary"><span>Back to sign in</span></Link>}
       />
     );
   }
-  return <LoadingState label="Signing you in" />;
+  return <LoadingState label={t("Signing you in")} />;
 }

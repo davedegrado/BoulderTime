@@ -1,3 +1,4 @@
+import { t } from "@/i18n/i18n";
 export interface ImagePrepOptions {
   /** Longest edge in pixels (or the side length when square). */
   maxSide?: number;
@@ -13,7 +14,7 @@ export interface ImagePrepOptions {
  * EXIF orientation is applied by the browser. Formats the browser can't decode are returned unchanged.
  */
 export async function prepareImage(file: Blob, { maxSide = 1600, quality = 0.82, square = false, force = false }: ImagePrepOptions = {}): Promise<Blob> {
-  if (!file.type.startsWith("image/")) throw new Error("Choose an image file.");
+  if (!file.type.startsWith("image/")) throw new Error(t("Choose an image file."));
   if (typeof createImageBitmap !== "function") return file;
 
   let bitmap: ImageBitmap;
@@ -40,7 +41,7 @@ export async function prepareImage(file: Blob, { maxSide = 1600, quality = 0.82,
   canvas.getContext("2d")!.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn't process the image."))), "image/jpeg", quality),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t("Couldn't process the image.")))), "image/jpeg", quality),
   );
 }
 

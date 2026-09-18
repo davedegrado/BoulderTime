@@ -4,6 +4,7 @@ import { ApiError, defaultMessage } from "@/lib/apiError";
 import { prepareImage } from "@/features/boulders/imageResize";
 import { userKeys, type CurrentUser } from "@/features/users/api";
 import { gymKeys, type GymDetail } from "@/features/gyms/api";
+import { t } from "@/i18n/i18n";
 
 interface Ticket { path: string; uploadUrl: string; method: string; headers: Record<string, string> }
 
@@ -15,7 +16,7 @@ async function uploadTo(ticketUrl: string, extra: object, blob: Blob): Promise<s
   } catch {
     throw new ApiError(0, null, defaultMessage(0));
   }
-  if (!res.ok) throw new ApiError(res.status, null, "The image upload failed. Try again.");
+  if (!res.ok) throw new ApiError(res.status, null, t("The image upload failed. Try again."));
   return ticket.path;
 }
 

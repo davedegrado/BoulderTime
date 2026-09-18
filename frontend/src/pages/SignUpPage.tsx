@@ -13,10 +13,10 @@ interface Errors { displayName?: string; email?: string; password?: string; form
 
 export function validateSignUp(displayName: string, email: string, password: string): Errors {
   const errors: Errors = {};
-  if (displayName.trim().length < 2) errors.displayName = "Use at least 2 characters.";
-  else if (displayName.trim().length > 40) errors.displayName = "Keep it to 40 characters or fewer.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = "Enter a valid email address.";
-  if (password.length < 8) errors.password = "Use at least 8 characters.";
+  if (displayName.trim().length < 2) errors.displayName = t("Use at least 2 characters.");
+  else if (displayName.trim().length > 40) errors.displayName = t("Keep it to 40 characters or fewer.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = t("Enter a valid email address.");
+  if (password.length < 8) errors.password = t("Use at least 8 characters.");
   return errors;
 }
 

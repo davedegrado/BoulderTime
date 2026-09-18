@@ -31,14 +31,14 @@ export function CreateGymForm({ initial, onCancel }: { initial?: Partial<CreateG
   return (
     <form className="card form" onSubmit={onSubmit} noValidate>
       <h2 className="section__title">{initial?.candidateId ? "Create gym from suggestion" : "New gym"}</h2>
-      <p className="field__hint">Gyms start as drafts. Invite an owner, then publish when they're ready.</p>
-      <TextField label="Name" value={form.name} onChange={set("name")} error={err?.fieldError("name")} />
-      <TextField label="City" value={form.city} onChange={set("city")} error={err?.fieldError("city")} />
-      <TextField label="Website" type="url" inputMode="url" value={form.website ?? ""} onChange={set("website")} error={err?.fieldError("website")} hint="Optional" />
-      <TextField label="Email" type="email" inputMode="email" value={form.email ?? ""} onChange={set("email")} error={err?.fieldError("email")} hint="Optional" />
+      <p className="field__hint">{t("Gyms start as drafts. Invite an owner, then publish when they are ready.")}</p>
+      <TextField label={t("Name")} value={form.name} onChange={set("name")} error={err?.fieldError("name")} />
+      <TextField label={t("City")} value={form.city} onChange={set("city")} error={err?.fieldError("city")} />
+      <TextField label={t("Website")} type="url" inputMode="url" value={form.website ?? ""} onChange={set("website")} error={err?.fieldError("website")} hint={t("Optional")} />
+      <TextField label={t("Email")} type="email" inputMode="email" value={form.email ?? ""} onChange={set("email")} error={err?.fieldError("email")} hint={t("Optional")} />
       <div className="form__actions">
-        <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending}>Create draft gym</Button>
-        {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+        <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending}>{t("Create draft gym")}</Button>
+        {onCancel && <Button variant="ghost" onClick={onCancel}>{t("Cancel")}</Button>}
       </div>
     </form>
   );

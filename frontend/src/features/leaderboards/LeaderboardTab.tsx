@@ -72,7 +72,7 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
               )}
               {b.entries.length === 0 ? (
                 <EmptyState icon={<Trophy />} title={t("No sends yet for this period")}
-                  body={session ? "Mark boulders as completed to get on the board." : "Sign in and log your sends to get on the board."} />
+                  body={session ? t("Mark boulders as completed to get on the board.") : t("Sign in and log your sends to get on the board.")} />
               ) : (
                 <ol className="board" aria-label={t("{metric} leaderboard", { metric: metricLabel[metric] })}>
                   {b.entries.map((e) => <Row key={e.climber.userId} entry={e} metric={metric} />)}

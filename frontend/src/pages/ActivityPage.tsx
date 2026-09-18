@@ -52,15 +52,15 @@ export function ClimbingActivity({ userId, title, header }: { userId: string; ti
         <div className="chips" role="radiogroup" aria-label={t("Filter history")}>
           {(["ALL", "COMPLETED", "PROJECTS"] as HistoryFilter[]).map((f) => (
             <button key={f} role="radio" aria-checked={filter === f} className="chip" onClick={() => setFilter(f)}>
-              {f === "ALL" ? "All" : f === "COMPLETED" ? "Completed" : "Projects"}
+              {f === "ALL" ? t("All") : f === "COMPLETED" ? t("Completed") : t("Projects")}
             </button>
           ))}
         </div>
         {history.isPending ? <LoadingState label={t("Loading history")} />
           : history.isError ? <ErrorState error={history.error} onRetry={() => history.refetch()} />
           : items.length === 0 ? (
-            <EmptyState icon={<Mountain />} title={filter === "PROJECTS" ? "No open projects" : "No climbs logged yet"}
-              body={p.isMe ? "Open a boulder at your gym and tap “Mark as completed” or add attempts." : undefined}
+            <EmptyState icon={<Mountain />} title={filter === "PROJECTS" ? t("No open projects") : t("No climbs logged yet")}
+              body={p.isMe ? t("Open a boulder at your gym and tap “Mark as completed” or add attempts.") : undefined}
               action={p.isMe ? <Link to="/explore" className="btn btn--primary"><span>{t("Find a gym")}</span></Link> : undefined} />
           ) : (
             <>

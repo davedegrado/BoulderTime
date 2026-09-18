@@ -25,7 +25,7 @@ function GuestHome() {
       <div className="hero__mark"><Logo variant="icon" height={96} /></div>
       <h1 className="hero__title">{t("Every problem on the wall, in your pocket.")}</h1>
       <p className="hero__lede">
-        See what's set at your gym right now, log your sends and attempts, and watch beta for the problem in front of you.
+        {t("See what's set at your gym right now, log your sends and attempts, and watch beta for the problem in front of you.")}
       </p>
       <div className="hero__actions">
         <Link to="/sign-up" className="btn btn--primary btn--lg"><span>{t("Create an account")}</span></Link>
@@ -52,7 +52,7 @@ function SignedInHome() {
       <header className="page__header">
         <h1 className="page__title">{t("Hey {name}", { name: firstName ?? user.displayName })}</h1>
         <p className="page__subtitle">
-          {h.stats.completedThisMonth > 0 ? t("{count} sent this month. Keep it going.", { count: h.stats.completedThisMonth }) : "Ready for a session?"}
+          {h.stats.completedThisMonth > 0 ? t("{count} sent this month. Keep it going.", { count: h.stats.completedThisMonth }) : t("Ready for a session?")}
         </p>
       </header>
 

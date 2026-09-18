@@ -26,7 +26,7 @@ export function SuggestGymPage() {
     submit.mutate(form, {
       onSuccess: () => {
         setForm(empty);
-        toast.success("Thanks! We'll get in touch with the gym.");
+        toast.success(t("Thanks! We'll get in touch with the gym."));
       },
       onError: (error) => {
         if (!(error instanceof ApiError && error.isValidation)) toast.error(errorMessage(error));
