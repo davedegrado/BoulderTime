@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { errorMessage } from "@/lib/apiError";
 import { Button } from "@/components/Button";
+import { t } from "@/i18n/i18n";
 
 export function LoadingState({ label = "Loading" }: { label?: string }) {
   return (
@@ -34,9 +35,9 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   return (
     <div className="state state--error" role="alert">
       <div className="state__icon" aria-hidden><AlertTriangle /></div>
-      <h2 className="state__title">This didn't load</h2>
+      <h2 className="state__title">{t("This didn't load")}</h2>
       <p className="state__text">{errorMessage(error)}</p>
-      {onRetry && <div className="state__action"><Button variant="secondary" onClick={onRetry}>Try again</Button></div>}
+      {onRetry && <div className="state__action"><Button variant="secondary" onClick={onRetry}>{t("Try again")}</Button></div>}
     </div>
   );
 }

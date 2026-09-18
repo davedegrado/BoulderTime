@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { captureVideoThumbnail } from "@/features/community/videoThumbnail";
+import { t } from "@/i18n/i18n";
 import { api } from "@/lib/api";
 import { ApiError, defaultMessage } from "@/lib/apiError";
 import type { PagedResult } from "@/lib/paging";
@@ -37,9 +38,16 @@ export interface Report {
 }
 export interface ModerationSummary { pendingVideos: number; pendingReports: number }
 
-export const reportReasonLabel: Record<ReportReason, string> = {
+const REPORT_REASONS: Record<ReportReason, string> = {
   INAPPROPRIATE: "Inappropriate content", WRONG_BOULDER: "Wrong boulder", SPAM: "Spam", MISLEADING: "Misleading", OTHER: "Other",
 };
+
+/** Read at render time, so the labels follow the language in use. */
+export const reportReasonLabel: Record<ReportReason, string> = new Proxy({} as Record<ReportReason, string>, {
+  get: (_, key: string) => t(REPORT_REASONS[key as ReportReason] ?? key),
+  ownKeys: () => Object.keys(REPORT_REASONS),
+  getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
+});
 
 interface ResumableUpload { endpoint: string; headers: Record<string, string>; metadata: Record<string, string>; chunkSize: number }
 interface UploadTicket { path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; resumable?: ResumableUpload | null }

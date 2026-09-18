@@ -4,6 +4,7 @@ import { ClimbingActivity } from "@/pages/ActivityPage";
 import { Avatar } from "@/components/Avatar";
 import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 export function UserProfilePage() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ export function UserProfilePage() {
         </div>
       </div>
       {p.followedGyms.length > 0 && (
-        <div className="gym-chips" aria-label="Gyms">
+        <div className="gym-chips" aria-label={t("Gyms")}>
           {p.followedGyms.map((g) => (
             <Link key={g.id} to={`/gyms/${g.slug}`} className="gym-chip"><GymAvatar name={g.name} logoUrl={g.logoUrl} size={24} /><span>{g.name}</span></Link>
           ))}

@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { t } from "@/i18n/i18n";
 
 interface ImagePickerProps {
   label: string;
@@ -27,7 +28,7 @@ export function ImagePicker({ label, hint, preview, hasImage, busy, onPick, onRe
           <Button variant="secondary" icon={<ImagePlus aria-hidden />} loading={busy} onClick={() => input.current?.click()}>
             {hasImage ? "Change" : "Upload"}
           </Button>
-          {hasImage && <Button variant="ghost" icon={<Trash2 aria-hidden />} disabled={busy} onClick={onRemove}>Remove</Button>}
+          {hasImage && <Button variant="ghost" icon={<Trash2 aria-hidden />} disabled={busy} onClick={onRemove}>{t("Remove")}</Button>}
         </div>
       </div>
     </div>

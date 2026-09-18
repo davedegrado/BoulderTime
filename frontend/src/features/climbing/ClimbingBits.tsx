@@ -6,14 +6,15 @@ import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { inkOn } from "@/features/boulders/holdColors";
 import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
+import { plural, t } from "@/i18n/i18n";
 
 export function RatingSummaryText({ rating, compact = false }: { rating: RatingSummary; compact?: boolean }) {
-  if (!rating.count || rating.average === null) return compact ? null : <span className="rating-summary rating-summary--empty">No ratings yet</span>;
+  if (!rating.count || rating.average === null) return compact ? null : <span className="rating-summary rating-summary--empty">{t("No ratings yet")}</span>;
   return (
-    <span className="rating-summary" aria-label={`Rated ${rating.average} out of 5 by ${rating.count} ${rating.count === 1 ? "climber" : "climbers"}`}>
+    <span className="rating-summary" aria-label={t("Rated {average} out of 5 by {count} climbers", { average: rating.average, count: rating.count })}>
       <Star aria-hidden className="rating-summary__star" />
       <strong>{rating.average.toFixed(1)}</strong>
-      {!compact && <span className="rating-summary__of">/ 5 · {rating.count} {rating.count === 1 ? "rating" : "ratings"}</span>}
+      {!compact && <span className="rating-summary__of">/ 5 · {plural(rating.count, "{count} rating", "{count} ratings")}</span>}
     </span>
   );
 }
@@ -21,9 +22,9 @@ export function RatingSummaryText({ rating, compact = false }: { rating: RatingS
 /** Five large tap targets. Tapping the current rating again clears it. */
 export function StarInput({ value, onChange, disabled }: { value: number | null; onChange: (v: number | null) => void; disabled?: boolean }) {
   return (
-    <div className="star-input" role="radiogroup" aria-label="Your rating">
+    <div className="star-input" role="radiogroup" aria-label={t("Your rating")}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={plural(n, "{count} star", "{count} stars")}
           className={`star-input__star ${value !== null && n <= value ? "is-on" : ""}`} disabled={disabled}
           onClick={() => onChange(value === n ? null : n)}>
           <Star aria-hidden />
@@ -51,17 +52,17 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
         <img className="history-row__thumb" src={b.photoUrl} alt="" loading="lazy" />
         <div className="history-row__main">
           <div className="history-row__top">
-            {item.completed ? <span className="sent-mark" aria-label="Completed"><Check aria-hidden /></span> : <span className="project-mark">Project</span>}
+            {item.completed ? <span className="sent-mark" aria-label={t("Completed")}><Check aria-hidden /></span> : <span className="project-mark">{t("Project")}</span>}
             <GradeLine grades={b.grades} />
           </div>
           <p className="list__sub">{b.sectorName} · {b.gymName}</p>
           <p className="history-row__meta">
-            {item.completed && item.completedAt ? `Completed ${formatDate(item.completedAt)}` : `Last tried ${formatDate(item.updatedAt)}`}
-            {` · ${item.attempts} ${item.attempts === 1 ? "attempt" : "attempts"}`}
+            {item.completed && item.completedAt ? t("Completed {date}", { date: formatDate(item.completedAt) }) : t("Last tried {date}", { date: formatDate(item.updatedAt) })}
+            {` · ${plural(item.attempts, "{count} attempt", "{count} attempts")}`}
           </p>
           <div className="history-row__tags">
             <HoldBadge color={b.holdColor} compact />
-            {b.status === "REMOVED" && <span className="tag">Boulder removed</span>}
+            {b.status === "REMOVED" && <span className="tag">{t("Boulder removed")}</span>}
           </div>
         </div>
       </Link>
@@ -74,23 +75,23 @@ export function WeeklyChart({ weeks }: { weeks: WeekActivity[] }) {
   const total = weeks.reduce((n, w) => n + w.completed, 0);
   return (
     <figure className="weekly">
-      <div className="weekly__bars" role="img" aria-label={`${total} completions in the last ${weeks.length} weeks`}>
+      <div className="weekly__bars" role="img" aria-label={t("{total} completions in the last {weeks} weeks", { total, weeks: weeks.length })}>
         {weeks.map((w, i) => (
-          <div key={w.weekStart} className="weekly__col" title={`Week of ${formatDate(w.weekStart, { day: "numeric", month: "short" })}: ${w.completed}`}>
+          <div key={w.weekStart} className="weekly__col" title={t("Week of {date}: {count}", { date: formatDate(w.weekStart, { day: "numeric", month: "short" }), count: w.completed })}>
             <span className={`weekly__bar ${i === weeks.length - 1 ? "is-current" : ""}`} style={{ height: `${Math.max(4, (w.completed / max) * 100)}%` }} />
           </div>
         ))}
       </div>
       <figcaption className="weekly__caption">
         <span>{formatDate(weeks[0]?.weekStart ?? new Date().toISOString(), { day: "numeric", month: "short" })}</span>
-        <span>This week</span>
+        <span>{t("This week")}</span>
       </figcaption>
     </figure>
   );
 }
 
 export function HighestGrades({ grades }: { grades: HighestGrade[] }) {
-  if (grades.length === 0) return <p className="list__sub">Complete a boulder to see your highest grades.</p>;
+  if (grades.length === 0) return <p className="list__sub">{t("Complete a boulder to see your highest grades.")}</p>;
   return (
     <ul className="highest">
       {grades.map((g) => (

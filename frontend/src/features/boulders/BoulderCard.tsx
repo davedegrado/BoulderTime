@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
+import { plural, t } from "@/i18n/i18n";
 
 interface BoulderCardProps {
   boulder: BoulderSummary;
@@ -18,10 +19,10 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle }: Bou
     <>
       <div className="boulder-card__photo">
         <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" />
-        {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">Removed</span>}
-        {!selectable && boulder.viewer?.completed && <span className="boulder-card__sent" aria-label="You completed this"><Check aria-hidden /></span>}
+        {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
+        {!selectable && boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
         {!selectable && boulder.viewer && !boulder.viewer.completed && boulder.viewer.attempts > 0 && (
-          <span className="boulder-card__tries">{boulder.viewer.attempts} {boulder.viewer.attempts === 1 ? "try" : "tries"}</span>
+          <span className="boulder-card__tries">{plural(boulder.viewer.attempts, "{count} try", "{count} tries")}</span>
         )}
         {selectable && <span className={`boulder-card__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
       </div>

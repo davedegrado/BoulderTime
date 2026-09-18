@@ -5,6 +5,7 @@ import { SelectField, TextAreaField } from "@/components/Fields";
 import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 /** Small "Report" link that expands into an inline form (no modal: works well one-handed on a phone). */
 export function ReportButton({ entityType, entityId, label = "Report" }: { entityType: ReportEntityType; entityId: string; label?: string }) {
@@ -29,13 +30,13 @@ export function ReportButton({ entityType, entityId, label = "Report" }: { entit
 
   return (
     <form className="report-form" onSubmit={onSubmit} noValidate>
-      <SelectField label="What's wrong?" value={reason} onChange={(e) => setReason(e.target.value as ReportReason)}
+      <SelectField label={t("What's wrong?")} value={reason} onChange={(e) => setReason(e.target.value as ReportReason)}
         options={(Object.keys(reportReasonLabel) as ReportReason[]).map((r) => ({ value: r, label: reportReasonLabel[r] }))} />
-      <TextAreaField label="Details" rows={2} value={description} onChange={(e) => setDescription(e.target.value)}
+      <TextAreaField label={t("Details")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)}
         error={err?.fieldError("description")} hint={reason === "OTHER" ? "Required for “Other”." : "Optional"} maxLength={500} />
       <div className="form__actions">
-        <Button type="submit" variant="danger" loading={report.isPending}>Send report</Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+        <Button type="submit" variant="danger" loading={report.isPending}>{t("Send report")}</Button>
+        <Button variant="ghost" onClick={() => setOpen(false)}>{t("Cancel")}</Button>
       </div>
     </form>
   );

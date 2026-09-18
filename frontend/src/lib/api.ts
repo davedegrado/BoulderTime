@@ -1,6 +1,7 @@
 import { env } from "@/config/env";
 import { supabase } from "@/lib/supabase";
 import { ApiError, defaultMessage, toApiError } from "@/lib/apiError";
+import { activeLanguage } from "@/i18n/i18n";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -12,7 +13,8 @@ interface RequestOptions {
 }
 
 async function request<T>(method: Method, path: string, options: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { Accept: "application/json" };
+  // The server answers (and writes notifications) in the language the person is using.
+  const headers: Record<string, string> = { Accept: "application/json", "Accept-Language": activeLanguage() };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   if (!options.anonymous) {

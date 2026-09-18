@@ -14,10 +14,11 @@ public sealed record CurrentUserDto(
     bool IsPlatformAdmin,
     DateTimeOffset CreatedAt,
     IReadOnlyList<MyStaffGymDto> StaffGyms,
-    int PendingInvitations)
+    int PendingInvitations,
+    string Language)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
-        new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations);
+        new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language);
 }
 
-public sealed record UpdateProfileRequest(string? DisplayName);
+public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);

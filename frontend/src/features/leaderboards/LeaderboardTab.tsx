@@ -6,6 +6,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { inkOn } from "@/features/boulders/holdColors";
+import { plural, t } from "@/i18n/i18n";
 
 const METRICS: LeaderboardMetric[] = ["POINTS", "COMPLETED", "HIGHEST"];
 const PERIODS: LeaderboardPeriod[] = ["WEEK", "MONTH", "YEAR", "ALL"];
@@ -17,14 +18,14 @@ function Value({ entry, metric }: { entry: LeaderboardEntry; metric: Leaderboard
       ? <span className="grade grade--color grade--sm" style={{ background: h.colorHex, color: inkOn(h.colorHex) }}>{h.label}</span>
       : <span className="grade grade--text grade--sm">{h.label}</span>;
   }
-  if (metric === "COMPLETED") return <span className="board__value">{entry.completed} <small>{entry.completed === 1 ? "send" : "sends"}</small></span>;
-  return <span className="board__value">{entry.points} <small>pts</small></span>;
+  if (metric === "COMPLETED") return <span className="board__value">{entry.completed} <small>{plural(entry.completed, "send", "sends", { count: entry.completed }).replace(String(entry.completed), "").trim()}</small></span>;
+  return <span className="board__value">{entry.points} <small>{t("pts")}</small></span>;
 }
 
 function Row({ entry, metric }: { entry: LeaderboardEntry; metric: LeaderboardMetric }) {
   return (
     <li className={`board__row ${entry.isViewer ? "is-viewer" : ""} ${entry.position <= 3 ? `is-top is-top-${entry.position}` : ""}`}>
-      <span className="board__position" aria-label={`Position ${entry.position}`}>{entry.position}</span>
+      <span className="board__position" aria-label={t("Position {position}", { position: entry.position })}>{entry.position}</span>
       <Link to={`/users/${entry.climber.userId}`} className="board__climber">
         <Avatar name={entry.climber.displayName} url={entry.climber.avatarUrl} size={36} />
         <span className="board__name">{entry.climber.displayName}{entry.isViewer && <span className="list__you"> · you</span>}</span>
@@ -44,14 +45,14 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
 
   return (
     <div className="stack">
-      <div className="chips" role="radiogroup" aria-label="Ranking by">
+      <div className="chips" role="radiogroup" aria-label={t("Ranking by")}>
         {METRICS.map((m) => <button key={m} role="radio" aria-checked={metric === m} className="chip" onClick={() => setMetric(m)}>{metricLabel[m]}</button>)}
       </div>
-      <div className="chips chips--light" role="radiogroup" aria-label="Period">
+      <div className="chips chips--light" role="radiogroup" aria-label={t("Period")}>
         {PERIODS.map((p) => <button key={p} role="radio" aria-checked={period === p} className="chip" onClick={() => setPeriod(p)}>{periodLabel[p]}</button>)}
       </div>
 
-      {board.isPending ? <LoadingState label="Loading leaderboard" />
+      {board.isPending ? <LoadingState label={t("Loading leaderboard")} />
         : board.isError ? <ErrorState error={board.error} onRetry={() => board.refetch()} />
         : (() => {
           const b = board.data;
@@ -59,26 +60,26 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
           return (
             <>
               <div className="section__row">
-                <p className="section__meta">{b.climbers} {b.climbers === 1 ? "climber" : "climbers"} · {periodLabel[b.period].toLowerCase()}</p>
+                <p className="section__meta">{plural(b.climbers, "{count} climber", "{count} climbers")} · {periodLabel[b.period].toLowerCase()}</p>
                 {metric !== "COMPLETED" && (
-                  <button type="button" className="text-btn" onClick={() => setExplain((v) => !v)} aria-expanded={explain}><Info aria-hidden /> How it works</button>
+                  <button type="button" className="text-btn" onClick={() => setExplain((v) => !v)} aria-expanded={explain}><Info aria-hidden /> {t("How it works")}</button>
                 )}
               </div>
               {explain && metric !== "COMPLETED" && (
                 <p className="notice notice--inline">
-                  {metric === "POINTS" ? b.scoringExplanation : `Highest completed grade in the gym's ${b.gradeSystemName ?? "primary"} scale.`}
+                  {metric === "POINTS" ? b.scoringExplanation : t("Highest completed grade in the gym's {system} scale.", { system: b.gradeSystemName ?? t("primary") })}
                 </p>
               )}
               {b.entries.length === 0 ? (
-                <EmptyState icon={<Trophy />} title="No sends yet for this period"
+                <EmptyState icon={<Trophy />} title={t("No sends yet for this period")}
                   body={session ? "Mark boulders as completed to get on the board." : "Sign in and log your sends to get on the board."} />
               ) : (
-                <ol className="board" aria-label={`${metricLabel[metric]} leaderboard`}>
+                <ol className="board" aria-label={t("{metric} leaderboard", { metric: metricLabel[metric] })}>
                   {b.entries.map((e) => <Row key={e.climber.userId} entry={e} metric={metric} />)}
                 </ol>
               )}
               {viewerOutside && b.viewer && (
-                <ol className="board board--viewer" aria-label="Your position"><Row entry={b.viewer} metric={metric} /></ol>
+                <ol className="board board--viewer" aria-label={t("Your position")}><Row entry={b.viewer} metric={metric} /></ol>
               )}
             </>
           );

@@ -22,6 +22,8 @@ public class User : IAuditable
     public string? AvatarUrl { get; private set; }
     /// <summary>Storage path when the avatar was uploaded to BoulderTime (null for provider avatars such as Google).</summary>
     public string? AvatarPath { get; private set; }
+    /// <summary>Language for the app and for notifications addressed to this user ("it" or "en").</summary>
+    public string Language { get; private set; } = "it";
 
     /// <summary>
     /// Platform-wide administrator. Set only via the server-side CLI — never from token claims or client input.
@@ -55,6 +57,8 @@ public class User : IAuditable
     }
 
     public void Rename(string displayName) => DisplayName = SanitizeDisplayName(displayName);
+
+    public void SetLanguage(string language) => Language = language;
 
     /// <returns>The previously uploaded avatar path, so the old file can be deleted.</returns>
     public string? SetAvatar(string? url, string? path)

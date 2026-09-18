@@ -14,6 +14,7 @@ import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 export function BoulderPage() {
   const { id } = useParams();
@@ -21,7 +22,7 @@ export function BoulderPage() {
   const { session } = useAuth();
   const follow = useFollowBoulder(id ?? "");
 
-  if (boulder.isPending) return <LoadingState label="Loading boulder" />;
+  if (boulder.isPending) return <LoadingState label={t("Loading boulder")} />;
   if (boulder.isError) return boulder.error instanceof ApiError && boulder.error.isNotFound ? <NotFoundPage /> : <ErrorState error={boulder.error} onRetry={() => boulder.refetch()} />;
 
   const b = boulder.data;
@@ -45,7 +46,7 @@ export function BoulderPage() {
 
         <header className="boulder-page__head">
           <div className="boulder-page__grades">
-            <p className="boulder-page__caption">Grade</p>
+            <p className="boulder-page__caption">{t("Grade")}</p>
             {primary && <GradeBadge grade={primary} size="lg" />}
             {others.length > 0 && (
               <p className="boulder-page__other-grades">
@@ -56,7 +57,7 @@ export function BoulderPage() {
           <div className="boulder-page__actions">
             {session && <FollowButton following={b.isFollowing} onToggle={() => follow.mutate(!b.isFollowing)} />}
             {b.viewerRole && (
-              <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="btn btn--secondary"><Pencil aria-hidden /><span>Edit</span></Link>
+              <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="btn btn--secondary"><Pencil aria-hidden /><span>{t("Edit")}</span></Link>
             )}
           </div>
         </header>
@@ -70,17 +71,17 @@ export function BoulderPage() {
           </li>
           <li className="list__row">
             <Layers className="list__icon" aria-hidden />
-            <div className="list__main"><p className="list__sub">Sector</p><p className="list__title">{b.sectorName}</p></div>
+            <div className="list__main"><p className="list__sub">{t("Sector")}</p><p className="list__title">{b.sectorName}</p></div>
           </li>
           {b.setter && (
             <li className="list__row">
               <UserRound className="list__icon" aria-hidden />
-              <div className="list__main"><p className="list__sub">Setter</p><p className="list__title">{b.setter.displayName}</p></div>
+              <div className="list__main"><p className="list__sub">{t("Setter")}</p><p className="list__title">{b.setter.displayName}</p></div>
             </li>
           )}
           <li className="list__row">
             <CalendarDays className="list__icon" aria-hidden />
-            <div className="list__main"><p className="list__sub">Set on</p><p className="list__title">{formatDate(b.createdAt)}</p></div>
+            <div className="list__main"><p className="list__sub">{t("Set on")}</p><p className="list__title">{formatDate(b.createdAt)}</p></div>
           </li>
         </ul>
 
@@ -91,7 +92,7 @@ export function BoulderPage() {
 
         <div className="form__actions">
           <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>More boulders at {b.gymName}</span></Link>
-          {session && <ReportButton entityType="BOULDER" entityId={b.id} label="Report a problem with this boulder" />}
+          {session && <ReportButton entityType="BOULDER" entityId={b.id} label={t("Report a problem with this boulder")} />}
         </div>
       </div>
     </article>

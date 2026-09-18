@@ -9,6 +9,7 @@ import { Badge } from "@/components/Badge";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { candidateStatusLabel, formatDate } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 const empty: SubmitCandidateInput = { gymName: "", city: "", officialEmail: "", website: "", notes: "" };
 
@@ -36,22 +37,22 @@ export function SuggestGymPage() {
   return (
     <div className="page page--narrow">
       <header className="page__header">
-        <h1 className="page__title">Suggest a gym</h1>
-        <p className="page__subtitle">Tell us where you climb. The BoulderTime team contacts the gym to bring it on board.</p>
+        <h1 className="page__title">{t("Suggest a gym")}</h1>
+        <p className="page__subtitle">{t("Tell us where you climb. The BoulderTime team contacts the gym to bring it on board.")}</p>
       </header>
 
       <form className="card form" onSubmit={onSubmit} noValidate>
-        <TextField label="Gym name" value={form.gymName} onChange={set("gymName")} error={err?.fieldError("gymName")} required />
-        <TextField label="City" value={form.city} onChange={set("city")} error={err?.fieldError("city")} autoComplete="address-level2" required />
-        <TextField label="Website" type="url" inputMode="url" placeholder="https://" value={form.website} onChange={set("website")} error={err?.fieldError("website")} hint="Optional" />
-        <TextField label="Gym's email" type="email" inputMode="email" value={form.officialEmail} onChange={set("officialEmail")} error={err?.fieldError("officialEmail")} hint="Optional — helps us reach the right person" />
-        <TextAreaField label="Anything else?" rows={3} value={form.notes} onChange={set("notes")} error={err?.fieldError("notes")} hint="Optional" />
-        <Button type="submit" icon={<Send aria-hidden />} loading={submit.isPending}>Send suggestion</Button>
+        <TextField label={t("Gym name")} value={form.gymName} onChange={set("gymName")} error={err?.fieldError("gymName")} required />
+        <TextField label={t("City")} value={form.city} onChange={set("city")} error={err?.fieldError("city")} autoComplete="address-level2" required />
+        <TextField label={t("Website")} type="url" inputMode="url" placeholder={t("https://")} value={form.website} onChange={set("website")} error={err?.fieldError("website")} hint={t("Optional")} />
+        <TextField label={t("Gym's email")} type="email" inputMode="email" value={form.officialEmail} onChange={set("officialEmail")} error={err?.fieldError("officialEmail")} hint={t("Optional — helps us reach the right person")} />
+        <TextAreaField label={t("Anything else?")} rows={3} value={form.notes} onChange={set("notes")} error={err?.fieldError("notes")} hint={t("Optional")} />
+        <Button type="submit" icon={<Send aria-hidden />} loading={submit.isPending}>{t("Send suggestion")}</Button>
       </form>
 
       {mine.data && mine.data.length > 0 && (
         <section className="section" aria-labelledby="my-suggestions">
-          <h2 id="my-suggestions" className="section__title">Your suggestions</h2>
+          <h2 id="my-suggestions" className="section__title">{t("Your suggestions")}</h2>
           <ul className="list">
             {mine.data.map((c) => (
               <li key={c.id} className="list__row">
@@ -66,7 +67,7 @@ export function SuggestGymPage() {
           </ul>
         </section>
       )}
-      <Link to="/explore" className="btn btn--ghost"><span>Back to Explore</span></Link>
+      <Link to="/explore" className="btn btn--ghost"><span>{t("Back to Explore")}</span></Link>
     </div>
   );
 }

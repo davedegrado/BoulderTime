@@ -5,6 +5,7 @@ import type { PagedResult } from "@/lib/paging";
 import type { Person } from "@/features/community/api";
 import { prepareImage } from "@/features/boulders/imageResize";
 import { putWithProgress } from "@/features/community/api";
+import { t } from "@/i18n/i18n";
 
 export type NotificationType =
   | "GYM_ANNOUNCEMENT" | "SECTOR_RETRACED" | "BOULDER_UPDATED" | "OFFICIAL_BETA"
@@ -19,9 +20,16 @@ export interface AppNotification {
 export interface NotificationSettings { gymUpdates: boolean; sectorUpdates: boolean; boulderUpdates: boolean; myContent: boolean }
 
 export type AnnouncementType = "ANNOUNCEMENT" | "EVENT" | "SCHEDULE_CHANGE" | "MAINTENANCE" | "COMPETITION" | "OTHER";
-export const announcementTypeLabel: Record<AnnouncementType, string> = {
+const ANNOUNCEMENT_TYPES: Record<AnnouncementType, string> = {
   ANNOUNCEMENT: "Announcement", EVENT: "Event", SCHEDULE_CHANGE: "Schedule change", MAINTENANCE: "Maintenance", COMPETITION: "Competition", OTHER: "Other",
 };
+
+/** Read at render time, so the labels follow the language in use. */
+export const announcementTypeLabel: Record<AnnouncementType, string> = new Proxy({} as Record<AnnouncementType, string>, {
+  get: (_, key: string) => t(ANNOUNCEMENT_TYPES[key as AnnouncementType] ?? key),
+  ownKeys: () => Object.keys(ANNOUNCEMENT_TYPES),
+  getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
+});
 export const needsEventDate = (t: AnnouncementType) => t === "EVENT" || t === "COMPETITION";
 
 export interface Announcement {

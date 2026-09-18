@@ -9,6 +9,7 @@ import { useUnreadCount } from "@/features/notifications/api";
 import { OfflineBanner, RouteAnnouncer } from "@/components/AppChrome";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/States";
+import { t } from "@/i18n/i18n";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -37,10 +38,10 @@ export function AppShell() {
 
   return (
     <div className="shell">
-      <a className="skip-link" href="#main">Skip to content</a>
+      <a className="skip-link" href="#main">{t("Skip to content")}</a>
 
-      <aside className="sidebar" aria-label="Primary">
-        <Link to="/" className="sidebar__brand" aria-label="BoulderTime home">
+      <aside className="sidebar" aria-label={t("Primary")}>
+        <Link to="/" className="sidebar__brand" aria-label={t("BoulderTime home")}>
           <Logo variant="horizontal" onDark height={40} />
         </Link>
         <nav className="sidebar__nav">
@@ -53,8 +54,8 @@ export function AppShell() {
           ))}
         </nav>
         {(staffGyms.length > 0 || isAdmin) && (
-          <nav className="sidebar__nav" aria-label="Manage">
-            <p className="sidebar__heading">Manage</p>
+          <nav className="sidebar__nav" aria-label={t("Manage")}>
+            <p className="sidebar__heading">{t("Manage")}</p>
             {staffGyms.map((g) => (
               <NavLink key={g.gymId} to={`/manage/${g.slug}`} className="sidebar__link">
                 <GymAvatar name={g.name} logoUrl={g.logoUrl} size={24} />
@@ -64,21 +65,21 @@ export function AppShell() {
             {isAdmin && (
               <NavLink to="/admin" className="sidebar__link">
                 <ShieldCheck aria-hidden />
-                <span>Admin</span>
+                <span>{t("Admin")}</span>
               </NavLink>
             )}
           </nav>
         )}
         {!session && (
           <Link to="/sign-in" className="btn btn--primary btn--block sidebar__cta">
-            <LogIn aria-hidden /><span>Sign in</span>
+            <LogIn aria-hidden /><span>{t("Sign in")}</span>
           </Link>
         )}
       </aside>
 
       <header className="topbar">
-        <Link to="/" aria-label="BoulderTime home"><Logo variant="horizontal" height={30} /></Link>
-        {!session && <Link to="/sign-in" className="topbar__signin">Sign in</Link>}
+        <Link to="/" aria-label={t("BoulderTime home")}><Logo variant="horizontal" height={30} /></Link>
+        {!session && <Link to="/sign-in" className="topbar__signin">{t("Sign in")}</Link>}
       </header>
 
       <RouteAnnouncer />
@@ -89,7 +90,7 @@ export function AppShell() {
         </Suspense>
       </main>
 
-      <nav className="tabbar" aria-label="Primary">
+      <nav className="tabbar" aria-label={t("Primary")}>
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === "/"} className="tabbar__link">
             <span className="tabbar__icon"><Icon aria-hidden />{badge(to)}</span>
@@ -98,7 +99,7 @@ export function AppShell() {
         ))}
         {!session && (
           <NavLink to="/sign-in" className="tabbar__link">
-            <LogIn aria-hidden /><span>Sign in</span>
+            <LogIn aria-hidden /><span>{t("Sign in")}</span>
           </NavLink>
         )}
       </nav>

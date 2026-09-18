@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Localization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,6 +42,8 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetails, I
             _ => "server_error",
         };
 
+        Localize(problem, http);
+
         if (problem.Status >= 500)
             logger.LogError(exception, "Unhandled exception for {Method} {Path}", http.Request.Method, http.Request.Path);
 
@@ -48,10 +51,28 @@ public sealed class ApiExceptionHandler(IProblemDetailsService problemDetails, I
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext { HttpContext = http, ProblemDetails = problem, Exception = exception });
     }
 
+    /// <summary>
+    /// Rewrites title, detail and field errors in the caller's language (Accept-Language, which the app sets to the
+    /// language the person chose). Messages without a translation stay in English.
+    /// </summary>
+    private static void Localize(ProblemDetails problem, HttpContext http)
+    {
+        var language = Language.Normalize(http.Request.Headers.AcceptLanguage.ToString());
+        if (language == Language.English) return;
+        problem.Title = Translations.Translate(problem.Title, language);
+        problem.Detail = Translations.Translate(problem.Detail, language);
+        if (problem is ValidationProblemDetails validation)
+        {
+            foreach (var (field, messages) in validation.Errors.ToList())
+                validation.Errors[field] = messages.Select(m => Translations.Translate(m, language)).ToArray();
+        }
+    }
+
     /// <summary>Adds traceId to every problem response, including framework-generated ones (401, 404, model binding).</summary>
     public static void Customize(ProblemDetailsContext ctx)
     {
         ctx.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier;
+        Localize(ctx.ProblemDetails, ctx.HttpContext);
         if (!ctx.ProblemDetails.Extensions.ContainsKey("code"))
         {
             ctx.ProblemDetails.Extensions["code"] = ctx.ProblemDetails.Status switch

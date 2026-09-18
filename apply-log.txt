@@ -1,23 +1,15 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Explore: list and map tabs with list by default; dev.sh explains port forwarding
-Using index info to reconstruct a base tree...
-M	frontend/src/features/map/useUserLocation.ts
-M	frontend/src/pages/ExplorePage.tsx
-M	frontend/src/test/explore-map.test.tsx
-M	scripts/dev.sh
-Falling back to patching base and 3-way merge...
-No changes -- Patch already applied.
-Applying: Fix map pins: upright circle with logo over initials instead of nested rotations
+Applying: Italian: climber screens, server messages and per-recipient notifications
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-già presente
+OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   121, Skipped:     0, Total:   121, Duration: 1 m 9 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 21 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  59 passed (59)
+      Tests  64 passed (64)
 OK
 == ESITO: ok ==

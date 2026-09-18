@@ -5,6 +5,7 @@ import { safeNext } from "@/auth/RequireAuth";
 import { AuthLayout, GoogleButton, OrDivider } from "@/pages/AuthLayout";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
+import { t } from "@/i18n/i18n";
 
 export function SignInPage() {
   const { session, signInWithPassword, signInWithGoogle } = useAuth();
@@ -44,14 +45,14 @@ export function SignInPage() {
   }
 
   return (
-    <AuthLayout title="Sign in" footer={<>New to BoulderTime? <Link to={`/sign-up${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`}>Create an account</Link></>}>
+    <AuthLayout title={t("Sign in")} footer={<>{t("New to BoulderTime?")} <Link to={`/sign-up${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("Create an account")}</Link></>}>
       <GoogleButton onClick={onGoogle} loading={busy === "google"} disabled={busy !== null} />
       <OrDivider />
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <p className="form__error" role="alert">{error}</p>}
-        <TextField label="Email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <TextField label="Password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        <Button type="submit" block loading={busy === "password"} disabled={busy !== null || !email || !password}>Sign in</Button>
+        <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextField label={t("Password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" block loading={busy === "password"} disabled={busy !== null || !email || !password}>{t("Sign in")}</Button>
       </form>
     </AuthLayout>
   );

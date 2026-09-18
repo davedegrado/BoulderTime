@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import type { Announcement, NotificationType } from "@/features/notifications/api";
 import { announcementTypeLabel } from "@/features/notifications/api";
 import { formatDate } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 export const notificationIcon: Record<NotificationType, LucideIcon> = {
   GYM_ANNOUNCEMENT: Megaphone, SECTOR_RETRACED: RefreshCw, BOULDER_UPDATED: Pencil, OFFICIAL_BETA: Clapperboard,
@@ -13,10 +14,10 @@ export const notificationIcon: Record<NotificationType, LucideIcon> = {
 
 export function relativeTime(iso: string, now = Date.now()): string {
   const minutes = Math.round((now - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return t("just now");
+  if (minutes < 60) return t("{minutes} min ago", { minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return t("{hours} h ago", { hours });
   return formatDate(iso, { day: "numeric", month: "short" });
 }
 

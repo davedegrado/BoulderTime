@@ -19,7 +19,7 @@ public sealed class UserProvisioningMiddleware(RequestDelegate next, IMemoryCach
             var cacheKey = $"provisioned:{identity.Subject}:{identity.Email}";
             if (!cache.TryGetValue(cacheKey, out _))
             {
-                await users.EnsureProvisionedAsync(identity, context.RequestAborted);
+                await users.EnsureProvisionedAsync(identity, context.RequestAborted, context.Request.Headers.AcceptLanguage.ToString());
                 cache.Set(cacheKey, true, CacheFor);
             }
         }

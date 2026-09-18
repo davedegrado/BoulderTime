@@ -14,7 +14,8 @@ public sealed class UserService(IAppDbContext db, IClock clock)
     /// Safe under concurrency: two simultaneous first requests resolve to the same row.
     /// Display name and avatar are user-owned after creation and are never overwritten from the token.
     /// </summary>
-    public async Task<User> EnsureProvisionedAsync(VerifiedIdentity identity, CancellationToken ct = default)
+    /// <param name="language">Preferred language of the request (Accept-Language), used only when the account is created.</param>
+    public async Task<User> EnsureProvisionedAsync(VerifiedIdentity identity, CancellationToken ct = default, string? language = null)
     {
         if (string.IsNullOrWhiteSpace(identity.Email))
             throw new ForbiddenException("This sign-in method didn't provide an email address.", "email_required");
@@ -29,6 +30,7 @@ public sealed class UserService(IAppDbContext db, IClock clock)
         }
 
         var user = User.Provision(identity.Subject, identity.Email, DeriveDisplayName(identity), identity.AvatarUrl);
+        user.SetLanguage(Localization.Language.Normalize(language)); // the language the app was used in when signing up
         db.Users.Add(user);
         try
         {
@@ -67,6 +69,7 @@ public sealed class UserService(IAppDbContext db, IClock clock)
     {
         var name = User.SanitizeDisplayName(request.DisplayName ?? string.Empty);
         new Validator()
+            .Check(request.Language is null || Localization.Language.IsSupported(request.Language), "language", "Choose a language BoulderTime speaks.")
             .Check(name.Length >= User.DisplayNameMinLength, "displayName", $"Use at least {User.DisplayNameMinLength} characters.")
             .Check(name.Length <= User.DisplayNameMaxLength, "displayName", $"Keep it to {User.DisplayNameMaxLength} characters or fewer.")
             .ThrowIfInvalid();
@@ -74,6 +77,7 @@ public sealed class UserService(IAppDbContext db, IClock clock)
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException("User", userId);
         user.Rename(name);
+        if (request.Language is not null) user.SetLanguage(Localization.Language.Normalize(request.Language));
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(user, ct);
     }

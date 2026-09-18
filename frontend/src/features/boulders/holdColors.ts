@@ -1,3 +1,5 @@
+import { t } from "@/i18n/i18n";
+
 /**
  * PHYSICAL hold colours. This palette is only ever used for holds — never for grades,
  * even when a gym grades by colour. UI copy always says "… holds".
@@ -21,8 +23,11 @@ export const HOLD_COLORS: { value: HoldColor; label: string; hex: string }[] = [
 
 export const holdColorInfo = (value: HoldColor) => HOLD_COLORS.find((c) => c.value === value) ?? HOLD_COLORS[0]!;
 
-/** "Blue holds", "Mixed holds". */
-export const holdLabel = (value: HoldColor) => `${holdColorInfo(value).label} holds`;
+/** Translated colour name, e.g. "Blue" / "Blu". */
+export const holdColorName = (value: HoldColor) => t(holdColorInfo(value).label);
+
+/** "Blue holds", "prese blu". */
+export const holdLabel = (value: HoldColor) => t("{colour} holds", { colour: holdColorName(value) });
 
 /** Readable text colour on top of a hex background (for colour GRADE badges). */
 export function inkOn(hex: string): string {

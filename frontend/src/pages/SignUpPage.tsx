@@ -7,6 +7,7 @@ import { AuthLayout, GoogleButton, OrDivider } from "@/pages/AuthLayout";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { EmptyState } from "@/components/States";
+import { t } from "@/i18n/i18n";
 
 interface Errors { displayName?: string; email?: string; password?: string; form?: string }
 
@@ -34,8 +35,8 @@ export function SignUpPage() {
 
   if (sentTo) {
     return (
-      <AuthLayout title="Check your inbox">
-        <EmptyState icon={<MailCheck />} title={`We sent a confirmation link to ${sentTo}.`} body="Open it on this device to finish creating your account." action={<Link to="/sign-in" className="btn btn--secondary"><span>Back to sign in</span></Link>} />
+      <AuthLayout title={t("Check your inbox")}>
+        <EmptyState icon={<MailCheck />} title={`We sent a confirmation link to ${sentTo}.`} body={t("Open it on this device to finish creating your account.")} action={<Link to="/sign-in" className="btn btn--secondary"><span>{t("Back to sign in")}</span></Link>} />
       </AuthLayout>
     );
   }
@@ -67,15 +68,15 @@ export function SignUpPage() {
   }
 
   return (
-    <AuthLayout title="Create your account" footer={<>Already climbing with us? <Link to="/sign-in">Sign in</Link></>}>
+    <AuthLayout title={t("Create your account")} footer={<>{t("Already climbing with us?")} <Link to="/sign-in">{t("Sign in")}</Link></>}>
       <GoogleButton onClick={onGoogle} loading={busy === "google"} disabled={busy !== null} />
       <OrDivider />
       <form onSubmit={onSubmit} className="form" noValidate>
         {errors.form && <p className="form__error" role="alert">{errors.form}</p>}
-        <TextField label="Display name" autoComplete="nickname" value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={errors.displayName} hint="Shown on comments and leaderboards." />
-        <TextField label="Email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
-        <TextField label="Password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} hint="At least 8 characters." />
-        <Button type="submit" block loading={busy === "password"} disabled={busy !== null}>Create account</Button>
+        <TextField label={t("Display name")} autoComplete="nickname" value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={errors.displayName} hint={t("Shown on comments and leaderboards.")} />
+        <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
+        <TextField label={t("Password")} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} hint={t("At least 8 characters.")} />
+        <Button type="submit" block loading={busy === "password"} disabled={busy !== null}>{t("Create account")}</Button>
       </form>
     </AuthLayout>
   );

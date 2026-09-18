@@ -5,6 +5,7 @@ import { Toggle } from "@/features/notifications/NotificationBits";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 const CATEGORIES: { key: keyof NotificationSettings; label: string; description: string }[] = [
   { key: "gymUpdates", label: "Gym updates", description: "New boulders, announcements, events and schedule changes at gyms you follow." },
@@ -24,11 +25,11 @@ export function NotificationSettingsPage() {
   return (
     <div className="page page--narrow">
       <header className="editor__head">
-        <Link to="/notifications" className="manage-head__back" aria-label="Back to notifications"><ArrowLeft aria-hidden /></Link>
-        <h1 className="page__title">Notification settings</h1>
+        <Link to="/notifications" className="manage-head__back" aria-label={t("Back to notifications")}><ArrowLeft aria-hidden /></Link>
+        <h1 className="page__title">{t("Notification settings")}</h1>
       </header>
 
-      <section className="card stack" aria-label="Categories">
+      <section className="card stack" aria-label={t("Categories")}>
         {settings.isPending ? <LoadingState /> : settings.isError ? <ErrorState error={settings.error} onRetry={() => settings.refetch()} />
           : CATEGORIES.map((c) => (
             <Toggle key={c.key} label={c.label} description={c.description} checked={settings.data[c.key]}
@@ -37,8 +38,8 @@ export function NotificationSettingsPage() {
       </section>
 
       <section className="section" aria-labelledby="following-title">
-        <h2 id="following-title" className="section__title">What you follow</h2>
-        <p className="field__hint">Turn off notifications for one thing without unfollowing it.</p>
+        <h2 id="following-title" className="section__title">{t("What you follow")}</h2>
+        <p className="field__hint">{t("Turn off notifications for one thing without unfollowing it.")}</p>
         {follows.isPending ? <LoadingState /> : follows.isError ? <ErrorState error={follows.error} onRetry={() => follows.refetch()} /> : (
           <div className="stack">
             {[
@@ -56,7 +57,7 @@ export function NotificationSettingsPage() {
                           <span className="list__title">{r.label}</span>
                           <span className="list__sub">{r.sub}</span>
                         </Link>
-                        <button type="button" role="switch" aria-checked={r.on} aria-label={`Notifications for ${r.label}`}
+                        <button type="button" role="switch" aria-checked={r.on} aria-label={t("Notifications for {name}", { name: r.label })}
                           className={`switch ${r.on ? "is-on" : ""}`} onClick={() => follow.mutate({ kind: group.kind, id: r.id, enabled: !r.on }, { onError })}>
                           <span className="switch__thumb" />
                         </button>

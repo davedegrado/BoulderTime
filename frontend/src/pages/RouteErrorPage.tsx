@@ -1,6 +1,7 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router-dom";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/Button";
+import { t } from "@/i18n/i18n";
 
 /** Friendly fallback for unexpected rendering errors and failed lazy chunks (e.g. after a deploy while offline). */
 export function RouteErrorPage() {
@@ -13,8 +14,8 @@ export function RouteErrorPage() {
       <h1 className="state__title">{notFound ? "There's nothing here" : "Something went wrong"}</h1>
       <p className="state__text">{notFound ? "The link may be wrong." : "This screen hit a problem. Reloading usually fixes it."}</p>
       <div className="state__action form__actions">
-        {!notFound && <Button icon={<RotateCcw aria-hidden />} onClick={() => window.location.reload()}>Reload</Button>}
-        <Link to="/" className="btn btn--secondary"><span>Go home</span></Link>
+        {!notFound && <Button icon={<RotateCcw aria-hidden />} onClick={() => window.location.reload()}>{t("Reload")}</Button>}
+        <Link to="/" className="btn btn--secondary"><span>{t("Go home")}</span></Link>
       </div>
     </div>
   );

@@ -127,13 +127,13 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, ct);
         var userId = currentUser.RequireUserId();
 
-        var changes = new List<string>();
-        if (boulder.SectorId != valid.SectorId) changes.Add("moved to another sector");
-        if (boulder.HoldColor != valid.HoldColor) changes.Add("hold colour corrected");
-        if (boulder.PhotoPath != valid.PhotoPath) changes.Add("new photo");
+        var changes = new List<Localization.NotificationTexts.BoulderChange>();
+        if (boulder.SectorId != valid.SectorId) changes.Add(Localization.NotificationTexts.BoulderChange.Sector);
+        if (boulder.HoldColor != valid.HoldColor) changes.Add(Localization.NotificationTexts.BoulderChange.HoldColor);
+        if (boulder.PhotoPath != valid.PhotoPath) changes.Add(Localization.NotificationTexts.BoulderChange.Photo);
         var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId);
         var current = await db.BoulderGrades.Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff).ToListAsync(ct);
-        if (!current.Select(g => (g.GradeSystemId, g.GradeValueId)).ToHashSet().SetEquals(valid.Grades)) changes.Insert(0, "grade changed");
+        if (!current.Select(g => (g.GradeSystemId, g.GradeValueId)).ToHashSet().SetEquals(valid.Grades)) changes.Insert(0, Localization.NotificationTexts.BoulderChange.Grade);
         foreach (var g in current.Where(g => !valid.Grades.Contains((g.GradeSystemId, g.GradeValueId))))
             db.BoulderGrades.Remove(g);
         await db.SaveChangesAsync(ct); // free (boulder, system) slots before re-adding changed grades
@@ -144,7 +144,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         {
             var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == boulder.GymId, ct);
             var sectorName = await db.Sectors.AsNoTracking().Where(x => x.Id == valid.SectorId).Select(x => x.Name).FirstAsync(ct);
-            await notifications.BoulderUpdatedAsync(boulder, gym, sectorName, string.Join(", ", changes), userId, ct);
+            await notifications.BoulderUpdatedAsync(boulder, gym, sectorName, changes, userId, ct);
         }
         await db.SaveChangesAsync(ct);
         foreach (var old in obsolete) await storage.DeleteAsync(StorageBuckets.BoulderImages, old, ct);

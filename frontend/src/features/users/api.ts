@@ -21,10 +21,12 @@ export interface CurrentUser {
   createdAt: string;
   staffGyms: StaffGym[];
   pendingInvitations: number;
+  language: "it" | "en";
 }
 
 export interface UpdateProfileInput {
   displayName: string;
+  language?: "it" | "en";
 }
 
 export const userKeys = {

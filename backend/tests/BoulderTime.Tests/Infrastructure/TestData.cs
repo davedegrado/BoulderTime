@@ -23,11 +23,12 @@ public sealed record TestUser(Guid Id, string Email, HttpClient Client);
 
 public static class TestData
 {
-    public static async Task<TestUser> UserAsync(this ApiFactory f, string? email = null, bool platformAdmin = false)
+    /// <param name="language">The language this person reads the app in: it decides the language of their notifications.</param>
+    public static async Task<TestUser> UserAsync(this ApiFactory f, string? email = null, bool platformAdmin = false, string language = "en")
     {
         var id = Guid.NewGuid();
         email ??= $"user-{id:N}@example.com";
-        var client = f.ClientFor(id, email);
+        var client = f.ClientFor(id, email, language: language);
         (await client.GetAsync("/api/users/me")).EnsureSuccessStatusCode(); // provisions the user
         if (platformAdmin)
         {

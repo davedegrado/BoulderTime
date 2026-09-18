@@ -9,6 +9,7 @@ import { TextField } from "@/components/TextField";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 function Player({ src, poster, label, autoPlay }: { src: string; poster?: string | null; label: string; autoPlay?: boolean }) {
   return <video className="player" src={src} poster={poster ?? undefined} controls playsInline preload="metadata" autoPlay={autoPlay} aria-label={label} />;
@@ -53,23 +54,23 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
     <div className="uploader">
       <input ref={input} type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
       {!file ? (
-        <Button variant="secondary" icon={<Upload aria-hidden />} onClick={() => input.current?.click()}>Choose a video</Button>
+        <Button variant="secondary" icon={<Upload aria-hidden />} onClick={() => input.current?.click()}>{t("Choose a video")}</Button>
       ) : (
         <>
           {previewUrl && (
-            <video className="player uploader__preview" src={previewUrl} controls playsInline muted preload="metadata" aria-label="Preview of the selected video" />
+            <video className="player uploader__preview" src={previewUrl} controls playsInline muted preload="metadata" aria-label={t("Preview of the selected video")} />
           )}
           <p className="list__sub">{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</p>
-          <TextField label="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={300} hint="Optional" />
+          <TextField label={t("Caption")} value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={300} hint={t("Optional")} />
           {progress !== null && (
             <div className="progress" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
               <span className="progress__fill" style={{ width: `${progress * 100}%` }} />
             </div>
           )}
-          {progress !== null && <p className="field__hint">Keep this screen open until it finishes. Short signal drops resume automatically.</p>}
+          {progress !== null && <p className="field__hint">{t("Keep this screen open until it finishes. Short signal drops resume automatically.")}</p>}
           <div className="form__actions">
-            <Button onClick={send} loading={progress !== null || busy}>{progress !== null ? `Uploading ${Math.round(progress * 100)}%` : submitLabel}</Button>
-            <Button variant="ghost" onClick={() => setFile(null)} disabled={progress !== null}>Cancel</Button>
+            <Button onClick={send} loading={progress !== null || busy}>{progress !== null ? t("Uploading {percent}%", { percent: Math.round(progress * 100) }) : submitLabel}</Button>
+            <Button variant="ghost" onClick={() => setFile(null)} disabled={progress !== null}>{t("Cancel")}</Button>
           </div>
         </>
       )}
@@ -83,28 +84,28 @@ export function BetaSection({ boulderId, isStaff }: { boulderId: string; isStaff
   const toast = useToast();
   const [replacing, setReplacing] = useState(false);
 
-  if (beta.isPending) return <LoadingState label="Loading beta" />;
+  if (beta.isPending) return <LoadingState label={t("Loading beta")} />;
   if (beta.isError) return <ErrorState error={beta.error} onRetry={() => beta.refetch()} />;
   if (!beta.data && !isStaff) return null;
 
   return (
     <section className="section card" aria-labelledby="beta-title">
-      <h2 id="beta-title" className="section__title"><Clapperboard aria-hidden className="title-icon" /> Official beta</h2>
+      <h2 id="beta-title" className="section__title"><Clapperboard aria-hidden className="title-icon" /> {t("Official beta")}</h2>
       {beta.data ? (
         <>
-          <Player src={beta.data.videoUrl} poster={beta.data.thumbnailUrl} label="Official beta video" />
+          <Player src={beta.data.videoUrl} poster={beta.data.thumbnailUrl} label={t("Official beta video")} />
           {beta.data.caption && <p className="prose">{beta.data.caption}</p>}
-          <p className="list__sub">By {beta.data.uploadedBy.displayName}</p>
+          <p className="list__sub">{t("By {name}", { name: beta.data.uploadedBy.displayName })}</p>
         </>
-      ) : <p className="list__sub">No official beta yet.</p>}
+      ) : <p className="list__sub">{t("No official beta yet.")}</p>}
       {isStaff && (replacing || !beta.data ? (
         <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? "Replace beta" : "Publish beta"} busy={save.isPending}
           onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => { setReplacing(false); toast.success("Official beta published"); })} />
       ) : (
         <div className="form__actions">
-          <Button variant="secondary" onClick={() => setReplacing(true)}>Replace</Button>
-          <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel="Delete beta?" loading={save.isPending}
-            onConfirm={() => save.mutate(null, { onError: (e) => toast.error(errorMessage(e)) })}>Delete</ConfirmButton>
+          <Button variant="secondary" onClick={() => setReplacing(true)}>{t("Replace")}</Button>
+          <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete beta?")} loading={save.isPending}
+            onConfirm={() => save.mutate(null, { onError: (e) => toast.error(errorMessage(e)) })}>{t("Delete")}</ConfirmButton>
         </div>
       ))}
     </section>
@@ -136,7 +137,7 @@ function FramePreview({ src }: { src: string }) {
 
 function Thumb({ video, onOpen, status }: { video: Video; onOpen: () => void; status?: ReactNode }) {
   return (
-    <button type="button" className="video-thumb" onClick={onOpen} aria-label={`Play video by ${video.author.displayName}${video.caption ? `: ${video.caption}` : ""}`}>
+    <button type="button" className="video-thumb" onClick={onOpen} aria-label={t("Play video by {name}", { name: video.author.displayName }) + (video.caption ? `: ${video.caption}` : "")}>
       <span className="video-thumb__frame">
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt="" loading="lazy" />
@@ -170,19 +171,19 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
         <h2 id="videos-title" className="section__title">Community videos{total > 0 && ` (${total})`}</h2>
         {approved.length > 2 && (
           <div className="rail-arrows">
-            <button type="button" className="icon-btn" onClick={() => scroll(-1)} aria-label="Scroll videos left"><ChevronLeft aria-hidden /></button>
-            <button type="button" className="icon-btn" onClick={() => scroll(1)} aria-label="Scroll videos right"><ChevronRight aria-hidden /></button>
+            <button type="button" className="icon-btn" onClick={() => scroll(-1)} aria-label={t("Scroll videos left")}><ChevronLeft aria-hidden /></button>
+            <button type="button" className="icon-btn" onClick={() => scroll(1)} aria-label={t("Scroll videos right")}><ChevronRight aria-hidden /></button>
           </div>
         )}
       </div>
 
-      {videos.isPending ? <LoadingState label="Loading videos" />
+      {videos.isPending ? <LoadingState label={t("Loading videos")} />
         : videos.isError ? <ErrorState error={videos.error} onRetry={() => videos.refetch()} />
         : (
           <>
             {mine.length > 0 && (
               <div className="stack">
-                <p className="section__meta">Your videos in review</p>
+                <p className="section__meta">{t("Your videos in review")}</p>
                 <div className="video-rail">
                   {mine.map((v, i) => (
                     <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "mine", index: i })}
@@ -192,13 +193,13 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
               </div>
             )}
             {approved.length === 0 ? (
-              <EmptyState icon={<VideoIcon />} title="No community videos yet." body={session ? "Post your send — it goes live after the gym approves it." : undefined} />
+              <EmptyState icon={<VideoIcon />} title={t("No community videos yet.")} body={session ? "Post your send — it goes live after the gym approves it." : undefined} />
             ) : (
-              <div className="video-rail" ref={rail} aria-label="Approved videos">
+              <div className="video-rail" ref={rail} aria-label={t("Approved videos")}>
                 {approved.map((v, i) => <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "approved", index: i })} />)}
                 {videos.hasNextPage && (
                   <button type="button" className="video-thumb video-thumb--more" onClick={() => videos.fetchNextPage()} disabled={videos.isFetchingNextPage}>
-                    <span className="video-thumb__frame"><span className="video-thumb__placeholder">{videos.isFetchingNextPage ? "Loading…" : `Show ${Math.min(12, total - approved.length)} more`}</span></span>
+                    <span className="video-thumb__frame"><span className="video-thumb__placeholder">{videos.isFetchingNextPage ? "Loading…" : t("Show {count} more", { count: Math.min(12, total - approved.length) })}</span></span>
                   </button>
                 )}
               </div>
@@ -207,7 +208,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
         )}
 
       {session && (
-        <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel="Send for review" busy={m.submit.isPending}
+        <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel={t("Send for review")} busy={m.submit.isPending}
           onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success("Sent! It appears once the gym approves it."))} />
       )}
 
@@ -276,23 +277,23 @@ function VideoViewer({ videos, index, signedIn, canLoadMore, onLoadMore, onIndex
   }, [index, next, onClose, onIndex]);
 
   return (
-    <div ref={dialogRef} className="viewer" role="dialog" aria-modal="true" aria-label={`Video ${index + 1} of ${videos.length}`}>
+    <div ref={dialogRef} className="viewer" role="dialog" aria-modal="true" aria-label={t("Video {index} of {total}", { index: index + 1, total: videos.length })}>
       <div className="viewer__top">
         <span className="viewer__count">{index + 1} / {videos.length}{canLoadMore ? "+" : ""}</span>
-        <button ref={closeRef} type="button" className="viewer__close" onClick={onClose} aria-label="Close video"><X aria-hidden /></button>
+        <button ref={closeRef} type="button" className="viewer__close" onClick={onClose} aria-label={t("Close video")}><X aria-hidden /></button>
       </div>
       <div className="viewer__stage">
-        <button type="button" className="viewer__nav viewer__nav--prev" onClick={() => onIndex(index - 1)} disabled={!hasPrev} aria-label="Previous video"><ChevronLeft aria-hidden /></button>
-        <Player key={v.id} src={v.videoUrl} poster={v.thumbnailUrl} label={`Video by ${v.author.displayName}`} autoPlay />
-        <button type="button" className="viewer__nav viewer__nav--next" onClick={next} disabled={!hasNext} aria-label="Next video"><ChevronRight aria-hidden /></button>
+        <button type="button" className="viewer__nav viewer__nav--prev" onClick={() => onIndex(index - 1)} disabled={!hasPrev} aria-label={t("Previous video")}><ChevronLeft aria-hidden /></button>
+        <Player key={v.id} src={v.videoUrl} poster={v.thumbnailUrl} label={t("Video by {name}", { name: v.author.displayName })} autoPlay />
+        <button type="button" className="viewer__nav viewer__nav--next" onClick={next} disabled={!hasNext} aria-label={t("Next video")}><ChevronRight aria-hidden /></button>
       </div>
       <div className="viewer__info">
         <p className="list__title">{v.author.displayName}</p>
         {v.caption && <p className="viewer__caption">{v.caption}</p>}
-        {v.isMine && v.status === "PENDING" && <p className="status-line"><Clock aria-hidden /> Waiting for the gym's approval. Only you can see it.</p>}
+        {v.isMine && v.status === "PENDING" && <p className="status-line"><Clock aria-hidden /> {t("Waiting for the gym's approval. Only you can see it.")}</p>}
         {v.isMine && v.status === "REJECTED" && <p className="status-line status-line--bad"><XCircle aria-hidden /> Not approved: {v.rejectionReason}</p>}
         <div className="comment__actions">
-          {v.isMine && <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel="Delete video?" onConfirm={() => onDelete(v.id)}>Delete</ConfirmButton>}
+          {v.isMine && <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete video?")} onConfirm={() => onDelete(v.id)}>{t("Delete")}</ConfirmButton>}
           {signedIn && !v.isMine && <ReportButton entityType="VIDEO" entityId={v.id} />}
         </div>
       </div>

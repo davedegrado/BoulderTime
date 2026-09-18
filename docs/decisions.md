@@ -272,3 +272,24 @@ SQL, Haversine `distanceKm` on the page) with unlocated gyms last. Leaflet loads
 **Video previews.** (1) The uploader plays the chosen file before sending. (2) Thumbnail capture now briefly plays the
 muted inline video before seeking, which iOS Safari requires to decode frames, and rejects black frames. (3) Videos
 without a thumbnail show a live frame (`#t=0.5`, metadata preload, loaded only when near the viewport) instead of an icon.
+
+## ADR-018 · Italian and English (i18n)
+**Italian is the default**; English is chosen in the profile. The choice is stored on the device
+(`localStorage`) and on the account (`users.language`), so notifications reach each person in their own language.
+The app sends `Accept-Language`, which also seeds the language when an account is first created.
+
+**Frontend.** A small provider; `t("English source text")` and `plural(count, one, other)` are plain functions, not
+hooks, so any module can translate without restructuring — the provider remounts the tree when the language changes
+(a rare action). **English source text doubles as the key**, so a missing entry degrades to readable English instead of
+an identifier; missing entries are logged in development. `src/i18n/it.ts` holds the Italian wording. Labels that used
+to be constant maps (hold colours, report reasons, announcement types, leaderboard metrics) are read at render time.
+Dates, times and relative times use the active locale.
+
+**Backend.** `Translations` holds the Italian version of every message the API returns, matched on the English text
+with `{0}` for runtime values (limits, names). Translation happens once, in the error handler, using the caller's
+`Accept-Language`; anything unmatched stays English. **Notifications are written per recipient in that recipient's
+language** (`NotificationTexts`): the publisher renders the text once per language present among the recipients, so an
+English staff member's announcement arrives in Italian for Italian climbers, including collapsed ones
+("2 nuovi blocchi in Cave"). Boulder changes travel as codes, not English phrases, so each reader sees their own wording.
+
+**Still English:** the staff and admin areas (next delivery).

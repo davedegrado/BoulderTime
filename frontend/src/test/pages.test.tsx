@@ -82,7 +82,7 @@ describe("Explore", () => {
   it("lists gyms and offers to suggest one when nothing matches", async () => {
     reply("GET", "/api/gyms", { items: [], page: 1, pageSize: 20, total: 0, hasMore: false });
     renderAt("/explore?q=atlantis", "/explore", <ExplorePage />);
-    expect(await screen.findByText(/No gyms match "atlantis"/)).toBeInTheDocument();
+    expect(await screen.findByText(/No gyms match .atlantis./)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /suggest a gym/i })).toHaveAttribute("href", "/gyms/suggest");
   });
 });

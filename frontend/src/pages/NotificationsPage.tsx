@@ -4,6 +4,7 @@ import { useMarkRead, useNotifications, type AppNotification } from "@/features/
 import { notificationIcon, relativeTime } from "@/features/notifications/NotificationBits";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
+import { t } from "@/i18n/i18n";
 
 export function NotificationsPage() {
   const list = useNotifications();
@@ -14,8 +15,8 @@ export function NotificationsPage() {
 
   const today = new Date().toDateString();
   const groups: [string, AppNotification[]][] = [
-    ["Today", items.filter((n) => new Date(n.createdAt).toDateString() === today)],
-    ["Earlier", items.filter((n) => new Date(n.createdAt).toDateString() !== today)],
+    [t("Today"), items.filter((n) => new Date(n.createdAt).toDateString() === today)],
+    [t("Earlier"), items.filter((n) => new Date(n.createdAt).toDateString() !== today)],
   ];
 
   function open(n: AppNotification) {
@@ -26,8 +27,8 @@ export function NotificationsPage() {
   return (
     <div className="page page--narrow">
       <header className="page__header section__row">
-        <h1 className="page__title">Notifications</h1>
-        <Link to="/notifications/settings" className="icon-link" aria-label="Notification settings"><Settings aria-hidden /></Link>
+        <h1 className="page__title">{t("Notifications")}</h1>
+        <Link to="/notifications/settings" className="icon-link" aria-label={t("Notification settings")}><Settings aria-hidden /></Link>
       </header>
 
       {unread > 0 && (
@@ -36,12 +37,12 @@ export function NotificationsPage() {
         </Button>
       )}
 
-      {list.isPending ? <LoadingState label="Loading notifications" />
+      {list.isPending ? <LoadingState label={t("Loading notifications")} />
         : list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} />
         : items.length === 0 ? (
-          <EmptyState icon={<BellOff />} title="You're all caught up"
-            body="Follow gyms, sectors and boulders to hear about new circuits, retraces, beta and events."
-            action={<Link to="/explore" className="btn btn--primary"><span>Find a gym</span></Link>} />
+          <EmptyState icon={<BellOff />} title={t("You're all caught up")}
+            body={t("Follow gyms, sectors and boulders to hear about new circuits, retraces, beta and events.")}
+            action={<Link to="/explore" className="btn btn--primary"><span>{t("Find a gym")}</span></Link>} />
         ) : groups.filter(([, g]) => g.length > 0).map(([label, group]) => (
           <section key={label} className="section" aria-label={label}>
             <h2 className="section__meta">{label}</h2>
@@ -57,7 +58,7 @@ export function NotificationsPage() {
                         {n.body && <span className="list__sub">{n.body}</span>}
                         <span className="notification__time">{relativeTime(n.createdAt)}</span>
                       </span>
-                      {!n.isRead && <span className="notification__dot"><span className="sr-only">Unread</span></span>}
+                      {!n.isRead && <span className="notification__dot"><span className="sr-only">{t("Unread")}</span></span>}
                     </button>
                   </li>
                 );
@@ -65,7 +66,7 @@ export function NotificationsPage() {
             </ul>
           </section>
         ))}
-      {list.hasNextPage && <Button variant="secondary" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Older notifications</Button>}
+      {list.hasNextPage && <Button variant="secondary" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("Older notifications")}</Button>}
     </div>
   );
 }

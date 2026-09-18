@@ -40,10 +40,12 @@ public sealed class ApiFactory(PostgresFixture postgres) : WebApplicationFactory
             await db.Database.EnsureCreatedAsync();
     }
 
-    public HttpClient ClientFor(Guid userId, string email = "climber@example.com", object? metadata = null)
+    /// <summary>Tests read English messages unless they ask for another language (see <see cref="ClientFor"/>).</summary>
+    public HttpClient ClientFor(Guid userId, string email = "climber@example.com", object? metadata = null, string language = "en")
     {
         var client = CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestTokens.For(userId, email, metadata));
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd(language);
         return client;
     }
 

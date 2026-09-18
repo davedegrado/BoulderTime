@@ -8,6 +8,7 @@ import { SearchField } from "@/components/SearchField";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useDebounced } from "@/lib/useDebounced";
+import { plural, t } from "@/i18n/i18n";
 
 // Leaflet loads only when the map view is opened.
 const GymMap = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.GymMap })));
@@ -49,44 +50,44 @@ export function ExplorePage() {
   return (
     <div className="page">
       <header className="page__header">
-        <h1 className="page__title">Explore gyms</h1>
-        <p className="page__subtitle">Search by gym name or city, or switch to the map to see what's around you.</p>
+        <h1 className="page__title">{t("Explore gyms")}</h1>
+        <p className="page__subtitle">{t("Search by gym name or city, or switch to the map to see what's around you.")}</p>
       </header>
 
-      <SearchField label="Search gyms" placeholder="Gym name or city" value={text} onChange={onQuery} />
+      <SearchField label={t("Search gyms")} placeholder={t("Gym name or city")} value={text} onChange={onQuery} />
 
-      <div className="chips" role="radiogroup" aria-label="View">
-        <button role="radio" aria-checked={view === "list"} className="chip" onClick={() => setView("list")}><List aria-hidden /> List</button>
-        <button role="radio" aria-checked={view === "map"} className="chip" onClick={() => setView("map")}><MapIcon aria-hidden /> Map</button>
+      <div className="chips" role="radiogroup" aria-label={t("View")}>
+        <button role="radio" aria-checked={view === "list"} className="chip" onClick={() => setView("list")}><List aria-hidden /> {t("List")}</button>
+        <button role="radio" aria-checked={view === "map"} className="chip" onClick={() => setView("map")}><MapIcon aria-hidden /> {t("Map")}</button>
       </div>
 
       {view === "map" ? (
-        <section className="map-card" aria-label="Map of gyms">
+        <section className="map-card" aria-label={t("Map of gyms")}>
           <Suspense fallback={<div className="gym-map gym-map--loading"><MapIcon aria-hidden /></div>}>
             <GymMap pins={pins.data ?? []} userPosition={here} focus={focus} onBounds={onBounds} />
           </Suspense>
           <button type="button" className="map-card__locate" onClick={() => { locate(); if (here) setFocus({ ...here, zoom: 13 }); }}
-            aria-label="Center the map on my position">
+            aria-label={t("Center the map on my position")}>
             <LocateFixed aria-hidden />
           </button>
           {location.status === "locating" && <p className="map-card__note">Finding your position…</p>}
-          {location.status === "denied" && <p className="map-card__note">Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.</p>}
+          {location.status === "denied" && <p className="map-card__note">{t("Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.")}</p>}
         </section>
       ) : search.isPending ? (
-        <LoadingState label="Finding gyms" />
+        <LoadingState label={t("Finding gyms")} />
       ) : search.isError ? (
         <ErrorState error={search.error} onRetry={() => search.refetch()} />
       ) : gyms.length === 0 ? (
         <EmptyState
           icon={query ? <SearchX /> : <Compass />}
-          title={query ? `No gyms match "${query}"` : "No gyms on BoulderTime yet"}
-          body="Is your gym missing? Suggest it and we'll reach out to them."
-          action={<Link to="/gyms/suggest" className="btn btn--primary"><Plus aria-hidden /><span>Suggest a gym</span></Link>}
+          title={query ? t("No gyms match “{query}”", { query }) : "No gyms on BoulderTime yet"}
+          body={t("Is your gym missing? Suggest it and we'll reach out to them.")}
+          action={<Link to="/gyms/suggest" className="btn btn--primary"><Plus aria-hidden /><span>{t("Suggest a gym")}</span></Link>}
         />
       ) : (
         <section className="section" aria-live="polite">
           <p className="section__meta">
-            {total} {total === 1 ? "gym" : "gyms"}{query && ` for "${query}"`}{here && !query ? " · nearest first" : ""}
+            {plural(total, "{count} gym", "{count} gyms")}{query && ` ${t("for “{query}”", { query })}`}{here && !query ? ` · ${t("nearest first")}` : ""}
           </p>
           <div className="gym-grid">
             {gyms.map((g) => (
@@ -101,9 +102,9 @@ export function ExplorePage() {
             ))}
           </div>
           {search.hasNextPage && (
-            <Button variant="secondary" onClick={() => search.fetchNextPage()} loading={search.isFetchingNextPage}>Show more</Button>
+            <Button variant="secondary" onClick={() => search.fetchNextPage()} loading={search.isFetchingNextPage}>{t("Show more")}</Button>
           )}
-          <p className="section__footnote">Missing a gym? <Link to="/gyms/suggest">Suggest it</Link></p>
+          <p className="section__footnote">{t("Missing a gym?")} <Link to="/gyms/suggest">{t("Suggest it")}</Link></p>
         </section>
       )}
     </div>

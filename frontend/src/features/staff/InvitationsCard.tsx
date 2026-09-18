@@ -4,6 +4,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { relativeDays, roleLabel } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 /** Shown on Home when the signed-in user has open staff invitations. Renders nothing otherwise. */
 export function InvitationsCard({ count }: { count: number }) {
@@ -15,14 +16,14 @@ export function InvitationsCard({ count }: { count: number }) {
 
   return (
     <section className="invites" aria-labelledby="invites-title">
-      <h2 id="invites-title" className="invites__title"><MailOpen aria-hidden /> You've been invited</h2>
+      <h2 id="invites-title" className="invites__title"><MailOpen aria-hidden /> {t("You've been invited")}</h2>
       <ul className="invites__list">
         {invitations.data.map((inv) => {
           const busy = respond.isPending && respond.variables?.id === inv.id;
           return (
             <li key={inv.id} className="invites__item">
               <p className="invites__text">
-                <strong>{inv.invitedBy}</strong> invited you to join <strong>{inv.gymName}</strong> ({inv.gymCity}) as <strong>{roleLabel[inv.role]}</strong>.
+                <strong>{inv.invitedBy}</strong> {t("invited you to join")} <strong>{inv.gymName}</strong> ({inv.gymCity}) as <strong>{roleLabel[inv.role]}</strong>.
               </p>
               <p className="invites__meta">Expires {relativeDays(inv.expiresAt)}</p>
               <div className="invites__actions">
@@ -34,14 +35,14 @@ export function InvitationsCard({ count }: { count: number }) {
                     onSuccess: () => toast.success(`You're now ${roleLabel[inv.role].toLowerCase()} at ${inv.gymName}`),
                     onError: (e) => toast.error(errorMessage(e)),
                   })}
-                >Accept</Button>
+                >{t("Accept")}</Button>
                 <Button
                   variant="on-dark"
                   icon={<X aria-hidden />}
                   loading={busy && !respond.variables?.accept}
                   disabled={respond.isPending}
                   onClick={() => respond.mutate({ id: inv.id, accept: false }, { onError: (e) => toast.error(errorMessage(e)) })}
-                >Decline</Button>
+                >{t("Decline")}</Button>
               </div>
             </li>
           );

@@ -2,8 +2,9 @@ import type { Sector } from "@/features/gyms/api";
 import type { GradeSystem } from "@/features/grading/api";
 import type { BoulderFilters as Filters, ProgressFilter } from "@/features/boulders/api";
 import { useAuth } from "@/auth/AuthProvider";
-import { HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
+import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
+import { t } from "@/i18n/i18n";
 
 interface Props {
   filters: Filters;
@@ -21,16 +22,16 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems }: Props
 
   return (
     <div className="boulder-filters">
-      <SelectField label="Sector" value={filters.sectorId ?? ""} onChange={(e) => set({ sectorId: e.target.value || undefined })}
+      <SelectField label={t("Sector")} value={filters.sectorId ?? ""} onChange={(e) => set({ sectorId: e.target.value || undefined })}
         options={[{ value: "", label: "All sectors" }, ...sectors.filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
-      <SelectField label="Grade" value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
-      <SelectField label="Hold colour" value={filters.holdColor ?? ""} onChange={(e) => set({ holdColor: (e.target.value || undefined) as HoldColor | undefined })}
-        options={[{ value: "", label: "Any holds" }, ...HOLD_COLORS.map((c) => ({ value: c.value, label: `${c.label} holds` }))]} />
+      <SelectField label={t("Grade")} value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
+      <SelectField label={t("Hold colour")} value={filters.holdColor ?? ""} onChange={(e) => set({ holdColor: (e.target.value || undefined) as HoldColor | undefined })}
+        options={[{ value: "", label: "Any holds" }, ...HOLD_COLORS.map((c) => ({ value: c.value, label: holdLabel(c.value) }))]} />
       {session && (
-        <SelectField label="Your progress" value={filters.progress ?? ""} onChange={(e) => set({ progress: (e.target.value || undefined) as ProgressFilter | undefined })}
+        <SelectField label={t("Your progress")} value={filters.progress ?? ""} onChange={(e) => set({ progress: (e.target.value || undefined) as ProgressFilter | undefined })}
           options={[{ value: "", label: "All" }, { value: "UNTRIED", label: "Not tried" }, { value: "PROJECTS", label: "Projects" }, { value: "COMPLETED", label: "Completed" }]} />
       )}
-      <SelectField label="Rating" value={filters.minRating ?? ""} onChange={(e) => set({ minRating: e.target.value || undefined })}
+      <SelectField label={t("Rating")} value={filters.minRating ?? ""} onChange={(e) => set({ minRating: e.target.value || undefined })}
         options={[{ value: "", label: "Any rating" }, { value: "3", label: "3+ stars" }, { value: "4", label: "4+ stars" }]} />
     </div>
   );
