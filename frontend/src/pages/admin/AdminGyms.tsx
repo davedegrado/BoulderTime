@@ -13,12 +13,13 @@ import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { useDebounced } from "@/lib/useDebounced";
 import { gymStatusLabel, type GymStatus } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "ARCHIVED", label: "Archived" },
+  { value: "", label: t("All statuses") },
+  { value: "DRAFT", label: t("Draft") },
+  { value: "ACTIVE", label: t("Active") },
+  { value: "ARCHIVED", label: t("Archived") },
 ];
 
 export function AdminGyms() {
@@ -32,16 +33,16 @@ export function AdminGyms() {
   return (
     <div className="stack">
       {creating ? <CreateGymForm onCancel={() => setCreating(false)} /> : (
-        <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>New gym</Button>
+        <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>{t(t("New gym"))}</Button>
       )}
       <div className="filters">
-        <SearchField label="Search gyms" placeholder="Name or city" value={text} onChange={setText} />
-        <SelectField label="Status" hideLabel value={status} options={STATUS_OPTIONS}
+        <SearchField label={t(t("Search gyms"))} placeholder={t(t("Name or city"))} value={text} onChange={setText} />
+        <SelectField label={t(t("Status"))} hideLabel value={status} options={STATUS_OPTIONS}
           onChange={(e) => setParams((p) => { e.target.value ? p.set("status", e.target.value) : p.delete("status"); return p; }, { replace: true })} />
       </div>
-      {gyms.isPending ? <LoadingState label="Loading gyms" />
+      {gyms.isPending ? <LoadingState label={t(t("Loading gyms"))} />
         : gyms.isError ? <ErrorState error={gyms.error} onRetry={() => gyms.refetch()} />
-        : gyms.data.items.length === 0 ? <EmptyState icon={<Building2 />} title="No gyms found" />
+        : gyms.data.items.length === 0 ? <EmptyState icon={<Building2 />} title={t(t("No gyms found"))} />
         : <div className="stack">{gyms.data.items.map((g) => <AdminGymCard key={g.id} gym={g} />)}</div>}
     </div>
   );
@@ -58,7 +59,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
   function onInvite(e: FormEvent) {
     e.preventDefault();
     inviteOwner.mutate({ gymId: gym.id, email: email.trim() }, {
-      onSuccess: () => { toast.success(`Owner invitation sent to ${email.trim()}`); setEmail(""); setInviting(false); },
+      onSuccess: () => { toast.success(t("Owner invitation sent to {email}", { email: email.trim() })); setEmail(""); setInviting(false); },
       onError: (err) => { if (!(err instanceof ApiError && err.isValidation)) toast.error(errorMessage(err)); },
     });
   }
@@ -72,21 +73,21 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
         </div>
         <Badge tone={gym.status === "ACTIVE" ? "success" : gym.status === "DRAFT" ? "orange" : "neutral"}>{gymStatusLabel[gym.status]}</Badge>
       </header>
-      {gym.ownerCount === 0 && <p className="notice notice--inline">No owner yet — invite one so the gym can manage itself.</p>}
+      {gym.ownerCount === 0 && <p className="notice notice--inline">{t("No owner yet — invite one so the gym can manage itself.")}</p>}
       <div className="form__actions">
-        <SelectField label={`Status of ${gym.name}`} hideLabel value={gym.status} disabled={setStatus.isPending}
+        <SelectField label={t("Status of {name}", { name: gym.name })} hideLabel value={gym.status} disabled={setStatus.isPending}
           options={STATUS_OPTIONS.slice(1)}
           onChange={(e) => setStatus.mutate({ gymId: gym.id, status: e.target.value as GymStatus }, {
-            onSuccess: (g) => toast.success(`${g.name} is now ${gymStatusLabel[g.status].toLowerCase()}`),
+            onSuccess: (g) => toast.success(t("{name} is now {status}", { name: g.name, status: gymStatusLabel[g.status].toLowerCase() })),
             onError: (err) => toast.error(errorMessage(err)),
           })} />
-        <Button variant="secondary" icon={<MailPlus aria-hidden />} onClick={() => setInviting((v) => !v)}>Invite owner</Button>
-        <Link to={`/manage/${gym.slug}`} className="btn btn--ghost"><Settings2 aria-hidden /><span>Manage</span></Link>
+        <Button variant="secondary" icon={<MailPlus aria-hidden />} onClick={() => setInviting((v) => !v)}>{t(t("Invite owner"))}</Button>
+        <Link to={`/manage/${gym.slug}`} className="btn btn--ghost"><Settings2 aria-hidden /><span>{t("Manage")}</span></Link>
       </div>
       {inviting && (
         <form className="inline-form" onSubmit={onInvite} noValidate>
-          <TextField label="Owner's email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={inviteError} autoFocus />
-          <Button type="submit" loading={inviteOwner.isPending} disabled={!email.trim()}>Send</Button>
+          <TextField label={t(t("Owner's email"))} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={inviteError} autoFocus />
+          <Button type="submit" loading={inviteOwner.isPending} disabled={!email.trim()}>{t(t("Send"))}</Button>
         </form>
       )}
     </article>

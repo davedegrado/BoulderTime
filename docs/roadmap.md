@@ -11,6 +11,7 @@
 | 7 | Leaderboards | **Done** |
 | 8 | Polish: responsive UX, accessibility, states, images, performance | **Done** |
 | 9 | Tests, seed data, docs, deployment | Next |
+| — | Italian and English throughout (ADR-018) | **Done** |
 
 ## How each phase is verified
 

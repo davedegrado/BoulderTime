@@ -12,6 +12,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 export function ManageBoulders() {
   const { gym } = useManagedGym();
@@ -52,14 +53,14 @@ export function ManageBoulders() {
   return (
     <div className="stack">
       <div className="toolbar">
-        <div className="chips" role="radiogroup" aria-label="Boulder status">
-          <button role="radio" aria-checked={!removedView} className="chip" onClick={() => switchView("ACTIVE")}>On the wall</button>
-          <button role="radio" aria-checked={removedView} className="chip" onClick={() => switchView("REMOVED")}>Removed</button>
+        <div className="chips" role="radiogroup" aria-label={t("Boulder status")}>
+          <button role="radio" aria-checked={!removedView} className="chip" onClick={() => switchView("ACTIVE")}>{t("On the wall")}</button>
+          <button role="radio" aria-checked={removedView} className="chip" onClick={() => switchView("REMOVED")}>{t("Removed")}</button>
         </div>
         {!removedView && !selecting && (
           <div className="toolbar__actions">
-            {items.length > 0 && <Button variant="secondary" icon={<CheckSquare aria-hidden />} onClick={() => setSelecting(true)}>Select</Button>}
-            {!noSetup && <Link to={`/manage/${gym.slug}/boulders/new`} className="btn btn--primary"><Plus aria-hidden /><span>New boulder</span></Link>}
+            {items.length > 0 && <Button variant="secondary" icon={<CheckSquare aria-hidden />} onClick={() => setSelecting(true)}>{t(t("Select"))}</Button>}
+            {!noSetup && <Link to={`/manage/${gym.slug}/boulders/new`} className="btn btn--primary"><Plus aria-hidden /><span>{t("New boulder")}</span></Link>}
           </div>
         )}
       </div>
@@ -76,24 +77,24 @@ export function ManageBoulders() {
               </Link>
             )}
           </div>
-          <button type="button" className="icon-btn" onClick={() => setLastRemoval(null)} aria-label="Dismiss"><X aria-hidden /></button>
+          <button type="button" className="icon-btn" onClick={() => setLastRemoval(null)} aria-label={t("Dismiss")}><X aria-hidden /></button>
         </div>
       )}
 
       {noSetup && (
-        <EmptyState icon={<Mountain />} title="Set up sectors and grading first"
-          body="Every boulder needs a sector and at least one official grade."
+        <EmptyState icon={<Mountain />} title={t(t("Set up sectors and grading first"))}
+          body={t(t("Every boulder needs a sector and at least one official grade."))}
           action={<div className="form__actions">
-            <Link to={`/manage/${gym.slug}/sectors`} className="btn btn--secondary"><span>Sectors</span></Link>
-            <Link to={`/manage/${gym.slug}/grading`} className="btn btn--secondary"><span>Grading</span></Link>
+            <Link to={`/manage/${gym.slug}/sectors`} className="btn btn--secondary"><span>{t("Sectors")}</span></Link>
+            <Link to={`/manage/${gym.slug}/grading`} className="btn btn--secondary"><span>{t("Grading")}</span></Link>
           </div>} />
       )}
 
       <BoulderFiltersBar filters={filters} onChange={(f) => setFilters({ ...f, status: filters.status })} sectors={sectors.data ?? []} systems={systems.data ?? []} />
 
-      {boulders.isPending ? <LoadingState label="Loading boulders" />
+      {boulders.isPending ? <LoadingState label={t(t("Loading boulders"))} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
-        : items.length === 0 ? <EmptyState icon={<Mountain />} title={removedView ? "No removed boulders" : "No boulders on the wall"} />
+        : items.length === 0 ? <EmptyState icon={<Mountain />} title={removedView ? t("No removed boulders") : t("No boulders on the wall")} />
         : (
           <>
             <p className="section__meta">{total} {removedView ? "removed" : "on the wall"}</p>
@@ -102,7 +103,7 @@ export function ManageBoulders() {
                 <div key={b.id} className="boulder-grid__item">
                   <BoulderCard boulder={b} />
                   <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
-                    onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success("Boulder restored"), onError: (e) => toast.error(errorMessage(e)) })}>
+                    onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
                     Restore
                   </Button>
                 </div>
@@ -111,20 +112,20 @@ export function ManageBoulders() {
                   selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)} />
               ))}
             </div>
-            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>Show more</Button>}
+            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{t(t("Show more"))}</Button>}
           </>
         )}
 
       {selecting && (
-        <div className="selection-bar" role="region" aria-label="Selection">
+        <div className="selection-bar" role="region" aria-label={t("Selection")}>
           <span className="selection-bar__count">{selected.size} selected</span>
           <label className="selection-bar__notify">
             <input type="checkbox" checked={notifyFollowers} onChange={(e) => setNotifyFollowers(e.target.checked)} />
-            <span>Notify followers</span>
+            <span>{t(t("Notify followers"))}</span>
           </label>
-          <Button variant="on-dark" onClick={selectAllLoaded}>All</Button>
-          <Button variant="on-dark" onClick={stopSelecting}>Cancel</Button>
-          <ConfirmButton variant="danger" icon={<Trash2 aria-hidden />} confirmLabel={`Remove ${selected.size}?`}
+          <Button variant="on-dark" onClick={selectAllLoaded}>{t("All")}</Button>
+          <Button variant="on-dark" onClick={stopSelecting}>{t(t("Cancel"))}</Button>
+          <ConfirmButton variant="danger" icon={<Trash2 aria-hidden />} confirmLabel={t("Remove {count}?", { count: selected.size })}
             disabled={selected.size === 0} loading={remove.isPending} onConfirm={removeSelected}>
             Remove
           </ConfirmButton>

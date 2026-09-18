@@ -292,4 +292,6 @@ language** (`NotificationTexts`): the publisher renders the text once per langua
 English staff member's announcement arrives in Italian for Italian climbers, including collapsed ones
 ("2 nuovi blocchi in Cave"). Boulder changes travel as codes, not English phrases, so each reader sees their own wording.
 
-**Still English:** the staff and admin areas (next delivery).
+**Staff and admin areas** are translated too: screens, toasts, confirmations and shared labels (roles, gym status,
+suggestion status), which are read at render time so they follow the language in use. Wording follows what Italian
+gyms say: *tracciare/ritracciare* for setting and resetting, *settore*, *presa*, *grado*, *blocco*.

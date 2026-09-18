@@ -10,12 +10,13 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { candidateStatusLabel, formatDate, type CandidateStatus } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 const FILTERS: { value: CandidateStatus | ""; label: string }[] = [
-  { value: "PENDING", label: "Pending" },
-  { value: "CONTACTED", label: "Contacted" },
-  { value: "ACCEPTED", label: "Accepted" },
-  { value: "REJECTED", label: "Rejected" },
+  { value: "PENDING", label: t("Pending") },
+  { value: "CONTACTED", label: t("Contacted") },
+  { value: "ACCEPTED", label: t("Accepted") },
+  { value: "REJECTED", label: t("Rejected") },
   { value: "", label: "All" },
 ];
 
@@ -25,14 +26,14 @@ export function AdminCandidates() {
 
   return (
     <div className="stack">
-      <div className="chips" role="radiogroup" aria-label="Filter by status">
+      <div className="chips" role="radiogroup" aria-label={t("Filter by status")}>
         {FILTERS.map((f) => (
           <button key={f.label} role="radio" aria-checked={status === f.value} className="chip" onClick={() => setStatus(f.value)}>{f.label}</button>
         ))}
       </div>
-      {list.isPending ? <LoadingState label="Loading suggestions" />
+      {list.isPending ? <LoadingState label={t(t("Loading suggestions"))} />
         : list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} />
-        : list.data.items.length === 0 ? <EmptyState icon={<Inbox />} title="Nothing here" body={status === "PENDING" ? "No new gym suggestions. Nice and tidy." : "No suggestions with this status."} />
+        : list.data.items.length === 0 ? <EmptyState icon={<Inbox />} title={t(t("Nothing here"))} body={status === "PENDING" ? t("No new gym suggestions. Nice and tidy.") : t("No suggestions with this status.")} />
         : <div className="stack">{list.data.items.map((c) => <CandidateCard key={c.id} candidate={c} />)}</div>}
     </div>
   );
@@ -44,7 +45,7 @@ function CandidateCard({ candidate: c }: { candidate: GymCandidate }) {
   const [creating, setCreating] = useState(false);
   const act = (status: CandidateStatus) =>
     setStatus.mutate({ id: c.id, status }, {
-      onSuccess: () => toast.success(`Marked as ${candidateStatusLabel[status].toLowerCase()}`),
+      onSuccess: () => toast.success(t("Marked as {status}", { status: candidateStatusLabel[status].toLowerCase() })),
       onError: (e) => toast.error(errorMessage(e)),
     });
 
@@ -71,12 +72,12 @@ function CandidateCard({ candidate: c }: { candidate: GymCandidate }) {
       )}
       {c.notes && <p className="prose candidate__notes">{c.notes}</p>}
       {c.gymId ? (
-        <Link to="/admin/gyms" className="btn btn--secondary"><span>Gym created — open gyms</span></Link>
+        <Link to="/admin/gyms" className="btn btn--secondary"><span>{t("Gym created — open gyms")}</span></Link>
       ) : (
         <div className="form__actions">
-          <Button onClick={() => setCreating(true)}>Create gym</Button>
-          {c.status !== "CONTACTED" && <Button variant="secondary" onClick={() => act("CONTACTED")} disabled={setStatus.isPending}>Mark contacted</Button>}
-          {c.status !== "REJECTED" && <Button variant="ghost" onClick={() => act("REJECTED")} disabled={setStatus.isPending}>Reject</Button>}
+          <Button onClick={() => setCreating(true)}>{t(t("Create gym"))}</Button>
+          {c.status !== "CONTACTED" && <Button variant="secondary" onClick={() => act("CONTACTED")} disabled={setStatus.isPending}>{t(t("Mark contacted"))}</Button>}
+          {c.status !== "REJECTED" && <Button variant="ghost" onClick={() => act("REJECTED")} disabled={setStatus.isPending}>{t(t("Reject"))}</Button>}
         </div>
       )}
     </article>

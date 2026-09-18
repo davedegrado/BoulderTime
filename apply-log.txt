@@ -1,15 +1,15 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Italian: climber screens, server messages and per-recipient notifications
+Applying: Italian for the staff and admin areas
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-OK
+già presente
 == 5. TEST BACKEND ==
 Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 21 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  64 passed (64)
+      Tests  65 passed (65)
 OK
 == ESITO: ok ==

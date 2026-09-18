@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider } from "@/i18n/i18n";
 import { CommunityGradeSection } from "@/features/community/CommunityGradeSection";
+import { roleLabel, gymStatusLabel } from "@/lib/format";
 
 vi.mock("@/auth/AuthProvider", () => ({ useAuth: () => ({ session: { access_token: "t" }, initializing: false }) }));
 vi.mock("@/lib/api", () => ({
@@ -35,5 +36,10 @@ describe("Italian", () => {
     expect(screen.getByText("1 voto · grado più votato 6A")).toBeInTheDocument();
     expect(screen.getByText("Ufficiale")).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Il tuo grado Fontainebleau" })).toBeInTheDocument();
+  });
+
+  it("translates shared labels used across the staff area", () => {
+    render(<I18nProvider initial="it"><span>{roleLabel.OWNER} · {gymStatusLabel.DRAFT}</span></I18nProvider>);
+    expect(screen.getByText("Proprietario · Bozza")).toBeInTheDocument();
   });
 });

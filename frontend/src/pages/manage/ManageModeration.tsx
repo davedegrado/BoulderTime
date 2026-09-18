@@ -10,6 +10,7 @@ import { TextField } from "@/components/TextField";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 export function ManageModeration() {
   const { gym } = useManagedGym();
@@ -18,7 +19,7 @@ export function ManageModeration() {
 
   return (
     <div className="stack">
-      <div className="chips" role="radiogroup" aria-label="Moderation queue">
+      <div className="chips" role="radiogroup" aria-label={t("Moderation queue")}>
         <button role="radio" aria-checked={tab === "videos"} className="chip" onClick={() => setTab("videos")}>
           Videos{summary.data?.pendingVideos ? ` (${summary.data.pendingVideos})` : ""}
         </button>
@@ -33,9 +34,9 @@ export function ManageModeration() {
 
 function VideoQueue({ gymId }: { gymId: string }) {
   const queue = usePendingVideos(gymId);
-  if (queue.isPending) return <LoadingState label="Loading videos" />;
+  if (queue.isPending) return <LoadingState label={t(t("Loading videos"))} />;
   if (queue.isError) return <ErrorState error={queue.error} onRetry={() => queue.refetch()} />;
-  if (queue.data.length === 0) return <EmptyState icon={<Video />} title="No videos waiting" body="New community videos show up here for approval." />;
+  if (queue.data.length === 0) return <EmptyState icon={<Video />} title={t(t("No videos waiting"))} body={t(t("New community videos show up here for approval."))} />;
   return <div className="stack">{queue.data.map((item) => <PendingVideo key={item.video.id} gymId={gymId} item={item} />)}</div>;
 }
 
@@ -57,22 +58,22 @@ function PendingVideo({ gymId, item }: { gymId: string; item: ModerationVideo })
           <p className="list__title">@{item.video.author.displayName}</p>
           {item.video.caption && <p className="prose">{item.video.caption}</p>}
           {own ? (
-            <p className="field__hint">This is your video — another staff member has to review it.</p>
+            <p className="field__hint">{t("This is your video — another staff member has to review it.")}</p>
           ) : rejecting ? (
             <form className="stack" onSubmit={(e) => { e.preventDefault(); review.mutate({ id: item.video.id, approve: false, reason }, { onSuccess: () => toast.success("Video rejected"), onError: (er) => { if (!(er instanceof ApiError && er.isValidation)) toast.error(errorMessage(er)); } }); }}>
-              <TextField label="Reason (shown to the climber)" value={reason} onChange={(e) => setReason(e.target.value)} error={reasonError} maxLength={300} autoFocus />
+              <TextField label={t(t("Reason (shown to the climber)"))} value={reason} onChange={(e) => setReason(e.target.value)} error={reasonError} maxLength={300} autoFocus />
               <div className="form__actions">
-                <Button type="submit" variant="danger" loading={review.isPending}>Reject</Button>
-                <Button variant="ghost" onClick={() => setRejecting(false)}>Cancel</Button>
+                <Button type="submit" variant="danger" loading={review.isPending}>{t(t("Reject"))}</Button>
+                <Button variant="ghost" onClick={() => setRejecting(false)}>{t(t("Cancel"))}</Button>
               </div>
             </form>
           ) : (
             <div className="form__actions">
               <Button icon={<Check aria-hidden />} loading={review.isPending}
-                onClick={() => review.mutate({ id: item.video.id, approve: true }, { onSuccess: () => toast.success("Video approved"), onError: (e) => toast.error(errorMessage(e)) })}>
+                onClick={() => review.mutate({ id: item.video.id, approve: true }, { onSuccess: () => toast.success(t("Video approved")), onError: (e) => toast.error(errorMessage(e)) })}>
                 Approve
               </Button>
-              <Button variant="secondary" icon={<X aria-hidden />} onClick={() => setRejecting(true)}>Reject</Button>
+              <Button variant="secondary" icon={<X aria-hidden />} onClick={() => setRejecting(true)}>{t(t("Reject"))}</Button>
             </div>
           )}
         </div>

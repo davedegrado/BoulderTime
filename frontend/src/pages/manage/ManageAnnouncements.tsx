@@ -15,6 +15,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 export function ManageAnnouncements() {
   const { gym } = useManagedGym();
@@ -34,18 +35,18 @@ export function ManageAnnouncements() {
         <AnnouncementForm key={editing?.id ?? "new"} gymId={gym.id} initial={editing}
           prefill={{ title: params.get("title") ?? "", sectorId: params.get("sectorId") }} onDone={close} />
       ) : (
-        <Button icon={<Plus aria-hidden />} onClick={() => setParams({ new: "1" }, { replace: true })}>New update</Button>
+        <Button icon={<Plus aria-hidden />} onClick={() => setParams({ new: "1" }, { replace: true })}>{t(t("New update"))}</Button>
       )}
 
-      {list.isPending ? <LoadingState label="Loading updates" />
+      {list.isPending ? <LoadingState label={t(t("Loading updates"))} />
         : list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} />
-        : items.length === 0 ? <EmptyState icon={<Megaphone />} title="No updates published" body="Tell climbers about new circuits, events, competitions and schedule changes." />
+        : items.length === 0 ? <EmptyState icon={<Megaphone />} title={t(t("No updates published"))} body={t(t("Tell climbers about new circuits, events, competitions and schedule changes."))} />
         : items.map((a) => (
           <AnnouncementCard key={a.id} a={a} actions={<>
             <span className="list__sub">{a.notifiedFollowers ? "Followers were notified" : "Published without notifying"}</span>
-            <Button variant="secondary" icon={<Pencil aria-hidden />} onClick={() => { setEditing(a); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Edit</Button>
-            <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel="Delete?" loading={m.remove.isPending && m.remove.variables === a.id}
-              onConfirm={() => m.remove.mutate(a.id, { onSuccess: () => toast.success("Update deleted"), onError: (e) => toast.error(errorMessage(e)) })}>Delete</ConfirmButton>
+            <Button variant="secondary" icon={<Pencil aria-hidden />} onClick={() => { setEditing(a); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{t(t("Edit"))}</Button>
+            <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete?")} loading={m.remove.isPending && m.remove.variables === a.id}
+              onConfirm={() => m.remove.mutate(a.id, { onSuccess: () => toast.success(t("Update deleted")), onError: (e) => toast.error(errorMessage(e)) })}>{t(t("Delete"))}</ConfirmButton>
           </>} />
         ))}
     </div>
@@ -98,10 +99,10 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
     };
     const onError = (error: unknown) => { if (!(error instanceof ApiError && error.isValidation)) toast.error(errorMessage(error)); };
     if (initial) {
-      m.update.mutate({ ...input, id: initial.id }, { onSuccess: () => { toast.success("Update saved"); onDone(); }, onError });
+      m.update.mutate({ ...input, id: initial.id }, { onSuccess: () => { toast.success(t("Update saved")); onDone(); }, onError });
     } else {
       m.create.mutate({ ...input, notifyFollowers: notify }, {
-        onSuccess: (a) => { toast.success(a.notifiedFollowers ? "Published and followers notified" : "Published"); onDone(); },
+        onSuccess: (a) => { toast.success(a.notifiedFollowers ? t("Published and followers notified") : "Published"); onDone(); },
         onError,
       });
     }
@@ -111,25 +112,25 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
     <form className="card form" onSubmit={onSubmit} noValidate>
       <div className="section__row">
         <h2 className="section__title">{initial ? "Edit update" : "New update"}</h2>
-        <button type="button" className="icon-btn" onClick={onDone} aria-label="Close"><X aria-hidden /></button>
+        <button type="button" className="icon-btn" onClick={onDone} aria-label={t("Close")}><X aria-hidden /></button>
       </div>
-      <SelectField label="Type" value={type} onChange={(e) => setType(e.target.value as AnnouncementType)}
+      <SelectField label={t(t("Type"))} value={type} onChange={(e) => setType(e.target.value as AnnouncementType)}
         options={(Object.keys(announcementTypeLabel) as AnnouncementType[]).map((t) => ({ value: t, label: announcementTypeLabel[t] }))} />
-      <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} error={err?.fieldError("title")} maxLength={120} />
+      <TextField label={t(t("Title"))} value={title} onChange={(e) => setTitle(e.target.value)} error={err?.fieldError("title")} maxLength={120} />
       {needsEventDate(type) && (
-        <TextField label="Date and time" type="datetime-local" value={eventDate} onChange={(e) => setEventDate(e.target.value)} error={err?.fieldError("eventDate")} />
+        <TextField label={t(t("Date and time"))} type="datetime-local" value={eventDate} onChange={(e) => setEventDate(e.target.value)} error={err?.fieldError("eventDate")} />
       )}
-      <TextAreaField label="Message" rows={5} value={content} onChange={(e) => setContent(e.target.value)} error={err?.fieldError("content")} maxLength={4000} />
-      <SelectField label="Sector" value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={err?.fieldError("sectorId")}
-        options={[{ value: "", label: "Whole gym" }, ...(sectors.data ?? []).filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
+      <TextAreaField label={t(t("Message"))} rows={5} value={content} onChange={(e) => setContent(e.target.value)} error={err?.fieldError("content")} maxLength={4000} />
+      <SelectField label={t(t("Sector"))} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={err?.fieldError("sectorId")}
+        options={[{ value: "", label: t("Whole gym") }, ...(sectors.data ?? []).filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
 
       <div className="editor__section">
-        <span className="field__label">Image</span>
+        <span className="field__label">{t("Image")}</span>
         {imagePreview && <img className="announcement__image" src={imagePreview} alt="" />}
         <input ref={fileInput} type="file" accept="image/*" hidden onChange={(e) => pickImage(e.target.files?.[0])} />
         <div className="form__actions">
-          <Button variant="secondary" icon={<ImagePlus aria-hidden />} onClick={() => fileInput.current?.click()} loading={uploading}>{imagePreview ? "Change image" : "Add image"}</Button>
-          {imagePreview && <Button variant="ghost" onClick={() => { setImagePath(null); setImagePreview(null); }}>Remove image</Button>}
+          <Button variant="secondary" icon={<ImagePlus aria-hidden />} onClick={() => fileInput.current?.click()} loading={uploading}>{imagePreview ? t("Change image") : t("Add image")}</Button>
+          {imagePreview && <Button variant="ghost" onClick={() => { setImagePath(null); setImagePreview(null); }}>{t(t("Remove image"))}</Button>}
         </div>
         {err?.fieldError("imagePath") && <p className="field__error">{err.fieldError("imagePath")}</p>}
       </div>
@@ -138,12 +139,12 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
         <label className="check">
           <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
           <span>
-            <span className="list__title">Notify followers</span>
+            <span className="list__title">{t("Notify followers")}</span>
             <span className="list__sub">{sectorId ? "People following the gym or this sector get one notification." : "People following the gym get one notification."} Edits never notify again.</span>
           </span>
         </label>
       )}
-      <Button type="submit" loading={mutation.isPending} disabled={uploading}>{initial ? "Save changes" : "Publish"}</Button>
+      <Button type="submit" loading={mutation.isPending} disabled={uploading}>{initial ? t("Save changes") : t("Publish")}</Button>
     </form>
   );
 }

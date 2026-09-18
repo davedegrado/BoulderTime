@@ -5,6 +5,7 @@ import { useBoulders } from "@/features/boulders/api";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGymInvitations, useStaff } from "@/features/staff/api";
+import { t } from "@/i18n/i18n";
 
 export function ManageOverview() {
   const { gym } = useManagedGym();
@@ -24,45 +25,45 @@ export function ManageOverview() {
         <div className="notice" role="note">
           <EyeOff aria-hidden />
           <p>{gym.status === "DRAFT"
-            ? "This gym isn't public yet. Set up sectors and staff; the BoulderTime team will publish it."
-            : "This gym is archived and hidden from climbers."}</p>
+            ? t("This gym isn't public yet. Set up sectors and staff; the BoulderTime team will publish it.")
+            : t("This gym is archived and hidden from climbers.")}</p>
         </div>
       )}
       <div className="stats">
         <Link to={`${base}/moderation`} className={`stat ${moderation.data?.pendingVideos ? "stat--attention" : ""}`}>
           <Video className="stat__icon" aria-hidden />
           <span className="stat__value">{count(moderation.data?.pendingVideos)}</span>
-          <span className="stat__label">Videos awaiting approval</span>
+          <span className="stat__label">{t("Videos awaiting approval")}</span>
         </Link>
         <Link to={`${base}/moderation`} className={`stat ${moderation.data?.pendingReports ? "stat--attention" : ""}`}>
           <Flag className="stat__icon" aria-hidden />
           <span className="stat__value">{count(moderation.data?.pendingReports)}</span>
-          <span className="stat__label">Open reports</span>
+          <span className="stat__label">{t("Open reports")}</span>
         </Link>
         <Link to={`${base}/boulders`} className="stat">
           <Mountain className="stat__icon" aria-hidden />
           <span className="stat__value">{count(active.data?.pages[0]?.total)}</span>
-          <span className="stat__label">Boulders on the wall</span>
+          <span className="stat__label">{t("Boulders on the wall")}</span>
         </Link>
         <Link to={`${base}/boulders`} className="stat">
           <History className="stat__icon" aria-hidden />
           <span className="stat__value">{count(removed.data?.pages[0]?.total)}</span>
-          <span className="stat__label">Removed boulders</span>
+          <span className="stat__label">{t("Removed boulders")}</span>
         </Link>
         <Link to={`${base}/sectors`} className="stat">
           <Layers className="stat__icon" aria-hidden />
           <span className="stat__value">{count(activeSectors)}</span>
-          <span className="stat__label">Active sectors</span>
+          <span className="stat__label">{t("Active sectors")}</span>
         </Link>
         <Link to={`${base}/staff`} className="stat">
           <Users className="stat__icon" aria-hidden />
           <span className="stat__value">{count(staff.data?.length)}</span>
-          <span className="stat__label">Staff members</span>
+          <span className="stat__label">{t("Staff members")}</span>
         </Link>
         <Link to={`${base}/staff`} className="stat">
           <MailPlus className="stat__icon" aria-hidden />
           <span className="stat__value">{count(invitations.data?.length)}</span>
-          <span className="stat__label">Open invitations</span>
+          <span className="stat__label">{t("Open invitations")}</span>
         </Link>
       </div>
     </div>

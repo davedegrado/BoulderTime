@@ -1,3 +1,4 @@
+import { t } from "@/i18n/i18n";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -19,7 +20,7 @@ export function CreateGymForm({ initial, onCancel }: { initial?: Partial<CreateG
     e.preventDefault();
     create.mutate(form, {
       onSuccess: (gym) => {
-        toast.success(`${gym.name} created as a draft`);
+        toast.success(t("{name} created as a draft", { name: gym.name }));
         navigate(`/admin/gyms?q=${encodeURIComponent(gym.name)}`);
         onCancel?.();
       },

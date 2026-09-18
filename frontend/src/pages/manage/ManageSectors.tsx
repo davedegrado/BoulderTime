@@ -8,6 +8,7 @@ import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 export function ManageSectors() {
   const { gym } = useManagedGym();
@@ -20,7 +21,7 @@ export function ManageSectors() {
   function onCreate(e: FormEvent) {
     e.preventDefault();
     create.mutate({ name: name.trim() }, {
-      onSuccess: (s) => { setName(""); toast.success(`Sector "${s.name}" added`); },
+      onSuccess: (s) => { setName(""); toast.success(t("Sector “{name}” added", { name: s.name })); },
       onError: (err) => { if (!(err instanceof ApiError && err.isValidation)) toast.error(errorMessage(err)); },
     });
   }
@@ -39,13 +40,13 @@ export function ManageSectors() {
   return (
     <div className="stack">
       <form className="inline-form" onSubmit={onCreate} noValidate>
-        <TextField label="New sector" placeholder="e.g. Cave, Slab, Room 2" value={name} onChange={(e) => setName(e.target.value)} error={createError} maxLength={60} />
-        <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending} disabled={!name.trim()}>Add</Button>
+        <TextField label={t(t("New sector"))} placeholder={t("e.g. Cave, Slab, Room 2")} value={name} onChange={(e) => setName(e.target.value)} error={createError} maxLength={60} />
+        <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending} disabled={!name.trim()}>{t("Add")}</Button>
       </form>
 
-      {sectors.isPending ? <LoadingState label="Loading sectors" />
+      {sectors.isPending ? <LoadingState label={t(t("Loading sectors"))} />
         : sectors.isError ? <ErrorState error={sectors.error} onRetry={() => sectors.refetch()} />
-        : sectors.data.length === 0 ? <EmptyState icon={<Layers />} title="No sectors yet" body="Add the areas of your gym so boulders can be organised by sector." />
+        : sectors.data.length === 0 ? <EmptyState icon={<Layers />} title={t(t("No sectors yet"))} body={t(t("Add the areas of your gym so boulders can be organised by sector."))} />
         : (
           <ul className="list">
             {sectors.data.map((s, i) => (
@@ -54,7 +55,7 @@ export function ManageSectors() {
             ))}
           </ul>
         )}
-      <p className="section__footnote">Hidden sectors aren't shown to climbers. Sectors are hidden rather than deleted so climbing history stays intact.</p>
+      <p className="section__footnote">{t("Hidden sectors aren't shown to climbers. Sectors are hidden rather than deleted so climbing history stays intact.")}</p>
     </div>
   );
 }
@@ -80,9 +81,9 @@ function SectorRow({ sector, gymId, first, last, onUp, onDown, reordering }: Row
     return (
       <li className="list__row list__row--editing">
         <form className="inline-form inline-form--row" onSubmit={save} noValidate>
-          <TextField label={`Rename ${sector.name}`} value={name} onChange={(e) => setName(e.target.value)} error={error} autoFocus maxLength={60} />
-          <Button type="submit" icon={<Check aria-hidden />} loading={update.isPending} aria-label="Save name">Save</Button>
-          <Button variant="ghost" icon={<X aria-hidden />} onClick={() => { setEditing(false); setName(sector.name); update.reset(); }} aria-label="Cancel">Cancel</Button>
+          <TextField label={t("Rename {name}", { name: sector.name })} value={name} onChange={(e) => setName(e.target.value)} error={error} autoFocus maxLength={60} />
+          <Button type="submit" icon={<Check aria-hidden />} loading={update.isPending} aria-label={t(t("Save name"))}>{t(t("Save"))}</Button>
+          <Button variant="ghost" icon={<X aria-hidden />} onClick={() => { setEditing(false); setName(sector.name); update.reset(); }} aria-label={t(t("Cancel"))}>{t(t("Cancel"))}</Button>
         </form>
       </li>
     );
@@ -96,15 +97,15 @@ function SectorRow({ sector, gymId, first, last, onUp, onDown, reordering }: Row
       </div>
       <div className="list__main">
         <p className="list__title">{sector.name}</p>
-        {!sector.isActive && <Badge>Hidden</Badge>}
+        {!sector.isActive && <Badge>{t(t("Hidden"))}</Badge>}
       </div>
-      <button type="button" className="icon-btn" onClick={() => setEditing(true)} aria-label={`Rename ${sector.name}`}><Pencil aria-hidden /></button>
+      <button type="button" className="icon-btn" onClick={() => setEditing(true)} aria-label={t("Rename {name}", { name: sector.name })}><Pencil aria-hidden /></button>
       <button
         type="button"
         className="icon-btn"
         disabled={update.isPending}
         onClick={() => update.mutate({ id: sector.id, isActive: !sector.isActive }, { onError: (err) => toast.error(errorMessage(err)) })}
-        aria-label={sector.isActive ? `Hide ${sector.name}` : `Show ${sector.name}`}
+        aria-label={sector.isActive ? t("Hide {name}", { name: sector.name }) : t("Show {name}", { name: sector.name })}
       >
         {sector.isActive ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
       </button>

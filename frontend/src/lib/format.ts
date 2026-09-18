@@ -1,17 +1,29 @@
-import { localeTag } from "@/i18n/i18n";
+import { localeTag, t } from "@/i18n/i18n";
 
 export type GymStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 export type GymRole = "STAFF" | "ADMIN" | "OWNER";
 export type CandidateStatus = "PENDING" | "CONTACTED" | "ACCEPTED" | "REJECTED";
 
-export const gymStatusLabel: Record<GymStatus, string> = { DRAFT: "Draft", ACTIVE: "Active", ARCHIVED: "Archived" };
-export const roleLabel: Record<GymRole, string> = { STAFF: "Staff", ADMIN: "Admin", OWNER: "Owner" };
-export const candidateStatusLabel: Record<CandidateStatus, string> = {
+const GYM_STATUS: Record<GymStatus, string> = { DRAFT: "Draft", ACTIVE: "Active", ARCHIVED: "Archived" };
+const ROLES: Record<GymRole, string> = { STAFF: "Staff", ADMIN: "Admin", OWNER: "Owner" };
+
+/** Label maps are read at render time, so they follow the language in use. */
+function labels<T extends string>(source: Record<T, string>): Record<T, string> {
+  return new Proxy({} as Record<T, string>, {
+    get: (_, key: string) => t(source[key as T] ?? key),
+    ownKeys: () => Object.keys(source),
+    getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
+  });
+}
+
+export const gymStatusLabel = labels(GYM_STATUS);
+export const roleLabel = labels(ROLES);
+export const candidateStatusLabel = labels<CandidateStatus>({
   PENDING: "Pending",
   CONTACTED: "Contacted",
   ACCEPTED: "Accepted",
   REJECTED: "Rejected",
-};
+});
 
 export function formatDate(iso: string, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }) {
   return new Date(iso).toLocaleDateString(localeTag(), opts);

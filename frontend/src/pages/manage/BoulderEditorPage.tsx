@@ -12,11 +12,12 @@ import { Button } from "@/components/Button";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
+import { t } from "@/i18n/i18n";
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
   const existing = useBoulder(boulderId);
-  if (boulderId && existing.isPending) return <LoadingState label="Loading boulder" />;
+  if (boulderId && existing.isPending) return <LoadingState label={t(t("Loading boulder"))} />;
   if (boulderId && existing.isError) return <ErrorState error={existing.error} onRetry={() => existing.refetch()} />;
   return <BoulderEditor key={boulderId ?? "new"} initial={existing.data} />;
 }
@@ -75,10 +76,10 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       };
       if (initial) {
         await update.mutateAsync(input);
-        toast.success("Boulder updated");
+        toast.success(t("Boulder updated"));
       } else {
         await create.mutateAsync(input);
-        toast.success("Boulder added");
+        toast.success(t("Boulder added"));
       }
       navigate(`/manage/${gym.slug}/boulders`);
     } catch (err) {
@@ -95,31 +96,31 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   if (sectors.isPending || systems.isPending) return <LoadingState />;
 
   const busy = stage !== "idle";
-  const busyLabel = stage === "processing" ? "Preparing photo…" : stage === "uploading" ? "Uploading photo…" : stage === "saving" ? "Saving…" : "";
+  const busyLabel = stage === "processing" ? t("Preparing photo…") : stage === "uploading" ? t("Uploading photo…") : stage === "saving" ? "Saving…" : "";
 
   return (
     <form className="editor" onSubmit={onSubmit} noValidate>
       <div className="editor__head">
-        <Link to={`/manage/${gym.slug}/boulders`} className="manage-head__back" aria-label="Back to boulders"><ArrowLeft aria-hidden /></Link>
+        <Link to={`/manage/${gym.slug}/boulders`} className="manage-head__back" aria-label={t("Back to boulders")}><ArrowLeft aria-hidden /></Link>
         <h2 className="section__title">{initial ? "Edit boulder" : "New boulder"}</h2>
       </div>
-      {initial && <p className="field__hint">Fix mistakes here. If the boulder was retraced, remove it and add a new one instead, so climbers' history stays accurate.</p>}
+      {initial && <p className="field__hint">{t("Fix mistakes here. If the boulder was retraced, remove it and add a new one instead, so climbers' history stays accurate.")}</p>}
 
       {/* Photo */}
       <section className="editor__section" aria-labelledby="photo-label">
         <p id="photo-label" className="field__label">Photo *</p>
         <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.click()}>
           {preview ? <img src={preview} alt="Selected boulder" /> : (
-            <span className="photo-picker__empty"><Camera aria-hidden /><span>Take or choose a photo</span></span>
+            <span className="photo-picker__empty"><Camera aria-hidden /><span>{t("Take or choose a photo")}</span></span>
           )}
-          {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> Change</span>}
+          {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
         <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" hidden onChange={(e) => pickFile(e.target.files?.[0])} />
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
 
-      <SelectField label="Sector *" value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
-        options={[{ value: "", label: "Choose a sector" }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
+      <SelectField label={t(t("Sector *"))} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
+        options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
 
       {/* Official grades — one control per active system */}
       <section className="editor__section" aria-labelledby="grades-label">
@@ -128,7 +129,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           {activeSystems.map((system) => (
             <SelectField key={system.id} label={system.name} value={grades[system.id] ?? ""}
               onChange={(e) => setGrades((g) => ({ ...g, [system.id]: e.target.value }))}
-              options={[{ value: "", label: "Not graded" }, ...system.values.filter((v) => v.isActive || v.id === grades[system.id]).map((v) => ({ value: v.id, label: v.label }))]} />
+              options={[{ value: "", label: t("Not graded") }, ...system.values.filter((v) => v.isActive || v.id === grades[system.id]).map((v) => ({ value: v.id, label: v.label }))]} />
           ))}
         </div>
         {errors.grades && <p className="field__error">{errors.grades}</p>}
@@ -137,7 +138,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       {/* Hold colour — deliberately a different control type from grades */}
       <fieldset className="editor__section hold-picker" aria-describedby={errors.holdColor ? "hold-error" : undefined}>
         <legend className="field__label">Hold colour *</legend>
-        <p className="field__hint">The colour of the physical holds, not the grade.</p>
+        <p className="field__hint">{t("The colour of the physical holds, not the grade.")}</p>
         <div className="hold-picker__grid">
           {HOLD_COLORS.map((c) => (
             <label key={c.value} className={`hold-option ${holdColor === c.value ? "is-selected" : ""}`}>
@@ -150,11 +151,11 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         {errors.holdColor && <p id="hold-error" className="field__error">{errors.holdColor}</p>}
       </fieldset>
 
-      <SelectField label="Setter" value={setterUserId} onChange={(e) => setSetterUserId(e.target.value)} error={errors.setterUserId}
-        options={[{ value: "", label: "Not specified" }, ...(staff.data ?? []).map((m) => ({ value: m.userId, label: m.displayName }))]} />
+      <SelectField label={t(t("Setter"))} value={setterUserId} onChange={(e) => setSetterUserId(e.target.value)} error={errors.setterUserId}
+        options={[{ value: "", label: t("Not specified") }, ...(staff.data ?? []).map((m) => ({ value: m.userId, label: m.displayName }))]} />
 
       <div className="editor__submit">
-        <Button type="submit" block icon={<Save aria-hidden />} loading={busy}>{busy ? busyLabel : initial ? "Save changes" : "Add boulder"}</Button>
+        <Button type="submit" block icon={<Save aria-hidden />} loading={busy}>{busy ? busyLabel : initial ? t("Save changes") : t("Add boulder")}</Button>
       </div>
     </form>
   );

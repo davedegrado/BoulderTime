@@ -9,6 +9,7 @@ import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { ApiError } from "@/lib/apiError";
 import { gymStatusLabel, roleLabel, type GymRole } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 interface ManageContextValue { gym: GymDetail; role: GymRole }
 const ManageContext = createContext<ManageContextValue | null>(null);
@@ -24,7 +25,7 @@ export function ManageLayout() {
   const { slug = "" } = useParams();
   const gym = useGym(slug);
 
-  if (gym.isPending) return <LoadingState label="Loading gym" />;
+  if (gym.isPending) return <LoadingState label={t(t("Loading gym"))} />;
   if (gym.isError) {
     if (gym.error instanceof ApiError && gym.error.isNotFound) return <NoAccess />;
     return <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
@@ -34,24 +35,24 @@ export function ManageLayout() {
 
   const base = `/manage/${slug}`;
   const items = [
-    { to: base, label: "Overview", end: true },
-    { to: `${base}/boulders`, label: "Boulders" },
-    { to: `${base}/sectors`, label: "Sectors" },
-    { to: `${base}/grading`, label: "Grading" },
-    { to: `${base}/announcements`, label: "Updates" },
-    { to: `${base}/moderation`, label: "Moderation" },
-    { to: `${base}/staff`, label: "Staff" },
-    ...(atLeast(role, "ADMIN") ? [{ to: `${base}/settings`, label: "Settings" }] : []),
+    { to: base, label: t("Overview"), end: true },
+    { to: `${base}/boulders`, label: t("Boulders") },
+    { to: `${base}/sectors`, label: t("Sectors") },
+    { to: `${base}/grading`, label: t("Grading") },
+    { to: `${base}/announcements`, label: t("Updates") },
+    { to: `${base}/moderation`, label: t("Moderation") },
+    { to: `${base}/staff`, label: t("Staff") },
+    ...(atLeast(role, "ADMIN") ? [{ to: `${base}/settings`, label: t("Settings") }] : []),
   ];
 
   return (
     <ManageContext.Provider value={{ gym: gym.data, role }}>
       <div className="page">
         <header className="manage-head">
-          <Link to={`/gyms/${slug}`} className="manage-head__back" aria-label="Back to gym page"><ArrowLeft aria-hidden /></Link>
+          <Link to={`/gyms/${slug}`} className="manage-head__back" aria-label={t("Back to gym page")}><ArrowLeft aria-hidden /></Link>
           <GymAvatar name={gym.data.name} logoUrl={gym.data.logoUrl} size={44} />
           <div className="manage-head__text">
-            <p className="manage-head__eyebrow">Staff area</p>
+            <p className="manage-head__eyebrow">{t("Staff area")}</p>
             <h1 className="manage-head__title">{gym.data.name}</h1>
           </div>
           <div className="manage-head__badges">
@@ -59,7 +60,7 @@ export function ManageLayout() {
             <Badge tone="orange">{roleLabel[role]}</Badge>
           </div>
         </header>
-        <SubNav items={items} label="Staff area sections" />
+        <SubNav items={items} label={t(t("Staff area sections"))} />
         <Outlet />
       </div>
     </ManageContext.Provider>
@@ -70,9 +71,9 @@ function NoAccess() {
   return (
     <EmptyState
       icon={<Lock />}
-      title="This area is for gym staff"
-      body="You're not on the staff of this gym. Staff join by invitation from a gym admin."
-      action={<Link to="/" className="btn btn--primary"><span>Go home</span></Link>}
+      title={t(t("This area is for gym staff"))}
+      body={t(t("You're not on the staff of this gym. Staff join by invitation from a gym admin."))}
+      action={<Link to="/" className="btn btn--primary"><span>{t("Go home")}</span></Link>}
     />
   );
 }
