@@ -1,15 +1,15 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Pre-phase-9 audit: fix open redirect, add rate limits and security headers, restore storage SQL, founding gym and early partners
+Applying: Admin partners: choose gyms by searching, not by pasting an id; translate staff counts
 OK
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-OK
+già presente
 == 5. TEST BACKEND ==
 Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 24 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  78 passed (78)
+      Tests  80 passed (80)
 OK
 == ESITO: ok ==

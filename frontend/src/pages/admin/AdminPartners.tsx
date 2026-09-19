@@ -1,26 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Handshake, Trophy } from "lucide-react";
-import { usePartners, usePartnerMutations } from "@/features/admin/api";
+import { useAdminGyms, usePartners, usePartnerMutations, type AdminGym } from "@/features/admin/api";
 import { GymBadges } from "@/features/gyms/GymBadges";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { SearchField } from "@/components/SearchField";
 import { TextField } from "@/components/TextField";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
+import { useDebounced } from "@/lib/useDebounced";
 import { t } from "@/i18n/i18n";
 
+type Target = "founding" | "early";
+
 /**
- * Platform distinctions. The founding gym is one and historical; early partners are several and have a period.
- * Both live here because only BoulderTime administrators may change them.
+ * Platform distinctions. Gyms are chosen by searching for them by name — an admin should never have to know an id.
+ * The founding gym is one and historical; early partners are several and hold a period.
  */
 export function AdminPartners() {
   const partners = usePartners();
   const m = usePartnerMutations();
   const toast = useToast();
-  const [gymId, setGymId] = useState("");
+  const [picking, setPicking] = useState<Target | null>(null);
   const [note, setNote] = useState("");
   const onError = (e: unknown) => toast.error(errorMessage(e));
 
@@ -29,6 +33,20 @@ export function AdminPartners() {
 
   const founding = partners.data.find((p) => p.gym.isFoundingGym);
   const early = partners.data.filter((p) => p.earlyPartner);
+
+  function choose(gym: AdminGym) {
+    if (picking === "founding") {
+      m.setFounding.mutate({ gymId: gym.id, isFoundingGym: true }, {
+        onSuccess: () => { toast.success(t("{name} is now the founding gym", { name: gym.name })); setPicking(null); },
+        onError,
+      });
+    } else {
+      m.startEarlyPartner.mutate({ gymId: gym.id, note: note.trim() || undefined }, {
+        onSuccess: () => { toast.success(t("{name} is now an early partner", { name: gym.name })); setPicking(null); setNote(""); },
+        onError,
+      });
+    }
+  }
 
   return (
     <div className="stack">
@@ -46,14 +64,12 @@ export function AdminPartners() {
               {t("Remove")}
             </ConfirmButton>
           </div>
-        ) : <p className="list__sub">{t("No founding gym yet.")}</p>}
-        <div className="inline-form">
-          <TextField label={t("Gym ID")} value={gymId} onChange={(e) => setGymId(e.target.value)} hint={t("Copy it from the gyms list.")} />
-          <Button disabled={!gymId.trim()} loading={m.setFounding.isPending}
-            onClick={() => m.setFounding.mutate({ gymId: gymId.trim(), isFoundingGym: true }, { onSuccess: () => { toast.success(t("Founding gym set")); setGymId(""); }, onError })}>
-            {t("Set as founding gym")}
-          </Button>
-        </div>
+        ) : (
+          <p className="list__sub">{t("No founding gym yet.")}</p>
+        )}
+        {picking === "founding"
+          ? <GymPicker busy={m.setFounding.isPending} onPick={choose} onCancel={() => setPicking(null)} actionLabel={t("Set as founding gym")} />
+          : !founding && <Button onClick={() => setPicking("founding")}>{t("Choose the founding gym")}</Button>}
       </section>
 
       <section className="card stack" aria-labelledby="early-title">
@@ -81,15 +97,46 @@ export function AdminPartners() {
             ))}
           </ul>
         )}
-        <div className="inline-form">
-          <TextField label={t("Gym ID")} value={gymId} onChange={(e) => setGymId(e.target.value)} />
-          <TextField label={t("Note")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} hint={t("Optional")} />
-          <Button disabled={!gymId.trim()} loading={m.startEarlyPartner.isPending}
-            onClick={() => m.startEarlyPartner.mutate({ gymId: gymId.trim(), note: note.trim() || undefined }, { onSuccess: () => { toast.success(t("Early partner added")); setGymId(""); setNote(""); }, onError })}>
-            {t("Add early partner")}
-          </Button>
-        </div>
+        {picking === "early" ? (
+          <>
+            <TextField label={t("Note")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} hint={t("Optional")} />
+            <GymPicker busy={m.startEarlyPartner.isPending} onPick={choose} onCancel={() => setPicking(null)} actionLabel={t("Add as early partner")} />
+          </>
+        ) : (
+          <Button variant="secondary" onClick={() => setPicking("early")}>{t("Add early partner")}</Button>
+        )}
       </section>
+    </div>
+  );
+}
+
+/** Search a gym by name or city and pick it — no identifiers to copy around. */
+function GymPicker({ onPick, onCancel, actionLabel, busy }: { onPick: (gym: AdminGym) => void; onCancel: () => void; actionLabel: string; busy: boolean }) {
+  const [text, setText] = useState("");
+  const query = useDebounced(text.trim(), 300);
+  const gyms = useAdminGyms(query, "");
+  const results = gyms.data?.items ?? [];
+
+  return (
+    <div className="stack">
+      <SearchField label={t("Search gyms")} placeholder={t("Gym name or city")} value={text} onChange={setText} />
+      {gyms.isPending ? <LoadingState label={t("Loading gyms")} />
+        : gyms.isError ? <ErrorState error={gyms.error} onRetry={() => gyms.refetch()} />
+        : results.length === 0 ? <p className="list__sub">{t("No gyms found")}</p>
+        : (
+          <ul className="list">
+            {results.slice(0, 8).map((gym) => (
+              <li key={gym.id} className="list__row">
+                <div className="list__main">
+                  <p className="list__title">{gym.name}</p>
+                  <p className="list__sub">{gym.city}</p>
+                </div>
+                <Button loading={busy} onClick={() => onPick(gym)}>{actionLabel}</Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      <Button variant="ghost" onClick={onCancel}>{t("Cancel")}</Button>
     </div>
   );
 }

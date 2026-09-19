@@ -13,7 +13,7 @@ import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { useDebounced } from "@/lib/useDebounced";
 import { gymStatusLabel, type GymStatus } from "@/lib/format";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 const STATUS_OPTIONS = [
   { value: "", label: t("All statuses") },
@@ -69,7 +69,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
       <header className="candidate__head">
         <div>
           <h3 className="list__title">{gym.name}</h3>
-          <p className="list__sub">{gym.city} · {gym.staffCount} staff · {gym.pendingInvitations} open invitations</p>
+          <p className="list__sub">{gym.city} · {plural(gym.staffCount, "{count} staff member", "{count} staff")} · {plural(gym.pendingInvitations, "{count} open invitation", "{count} open invitations")}</p>
         </div>
         <Badge tone={gym.status === "ACTIVE" ? "success" : gym.status === "DRAFT" ? "orange" : "neutral"}>{gymStatusLabel[gym.status]}</Badge>
       </header>
