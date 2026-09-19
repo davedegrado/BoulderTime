@@ -33,6 +33,11 @@ public class Gym : IAuditable
     /// <summary>WGS84 position for the map. Optional: gyms without coordinates don't appear as pins.</summary>
     public double? Latitude { get; private set; }
     public double? Longitude { get; private set; }
+    /// <summary>
+    /// The one gym that launched BoulderTime with us. A historical distinction, not a commercial tier:
+    /// at most one gym can hold it (guaranteed by a partial unique index) and only platform admins can move it.
+    /// </summary>
+    public bool IsFoundingGym { get; private set; }
     public GymStatus Status { get; private set; } = GymStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -76,6 +81,8 @@ public class Gym : IAuditable
     }
 
     public void SetStatus(GymStatus status) => Status = status;
+
+    public void SetFoundingGym(bool isFounding) => IsFoundingGym = isFounding;
 
     /// <summary>Both values or neither.</summary>
     public void SetLocation(double? latitude, double? longitude)

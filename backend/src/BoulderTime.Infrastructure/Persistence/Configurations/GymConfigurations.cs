@@ -32,6 +32,8 @@ internal sealed class GymConfiguration : IEntityTypeConfiguration<Gym>
         b.HasIndex(g => new { g.Status, g.Name });
         b.HasIndex(g => new { g.Status, g.City });
         b.HasIndex(g => new { g.Latitude, g.Longitude }); // map bounds queries
+        // At most one founding gym, guaranteed by the database rather than by application code alone.
+        b.HasIndex(g => g.IsFoundingGym).IsUnique().HasFilter("is_founding_gym");
     }
 }
 
@@ -104,5 +106,22 @@ internal sealed class GymCandidateConfiguration : IEntityTypeConfiguration<GymCa
         b.HasOne<Gym>().WithMany().HasForeignKey(c => c.GymId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(c => new { c.Status, c.CreatedAt });
         b.HasIndex(c => c.SubmittedByUserId);
+    }
+}
+
+
+internal sealed class EarlyPartnershipConfiguration : IEntityTypeConfiguration<EarlyPartnership>
+{
+    public void Configure(EntityTypeBuilder<EarlyPartnership> b)
+    {
+        b.ToTable("early_partnerships");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Note).HasMaxLength(EarlyPartnership.NoteMaxLength);
+        b.HasOne<Gym>().WithMany().HasForeignKey(x => x.GymId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.GrantedByUserId).OnDelete(DeleteBehavior.Restrict);
+        // One running partnership per gym; ended ones stay for the history.
+        b.HasIndex(x => x.GymId).IsUnique().HasFilter("ended_at IS NULL");
+        b.HasIndex(x => new { x.GymId, x.StartedAt });
     }
 }

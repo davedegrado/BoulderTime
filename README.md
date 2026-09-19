@@ -66,7 +66,7 @@ Defaults: API `http://127.0.0.1:54321`, Postgres `127.0.0.1:54322` (user/passwor
 | File | Variables |
 |---|---|
 | `frontend/.env.local` (copy from `frontend/.env.example`) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL` |
-| `backend/.env` (copy from `backend/.env.example`) or `dotnet user-secrets` | `ConnectionStrings__Database`, `Supabase__Url`, `Supabase__JwtSecret` (optional), `Cors__AllowedOrigins__0` |
+| `backend/.env` (copy from `backend/.env.example`) or `dotnet user-secrets` | `ConnectionStrings__Database`, `Supabase__Url`, `Supabase__JwtSecret` (optional), `Cors__AllowedOrigins__0`, `Storage__Provider`, `Supabase__ServiceRoleKey` (Supabase storage), `Geocoding__*`, `RateLimiting__*` |
 
 Anything prefixed `VITE_` is public. The service-role/secret key, database password and JWT secret are server-only and
 must never appear in the frontend or in git.

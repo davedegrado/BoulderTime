@@ -17,7 +17,17 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 /** Only allow same-origin relative redirects to avoid open-redirects via ?next=. */
+/**
+ * Only same-origin paths may be used as a post-sign-in destination.
+ * Browsers treat a backslash like a slash, so "/\\evil.example" would leave the site: everything that isn't a plain
+ * "/path" is refused, and so are control characters that could smuggle a scheme.
+ */
 export function safeNext(raw: string | null, fallback = "/"): string {
   if (!raw) return fallback;
-  return raw.startsWith("/") && !raw.startsWith("//") ? raw : fallback;
+  const value = raw.trim();
+  if (!value.startsWith("/")) return fallback;
+  if (/[\\]/.test(value)) return fallback;          // "/\evil.example" behaves like "//evil.example"
+  if (value.startsWith("//")) return fallback;      // protocol-relative
+  if (/[\u0000-\u001f\u007f]/.test(value)) return fallback;
+  return value;
 }

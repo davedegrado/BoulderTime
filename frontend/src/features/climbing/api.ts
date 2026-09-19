@@ -17,6 +17,13 @@ export interface Profile {
   id: string; displayName: string; avatarUrl: string | null; memberSince: string; isMe: boolean;
   stats: ClimbingStats; highestGrades: HighestGrade[]; weekly: WeekActivity[];
   followedGyms: GymSummary[]; recentCompletions: HistoryItem[];
+  /** Earned by being staff of a distinguished gym — following one is not enough. */
+  staffDistinctions: StaffDistinction[];
+}
+
+export interface StaffDistinction {
+  gymId: string; gymSlug: string; gymName: string; role: "STAFF" | "ADMIN" | "OWNER";
+  isFoundingGym: boolean; isEarlyPartner: boolean;
 }
 export interface HomeGym { gym: GymSummary; isFavorite: boolean; activeBoulders: number; newThisWeek: number }
 export interface Home { stats: ClimbingStats; gyms: HomeGym[]; projects: BoulderSummary[]; freshToTry: BoulderSummary[]; recentCompletions: HistoryItem[]; updates: Announcement[] }

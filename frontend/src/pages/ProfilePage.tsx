@@ -15,12 +15,15 @@ import { Avatar } from "@/components/Avatar";
 import { ImagePicker } from "@/components/ImagePicker";
 import { useSetAvatar } from "@/features/images/api";
 import { LANGUAGES, t, useI18n, type Language } from "@/i18n/i18n";
+import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
+import { useProfile } from "@/features/climbing/api";
 
 export function ProfilePage() {
   const { signOut } = useAuth();
   const me = useCurrentUser();
   const update = useUpdateProfile();
   const { language, setLanguage } = useI18n();
+  const profile = useProfile(me.data?.id);
   const setAvatar = useSetAvatar();
   const toast = useToast();
   const [displayName, setDisplayName] = useState("");
@@ -64,6 +67,7 @@ export function ProfilePage() {
         <div>
           <h1 className="page__title">{user.displayName}</h1>
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(user.createdAt, { month: "long", year: "numeric" }) })}</p>
+          <StaffDistinctions distinctions={profile.data?.staffDistinctions ?? []} />
           {user.isPlatformAdmin && <p className="badge"><ShieldCheck aria-hidden /> {t("BoulderTime admin")}</p>}
         </div>
       </header>

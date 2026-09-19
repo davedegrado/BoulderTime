@@ -305,3 +305,32 @@ interface dictionary because the same word needs a different form in each: a gra
 
 Boulder photos no longer force the camera: the file input dropped `capture`, so staff who photographed the wall
 earlier can upload from the phone's library. A test asserts the attribute is absent.
+
+## ADR-020 · Founding gym and early partners
+Two distinctions that belong to the **gym**, are granted only by platform admins, and are never stored on users.
+
+**Founding gym** — `gyms.is_founding_gym`. A historical distinction held by exactly one gym: a partial unique index
+(`WHERE is_founding_gym`) makes a second one impossible even if application code were wrong, and designating a gym
+while another holds it returns 409 naming the current holder, so the distinction is never moved by accident.
+
+**Early partner** — table `early_partnerships(gym_id, started_at, ended_at, note, granted_by)`. Several gyms can hold
+it at once and it is a *period*, not a flag: ending it keeps the row, so history survives. A partial unique index
+(`WHERE ended_at IS NULL`) allows only one running partnership per gym. Billing is out of scope.
+
+**Badges on people are derived, never stored:** `User → GymStaff → Gym → distinction`. Following a distinguished gym
+grants nothing; leaving the staff, or the gym losing the status, removes the badge with no extra bookkeeping.
+Wording goes through i18n ("Palestra Fondatrice" / "Fondatrice" where space is tight, "Early Partner" in both languages).
+
+## ADR-021 · Security hardening (pre-phase-9 audit)
+- **Open redirect fixed.** The post-sign-in destination accepted `/\evil.example`, which browsers treat like
+  `//evil.example` and follow off-site. Only plain same-origin paths are accepted now; backslashes, protocol-relative
+  paths and control characters are refused, with tests.
+- **Rate limits** (`RateLimiting:*`): 300 requests/minute per signed-in user or IP, and 60/minute on endpoints that
+  create content or start uploads. Disabled in the test environment.
+- **Security headers** on every API response: `nosniff`, `DENY` framing, `no-referrer`, `same-site` resource policy and
+  a restrictive permissions policy.
+- **Storage bucket SQL is versioned again** (`database/supabase/storage.sql`): `.gitignore` had excluded the whole
+  `database/supabase/` folder, so a file the deployment depends on was missing from the repository.
+- **Dependency audit:** the remaining advisories are in dev-only tooling (Vite dev server on Windows, Vitest UI server),
+  neither of which ships or runs in production; fixing them requires major upgrades and is scheduled separately.
+  The one advisory affecting a shipped library (react-router open redirect) is mitigated by the check above.

@@ -7,6 +7,8 @@ using BoulderTime.Application;
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Infrastructure;
 
+using BoulderTime.Api.Security;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
@@ -25,6 +27,8 @@ builder.Services
     .AddControllers()
     // Enums travel as SCREAMING_SNAKE strings ("OWNER", "PENDING") to match the product vocabulary.
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper, allowIntegerValues: false)));
+
+builder.Services.AddBoulderTimeRateLimiting(builder.Configuration);
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
@@ -54,7 +58,9 @@ else
     app.UseHsts();
 }
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseCors();
+if (builder.Configuration.GetValue("RateLimiting:Enabled", true)) app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<UserProvisioningMiddleware>();
 app.UseAuthorization();

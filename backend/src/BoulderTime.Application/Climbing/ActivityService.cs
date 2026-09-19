@@ -7,6 +7,7 @@ using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Climbing;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
+using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,10 +25,14 @@ public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, Grad
 
 public sealed record WeekActivityDto(DateOnly WeekStart, int Completed);
 
+/// <summary>A distinction the person carries because they are staff of that gym — never because they follow it.</summary>
+public sealed record StaffDistinctionDto(Guid GymId, string GymSlug, string GymName, GymRole Role, bool IsFoundingGym, bool IsEarlyPartner);
+
 public sealed record ProfileDto(
     Guid Id, string DisplayName, string? AvatarUrl, DateTimeOffset MemberSince, bool IsMe,
     ClimbingStatsDto Stats, IReadOnlyList<HighestGradeDto> HighestGrades, IReadOnlyList<WeekActivityDto> Weekly,
-    IReadOnlyList<GymSummaryDto> FollowedGyms, IReadOnlyList<ClimbHistoryItemDto> RecentCompletions);
+    IReadOnlyList<GymSummaryDto> FollowedGyms, IReadOnlyList<ClimbHistoryItemDto> RecentCompletions,
+    IReadOnlyList<StaffDistinctionDto> StaffDistinctions);
 
 public sealed record HomeGymDto(GymSummaryDto Gym, bool IsFavorite, int ActiveBoulders, int NewThisWeek);
 
@@ -38,7 +43,7 @@ public sealed record HomeDto(
     IReadOnlyList<Notifications.AnnouncementDto> Updates);
 
 /// <summary>Personal climbing history, statistics, public profiles and the Home screen. All computed on read.</summary>
-public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements)
+public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners)
 {
     public const int Weeks = 12;
 
@@ -72,7 +77,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
-            gyms.Select(GymSummaryDto.From).ToList(), await ToHistoryAsync(userId, recent, ct));
+            await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)
@@ -114,12 +119,43 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
         return new HomeDto(
             await StatsAsync(userId, ct),
-            follows.OrderByDescending(x => x.IsFavorite).ThenBy(x => x.g.Name)
-                .Select(x => new HomeGymDto(GymSummaryDto.From(x.g), x.IsFavorite, x.Active, x.Fresh)).ToList(),
+            await HomeGymsAsync(follows.Select(x => (x.g, x.IsFavorite, x.Active, x.Fresh)).ToList(), ct),
             await reader.SummariesAsync(projects, ct),
             await reader.SummariesAsync(fresh, ct),
             await ToHistoryAsync(userId, recent, ct),
             await announcements.ForFollowedGymsAsync(userId, 5, ct));
+    }
+
+    private async Task<IReadOnlyList<GymSummaryDto>> SummariesAsync(List<Domain.Gyms.Gym> gyms, CancellationToken ct)
+    {
+        var early = await partners.ActiveEarlyPartnerIdsAsync(gyms.Select(g => g.Id).ToList(), ct);
+        return gyms.Select(g => GymSummaryDto.From(g, early.Contains(g.Id))).ToList();
+    }
+
+    private async Task<IReadOnlyList<HomeGymDto>> HomeGymsAsync(List<(Domain.Gyms.Gym Gym, bool IsFavorite, int Active, int Fresh)> rows, CancellationToken ct)
+    {
+        var early = await partners.ActiveEarlyPartnerIdsAsync(rows.Select(r => r.Gym.Id).ToList(), ct);
+        return rows.OrderByDescending(r => r.IsFavorite).ThenBy(r => r.Gym.Name)
+            .Select(r => new HomeGymDto(GymSummaryDto.From(r.Gym, early.Contains(r.Gym.Id)), r.IsFavorite, r.Active, r.Fresh)).ToList();
+    }
+
+    /// <summary>
+    /// Distinctions a person shows on their profile: derived live from their staff roles, so they disappear by
+    /// themselves when the person leaves the staff or the gym loses the status.
+    /// </summary>
+    private async Task<IReadOnlyList<StaffDistinctionDto>> StaffDistinctionsAsync(Guid userId, CancellationToken ct)
+    {
+        var memberships = await db.GymStaff.AsNoTracking().Where(m => m.UserId == userId)
+            .Join(db.Gyms, m => m.GymId, g => g.Id, (m, g) => new { m.Role, Gym = g })
+            .Where(x => x.Gym.Status == GymStatus.Active)
+            .ToListAsync(ct);
+        if (memberships.Count == 0) return [];
+        var early = await partners.ActiveEarlyPartnerIdsAsync(memberships.Select(x => x.Gym.Id).ToList(), ct);
+        return memberships
+            .Where(x => x.Gym.IsFoundingGym || early.Contains(x.Gym.Id))
+            .OrderByDescending(x => x.Gym.IsFoundingGym).ThenBy(x => x.Gym.Name)
+            .Select(x => new StaffDistinctionDto(x.Gym.Id, x.Gym.Slug, x.Gym.Name, x.Role, x.Gym.IsFoundingGym, early.Contains(x.Gym.Id)))
+            .ToList();
     }
 
     internal async Task<ClimbingStatsDto> StatsAsync(Guid userId, CancellationToken ct)

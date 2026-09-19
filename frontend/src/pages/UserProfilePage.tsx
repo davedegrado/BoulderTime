@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
+import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 
 export function UserProfilePage() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ export function UserProfilePage() {
         <div>
           <h1 className="page__title">{p.displayName}</h1>
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
+          <StaffDistinctions distinctions={p.staffDistinctions} />
         </div>
       </div>
       {p.followedGyms.length > 0 && (

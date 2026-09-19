@@ -49,6 +49,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
     public DbSet<GymAnnouncement> GymAnnouncements => Set<GymAnnouncement>();
+    public DbSet<EarlyPartnership> EarlyPartnerships => Set<EarlyPartnership>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -3,11 +3,16 @@ using BoulderTime.Domain.Staff;
 
 namespace BoulderTime.Application.Gyms;
 
+/// <param name="IsFoundingGym">The single gym that launched BoulderTime with us.</param>
+/// <param name="IsEarlyPartner">Currently in the early-adopter programme (several gyms can be).</param>
 public sealed record GymSummaryDto(
     Guid Id, string Slug, string Name, string City, string? LogoUrl, string? CoverImageUrl, GymStatus Status,
-    double? Latitude = null, double? Longitude = null, double? DistanceKm = null)
+    double? Latitude = null, double? Longitude = null, double? DistanceKm = null,
+    bool IsFoundingGym = false, bool IsEarlyPartner = false)
 {
-    public static GymSummaryDto From(Gym g) => new(g.Id, g.Slug, g.Name, g.City, g.LogoUrl, g.CoverImageUrl, g.Status, g.Latitude, g.Longitude);
+    public static GymSummaryDto From(Gym g, bool isEarlyPartner = false) =>
+        new(g.Id, g.Slug, g.Name, g.City, g.LogoUrl, g.CoverImageUrl, g.Status, g.Latitude, g.Longitude,
+            IsFoundingGym: g.IsFoundingGym, IsEarlyPartner: isEarlyPartner);
 }
 
 public sealed record GymPinDto(Guid Id, string Slug, string Name, string City, string? LogoUrl, double Latitude, double Longitude);
@@ -23,11 +28,15 @@ public sealed record GymDetailDto(
     Follows.GymFollowState? Follow = null,
     int FollowerCount = 0,
     double? Latitude = null,
-    double? Longitude = null)
+    double? Longitude = null,
+    bool IsFoundingGym = false,
+    bool IsEarlyPartner = false,
+    DateTimeOffset? EarlyPartnerSince = null)
 {
     public static GymDetailDto From(Gym g, GymRole? viewerRole) => new(
         g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone,
-        g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude);
+        g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude,
+        IsFoundingGym: g.IsFoundingGym);
 }
 
 /// <param name="Latitude">Set both coordinates, or send ClearLocation to remove them; omit both to keep the current ones.</param>

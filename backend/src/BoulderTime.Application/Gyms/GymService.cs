@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IGeocoder geocoder)
+public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IGeocoder geocoder, PartnerService partners)
 {
     public const int MaxPins = 500;
 
@@ -45,7 +45,8 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
             items = await q.OrderBy(g => g.Name).Skip((p - 1) * size).Take(size).ToListAsync(ct);
         }
 
-        return new PagedResult<GymSummaryDto>(items.Select(g => GymSummaryDto.From(g) with
+        var earlyPartners = await partners.ActiveEarlyPartnerIdsAsync(items.Select(g => g.Id).ToList(), ct);
+        return new PagedResult<GymSummaryDto>(items.Select(g => GymSummaryDto.From(g, earlyPartners.Contains(g.Id)) with
         {
             DistanceKm = near is { } o && g.Latitude is { } la && g.Longitude is { } lo ? Math.Round(HaversineKm(o.Latitude, o.Longitude, la, lo), 1) : null,
         }).ToList(), p, size, total);
@@ -106,7 +107,12 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
             follow = f is null ? new(false, false, false) : new(true, f.IsFavorite, f.NotificationsEnabled);
         }
         var followers = await db.GymFollows.CountAsync(x => x.GymId == gym.Id, ct);
-        return GymDetailDto.From(gym, role) with { Follow = follow, FollowerCount = followers };
+        var partnership = await partners.CurrentPartnershipAsync(gym.Id, ct);
+        return GymDetailDto.From(gym, role) with
+        {
+            Follow = follow, FollowerCount = followers,
+            IsEarlyPartner = partnership is not null, EarlyPartnerSince = partnership?.StartedAt,
+        };
     }
 
     public async Task<GymDetailDto> UpdateAsync(Guid gymId, UpdateGymRequest r, CancellationToken ct = default)

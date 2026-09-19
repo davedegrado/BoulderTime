@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddSingleton<IClimbScoring, RankBasedScoring>();
         services.AddScoped<LeaderboardService>();
         services.AddScoped<ImageService>();
+        services.AddScoped<PartnerService>();
         return services;
     }
 }

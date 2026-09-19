@@ -4,6 +4,8 @@ using BoulderTime.Application.Images;
 using BoulderTime.Application.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using BoulderTime.Api.Security;
 
 namespace BoulderTime.Api.Controllers;
 
@@ -12,13 +14,13 @@ namespace BoulderTime.Api.Controllers;
 [Produces("application/json")]
 public sealed class ImagesController(ImageService images) : ControllerBase
 {
-    [HttpPost("api/users/me/avatar-uploads")]
+    [HttpPost("api/users/me/avatar-uploads"), EnableRateLimiting(RateLimiting.WritePolicy)]
     public Task<UploadTicket> AvatarUpload([FromBody] ImageUploadRequest request, CancellationToken ct) => images.CreateAvatarUploadAsync(request, ct);
 
     [HttpPut("api/users/me/avatar")]
     public Task<CurrentUserDto> SetAvatar([FromBody] SetImageRequest request, CancellationToken ct) => images.SetAvatarAsync(request, ct);
 
-    [HttpPost("api/gyms/{gymId:guid}/image-uploads")]
+    [HttpPost("api/gyms/{gymId:guid}/image-uploads"), EnableRateLimiting(RateLimiting.WritePolicy)]
     public Task<UploadTicket> GymImageUpload(Guid gymId, [FromBody] GymImageUploadRequest request, CancellationToken ct) => images.CreateGymImageUploadAsync(gymId, request, ct);
 
     [HttpPut("api/gyms/{gymId:guid}/logo")]

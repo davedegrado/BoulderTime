@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { GymSummary } from "@/features/gyms/api";
 import type { PagedResult } from "@/lib/paging";
 import type { CandidateStatus, GymStatus } from "@/lib/format";
 import type { GymDetail } from "@/features/gyms/api";
@@ -11,6 +12,7 @@ export interface AdminUser { id: string; displayName: string; email: string; isP
 export interface CreateGymInput { name: string; city: string; address?: string; website?: string; email?: string; phone?: string; description?: string; candidateId?: string }
 
 export const adminKeys = {
+  partners: ["admin", "partners"] as const,
   dashboard: ["admin", "dashboard"] as const,
   gyms: (q: string, status: string) => ["admin", "gyms", q, status] as const,
   candidates: (status: string) => ["admin", "candidates", status] as const,
@@ -83,4 +85,37 @@ export function useSetCandidateStatus() {
     mutationFn: ({ id, status }: { id: string; status: CandidateStatus }) => api.put<GymCandidate>(`/api/admin/gym-candidates/${id}/status`, { status }),
     onSuccess: invalidate,
   });
+}
+
+
+export interface EarlyPartner { id: string; gymId: string; startedAt: string; endedAt: string | null; note: string | null; isActive: boolean }
+export interface PartnerGym { gym: GymSummary; earlyPartner: EarlyPartner | null }
+
+/** The founding gym and the current early partners (platform admins only). */
+export function usePartners() {
+  return useQuery({ queryKey: adminKeys.partners, queryFn: ({ signal }) => api.get<PartnerGym[]>("/api/admin/partners", { signal }) });
+}
+
+export function usePartnerMutations() {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["admin"] });
+    qc.invalidateQueries({ queryKey: ["gyms"] });
+    qc.invalidateQueries({ queryKey: ["climbing"] });
+  };
+  return {
+    setFounding: useMutation({
+      mutationFn: ({ gymId, isFoundingGym }: { gymId: string; isFoundingGym: boolean }) =>
+        api.put(`/api/admin/gyms/${gymId}/founding`, { isFoundingGym }),
+      onSuccess: invalidate,
+    }),
+    startEarlyPartner: useMutation({
+      mutationFn: ({ gymId, note }: { gymId: string; note?: string }) => api.post(`/api/admin/gyms/${gymId}/early-partner`, { note }),
+      onSuccess: invalidate,
+    }),
+    endEarlyPartner: useMutation({
+      mutationFn: (gymId: string) => api.delete(`/api/admin/gyms/${gymId}/early-partner`),
+      onSuccess: invalidate,
+    }),
+  };
 }

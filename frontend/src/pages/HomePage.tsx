@@ -12,6 +12,7 @@ import { GymAvatar } from "@/components/GymAvatar";
 import { Logo } from "@/components/Logo";
 import { roleLabel } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
+import { GymBadges } from "@/features/gyms/GymBadges";
 
 export function HomePage() {
   const { session, initializing } = useAuth();
@@ -72,6 +73,7 @@ function SignedInHome() {
                   <GymAvatar name={g.gym.name} logoUrl={g.gym.logoUrl} size={44} />
                   <div className="list__main">
                     <p className="list__title">{g.gym.name} {g.isFavorite && <Heart className="inline-fav" aria-label={t("Favourite")} />}</p>
+                    <GymBadges isFoundingGym={g.gym.isFoundingGym} isEarlyPartner={g.gym.isEarlyPartner} size="compact" />
                     <p className="list__sub">{plural(g.activeBoulders, "{count} boulder", "{count} boulders")}{g.newThisWeek > 0 && ` · ${t("{count} new this week", { count: g.newThisWeek })}`}</p>
                   </div>
                   <ChevronRight className="list__chevron" aria-hidden />

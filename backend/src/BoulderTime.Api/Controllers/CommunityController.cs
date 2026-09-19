@@ -4,6 +4,8 @@ using BoulderTime.Application.Community;
 using BoulderTime.Domain.Community;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using BoulderTime.Api.Security;
 
 namespace BoulderTime.Api.Controllers;
 
@@ -18,7 +20,7 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
     public Task<PagedResult<CommentDto>> ListComments(Guid boulderId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
         comments.ListAsync(boulderId, page, pageSize, ct);
 
-    [HttpPost("api/boulders/{boulderId:guid}/comments"), Authorize]
+    [HttpPost("api/boulders/{boulderId:guid}/comments"), Authorize, EnableRateLimiting(RateLimiting.WritePolicy)]
     public async Task<ActionResult<CommentDto>> CreateComment(Guid boulderId, [FromBody] SaveCommentRequest request, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await comments.CreateAsync(boulderId, request, ct));
 
@@ -53,7 +55,7 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
 
     // ---- Videos ----
 
-    [HttpPost("api/boulders/{boulderId:guid}/video-uploads"), Authorize]
+    [HttpPost("api/boulders/{boulderId:guid}/video-uploads"), Authorize, EnableRateLimiting(RateLimiting.WritePolicy)]
     public Task<UploadTicket> VideoUpload(Guid boulderId, [FromBody] VideoUploadRequest request, CancellationToken ct) => videos.CreateUploadAsync(boulderId, request, ct);
 
     [HttpGet("api/boulders/{boulderId:guid}/beta"), AllowAnonymous]
@@ -70,7 +72,7 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
     public Task<BoulderVideosDto> ListVideos(Guid boulderId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
         videos.ListAsync(boulderId, page, pageSize, ct);
 
-    [HttpPost("api/boulders/{boulderId:guid}/videos"), Authorize]
+    [HttpPost("api/boulders/{boulderId:guid}/videos"), Authorize, EnableRateLimiting(RateLimiting.WritePolicy)]
     public async Task<ActionResult<VideoDto>> SubmitVideo(Guid boulderId, [FromBody] SubmitVideoRequest request, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await videos.SubmitAsync(boulderId, request, ct));
 
@@ -101,7 +103,7 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
     [HttpGet("api/admin/reports"), Authorize]
     public Task<PagedResult<ReportDto>> AllReports([FromQuery] ReportStatus? status, [FromQuery] int? page, CancellationToken ct) => reports.ListAllAsync(status, page, ct);
 
-    [HttpPost("api/reports"), Authorize]
+    [HttpPost("api/reports"), Authorize, EnableRateLimiting(RateLimiting.WritePolicy)]
     public async Task<ActionResult<ReportDto>> CreateReport([FromBody] CreateReportRequest request, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await reports.CreateAsync(request, ct));
 

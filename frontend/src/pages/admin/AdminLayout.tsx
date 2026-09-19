@@ -24,6 +24,7 @@ export function AdminLayout() {
         { to: "/admin/candidates", label: t("Suggestions") },
         { to: "/admin/reports", label: t("Reports") },
         { to: "/admin/gyms", label: t("Gyms") },
+        { to: "/admin/partners", label: t("Partners") },
         { to: "/admin/users", label: t("Users") },
       ]} />
       <Outlet />

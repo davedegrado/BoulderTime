@@ -21,6 +21,7 @@ import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 import { plural, t as translate } from "@/i18n/i18n";
+import { GymBadges } from "@/features/gyms/GymBadges";
 
 const StaticGymMap = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.StaticGymMap })));
 
@@ -48,7 +49,8 @@ export function GymPage() {
           <div className="gym-hero__row">
             <div className="gym-hero__text">
               <h1 className="page__title">{g.name}</h1>
-              <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
+              <GymBadges isFoundingGym={g.isFoundingGym} isEarlyPartner={g.isEarlyPartner} />
+            <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
               {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · only staff can see this</Badge>}
             </div>
             <div className="gym-hero__actions">

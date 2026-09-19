@@ -5,6 +5,8 @@ using BoulderTime.Application.Grading;
 using BoulderTime.Domain.Boulders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using BoulderTime.Api.Security;
 
 namespace BoulderTime.Api.Controllers;
 
@@ -44,7 +46,7 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
     [HttpGet("api/boulders/{boulderId:guid}"), AllowAnonymous]
     public Task<BoulderDetailDto> Get(Guid boulderId, CancellationToken ct) => boulders.GetAsync(boulderId, ct);
 
-    [HttpPost("api/gyms/{gymId:guid}/boulder-photos"), Authorize]
+    [HttpPost("api/gyms/{gymId:guid}/boulder-photos"), Authorize, EnableRateLimiting(RateLimiting.WritePolicy)]
     public Task<UploadTicket> CreatePhotoUpload(Guid gymId, [FromBody] PhotoUploadRequest request, CancellationToken ct) =>
         boulders.CreatePhotoUploadAsync(gymId, request, ct);
 

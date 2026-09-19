@@ -14,6 +14,10 @@ export interface GymSummary {
   latitude: number | null;
   longitude: number | null;
   distanceKm?: number | null;
+  /** The single gym that launched BoulderTime with us. */
+  isFoundingGym: boolean;
+  /** Currently in the early-adopter programme; several gyms can be. */
+  isEarlyPartner: boolean;
 }
 
 export interface GymPin { id: string; slug: string; name: string; city: string; logoUrl: string | null; latitude: number; longitude: number }
@@ -29,6 +33,7 @@ export interface GymDetail extends GymSummary {
   viewerRole: GymRole | null;
   follow: { isFollowing: boolean; isFavorite: boolean; notificationsEnabled: boolean } | null;
   followerCount: number;
+  earlyPartnerSince?: string | null;
 }
 
 export interface Sector {

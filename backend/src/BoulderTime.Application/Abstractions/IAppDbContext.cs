@@ -42,6 +42,7 @@ public interface IAppDbContext
     DbSet<Notification> Notifications { get; }
     DbSet<NotificationSettings> NotificationSettings { get; }
     DbSet<GymAnnouncement> GymAnnouncements { get; }
+    DbSet<EarlyPartnership> EarlyPartnerships { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
