@@ -66,7 +66,7 @@ function CommentItem({ comment: c, boulderId, signedIn }: { comment: Comment; bo
       <div className="comment__body">
         <p className="comment__meta">
           <Link to={`/users/${c.author.userId}`} className="comment__author">{c.author.displayName}</Link>
-          <span> · {formatDate(c.createdAt, { day: "numeric", month: "short" })}{c.editedAt && " · edited"}</span>
+          <span> · {formatDate(c.createdAt, { day: "numeric", month: "short" })}{c.editedAt && t(" · edited")}</span>
           {c.status === "HIDDEN" && <span className="tag">{t("Hidden by staff")}</span>}
         </p>
         {editing ? (

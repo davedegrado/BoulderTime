@@ -5,10 +5,10 @@ export type GymRole = "STAFF" | "ADMIN" | "OWNER";
 export type CandidateStatus = "PENDING" | "CONTACTED" | "ACCEPTED" | "REJECTED";
 
 const GYM_STATUS: Record<GymStatus, string> = { DRAFT: "Draft", ACTIVE: "Active", ARCHIVED: "Archived" };
-const ROLES: Record<GymRole, string> = { STAFF: "Staff", ADMIN: "Admin", OWNER: "Owner" };
+const ROLES: Record<GymRole, string> = { STAFF: t("Staff"), ADMIN: t("Admin"), OWNER: t("Owner") };
 
 /** Label maps are read at render time, so they follow the language in use. */
-function labels<T extends string>(source: Record<T, string>): Record<T, string> {
+export function labels<T extends string>(source: Record<T, string>): Record<T, string> {
   return new Proxy({} as Record<T, string>, {
     get: (_, key: string) => t(source[key as T] ?? key),
     ownKeys: () => Object.keys(source),

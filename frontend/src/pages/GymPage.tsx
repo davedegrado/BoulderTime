@@ -20,7 +20,7 @@ import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
-import { plural, t } from "@/i18n/i18n";
+import { plural, t as translate } from "@/i18n/i18n";
 
 const StaticGymMap = lazy(() => import("@/features/map/GymMap").then((m) => ({ default: m.StaticGymMap })));
 
@@ -35,7 +35,7 @@ export function GymPage() {
   const tab: Tab = TABS.includes(params.get("tab") as Tab) ? (params.get("tab") as Tab) : "boulders";
   const setTab = (t: Tab) => setParams(t === "boulders" ? {} : { tab: t }, { replace: true });
 
-  if (gym.isPending) return <LoadingState label={t("Loading gym")} />;
+  if (gym.isPending) return <LoadingState label={translate("Loading gym")} />;
   if (gym.isError) return gym.error instanceof ApiError && gym.error.isNotFound ? <NotFoundPage /> : <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
 
   const g = gym.data;
@@ -54,16 +54,16 @@ export function GymPage() {
             <div className="gym-hero__actions">
               <GymFollowControls gym={g} />
               {g.viewerRole && (
-                <Link to={`/manage/${g.slug}`} className="btn btn--secondary"><Settings2 aria-hidden /><span>{t("Manage")}</span></Link>
+                <Link to={`/manage/${g.slug}`} className="btn btn--secondary"><Settings2 aria-hidden /><span>{translate("Manage")}</span></Link>
               )}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="tabs" role="tablist" aria-label={t("Gym sections")}>
+      <div className="tabs" role="tablist" aria-label={translate("Gym sections")}>
         {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} className="tabs__tab" onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
+          <button key={t} role="tab" aria-selected={tab === t} className="tabs__tab" onClick={() => setTab(t)}>{translate(TAB_LABEL[t])}</button>
         ))}
       </div>
 
@@ -77,14 +77,14 @@ export function GymPage() {
 function GymFollowControls({ gym }: { gym: GymDetail }) {
   const { session } = useAuth();
   const follow = useFollowGym(gym);
-  if (!session) return <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="btn btn--primary"><Bell aria-hidden /><span>{t("Follow")}</span></Link>;
+  if (!session) return <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="btn btn--primary"><Bell aria-hidden /><span>{translate("Follow")}</span></Link>;
   const state = gym.follow ?? { isFollowing: false, isFavorite: false };
   return (
     <>
       <FollowButton following={state.isFollowing} onToggle={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })} />
       {state.isFollowing && (
         <button type="button" className={`icon-btn fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
-          aria-label={state.isFavorite ? t("Remove from favourites") : t("Add to favourites")}
+          aria-label={state.isFavorite ? translate("Remove from favourites") : translate("Add to favourites")}
           onClick={() => follow.mutate({ isFollowing: true, isFavorite: !state.isFavorite })}>
           <Heart aria-hidden />
         </button>
@@ -105,18 +105,18 @@ function BouldersTab({ gymId }: { gymId: string }) {
   return (
     <div className="stack">
       <BoulderFiltersBar filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
-      {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
+      {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (
           <EmptyState icon={<Mountain />}
-            title={filtered ? t("No boulders match these filters") : t("No boulders on the wall yet")}
-            body={filtered ? t("Try another sector, grade or hold colour.") : t("This gym hasn't added its current boulders yet.")}
-            action={filtered ? <Button variant="secondary" onClick={() => setFilters({})}>{t("Clear filters")}</Button> : undefined} />
+            title={filtered ? translate("No boulders match these filters") : translate("No boulders on the wall yet")}
+            body={filtered ? translate("Try another sector, grade or hold colour.") : translate("This gym hasn't added its current boulders yet.")}
+            action={filtered ? <Button variant="secondary" onClick={() => setFilters({})}>{translate("Clear filters")}</Button> : undefined} />
         ) : (
           <>
-            <p className="section__meta">{total} {total === 1 ? "boulder" : "boulders"}</p>
+            <p className="section__meta">{plural(total, "{count} boulder", "{count} boulders")}</p>
             <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
-            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{t("Show more")}</Button>}
+            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{translate("Show more")}</Button>}
           </>
         )}
     </div>
@@ -126,13 +126,13 @@ function BouldersTab({ gymId }: { gymId: string }) {
 function UpdatesTab({ gymId }: { gymId: string }) {
   const updates = useAnnouncements(gymId);
   const items = updates.data?.pages.flatMap((p) => p.items) ?? [];
-  if (updates.isPending) return <LoadingState label={t("Loading updates")} />;
+  if (updates.isPending) return <LoadingState label={translate("Loading updates")} />;
   if (updates.isError) return <ErrorState error={updates.error} onRetry={() => updates.refetch()} />;
-  if (items.length === 0) return <EmptyState icon={<Megaphone />} title={t("No updates yet")} body={t("Events, new circuits and schedule changes will show up here.")} />;
+  if (items.length === 0) return <EmptyState icon={<Megaphone />} title={translate("No updates yet")} body={translate("Events, new circuits and schedule changes will show up here.")} />;
   return (
     <div className="stack">
       {items.map((a) => <AnnouncementCard key={a.id} a={a} />)}
-      {updates.hasNextPage && <Button variant="secondary" onClick={() => updates.fetchNextPage()} loading={updates.isFetchingNextPage}>{t("Older updates")}</Button>}
+      {updates.hasNextPage && <Button variant="secondary" onClick={() => updates.fetchNextPage()} loading={updates.isFetchingNextPage}>{translate("Older updates")}</Button>}
     </div>
   );
 }
@@ -141,9 +141,9 @@ function SectorsTab({ gymId }: { gymId: string }) {
   const sectors = useSectors(gymId);
   const { session } = useAuth();
   const followSector = useFollowSector(gymId);
-  if (sectors.isPending) return <LoadingState label={t("Loading sectors")} />;
+  if (sectors.isPending) return <LoadingState label={translate("Loading sectors")} />;
   if (sectors.isError) return <ErrorState error={sectors.error} onRetry={() => sectors.refetch()} />;
-  if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title={t("No sectors yet")} body={t("This gym hasn't set up its sectors on BoulderTime.")} />;
+  if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title={translate("No sectors yet")} body={translate("This gym hasn't set up its sectors on BoulderTime.")} />;
 
   return (
     <ul className="list">
@@ -154,10 +154,10 @@ function SectorsTab({ gymId }: { gymId: string }) {
             <p className="list__title">{s.name}</p>
             {s.description && <p className="list__sub">{s.description}</p>}
           </div>
-          {!s.isActive && <Badge>{t("Hidden")}</Badge>}
+          {!s.isActive && <Badge>{translate("Hidden")}</Badge>}
           {session && s.isActive && (
             <button type="button" className={`icon-btn ${s.isFollowing ? "is-following" : ""}`} aria-pressed={s.isFollowing}
-              aria-label={s.isFollowing ? t("Unfollow {sector}", { sector: s.name }) : t("Follow {sector}", { sector: s.name })}
+              aria-label={s.isFollowing ? translate("Unfollow {sector}", { sector: s.name }) : translate("Follow {sector}", { sector: s.name })}
               onClick={() => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing })}>
               {s.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
             </button>
@@ -185,7 +185,7 @@ function InfoTab({ gym }: { gym: GymDetail }) {
             <p className="list__title">{gym.address ?? gym.city}</p>
             {gym.address && <p className="list__sub">{gym.city}</p>}
           </div>
-          <a className="icon-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={t("Open in maps")}><ExternalLink aria-hidden /></a>
+          <a className="icon-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={translate("Open in maps")}><ExternalLink aria-hidden /></a>
         </li>
         {gym.website && (
           <li className="list__row">

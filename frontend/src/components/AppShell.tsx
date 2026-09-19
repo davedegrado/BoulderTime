@@ -18,11 +18,11 @@ interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: b
  * to keep the phone tab bar at five thumb-reachable targets.
  */
 const NAV: NavItem[] = [
-  { to: "/", label: "Home", icon: Home, requiresAuth: false },
-  { to: "/explore", label: "Explore", icon: Compass, requiresAuth: false },
-  { to: "/activity", label: "Activity", icon: Activity, requiresAuth: true },
-  { to: "/notifications", label: "Alerts", icon: Bell, requiresAuth: true },
-  { to: "/profile", label: "Profile", icon: UserRound, requiresAuth: true },
+  { to: "/", label: t("Home"), icon: Home, requiresAuth: false },
+  { to: "/explore", label: t("Explore"), icon: Compass, requiresAuth: false },
+  { to: "/activity", label: t("Activity"), icon: Activity, requiresAuth: true },
+  { to: "/notifications", label: t("Alerts"), icon: Bell, requiresAuth: true },
+  { to: "/profile", label: t("Profile"), icon: UserRound, requiresAuth: true },
 ];
 
 export function AppShell() {
@@ -48,7 +48,7 @@ export function AppShell() {
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === "/"} className="sidebar__link">
               <Icon aria-hidden />
-              <span>{t(label === "Alerts" ? "Notifications" : label)}</span>
+              <span>{t(label === t("Alerts") ? t("Notifications") : label)}</span>
               {badge(to)}
             </NavLink>
           ))}

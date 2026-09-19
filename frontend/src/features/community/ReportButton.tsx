@@ -23,7 +23,7 @@ export function ReportButton({ entityType, entityId, label = t("Report") }: { en
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     report.mutate({ entityType, entityId, reason, description: description.trim() || undefined }, {
-      onSuccess: () => { toast.success("Thanks — the gym will review it."); setOpen(false); setDescription(""); },
+      onSuccess: () => { toast.success(t("Thanks — the gym will review it.")); setOpen(false); setDescription(""); },
       onError: (e2) => { if (!(e2 instanceof ApiError && e2.isValidation)) toast.error(errorMessage(e2)); },
     });
   }

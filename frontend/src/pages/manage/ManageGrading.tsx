@@ -11,7 +11,7 @@ import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 export function ManageGrading() {
   const { gym, role } = useManagedGym();
@@ -89,7 +89,7 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
       <header className="candidate__head">
         <div>
           <h3 className="list__title">{system.name}</h3>
-          <p className="list__sub">{gradeSystemTypeLabel[system.type]} · {active.length} grades · easiest first</p>
+          <p className="list__sub">{gradeSystemTypeLabel[system.type]} · {plural(active.length, "{count} grade", "{count} grades")} · {t("easiest first")}</p>
         </div>
         <div className="form__actions">
           {!system.isActive && <Badge>{t(t("Hidden"))}</Badge>}
@@ -110,7 +110,7 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
               ? <span key={v.id} className="grade grade--color grade--sm" style={{ background: v.colorHex, color: inkOn(v.colorHex) }}>{v.label}</span>
               : <span key={v.id} className="grade grade--text grade--sm">{v.label}</span>)}
           </div>
-          {canEdit && <Button variant="secondary" onClick={startEditing}>{t(t("Edit grades"))}</Button>}
+          {canEdit && <Button variant="secondary" onClick={startEditing}>{t("Edit grades")}</Button>}
         </>
       ) : (
         <div className="stack">

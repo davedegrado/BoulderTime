@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { labels } from "@/lib/format";
 
 export type GradeSystemType = "COLOR" | "FONTAINEBLEAU" | "V_SCALE" | "CUSTOM";
 
-export const gradeSystemTypeLabel: Record<GradeSystemType, string> = {
+/** Read at render time, so the names follow the language in use. */
+export const gradeSystemTypeLabel = labels<GradeSystemType>({
   COLOR: "Colour grades",
   FONTAINEBLEAU: "Fontainebleau",
   V_SCALE: "V-scale",
   CUSTOM: "Custom",
-};
+});
 
 export interface GradeValue { id: string; label: string; rank: number; colorHex: string | null; isActive: boolean }
 export interface GradeSystem { id: string; gymId: string; name: string; type: GradeSystemType; isActive: boolean; sortOrder: number; values: GradeValue[] }

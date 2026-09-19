@@ -102,13 +102,13 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     <form className="editor" onSubmit={onSubmit} noValidate>
       <div className="editor__head">
         <Link to={`/manage/${gym.slug}/boulders`} className="manage-head__back" aria-label={t("Back to boulders")}><ArrowLeft aria-hidden /></Link>
-        <h2 className="section__title">{initial ? "Edit boulder" : "New boulder"}</h2>
+        <h2 className="section__title">{initial ? t("Edit boulder") : t("New boulder")}</h2>
       </div>
       {initial && <p className="field__hint">{t("Fix mistakes here. If the boulder was retraced, remove it and add a new one instead, so climbers' history stays accurate.")}</p>}
 
       {/* Photo */}
       <section className="editor__section" aria-labelledby="photo-label">
-        <p id="photo-label" className="field__label">Photo *</p>
+        <p id="photo-label" className="field__label">{t("Photo *")}</p>
         <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.click()}>
           {preview ? <img src={preview} alt={t("Selected boulder")} /> : (
             <span className="photo-picker__empty"><Camera aria-hidden /><span>{t("Take or choose a photo")}</span></span>
@@ -124,7 +124,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
       {/* Official grades — one control per active system */}
       <section className="editor__section" aria-labelledby="grades-label">
-        <p id="grades-label" className="field__label">Official grade *</p>
+        <p id="grades-label" className="field__label">{t("Official grade *")}</p>
         <div className="form__grid">
           {activeSystems.map((system) => (
             <SelectField key={system.id} label={system.name} value={grades[system.id] ?? ""}
@@ -137,7 +137,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
       {/* Hold colour — deliberately a different control type from grades */}
       <fieldset className="editor__section hold-picker" aria-describedby={errors.holdColor ? "hold-error" : undefined}>
-        <legend className="field__label">Hold colour *</legend>
+        <legend className="field__label">{t("Hold colour *")}</legend>
         <p className="field__hint">{t("The colour of the physical holds, not the grade.")}</p>
         <div className="hold-picker__grid">
           {HOLD_COLORS.map((c) => (

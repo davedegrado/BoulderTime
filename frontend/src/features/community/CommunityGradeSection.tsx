@@ -52,7 +52,7 @@ function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; 
       {canSuggest && (
         <SelectField label={t("Your {system} grade", { system: s.systemName })} value={s.viewerValueId ?? ""} disabled={suggest.isPending}
           onChange={(e) => suggest.mutate({ gradeSystemId: s.gradeSystemId, gradeValueId: e.target.value || null }, { onError: (err) => toast.error(errorMessage(err)) })}
-          options={[{ value: "", label: "No suggestion" }, ...s.scale.map((v) => ({ value: v.gradeValueId, label: v.label }))]} />
+          options={[{ value: "", label: t("No suggestion") }, ...s.scale.map((v) => ({ value: v.gradeValueId, label: v.label }))]} />
       )}
     </div>
   );

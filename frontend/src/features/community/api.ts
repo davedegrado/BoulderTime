@@ -103,7 +103,7 @@ export async function uploadResumable(ticket: UploadTicket & { resumable: Resuma
         const status = (error as { originalResponse?: { getStatus(): number } }).originalResponse?.getStatus() ?? 0;
         reject(new ApiError(status, null, status === 0
           ? t("The upload was interrupted. Check your connection and try again.")
-          : status === 413 ? "The video is too large." : "The upload failed. Try again."));
+          : status === 413 ? t("The video is too large.") : t("The upload failed. Try again.")));
       },
     });
     upload.start();
