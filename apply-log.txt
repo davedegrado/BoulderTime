@@ -1,5 +1,19 @@
 == 1. APPLICO LE MODIFICHE ==
 Applying: Allow gallery uploads for boulder photos; translate preset grade names and labels
+Using index info to reconstruct a base tree...
+M	docs/decisions.md
+M	frontend/src/features/boulders/BoulderBits.tsx
+M	frontend/src/features/boulders/BoulderFilters.tsx
+M	frontend/src/features/climbing/ClimbingBits.tsx
+M	frontend/src/features/community/CommunityGradeSection.tsx
+M	frontend/src/features/leaderboards/LeaderboardTab.tsx
+M	frontend/src/i18n/it.ts
+M	frontend/src/pages/manage/BoulderEditorPage.tsx
+M	frontend/src/pages/manage/ManageGrading.tsx
+M	frontend/src/test/boulders.test.tsx
+Falling back to patching base and 3-way merge...
+No changes -- Patch already applied.
+Applying: Filters never widen the page: fields clamp and long options are truncated; shorter filter wording
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +22,7 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 20 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 29 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
       Tests  69 passed (69)
 OK

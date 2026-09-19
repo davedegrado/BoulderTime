@@ -81,7 +81,7 @@ svg { flex-shrink: 0; }
 }
 
 /* ---------- Page structure ---------- */
-.page { max-width: var(--bt-content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--bt-8); }
+.page { overflow-x: clip; max-width: var(--bt-content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--bt-8); }
 .page--narrow { max-width: 560px; }
 .page__header { display: flex; flex-direction: column; gap: var(--bt-1); }
 .page__title { font-size: var(--bt-text-2xl); font-weight: 800; }
@@ -130,10 +130,12 @@ svg { flex-shrink: 0; }
 /* ---------- Forms ---------- */
 .form { display: flex; flex-direction: column; gap: var(--bt-4); }
 .form__error { background: var(--bt-danger-tint); color: var(--bt-danger); padding: var(--bt-3) var(--bt-4); border-radius: var(--bt-radius-sm); font-weight: 600; font-size: var(--bt-text-sm); }
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; /* never let a long value widen its column */ }
 .field__label { font-weight: 600; font-size: var(--bt-text-sm); }
 .field__input {
   min-height: var(--bt-touch); padding: 0 var(--bt-4);
+  width: 100%; min-width: 0; max-width: 100%;
+  text-overflow: ellipsis; /* a long option is cut, not spilled */
   font: inherit; font-size: 1rem; /* 16px prevents iOS zoom on focus */
   color: var(--bt-ink); background: var(--bt-surface);
   border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-sm);
@@ -197,7 +199,7 @@ svg { flex-shrink: 0; }
 .tag--dark { background: var(--bt-charcoal); color: #fff; }
 
 /* Fields */
-.field__select { appearance: none; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%234a4a4a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+.field__select { appearance: none; white-space: nowrap; overflow: hidden; padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%234a4a4a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
 .field__textarea { min-height: auto; padding: var(--bt-3) var(--bt-4); line-height: 1.5; resize: vertical; }
 .form--wide { max-width: 760px; }
 .form__grid { display: grid; gap: var(--bt-4); }
