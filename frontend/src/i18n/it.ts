@@ -643,4 +643,6 @@ export const it: Record<string, string> = {
   "Colour grades": "Gradi a colori",
   "V-scale": "Scala V",
   "Custom": "Personalizzata",
+  "{system} grade: {grade}": "Grado {system}: {grade}",
+  "{system} grade": "Grado {system}",
 };

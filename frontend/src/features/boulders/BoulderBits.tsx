@@ -1,5 +1,7 @@
 import type { BoulderGrade } from "@/features/boulders/api";
 import { holdColorInfo, holdLabel, inkOn, type HoldColor } from "@/features/boulders/holdColors";
+import { dataLabel } from "@/i18n/data";
+import { t } from "@/i18n/i18n";
 
 /**
  * GRADE display. Colour grades render as a solid grade badge with the grade name written in it;
@@ -9,12 +11,12 @@ export function GradeBadge({ grade, size = "md" }: { grade: BoulderGrade; size?:
   if (grade.systemType === "COLOR" && grade.colorHex) {
     return (
       <span className={`grade grade--color grade--${size}`} style={{ background: grade.colorHex, color: inkOn(grade.colorHex) }}
-        title={`${grade.systemName} grade: ${grade.label}`}>
-        {grade.label}
+        title={t("{system} grade: {grade}", { system: dataLabel(grade.systemName), grade: dataLabel(grade.label) })}>
+        {dataLabel(grade.label)}
       </span>
     );
   }
-  return <span className={`grade grade--text grade--${size}`} title={`${grade.systemName} grade`}>{grade.label}</span>;
+  return <span className={`grade grade--text grade--${size}`} title={t("{system} grade", { system: dataLabel(grade.systemName) })}>{dataLabel(grade.label)}</span>;
 }
 
 /** Primary grade large, other systems small after it: "YELLOW · 6A · V3". */

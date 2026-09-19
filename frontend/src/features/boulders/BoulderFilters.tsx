@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
 import { t } from "@/i18n/i18n";
+import { dataLabel } from "@/i18n/data";
 
 interface Props {
   filters: Filters;
@@ -18,7 +19,7 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems }: Props
   const { session } = useAuth();
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
   const gradeOptions = [{ value: "", label: t("Any grade") }, ...systems.flatMap((s) =>
-    s.values.filter((v) => v.isActive).map((v) => ({ value: v.id, label: systems.length > 1 ? `${s.name}: ${v.label}` : v.label })))];
+    s.values.filter((v) => v.isActive).map((v) => ({ value: v.id, label: systems.length > 1 ? `${dataLabel(s.name)}: ${dataLabel(v.label)}` : dataLabel(v.label) })))];
 
   return (
     <div className="boulder-filters">

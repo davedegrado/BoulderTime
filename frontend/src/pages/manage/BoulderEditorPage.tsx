@@ -13,6 +13,7 @@ import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
+import { dataLabel } from "@/i18n/data";
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
@@ -115,7 +116,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           )}
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
-        <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" hidden onChange={(e) => pickFile(e.target.files?.[0])} />
+        <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden onChange={(e) => pickFile(e.target.files?.[0])} />
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
 
@@ -127,9 +128,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         <p id="grades-label" className="field__label">{t("Official grade *")}</p>
         <div className="form__grid">
           {activeSystems.map((system) => (
-            <SelectField key={system.id} label={system.name} value={grades[system.id] ?? ""}
+            <SelectField key={system.id} label={dataLabel(system.name)} value={grades[system.id] ?? ""}
               onChange={(e) => setGrades((g) => ({ ...g, [system.id]: e.target.value }))}
-              options={[{ value: "", label: t("Not graded") }, ...system.values.filter((v) => v.isActive || v.id === grades[system.id]).map((v) => ({ value: v.id, label: v.label }))]} />
+              options={[{ value: "", label: t("Not graded") }, ...system.values.filter((v) => v.isActive || v.id === grades[system.id]).map((v) => ({ value: v.id, label: dataLabel(v.label) }))]} />
           ))}
         </div>
         {errors.grades && <p className="field__error">{errors.grades}</p>}

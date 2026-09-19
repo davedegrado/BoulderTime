@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
@@ -114,5 +114,16 @@ describe("Staff boulder management", () => {
     expect(screen.getByText("Choose the hold colour.")).toBeInTheDocument();
     expect(screen.getByText("Give the boulder at least one official grade.")).toBeInTheDocument();
     expect(calls.some((c) => c.method === "POST")).toBe(false);
+  });
+
+  it("lets staff pick an existing photo from the library, not just the camera", async () => {
+    setupManage();
+    renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+
+    await waitFor(() => expect(document.querySelector("input[type=file]")).not.toBeNull());
+    const input = document.querySelector("input[type=file]") as HTMLInputElement;
+    expect(input.accept).toContain("image/");
+    // "capture" would force the camera and hide the photo library on phones.
+    expect(input.hasAttribute("capture")).toBe(false);
   });
 });

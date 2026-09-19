@@ -7,6 +7,7 @@ import { inkOn } from "@/features/boulders/holdColors";
 import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
+import { dataLabel } from "@/i18n/data";
 
 export function RatingSummaryText({ rating, compact = false }: { rating: RatingSummary; compact?: boolean }) {
   if (!rating.count || rating.average === null) return compact ? null : <span className="rating-summary rating-summary--empty">{t("No ratings yet")}</span>;
@@ -97,9 +98,9 @@ export function HighestGrades({ grades }: { grades: HighestGrade[] }) {
       {grades.map((g) => (
         <li key={g.gradeSystemId} className="highest__item">
           {g.systemType === "COLOR" && g.colorHex
-            ? <span className="grade grade--color grade--md" style={{ background: g.colorHex, color: inkOn(g.colorHex) }}>{g.label}</span>
-            : <span className="grade grade--text grade--md">{g.label}</span>}
-          <span className="list__sub">{g.systemName}{g.systemType === "COLOR" || g.systemType === "CUSTOM" ? ` · ${g.gymName}` : ""}</span>
+            ? <span className="grade grade--color grade--md" style={{ background: g.colorHex, color: inkOn(g.colorHex) }}>{dataLabel(g.label)}</span>
+            : <span className="grade grade--text grade--md">{dataLabel(g.label)}</span>}
+          <span className="list__sub">{dataLabel(g.systemName)}{g.systemType === "COLOR" || g.systemType === "CUSTOM" ? ` · ${g.gymName}` : ""}</span>
         </li>
       ))}
     </ul>

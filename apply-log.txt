@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Translate filter options, gym tabs, boulder editor and grading labels missed by the earlier pass
+Applying: Allow gallery uploads for boulder photos; translate preset grade names and labels
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 28 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   136, Skipped:     0, Total:   136, Duration: 1 m 20 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  66 passed (66)
+      Tests  69 passed (69)
 OK
 == ESITO: ok ==

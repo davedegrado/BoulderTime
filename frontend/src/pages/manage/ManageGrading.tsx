@@ -12,6 +12,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { plural, t } from "@/i18n/i18n";
+import { dataLabel } from "@/i18n/data";
 
 export function ManageGrading() {
   const { gym, role } = useManagedGym();
@@ -88,14 +89,14 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
     <article className={`card grading ${system.isActive ? "" : "grading--inactive"}`}>
       <header className="candidate__head">
         <div>
-          <h3 className="list__title">{system.name}</h3>
+          <h3 className="list__title">{dataLabel(system.name)}</h3>
           <p className="list__sub">{gradeSystemTypeLabel[system.type]} · {plural(active.length, "{count} grade", "{count} grades")} · {t("easiest first")}</p>
         </div>
         <div className="form__actions">
           {!system.isActive && <Badge>{t(t("Hidden"))}</Badge>}
           {canEdit && (
             <button type="button" className="icon-btn" disabled={update.isPending}
-              aria-label={system.isActive ? t("Hide {name}", { name: system.name }) : t("Show {name}", { name: system.name })}
+              aria-label={system.isActive ? t("Hide {name}", { name: dataLabel(system.name) }) : t("Show {name}", { name: dataLabel(system.name) })}
               onClick={() => update.mutate({ id: system.id, isActive: !system.isActive }, { onError: (e) => toast.error(errorMessage(e)) })}>
               {system.isActive ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </button>
@@ -107,8 +108,8 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
         <>
           <div className="grade-scale">
             {active.map((v) => isColor && v.colorHex
-              ? <span key={v.id} className="grade grade--color grade--sm" style={{ background: v.colorHex, color: inkOn(v.colorHex) }}>{v.label}</span>
-              : <span key={v.id} className="grade grade--text grade--sm">{v.label}</span>)}
+              ? <span key={v.id} className="grade grade--color grade--sm" style={{ background: v.colorHex, color: inkOn(v.colorHex) }}>{dataLabel(v.label)}</span>
+              : <span key={v.id} className="grade grade--text grade--sm">{dataLabel(v.label)}</span>)}
           </div>
           {canEdit && <Button variant="secondary" onClick={startEditing}>{t("Edit grades")}</Button>}
         </>

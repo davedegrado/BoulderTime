@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { inkOn } from "@/features/boulders/holdColors";
 import { plural, t } from "@/i18n/i18n";
+import { dataLabel } from "@/i18n/data";
 
 const METRICS: LeaderboardMetric[] = ["POINTS", "COMPLETED", "HIGHEST"];
 const PERIODS: LeaderboardPeriod[] = ["WEEK", "MONTH", "YEAR", "ALL"];
@@ -15,8 +16,8 @@ function Value({ entry, metric }: { entry: LeaderboardEntry; metric: Leaderboard
   if (metric === "HIGHEST" && entry.highest) {
     const h = entry.highest;
     return h.colorHex
-      ? <span className="grade grade--color grade--sm" style={{ background: h.colorHex, color: inkOn(h.colorHex) }}>{h.label}</span>
-      : <span className="grade grade--text grade--sm">{h.label}</span>;
+      ? <span className="grade grade--color grade--sm" style={{ background: h.colorHex, color: inkOn(h.colorHex) }}>{dataLabel(h.label)}</span>
+      : <span className="grade grade--text grade--sm">{dataLabel(h.label)}</span>;
   }
   if (metric === "COMPLETED") return <span className="board__value">{entry.completed} <small>{plural(entry.completed, "send", "sends", { count: entry.completed }).replace(String(entry.completed), "").trim()}</small></span>;
   return <span className="board__value">{entry.points} <small>{t("pts")}</small></span>;
@@ -67,7 +68,7 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
               </div>
               {explain && metric !== "COMPLETED" && (
                 <p className="notice notice--inline">
-                  {metric === "POINTS" ? b.scoringExplanation : t("Highest completed grade in the gym's {system} scale.", { system: b.gradeSystemName ?? t("primary") })}
+                  {metric === "POINTS" ? b.scoringExplanation : t("Highest completed grade in the gym's {system} scale.", { system: b.gradeSystemName ? dataLabel(b.gradeSystemName) : t("primary") })}
                 </p>
               )}
               {b.entries.length === 0 ? (
