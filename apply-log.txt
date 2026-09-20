@@ -1,5 +1,12 @@
 == 1. APPLICO LE MODIFICHE ==
+Applying: README: describe the current state — phases 1-8 done, committed migrations, distinctions, security, phase 9 next
 Applying: Admin partners: action buttons wrap to their own line on narrow screens
+Using index info to reconstruct a base tree...
+M	frontend/src/pages/admin/AdminPartners.tsx
+M	frontend/src/styles/global.css
+M	frontend/src/test/admin-partners.test.tsx
+Falling back to patching base and 3-way merge...
+No changes -- Patch already applied.
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,7 +15,7 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 21 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 28 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
       Tests  81 passed (81)
 OK

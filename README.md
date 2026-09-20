@@ -10,7 +10,9 @@ problems, suggest grades, watch beta and keep a climbing history that survives r
 
 One account can be a climber, staff at several gyms and a platform administrator at the same time.
 
-> **Build status:** Phase 1 (Foundation) of 9. See [`docs/roadmap.md`](docs/roadmap.md) for what's done and verified.
+> **Build status:** phases 1–8 are complete and verified, together with the founding gym and early-partner
+> distinctions and the pre-deployment security hardening. **Phase 9 (seed data, final checks, deployment) is next.**
+> Status per phase, and the deliberate limitations, are in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## 2. Architecture
 
@@ -39,19 +41,20 @@ Create an account in the app, then run `bash scripts/dev.sh promote` to unlock t
 
 - Node.js 20+ and npm
 - .NET 8 SDK
-- Docker (for the local Supabase stack and backend integration tests)
-- Supabase CLI (`npm i -g supabase` or see supabase.com/docs/guides/cli) — for local development
-- `dotnet-ef`: `dotnet tool install --global dotnet-ef --version 8.*`
+- Docker (for the local database, auth and the backend integration tests)
+- `dotnet-ef`: `dotnet tool install --global dotnet-ef --version 8.*` — only needed to add migrations
+
+The Supabase CLI is not required: `scripts/dev.sh` runs PostgreSQL and Supabase Auth (GoTrue) directly in Docker
+(see ADR-008 in [`docs/decisions.md`](docs/decisions.md)).
 
 ## 4. Supabase setup
 
 **Option A — local (recommended for development)**
 
-    cd database
-    supabase init          # first time only; creates database/supabase/config.toml
-    supabase start         # prints API URL, anon/publishable key, DB URL
+    bash scripts/dev.sh
 
-Defaults: API `http://127.0.0.1:54321`, Postgres `127.0.0.1:54322` (user/password `postgres`).
+Starts PostgreSQL (`127.0.0.1:54322`, user/password `postgres`) and Supabase Auth (`127.0.0.1:9999`) in Docker,
+applies migrations, seeds demo data and writes `frontend/.env.local` for you. Nothing else to configure.
 
 **Option B — hosted project**
 
@@ -65,7 +68,7 @@ Defaults: API `http://127.0.0.1:54321`, Postgres `127.0.0.1:54322` (user/passwor
 
 | File | Variables |
 |---|---|
-| `frontend/.env.local` (copy from `frontend/.env.example`) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL` |
+| `frontend/.env.local` (copy from `frontend/.env.example`) | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL`, `VITE_MAP_TILE_URL` and `VITE_MAP_ATTRIBUTION` (optional; required in production, see §14) |
 | `backend/.env` (copy from `backend/.env.example`) or `dotnet user-secrets` | `ConnectionStrings__Database`, `Supabase__Url`, `Supabase__JwtSecret` (optional), `Cors__AllowedOrigins__0`, `Storage__Provider`, `Supabase__ServiceRoleKey` (Supabase storage), `Geocoding__*`, `RateLimiting__*` |
 
 Anything prefixed `VITE_` is public. The service-role/secret key, database password and JWT secret are server-only and
@@ -102,23 +105,26 @@ The installable app (service worker, offline shell) is only active in production
 
 ## 9. Running migrations
 
-    cd backend
-    # first time only — generates the InitialCreate migration (see note below)
-    dotnet ef migrations add InitialCreate \
-      --project src/BoulderTime.Infrastructure --startup-project src/BoulderTime.Api \
-      --output-dir Persistence/Migrations
+All migrations are generated and committed (`backend/src/BoulderTime.Infrastructure/Persistence/Migrations`), from
+`InitialCreate` through the founding-gym and early-partner tables. Applying them:
 
+    cd backend
     dotnet run --project src/BoulderTime.Api -- migrate
 
-> **Note:** Phase 1 was built in a sandbox without access to the NuGet feed, so the `InitialCreate` migration has not
-> been generated and committed yet. It will be committed at the start of Phase 2; until then, run the command above.
+After changing the model, add a migration and commit model, migration and snapshot together:
+
+    dotnet ef migrations add <Name> \
+      --project src/BoulderTime.Infrastructure --startup-project src/BoulderTime.Api \
+      --output-dir Persistence/Migrations
 
 ## 10. Seeding demo data
 
     dotnet run --project src/BoulderTime.Api -- seed [--owner you@example.com]
 
-Creates four active demo gyms with sectors (idempotent). `--owner` makes an existing user OWNER of all of them.
-Later phases extend the seed with grading systems, boulders, attempts, videos and announcements.
+Creates four active demo gyms with sectors, grading systems, photos and boulders — active and removed (idempotent).
+`--owner` makes an existing user OWNER of all of them. In development, `bash scripts/dev.sh promote` also gives every
+existing account staff and platform-admin rights plus some demo climbing history, so Home and Activity aren't empty.
+Phase 9 extends the seed with more accounts, comments, videos, announcements and reports.
 
 ## 11. Authentication setup
 
@@ -134,23 +140,46 @@ Later phases extend the seed with grading systems, boulders, attempts, videos an
 
 ## 12. Storage setup
 
-Run `database/supabase/storage.sql` once in the hosted project to create the buckets (boulder images, gym images,
-avatars) with size and type limits. Set `Storage__Provider=Supabase` and `Supabase__ServiceRoleKey` on the API.
+Run `database/supabase/storage.sql` once in the hosted project to create the buckets with their size and type
+limits: **public** for boulder images, gym images and avatars; **private** for official beta and community videos.
+Set `Storage__Provider=Supabase` and `Supabase__ServiceRoleKey` on the API.
 
 Uploads work the same way in every environment: the API checks permissions and returns a short-lived signed upload
 URL; the browser shrinks the photo and uploads it directly; the API then verifies the object exists before saving
-the boulder. Binaries are never stored in PostgreSQL. In development (`Storage__Provider=Local`) the API itself plays
-the role of Storage using a local folder.
+the boulder. Videos are larger, so they upload in resumable 6 MB chunks (tus) and are read back through short-lived
+signed URLs issued only to viewers allowed to watch them. Binaries are never stored in PostgreSQL. In development
+(`Storage__Provider=Local`) the API itself plays the role of Storage using a local folder, with the same signed links.
 
-## 13. Development workflow
+## 13. Platform distinctions
+
+Two badges that belong to a gym and are granted only by BoulderTime administrators (*Admin → Partners*, choosing the
+gym by search):
+
+- **Founding gym** — the single gym that launched BoulderTime with us. A partial unique index makes a second one
+  impossible; designating one while another holds it is refused rather than silently moved.
+- **Early partner** — the early-adopter programme. Several gyms at a time, stored as a period (start, optional end,
+  note), so ending one keeps the history.
+
+Staff of a distinguished gym show the badge on their profile; following such a gym grants nothing. The badge is
+derived from the staff role, so it disappears by itself when the role or the gym's status ends (ADR-020).
+
+## 14. Security
+
+Verified in the pre-deployment audit (ADR-021): no secrets in the repository or its git history, every write endpoint
+authenticated, authorisation enforced in the API (hiding a button is never the control), request rate limits
+(`RateLimiting__*`), security headers on every response, signed and ownership-checked uploads, and a post-sign-in
+redirect that only accepts same-origin paths. Remaining dependency advisories are in dev-only tooling that never ships.
+
+## 15. Development workflow
 
 - Work phase by phase (`docs/roadmap.md`). Each phase ends with typecheck, tests and docs updated.
 - Change the model → add an EF migration → commit model, migration and snapshot together.
+- User-visible text goes through `t()`; a test fails if a string has no Italian wording (`frontend/src/i18n`).
 - Backend tests: `cd backend && dotnet test` (Docker must be running; tests start their own PostgreSQL).
 - Architecture-affecting decisions get an entry in `docs/decisions.md` before implementation.
 - Brand assets: `docs/brand.md`.
 
-## 14. Production deployment considerations
+## 16. Production deployment considerations
 
 - **Frontend:** static build (`npm run build`) on any CDN host. Configure SPA fallback to `index.html`. Set `VITE_*` at build time.
 - **API:** container or App Service–style host running .NET 8 behind HTTPS. Set `ASPNETCORE_ENVIRONMENT=Production`,
@@ -159,4 +188,10 @@ the role of Storage using a local folder.
 - **Database connections:** use Supabase's session pooler or direct connection; size the Npgsql pool to your plan's limits.
 - **Secrets:** use the host's secret store. Rotate the Supabase secret key if it is ever exposed.
 - **Auth keys:** stay on asymmetric JWT signing keys; the API refreshes JWKS every 10 minutes and on unknown key ids, so rotation needs no redeploy.
+- **Storage:** run `database/supabase/storage.sql` once; video buckets must stay private.
+- **Maps:** OpenStreetMap's tiles are for light use only — set `VITE_MAP_TILE_URL` and `VITE_MAP_ATTRIBUTION` to a tile
+  provider before going public.
 - **Observability:** every error response carries a `traceId` that matches server logs.
+
+Known limitations (push notifications, staff invitation emails, video transcoding, no cross-gym leaderboard) are listed
+in [`docs/roadmap.md`](docs/roadmap.md).
