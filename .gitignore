@@ -24,6 +24,7 @@ TestResults/
 database/supabase/*
 !database/supabase/hardening.sql
 !database/supabase/storage.sql
+!database/supabase/reset-project.sql
 
 # OS / editors
 .DS_Store

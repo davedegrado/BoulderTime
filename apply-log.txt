@@ -1,12 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: README: describe the current state — phases 1-8 done, committed migrations, distinctions, security, phase 9 next
-Applying: Admin partners: action buttons wrap to their own line on narrow screens
-Using index info to reconstruct a base tree...
-M	frontend/src/pages/admin/AdminPartners.tsx
-M	frontend/src/styles/global.css
-M	frontend/src/test/admin-partners.test.tsx
-Falling back to patching base and 3-way merge...
-No changes -- Patch already applied.
+Applying: Phase 9: Italian demo data with climbers, history, comments, announcements and a report; Supabase project cleanup script
 OK
 == 2. STRUMENTI ==
 OK
@@ -15,8 +8,46 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 28 s - BoulderTime.Tests.dll (net8.0)
+[xUnit.net 00:00:31.38]     BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_fills_the_demo_gyms_with_italian_content_and_climbing_history [FAIL]
+---- Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+[xUnit.net 00:00:32.31]     BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_twice_changes_nothing [FAIL]
+[xUnit.net 00:00:33.27]     BoulderTime.Tests.Seeding.DemoSeedTests.Sends_are_spread_over_the_past_weeks_so_periods_and_charts_look_real [FAIL]
+---- Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+---- Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+Failed!  - Failed:     3, Passed:   143, Skipped:     0, Total:   146, Duration: 1 m 25 s - BoulderTime.Tests.dll (net8.0)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:31.38]     BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_fills_the_demo_gyms_with_italian_content_and_climbing_history [FAIL]
+  Failed BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_fills_the_demo_gyms_with_italian_content_and_climbing_history [616 ms]
+  Error Message:
+   BoulderTime.Application.Common.UniqueConstraintViolationException : Unique constraint 'ix_boulder_attempts_user_id_boulder_id' was violated.
+---- Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+-------- Npgsql.PostgresException : 23505: duplicate key value violates unique constraint "ix_boulder_attempts_user_id_boulder_id"
+
+DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+  Stack Trace:
+     at BoulderTime.Infrastructure.Persistence.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Persistence/AppDbContext.cs:line 69
+   at BoulderTime.Infrastructure.Seeding.DemoSeeder.SeedCommunityAsync(List`1 climbers, CancellationToken ct) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Seeding/DemoSeeder.cs:line 229
+   at BoulderTime.Infrastructure.Seeding.DemoSeeder.SeedAsync(String ownerEmail, CancellationToken ct) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Seeding/DemoSeeder.cs:line 84
+   at BoulderTime.Tests.Seeding.DemoSeedTests.SeedAsync() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Seeding/DemoSeedTests.cs:line 21
+--
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:32.31]     BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_twice_changes_nothing [FAIL]
+[xUnit.net 00:00:33.27]     BoulderTime.Tests.Seeding.DemoSeedTests.Sends_are_spread_over_the_past_weeks_so_periods_and_charts_look_real [FAIL]
+  Failed BoulderTime.Tests.Seeding.DemoSeedTests.Seeding_twice_changes_nothing [495 ms]
+  Error Message:
+   BoulderTime.Application.Common.UniqueConstraintViolationException : Unique constraint 'ix_boulder_attempts_user_id_boulder_id' was violated.
+---- Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+-------- Npgsql.PostgresException : 23505: duplicate key value violates unique constraint "ix_boulder_attempts_user_id_boulder_id"
+
+DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+  Stack Trace:
+     at BoulderTime.Infrastructure.Persistence.AppDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Persistence/AppDbContext.cs:line 69
+   at BoulderTime.Infrastructure.Seeding.DemoSeeder.SeedCommunityAsync(List`1 climbers, CancellationToken ct) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Seeding/DemoSeeder.cs:line 229
+   at BoulderTime.Infrastructure.Seeding.DemoSeeder.SeedAsync(String ownerEmail, CancellationToken ct) in /workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/Seeding/DemoSeeder.cs:line 84
+   at BoulderTime.Tests.Seeding.DemoSeedTests.SeedAsync() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Seeding/DemoSeedTests.cs:line 21
 == 6. FRONTEND ==
       Tests  81 passed (81)
 OK
-== ESITO: ok ==
+== ESITO: fail ==

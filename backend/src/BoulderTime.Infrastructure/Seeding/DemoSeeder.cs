@@ -2,6 +2,9 @@ using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Climbing;
+using BoulderTime.Domain.Community;
+using BoulderTime.Domain.Notifications;
+using BoulderTime.Domain.Users;
 using BoulderTime.Domain.Follows;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
@@ -23,14 +26,18 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
 
     private static readonly DemoGym[] DemoGyms =
     [
-        new("Crimp Factory", "demo-crimp-factory", "Milano", "Via Tortona 31", "Two floors of bouldering in a former textile mill. Steep cave, big slab, and a dedicated kids' wall.",
-            ["Main Hall", "Cave", "Slab", "Kids Wall"], [GradeSystemType.Color, GradeSystemType.Fontainebleau], 45.4526, 9.1623),
-        new("Volume Lab", "demo-volume-lab", "Torino", "Corso Regina Margherita 120", "Competition-style setting with big volumes and coordination moves. Resets every week.",
-            ["Comp Wall", "Overhang", "Beginners", "Room 2"], [GradeSystemType.Fontainebleau, GradeSystemType.VScale], 45.0781, 7.6696),
-        new("Sloper Social", "demo-sloper-social", "Bologna", "Via del Pratello 8", "A community gym with a café, a training board area and a relaxed atmosphere.",
-            ["Front Room", "Training Boards", "Slab Corner"], [GradeSystemType.Color], 44.4949, 11.3325),
-        new("Granite House", "demo-granite-house", "Trento", "Via Brennero 64", "Mountain-town gym with setting inspired by the Dolomites. Great for technical climbers.",
-            ["Arena", "Roof", "Vertical"], [GradeSystemType.Fontainebleau], 46.0833, 11.1165),
+        new("Crimp Factory", "demo-crimp-factory", "Milano", "Via Tortona 31",
+            "Due piani di boulder in un ex cotonificio. Grotta strapiombante, placca grande e una parete dedicata ai bambini.",
+            ["Sala Grande", "Grotta", "Placca", "Parete Bambini"], [GradeSystemType.Color, GradeSystemType.Fontainebleau], 45.4526, 9.1623),
+        new("Volume Lab", "demo-volume-lab", "Torino", "Corso Regina Margherita 120",
+            "Tracciature da gara con volumi grandi e movimenti di coordinazione. Si ritraccia ogni settimana.",
+            ["Parete Gara", "Strapiombo", "Principianti", "Sala 2"], [GradeSystemType.Fontainebleau, GradeSystemType.VScale], 45.0781, 7.6696),
+        new("Sloper Social", "demo-sloper-social", "Bologna", "Via del Pratello 8",
+            "Palestra di quartiere con bar, zona pan Güllich e atmosfera rilassata.",
+            ["Sala Davanti", "Pan Güllich", "Angolo Placca"], [GradeSystemType.Color], 44.4949, 11.3325),
+        new("Granite House", "demo-granite-house", "Trento", "Via Brennero 64",
+            "Palestra di montagna con tracciature ispirate alle Dolomiti. Ottima per chi ama il tecnico.",
+            ["Arena", "Tetto", "Verticale"], [GradeSystemType.Fontainebleau], 46.0833, 11.1165),
     ];
 
     /// <summary>Embedded illustrations; the file name carries the hold colour drawn in the picture.</summary>
@@ -68,9 +75,13 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 gym.SetLocation(d.Latitude, d.Longitude); // demo gyms created before locations existed get a pin too
                 await db.SaveChangesAsync(ct);
             }
+            await RenameLegacySectorsAsync(gym.Id, d.Sectors, ct);
             await SeedGradingAsync(gym.Id, d.Grading, ct);
             boulders += await SeedBouldersAsync(gym.Id, ct);
         }
+
+        var climbers = await SeedDemoClimbersAsync(ct);
+        await SeedCommunityAsync(climbers, ct);
 
         var ownerNote = "";
         if (!string.IsNullOrWhiteSpace(ownerEmail))
@@ -88,7 +99,171 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
             await db.SaveChangesAsync(ct);
             ownerNote = $" {email} is OWNER of every demo gym.";
         }
-        return $"Seeded {created} new demo gym(s) and {boulders} boulder(s).{ownerNote}";
+        return $"Seeded {created} new demo gym(s), {boulders} boulder(s) and demo climbers with history, comments and updates.{ownerNote}";
+    }
+
+    /// <summary>
+    /// Demo climbers. They are BoulderTime profiles without a Supabase Auth account: nobody can sign in as them,
+    /// they only make the app look alive (history, ratings, comments, leaderboards). Their email domain marks them
+    /// so they can be removed in one query.
+    /// </summary>
+    public const string DemoEmailDomain = "demo.bouldertime.invalid";
+
+    private static readonly (string Name, string Email)[] DemoClimbers =
+    [
+        ("Giulia Ferrari", "giulia"), ("Marco Bianchi", "marco"), ("Sara Conti", "sara"),
+        ("Luca Rossi", "luca"), ("Chiara De Luca", "chiara"), ("Matteo Greco", "matteo"),
+    ];
+
+    /// <summary>A stable id for a demo profile. No Supabase account exists behind it, so nobody can sign in as them.</summary>
+    private static Guid DemoUserId(string handle)
+    {
+        var bytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes($"bouldertime-demo:{handle}"));
+        return new Guid(bytes);
+    }
+
+    private async Task<List<User>> SeedDemoClimbersAsync(CancellationToken ct)
+    {
+        var users = new List<User>();
+        foreach (var (name, handle) in DemoClimbers)
+        {
+            var email = $"{handle}@{DemoEmailDomain}";
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+            if (user is null)
+            {
+                // Deterministic id derived from the handle, so re-seeding finds the same profiles.
+                user = User.Provision(DemoUserId(handle), email, name, null);
+                user.SetLanguage("it");
+                db.Users.Add(user);
+            }
+            users.Add(user);
+        }
+        await db.SaveChangesAsync(ct);
+        return users;
+    }
+
+    /// <summary>
+    /// Fills the demo gyms with the things a gym owner wants to see: sends spread over the past weeks, projects,
+    /// ratings, community grade suggestions, comments, announcements and one report waiting in the moderation queue.
+    /// </summary>
+    private async Task SeedCommunityAsync(List<User> climbers, CancellationToken ct)
+    {
+        if (climbers.Count == 0 || await db.Comments.AnyAsync(c => true, ct)) return;
+        var now = clock.UtcNow;
+        var slugs = DemoGyms.Select(g => g.Slug).ToList();
+        var gyms = await db.Gyms.Where(g => slugs.Contains(g.Slug)).ToListAsync(ct);
+        var staffId = await db.GymStaff.Select(s => s.UserId).FirstOrDefaultAsync(ct);
+
+        var comments = new[]
+        {
+            "Tallonaggio sulla presa grande e poi si chiude bene.",
+            "Duro il primo movimento, il resto scorre.",
+            "Bellissimo, tra i più belli della tracciatura.",
+            "Attenzione al piede destro sul volume: scivola.",
+            "Fatto al terzo tentativo, questione di sequenza.",
+            "Secondo me è un filo più duro del grado.",
+        };
+
+        var rnd = new Random(20260920); // fixed seed: the demo looks the same on every machine
+        foreach (var gym in gyms)
+        {
+            var boulders = await db.Boulders.Where(b => b.GymId == gym.Id && b.Status == BoulderStatus.Active)
+                .OrderBy(b => b.Id).Take(10).ToListAsync(ct);
+            if (boulders.Count == 0) continue;
+            var sectors = await db.Sectors.Where(s => s.GymId == gym.Id).OrderBy(s => s.SortOrder).ToListAsync(ct);
+            var systems = await db.GradeSystems.Where(s => s.GymId == gym.Id).OrderBy(s => s.SortOrder).ToListAsync(ct);
+            var primary = systems.FirstOrDefault();
+            var values = primary is null
+                ? []
+                : await db.GradeValues.Where(v => v.GradeSystemId == primary.Id && v.IsActive).OrderBy(v => v.Rank).ToListAsync(ct);
+
+            for (var c = 0; c < climbers.Count; c++)
+            {
+                var climber = climbers[c];
+                if (!await db.GymFollows.AnyAsync(f => f.UserId == climber.Id && f.GymId == gym.Id, ct))
+                {
+                    var follow = GymFollow.Create(climber.Id, gym.Id, now.AddDays(-60));
+                    follow.Update(isFavorite: c % 3 == 0, notificationsEnabled: true);
+                    db.GymFollows.Add(follow);
+                }
+
+                // Sends spread over the last weeks, plus one open project each.
+                var sends = 3 + (c % 4);
+                for (var i = 0; i < sends && i < boulders.Count; i++)
+                {
+                    var boulder = boulders[(c + i * 2) % boulders.Count];
+                    if (await db.BoulderAttempts.AnyAsync(a => a.UserId == climber.Id && a.BoulderId == boulder.Id, ct)) continue;
+                    var attempt = BoulderAttempt.Start(climber.Id, boulder.Id);
+                    attempt.Record(1 + rnd.Next(4), completed: true, now.AddDays(-rnd.Next(1, 60)));
+                    db.BoulderAttempts.Add(attempt);
+                    if (i % 2 == 0) db.BoulderRatings.Add(BoulderRating.Create(climber.Id, boulder.Id, 3 + rnd.Next(3)));
+                    if (primary is not null && values.Count > 0 && i == 0)
+                        db.GradeSuggestions.Add(GradeSuggestion.Create(boulder.Id, climber.Id, primary.Id, values[Math.Min(values.Count - 1, 4 + rnd.Next(3))].Id));
+                }
+                var project = boulders[(c + 5) % boulders.Count];
+                if (!await db.BoulderAttempts.AnyAsync(a => a.UserId == climber.Id && a.BoulderId == project.Id, ct))
+                {
+                    var attempt = BoulderAttempt.Start(climber.Id, project.Id);
+                    attempt.Record(4 + rnd.Next(8), completed: false, now);
+                    db.BoulderAttempts.Add(attempt);
+                }
+
+                db.Comments.Add(Comment.Create(boulders[c % boulders.Count].Id, climber.Id, comments[c % comments.Length]));
+            }
+
+            if (staffId == Guid.Empty) continue;
+            var author = staffId;
+            if (!await db.GymAnnouncements.AnyAsync(a => a.GymId == gym.Id, ct))
+            {
+                db.GymAnnouncements.Add(GymAnnouncement.Publish(gym.Id, author, AnnouncementType.Announcement,
+                    "Ritracciata la sala principale",
+                    "Venti blocchi nuovi da questo weekend, dal 4 al 7B. Passate a provarli!",
+                    sectors.FirstOrDefault()?.Id, null, null, notifyFollowers: false));
+                db.GymAnnouncements.Add(GymAnnouncement.Publish(gym.Id, author, AnnouncementType.Event,
+                    "Serata boulder + pizza",
+                    "Sessione libera fino a tardi e pizza insieme. Ingresso ridotto per i soci.",
+                    null, null, now.AddDays(12), notifyFollowers: false));
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+        await SeedModerationQueueAsync(climbers, ct);
+    }
+
+    /// <summary>One open report, so the moderation queue isn't empty when a gym tries the staff area.</summary>
+    private async Task SeedModerationQueueAsync(List<User> climbers, CancellationToken ct)
+    {
+        if (await db.Reports.AnyAsync(r => true, ct)) return;
+        var comment = await db.Comments.OrderBy(c => c.CreatedAt).FirstOrDefaultAsync(ct);
+        if (comment is null) return;
+        var boulder = await db.Boulders.FirstAsync(b => b.Id == comment.BoulderId, ct);
+        var reporter = climbers.FirstOrDefault(c => c.Id != comment.UserId);
+        if (reporter is null) return;
+        db.Reports.Add(Report.Create(reporter.Id, ReportEntityType.Comment, comment.Id, boulder.GymId,
+            ReportReason.Misleading, "Secondo me il grado indicato nel commento confonde chi prova il blocco.", clock.UtcNow));
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Demo gyms seeded before the Italian rewrite keep their sectors, renamed in place — history stays attached.</summary>
+    private static readonly Dictionary<string, string> LegacySectorNames = new()
+    {
+        ["Main Hall"] = "Sala Grande", ["Cave"] = "Grotta", ["Slab"] = "Placca", ["Kids Wall"] = "Parete Bambini",
+        ["Comp Wall"] = "Parete Gara", ["Overhang"] = "Strapiombo", ["Beginners"] = "Principianti", ["Room 2"] = "Sala 2",
+        ["Front Room"] = "Sala Davanti", ["Training Boards"] = "Pan Güllich", ["Slab Corner"] = "Angolo Placca",
+        ["Roof"] = "Tetto", ["Vertical"] = "Verticale",
+    };
+
+    private async Task RenameLegacySectorsAsync(Guid gymId, string[] expected, CancellationToken ct)
+    {
+        var sectors = await db.Sectors.Where(s => s.GymId == gymId).ToListAsync(ct);
+        var renamed = false;
+        foreach (var sector in sectors)
+        {
+            if (expected.Contains(sector.Name) || !LegacySectorNames.TryGetValue(sector.Name, out var italian)) continue;
+            sector.Update(italian, sector.Description);
+            renamed = true;
+        }
+        if (renamed) await db.SaveChangesAsync(ct);
     }
 
     private async Task SeedGradingAsync(Guid gymId, GradeSystemType[] types, CancellationToken ct)

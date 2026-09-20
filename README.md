@@ -58,7 +58,11 @@ applies migrations, seeds demo data and writes `frontend/.env.local` for you. No
 
 **Option B — hosted project**
 
-1. Create a project at supabase.com.
+Reusing an existing project is fine: BoulderTime keeps its tables in the `bouldertime` schema and never touches
+`public`. `database/supabase/reset-project.sql` lists the optional cleanups (old tables, old buckets, old accounts —
+every account that signs in becomes a BoulderTime profile). Pick a European region: it cannot be changed later.
+
+1. Create a project at supabase.com (or reuse one).
 2. *Project Settings → API*: copy the project URL and the publishable (anon) key.
 3. *Project Settings → Database*: copy the **direct** or **session pooler** connection string.
 4. *Project Settings → JWT Keys*: new projects sign tokens asymmetrically, which the API verifies via JWKS
@@ -121,10 +125,15 @@ After changing the model, add a migration and commit model, migration and snapsh
 
     dotnet run --project src/BoulderTime.Api -- seed [--owner you@example.com]
 
-Creates four active demo gyms with sectors, grading systems, photos and boulders — active and removed (idempotent).
-`--owner` makes an existing user OWNER of all of them. In development, `bash scripts/dev.sh promote` also gives every
-existing account staff and platform-admin rights plus some demo climbing history, so Home and Activity aren't empty.
-Phase 9 extends the seed with more accounts, comments, videos, announcements and reports.
+Creates four Italian demo gyms with sectors, grading systems, photos and boulders (active and removed), six demo
+climbers with sends spread over the past weeks, projects, ratings, grade suggestions, comments, follows, two
+announcements per gym and one report waiting in the moderation queue. Re-running changes nothing.
+
+`--owner` makes an existing user OWNER of all of them; in development `bash scripts/dev.sh promote` does that for every
+account and adds personal climbing history.
+
+**Demo climbers have no Supabase account** — nobody can sign in as them. Their email ends in
+`@demo.bouldertime.invalid`, so they can be removed in one query (see `database/supabase/reset-project.sql`).
 
 ## 11. Authentication setup
 
