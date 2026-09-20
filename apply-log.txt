@@ -1,5 +1,5 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Admin partners: choose gyms by searching, not by pasting an id; translate staff counts
+Applying: Admin partners: action buttons wrap to their own line on narrow screens
 OK
 == 2. STRUMENTI ==
 OK
@@ -8,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 24 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   143, Skipped:     0, Total:   143, Duration: 1 m 21 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  80 passed (80)
+      Tests  81 passed (81)
 OK
 == ESITO: ok ==

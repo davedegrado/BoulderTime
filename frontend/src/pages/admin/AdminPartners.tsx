@@ -54,7 +54,7 @@ export function AdminPartners() {
         <h2 id="founding-title" className="section__title"><Trophy aria-hidden className="title-icon" /> {t("Founding Gym")}</h2>
         <p className="field__hint">{t("The first gym that launched BoulderTime with us. There can only be one.")}</p>
         {founding ? (
-          <div className="list__row">
+          <div className="list__row list__row--stack">
             <div className="list__main">
               <Link className="list__title" to={`/gyms/${founding.gym.slug}`}>{founding.gym.name}</Link>
               <p className="list__sub">{founding.gym.city}</p>
@@ -80,7 +80,7 @@ export function AdminPartners() {
         ) : (
           <ul className="list">
             {early.map((p) => (
-              <li key={p.gym.id} className="list__row">
+              <li key={p.gym.id} className="list__row list__row--stack">
                 <div className="list__main">
                   <Link className="list__title" to={`/gyms/${p.gym.slug}`}>{p.gym.name}</Link>
                   <p className="list__sub">
@@ -126,7 +126,7 @@ function GymPicker({ onPick, onCancel, actionLabel, busy }: { onPick: (gym: Admi
         : (
           <ul className="list">
             {results.slice(0, 8).map((gym) => (
-              <li key={gym.id} className="list__row">
+              <li key={gym.id} className="list__row list__row--stack">
                 <div className="list__main">
                   <p className="list__title">{gym.name}</p>
                   <p className="list__sub">{gym.city}</p>

@@ -48,6 +48,15 @@ describe("Admin partners", () => {
     }));
   });
 
+  it("gives long action buttons their own line so gym names aren't squeezed", async () => {
+    reply("GET", "/api/admin/partners", []);
+    renderAt("/admin/partners", "/admin/partners", <AdminPartners />);
+    await userEvent.click(await screen.findByRole("button", { name: "Choose the founding gym" }));
+
+    const row = (await screen.findAllByRole("listitem")).find((r) => within(r).queryByText("Rock n Fire"))!;
+    expect(row.className).toContain("list__row--stack");
+  });
+
   it("adds an early partner with an optional note, and ends a running partnership", async () => {
     reply("GET", "/api/admin/partners", [
       { gym: { ...adminGym, logoUrl: null, coverImageUrl: null, latitude: null, longitude: null, isFoundingGym: false, isEarlyPartner: true },
