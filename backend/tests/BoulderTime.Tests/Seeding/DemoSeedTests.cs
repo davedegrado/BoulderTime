@@ -45,6 +45,20 @@ public sealed class DemoSeedTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Each_climber_has_at_most_one_row_per_boulder()
+    {
+        await SeedAsync();
+
+        // The database enforces this, so a duplicate would make seeding fail outright — assert it explicitly
+        // because the boulder-picking cycle can otherwise land on the same boulder twice for one climber.
+        var pairs = await _f.Db(db => db.BoulderAttempts.Select(a => new { a.UserId, a.BoulderId }).ToListAsync());
+        pairs.Distinct().Count().Should().Be(pairs.Count);
+
+        var ratings = await _f.Db(db => db.BoulderRatings.Select(r => new { r.UserId, r.BoulderId }).ToListAsync());
+        ratings.Distinct().Count().Should().Be(ratings.Count);
+    }
+
+    [Fact]
     public async Task Sends_are_spread_over_the_past_weeks_so_periods_and_charts_look_real()
     {
         await SeedAsync();

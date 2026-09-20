@@ -187,11 +187,16 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                     db.GymFollows.Add(follow);
                 }
 
+                // One row per climber and boulder: the cycle below can land on the same boulder twice,
+                // and the database (rightly) refuses a second attempt for the same pair.
+                var touched = new HashSet<Guid>();
+
                 // Sends spread over the last weeks, plus one open project each.
                 var sends = 3 + (c % 4);
                 for (var i = 0; i < sends && i < boulders.Count; i++)
                 {
                     var boulder = boulders[(c + i * 2) % boulders.Count];
+                    if (!touched.Add(boulder.Id)) continue;
                     if (await db.BoulderAttempts.AnyAsync(a => a.UserId == climber.Id && a.BoulderId == boulder.Id, ct)) continue;
                     var attempt = BoulderAttempt.Start(climber.Id, boulder.Id);
                     attempt.Record(1 + rnd.Next(4), completed: true, now.AddDays(-rnd.Next(1, 60)));
@@ -200,8 +205,9 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                     if (primary is not null && values.Count > 0 && i == 0)
                         db.GradeSuggestions.Add(GradeSuggestion.Create(boulder.Id, climber.Id, primary.Id, values[Math.Min(values.Count - 1, 4 + rnd.Next(3))].Id));
                 }
+
                 var project = boulders[(c + 5) % boulders.Count];
-                if (!await db.BoulderAttempts.AnyAsync(a => a.UserId == climber.Id && a.BoulderId == project.Id, ct))
+                if (touched.Add(project.Id) && !await db.BoulderAttempts.AnyAsync(a => a.UserId == climber.Id && a.BoulderId == project.Id, ct))
                 {
                     var attempt = BoulderAttempt.Start(climber.Id, project.Id);
                     attempt.Record(4 + rnd.Next(8), completed: false, now);
