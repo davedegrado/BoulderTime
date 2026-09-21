@@ -191,6 +191,8 @@ redirect that only accepts same-origin paths. Remaining dependency advisories ar
 
 ## 16. Production deployment considerations
 
+Step-by-step guide with the exact variables: [`docs/deployment.md`](docs/deployment.md).
+
 - **Frontend:** static build (`npm run build`) on any CDN host. Configure SPA fallback to `index.html`. Set `VITE_*` at build time.
 - **API:** container or App Service–style host running .NET 8 behind HTTPS. Set `ASPNETCORE_ENVIRONMENT=Production`,
   connection string, `Supabase__Url`, and `Cors__AllowedOrigins__*` to the exact frontend origin(s).

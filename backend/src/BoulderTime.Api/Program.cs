@@ -30,6 +30,18 @@ builder.Services
 
 builder.Services.AddBoulderTimeRateLimiting(builder.Configuration);
 
+// Behind a hosting proxy (Railway, Fly, …) every request arrives from the proxy's address. Reading the client's real
+// address and scheme from the proxy headers keeps per-client rate limits and HTTPS detection correct.
+builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+                         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    // The platform's proxy addresses aren't known in advance; the app is only reachable through it.
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
+    o.ForwardLimit = 1;
+});
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(allowedOrigins)
@@ -45,6 +57,7 @@ var app = builder.Build();
 if (AdminCli.IsCommand(args))
     return await AdminCli.RunAsync(app, args);
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages(); // ProblemDetails bodies for bare 401/403/404
 

@@ -33,6 +33,8 @@
 -- delete from bouldertime.users where email like '%@demo.bouldertime.invalid';
 
 -- After the cleanup, in order:
---   1) dotnet run --project src/BoulderTime.Api -- migrate
---   2) psql "$DATABASE_URL" -f database/supabase/hardening.sql
---   3) psql "$DATABASE_URL" -f database/supabase/storage.sql
+--   1) apply the migrations (Railway's pre-deploy step does it, or run `dotnet run --project src/BoulderTime.Api -- migrate`
+--      from backend/ with ConnectionStrings__Database pointing at this project)
+--   2) SQL Editor: paste and run database/supabase/hardening.sql
+--   3) SQL Editor: paste and run database/supabase/storage.sql
+--   (psql works too if you have it installed; nothing requires it)

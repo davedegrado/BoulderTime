@@ -1,0 +1,9 @@
+**/bin
+**/obj
+**/node_modules
+frontend/dist
+backend/.local-storage
+backend/tests
+.git
+*.zip
+apply-log.txt
