@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="it">
+  <body style="margin:0;padding:24px;background:#F8F8F8;font-family:Inter,Arial,sans-serif;color:#1A1A1A;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:16px;">
+      <tr><td style="padding:32px 32px 8px;font-size:22px;font-weight:800;">Boulder<span style="color:#FF7A2E;">Time</span></td></tr>
+      <tr><td style="padding:8px 32px;font-size:20px;font-weight:700;">Conferma il nuovo indirizzo</td></tr>
+      <tr><td style="padding:8px 32px;font-size:16px;line-height:1.5;">Hai chiesto di usare {{ .NewEmail }} per il tuo account BoulderTime al posto di {{ .Email }}.</td></tr>
+      <tr><td style="padding:16px 32px;">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;background:#FF7A2E;color:#1A1A1A;border-radius:999px;font-weight:700;text-decoration:none;">Conferma il nuovo indirizzo</a>
+      </td></tr>
+      <tr><td style="padding:8px 32px;font-size:14px;line-height:1.5;color:#555555;">
+        Se il pulsante non funziona, copia questo indirizzo nel browser:<br>
+        <span style="word-break:break-all;">{{ .ConfirmationURL }}</span>
+      </td></tr>
+      <tr><td style="padding:8px 32px 32px;font-size:14px;line-height:1.5;color:#555555;">Se non sei stato tu, ignora questa email e l'indirizzo resterà invariato.</td></tr>
+    </table>
+    <p style="max-width:520px;margin:16px auto 0;font-size:12px;color:#888888;text-align:center;">BoulderTime · bouldertime.com</p>
+  </body>
+</html>

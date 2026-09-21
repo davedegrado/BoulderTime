@@ -1,7 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-già presente: dev promote: skip demo climbers, undo their earlier
-Applying: Deployment: Dockerfile, Railway config, Cloudflare Pages redirects/headers, forwarded headers behind proxies, deployment guide
-applicata: Deployment: Dockerfile, Railway config, Cloudflare Pages
+Applying: Password reset flow and Italian email templates
+applicata: Password reset flow and Italian email templates
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -9,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 41 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 40 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  81 passed (81)
+      Tests  85 passed (85)
 OK
 == ESITO: ok ==

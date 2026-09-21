@@ -755,3 +755,5 @@ svg { flex-shrink: 0; }
   .list__row--stack .list__main { flex: 1 1 auto; }
   .list__row--stack .btn { width: auto; }
 }
+
+.auth-forgot { align-self: flex-end; margin-top: calc(-1 * var(--bt-2)); font-size: var(--bt-text-sm); font-weight: 600; }

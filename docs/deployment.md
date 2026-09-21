@@ -12,7 +12,8 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
    `psql` works too if you have it; the SQL Editor needs nothing installed.
 2. **Authentication → URL Configuration**: Site URL `https://bouldertime.com`; Redirect URLs `https://bouldertime.com/**`.
 3. **Authentication → Emails / SMTP**: configure a real sender (e.g. Resend) before inviting users — the built-in sender
-   is rate-limited and meant for testing.
+   is rate-limited and meant for testing. Add a DMARC record (`_dmarc` TXT `v=DMARC1; p=none;`), keep Resend's click and
+   open tracking off, and paste the Italian templates from `docs/email-templates/`.
 4. **Authentication → Providers → Google** (optional): client ID and secret from Google Cloud; authorised redirect URI
    `https://<project-ref>.supabase.co/auth/v1/callback`.
 

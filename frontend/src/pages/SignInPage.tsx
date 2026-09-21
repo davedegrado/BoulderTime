@@ -52,6 +52,7 @@ export function SignInPage() {
         {error && <p className="form__error" role="alert">{error}</p>}
         <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <TextField label={t("Password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Link to="/forgot-password" className="auth-forgot">{t("Forgot your password?")}</Link>
         <Button type="submit" block loading={busy === "password"} disabled={busy !== null || !email || !password}>{t("Sign in")}</Button>
       </form>
     </AuthLayout>

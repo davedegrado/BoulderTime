@@ -1,6 +1,8 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { RouteErrorPage } from "@/pages/RouteErrorPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { HomePage } from "@/pages/HomePage";
@@ -41,6 +43,8 @@ export const router = createBrowserRouter([
   { path: "/sign-in", element: <SignInPage /> },
   { path: "/sign-up", element: <SignUpPage /> },
   { path: "/auth/callback", element: <AuthCallbackPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   {
     element: <AppShell />,
     errorElement: <RouteErrorPage />,
