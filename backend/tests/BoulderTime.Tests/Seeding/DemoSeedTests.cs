@@ -70,6 +70,43 @@ public sealed class DemoSeedTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Promote_makes_real_accounts_admins_but_leaves_demo_climbers_and_personal_history_alone()
+    {
+        await SeedAsync();
+        var me = await _f.UserAsync();
+
+        await using (var scope = _f.Services.CreateAsyncScope())
+        {
+            var promoted = await scope.ServiceProvider.GetRequiredService<DemoSeeder>().PromoteAllForLocalDevelopmentAsync();
+            promoted.Should().Equal(me.Email);
+        }
+
+        (await _f.Db(db => db.Users.Where(u => u.Id == me.Id).Select(u => u.IsPlatformAdmin).FirstAsync())).Should().BeTrue();
+        (await _f.Db(db => db.Users.CountAsync(u => u.Email.EndsWith(DemoSeeder.DemoEmailDomain) && u.IsPlatformAdmin))).Should().Be(0);
+        var demoIds = await _f.Db(db => db.Users.Where(u => u.Email.EndsWith(DemoSeeder.DemoEmailDomain)).Select(u => u.Id).ToListAsync());
+        (await _f.Db(db => db.GymStaff.CountAsync(m => demoIds.Contains(m.UserId)))).Should().Be(0);
+
+        // Nothing is invented on a real account unless asked for.
+        (await _f.Db(db => db.BoulderAttempts.CountAsync(a => a.UserId == me.Id))).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Promote_takes_back_rights_an_earlier_version_gave_to_demo_climbers()
+    {
+        await SeedAsync();
+        await _f.Db(async db =>
+        {
+            foreach (var demo in await db.Users.Where(u => u.Email.EndsWith(DemoSeeder.DemoEmailDomain)).ToListAsync()) demo.GrantPlatformAdmin();
+            return await db.SaveChangesAsync();
+        });
+
+        await using var scope = _f.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<DemoSeeder>().PromoteAllForLocalDevelopmentAsync();
+
+        (await _f.Db(db => db.Users.CountAsync(u => u.Email.EndsWith(DemoSeeder.DemoEmailDomain) && u.IsPlatformAdmin))).Should().Be(0);
+    }
+
+    [Fact]
     public async Task Seeding_twice_changes_nothing()
     {
         await SeedAsync();

@@ -54,7 +54,8 @@ stop_all() { pkill -f "BoulderTime.Api" 2>/dev/null; pkill -f "vite" 2>/dev/null
 case "${1:-}" in
   stop) stop_all; echo "Stopped. Data is kept."; exit 0 ;;
   reset) stop_all; docker rm -f $AUTH $DB >/dev/null 2>&1; docker volume rm $DB_VOLUME >/dev/null 2>&1; echo "Local data deleted."; exit 0 ;;
-  promote) cd backend && dotnet run --project src/BoulderTime.Api -- dev-promote-all && echo "Reload the app in your browser."; exit 0 ;;
+  # promote [--with-history]: every real account becomes platform admin + demo-gym owner. Demo climbers are skipped.
+  promote) shift; cd backend && dotnet run --project src/BoulderTime.Api -- dev-promote-all "$@" && echo "Reload the app in your browser."; exit 0 ;;
 esac
 
 # Containers are recreated on every start so configuration changes always apply.

@@ -48,8 +48,18 @@ public static class AdminCli
                     Console.Error.WriteLine("dev-promote-all is only available in the Development environment.");
                     return 1;
                 }
-                var promoted = await scope.ServiceProvider.GetRequiredService<DemoSeeder>().PromoteAllForLocalDevelopmentAsync();
-                Console.WriteLine($"Promoted {promoted} user(s) to platform admin and demo-gym owner.");
+                var withHistory = args.Contains("--with-history");
+                var promoted = await scope.ServiceProvider.GetRequiredService<DemoSeeder>().PromoteAllForLocalDevelopmentAsync(withHistory);
+                if (promoted.Count == 0)
+                {
+                    Console.WriteLine("No accounts to promote yet. Register in the app first, then run this again.");
+                    return 0;
+                }
+                Console.WriteLine($"Promoted {promoted.Count} account(s) to platform admin and demo-gym owner (demo climbers excluded):");
+                foreach (var promotedEmail in promoted) Console.WriteLine($"  - {promotedEmail}");
+                Console.WriteLine(withHistory
+                    ? "Added demo climbing history to accounts that had none."
+                    : "Your climbing history was left untouched (add --with-history to invent some).");
                 return 0;
 
             case "grant-platform-admin" or "revoke-platform-admin" when args.Length == 2:

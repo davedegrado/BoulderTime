@@ -129,8 +129,9 @@ Creates four Italian demo gyms with sectors, grading systems, photos and boulder
 climbers with sends spread over the past weeks, projects, ratings, grade suggestions, comments, follows, two
 announcements per gym and one report waiting in the moderation queue. Re-running changes nothing.
 
-`--owner` makes an existing user OWNER of all of them; in development `bash scripts/dev.sh promote` does that for every
-account and adds personal climbing history.
+`--owner` makes an existing user OWNER of all of them. In development, `bash scripts/dev.sh promote` makes every real
+account a platform admin and owner of the demo gyms. Demo climbers are skipped, and your own climbing history is left
+untouched unless you add `--with-history`.
 
 **Demo climbers have no Supabase account** — nobody can sign in as them. Their email ends in
 `@demo.bouldertime.invalid`, so they can be removed in one query (see `database/supabase/reset-project.sql`).

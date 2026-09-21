@@ -336,20 +336,31 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
     }
 
     /// <summary>
-    /// LOCAL DEVELOPMENT ONLY (the CLI refuses outside Development): makes every existing user a platform admin
-    /// and OWNER of every demo gym, so a freshly registered account can explore all areas immediately.
+    /// LOCAL DEVELOPMENT ONLY (the CLI refuses outside Development): makes every real account a platform admin and
+    /// OWNER of every demo gym, so a freshly registered account can explore all areas immediately.
+    /// Demo climbers are never promoted — they stay ordinary climbers — and any rights they got from an earlier
+    /// version of this command are taken back. Personal climbing history is only invented when asked for.
     /// </summary>
-    public async Task<int> PromoteAllForLocalDevelopmentAsync(CancellationToken ct = default)
+    /// <returns>The emails of the accounts that were promoted.</returns>
+    public async Task<IReadOnlyList<string>> PromoteAllForLocalDevelopmentAsync(bool withHistory = false, CancellationToken ct = default)
     {
-        var users = await db.Users.ToListAsync(ct);
+        var demoSuffix = "@" + DemoEmailDomain;
+        var users = await db.Users.Where(u => !u.Email.EndsWith(demoSuffix)).ToListAsync(ct);
         foreach (var user in users) user.GrantPlatformAdmin();
+
+        // Undo what earlier versions did to demo climbers: they are climbers, not admins or gym staff.
+        var demoUsers = await db.Users.Where(u => u.Email.EndsWith(demoSuffix)).ToListAsync(ct);
+        foreach (var demo in demoUsers) demo.RevokePlatformAdmin();
+        var demoIds = demoUsers.Select(u => u.Id).ToList();
+        db.GymStaff.RemoveRange(await db.GymStaff.Where(m => demoIds.Contains(m.UserId)).ToListAsync(ct));
         await db.SaveChangesAsync(ct);
+
         foreach (var user in users)
         {
             await SeedAsync(user.Email, ct);
-            await SeedActivityAsync(user.Id, ct);
+            if (withHistory) await SeedActivityAsync(user.Id, ct);
         }
-        return users.Count;
+        return users.Select(u => u.Email).ToList();
     }
 
     /// <summary>
