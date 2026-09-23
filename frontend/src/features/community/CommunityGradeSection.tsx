@@ -39,7 +39,7 @@ function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; 
         <p className="list__sub">{s.totalVotes === 0 ? t("No votes yet") : plural(s.totalVotes, "{count} vote", "{count} votes") + (consensus ? " · " + t("consensus {grade}", { grade: consensus.label }) : "")}</p>
       </div>
       {s.buckets.length > 0 && (
-        <ul className="consensus__bars" aria-label={`${s.systemName} votes`}>
+        <ul className="consensus__bars" aria-label={t("Votes for {system}", { system: dataLabel(s.systemName) })}>
           {s.buckets.map((b) => (
             <li key={b.gradeValueId} className={`consensus__row ${b.gradeValueId === s.consensusValueId ? "is-consensus" : ""}`}>
               <span className="consensus__label">{dataLabel(b.label)}</span>

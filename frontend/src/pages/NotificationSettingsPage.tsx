@@ -61,7 +61,7 @@ export function NotificationSettingsPage() {
                           className={`switch ${r.on ? "is-on" : ""}`} onClick={() => follow.mutate({ kind: group.kind, id: r.id, enabled: !r.on }, { onError })}>
                           <span className="switch__thumb" />
                         </button>
-                        <button type="button" className="icon-btn" aria-label={`Unfollow ${r.label}`} onClick={() => follow.mutate({ kind: group.kind, id: r.id, enabled: null }, { onError })}>
+                        <button type="button" className="icon-btn" aria-label={t("Unfollow {name}", { name: r.label })} onClick={() => follow.mutate({ kind: group.kind, id: r.id, enabled: null }, { onError })}>
                           <X aria-hidden />
                         </button>
                       </li>

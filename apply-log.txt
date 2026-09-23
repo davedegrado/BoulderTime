@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Host the app as a Cloudflare Worker with static assets (Pages is legacy)
-applicata: Host the app as a Cloudflare Worker with static assets (Pages
+Applying: Translate text built with values inside, screen-reader labels included, and guard it with a test
+applicata: Translate text built with values inside, screen-reader labels
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -8,8 +8,8 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 29 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  85 passed (85)
+      Tests  86 passed (86)
 OK
 == ESITO: ok ==

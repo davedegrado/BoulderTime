@@ -36,7 +36,7 @@ export function SignUpPage() {
   if (sentTo) {
     return (
       <AuthLayout title={t("Check your inbox")}>
-        <EmptyState icon={<MailCheck />} title={`We sent a confirmation link to ${sentTo}.`} body={t("Open it on this device to finish creating your account.")} action={<Link to="/sign-in" className="btn btn--secondary"><span>{t("Back to sign in")}</span></Link>} />
+        <EmptyState icon={<MailCheck />} title={t("We sent a confirmation link to {email}.", { email: sentTo })} body={t("Open it on this device to finish creating your account.")} action={<Link to="/sign-in" className="btn btn--secondary"><span>{t("Back to sign in")}</span></Link>} />
       </AuthLayout>
     );
   }

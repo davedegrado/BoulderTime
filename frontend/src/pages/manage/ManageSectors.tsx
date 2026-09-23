@@ -92,8 +92,8 @@ function SectorRow({ sector, gymId, first, last, onUp, onDown, reordering }: Row
   return (
     <li className={`list__row ${sector.isActive ? "" : "list__row--muted"}`}>
       <div className="reorder">
-        <button type="button" className="icon-btn" onClick={onUp} disabled={first || reordering} aria-label={`Move ${sector.name} up`}><ArrowUp aria-hidden /></button>
-        <button type="button" className="icon-btn" onClick={onDown} disabled={last || reordering} aria-label={`Move ${sector.name} down`}><ArrowDown aria-hidden /></button>
+        <button type="button" className="icon-btn" onClick={onUp} disabled={first || reordering} aria-label={t("Move {name} up", { name: sector.name })}><ArrowUp aria-hidden /></button>
+        <button type="button" className="icon-btn" onClick={onDown} disabled={last || reordering} aria-label={t("Move {name} down", { name: sector.name })}><ArrowDown aria-hidden /></button>
       </div>
       <div className="list__main">
         <p className="list__title">{sector.name}</p>

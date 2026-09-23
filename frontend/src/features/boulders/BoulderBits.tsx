@@ -24,7 +24,7 @@ export function GradeLine({ grades, size = "md" }: { grades: BoulderGrade[]; siz
   const [primary, ...rest] = grades;
   if (!primary) return null;
   return (
-    <span className="grade-line" aria-label={`Grade ${grades.map((g) => `${g.label} (${g.systemName})`).join(", ")}`}>
+    <span className="grade-line" aria-label={t("Grade {grades}", { grades: grades.map((g) => `${dataLabel(g.label)} (${dataLabel(g.systemName)})`).join(", ") })}>
       <GradeBadge grade={primary} size={size} />
       {rest.map((g) => <GradeBadge key={g.gradeSystemId} grade={g} size="sm" />)}
     </span>

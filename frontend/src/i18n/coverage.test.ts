@@ -26,4 +26,20 @@ describe("Italian coverage", () => {
     const missing = [...keys].filter((key) => italian[key] === undefined);
     expect(missing, `missing Italian for: ${missing.join(" | ")}`).toEqual([]);
   });
+
+  it("has no user-visible text built with a template literal", () => {
+    // Text assembled as `Back to ${gym.name}` never reaches the dictionary, so it silently stays English —
+    // including aria-labels, which screen readers read aloud.
+    const props = /(title|body|label|hint|placeholder|aria-label|confirmLabel|submitLabel|alt)=\{`([^`]*)`\}/g;
+    const offenders: string[] = [];
+    for (const file of sourceFiles("src")) {
+      if (file.includes("i18n")) continue;
+      const source = readFileSync(file, "utf8");
+      for (const match of source.matchAll(props)) {
+        const withoutValues = match[2]!.replace(/\$\{[^}]*\}/g, "");
+        if (/[A-Za-z]{3,}/.test(withoutValues)) offenders.push(`${file}: ${match[0]}`);
+      }
+    }
+    expect(offenders, `translate these: ${offenders.join(" | ")}`).toEqual([]);
+  });
 });

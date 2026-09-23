@@ -9,7 +9,7 @@ import { useUnreadCount } from "@/features/notifications/api";
 import { OfflineBanner, RouteAnnouncer } from "@/components/AppChrome";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/States";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -33,7 +33,7 @@ export function AppShell() {
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
   const badge = (to: string) => to === "/notifications" && unread > 0
-    ? <span className="nav-badge" aria-label={`${unread} unread`}>{unread > 99 ? "99+" : unread}</span>
+    ? <span className="nav-badge" aria-label={plural(unread, "{count} unread notification", "{count} unread notifications")}>{unread > 99 ? "99+" : unread}</span>
     : null;
 
   return (

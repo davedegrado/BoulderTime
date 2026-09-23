@@ -130,7 +130,7 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
                     <input type="color" value={r.colorHex} onChange={(e) => setRows((rs) => rs.map((x, k) => (k === i ? { ...x, colorHex: e.target.value } : x)))} />
                   </label>
                 )}
-                <button type="button" className="icon-btn" onClick={() => setRows((rs) => rs.filter((_, k) => k !== i))} aria-label={`Retire ${r.label}`}><Trash2 aria-hidden /></button>
+                <button type="button" className="icon-btn" onClick={() => setRows((rs) => rs.filter((_, k) => k !== i))} aria-label={t("Retire {grade}", { grade: dataLabel(r.label) })}><Trash2 aria-hidden /></button>
               </li>
             ))}
           </ol>
