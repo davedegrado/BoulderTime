@@ -3,7 +3,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { MailCheck } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { safeNext } from "@/auth/RequireAuth";
-import { AuthLayout, GoogleButton, OrDivider } from "@/pages/AuthLayout";
+import { AuthLayout } from "@/pages/AuthLayout";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { EmptyState } from "@/components/States";
@@ -21,7 +21,7 @@ export function validateSignUp(displayName: string, email: string, password: str
 }
 
 export function SignUpPage() {
-  const { session, signUpWithPassword, signInWithGoogle } = useAuth();
+  const { session, signUpWithPassword } = useAuth();
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
   const [displayName, setDisplayName] = useState("");
@@ -57,20 +57,9 @@ export function SignUpPage() {
     }
   }
 
-  async function onGoogle() {
-    setBusy("google");
-    try {
-      await signInWithGoogle(next);
-    } catch (err) {
-      setErrors({ form: (err as Error).message });
-      setBusy(null);
-    }
-  }
 
   return (
     <AuthLayout title={t("Create your account")} footer={<>{t("Already climbing with us?")} <Link to="/sign-in">{t("Sign in")}</Link></>}>
-      <GoogleButton onClick={onGoogle} loading={busy === "google"} disabled={busy !== null} />
-      <OrDivider />
       <form onSubmit={onSubmit} className="form" noValidate>
         {errors.form && <p className="form__error" role="alert">{errors.form}</p>}
         <TextField label={t("Display name")} autoComplete="nickname" value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={errors.displayName} hint={t("Shown on comments and leaderboards.")} />

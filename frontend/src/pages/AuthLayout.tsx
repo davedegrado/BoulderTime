@@ -17,6 +17,11 @@ export function AuthLayout({ title, children, footer }: { title: string; childre
   );
 }
 
+/**
+ * Google sign-in is built and working, but Google's consent screen shows the Supabase project host
+ * ("continue to <ref>.supabase.co") because the redirect lands there. A custom auth domain needs a paid
+ * Supabase plan, so the button stays out of the app until then rather than showing that to climbers.
+ */
 export function OrDivider() {
   return <div className="divider" role="separator"><span>{t("or use email")}</span></div>;
 }

@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Translate text built with values inside, screen-reader labels included, and guard it with a test
-applicata: Translate text built with values inside, screen-reader labels
+Applying: Hide Google sign-in until the consent screen shows our domain; app-like touch behaviour; finish notification and boulder translations
+applicata: Hide Google sign-in until the consent screen shows our
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 29 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 31 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
       Tests  86 passed (86)
 OK

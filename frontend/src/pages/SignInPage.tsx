@@ -2,13 +2,13 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { safeNext } from "@/auth/RequireAuth";
-import { AuthLayout, GoogleButton, OrDivider } from "@/pages/AuthLayout";
+import { AuthLayout } from "@/pages/AuthLayout";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { t } from "@/i18n/i18n";
 
 export function SignInPage() {
-  const { session, signInWithPassword, signInWithGoogle } = useAuth();
+  const { session, signInWithPassword } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const next = safeNext(params.get("next"));
@@ -33,21 +33,9 @@ export function SignInPage() {
     }
   }
 
-  async function onGoogle() {
-    setError(null);
-    setBusy("google");
-    try {
-      await signInWithGoogle(next);
-    } catch (err) {
-      setError((err as Error).message);
-      setBusy(null);
-    }
-  }
 
   return (
     <AuthLayout title={t("Sign in")} footer={<>{t("New to BoulderTime?")} <Link to={`/sign-up${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("Create an account")}</Link></>}>
-      <GoogleButton onClick={onGoogle} loading={busy === "google"} disabled={busy !== null} />
-      <OrDivider />
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <p className="form__error" role="alert">{error}</p>}
         <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

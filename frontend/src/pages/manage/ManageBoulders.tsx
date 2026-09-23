@@ -12,7 +12,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 export function ManageBoulders() {
   const { gym } = useManagedGym();
@@ -97,14 +97,14 @@ export function ManageBoulders() {
         : items.length === 0 ? <EmptyState icon={<Mountain />} title={removedView ? t("No removed boulders") : t("No boulders on the wall")} />
         : (
           <>
-            <p className="section__meta">{total} {removedView ? "removed" : "on the wall"}</p>
+            <p className="section__meta">{removedView ? plural(total, "{count} removed", "{count} removed") : plural(total, "{count} on the wall", "{count} on the wall")}</p>
             <div className="boulder-grid">
               {items.map((b) => removedView ? (
                 <div key={b.id} className="boulder-grid__item">
                   <BoulderCard boulder={b} />
                   <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
                     onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
-                    Restore
+                    {t("Restore")}
                   </Button>
                 </div>
               ) : (
@@ -112,7 +112,7 @@ export function ManageBoulders() {
                   selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)} />
               ))}
             </div>
-            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{t(t("Show more"))}</Button>}
+            {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{t("Show more")}</Button>}
           </>
         )}
 

@@ -757,3 +757,13 @@ svg { flex-shrink: 0; }
 }
 
 .auth-forgot { align-self: flex-end; margin-top: calc(-1 * var(--bt-2)); font-size: var(--bt-text-sm); font-weight: 600; }
+
+/* ---------- Installed app behaviour ---------- */
+/* Without this the whole page rubber-bands on iOS: the bottom bar drifts and headers detach while dragging. */
+html, body { overscroll-behavior: none; }
+/* A drag that starts on a horizontal strip (tabs, chips, thumbnails) must not drag the page with it. */
+.tabs, .chips, .subnav, .video-strip { overscroll-behavior-x: contain; touch-action: pan-x; }
+/* Sticky elements stay put instead of sliding while the page settles. */
+.app-shell__nav, .tabs { transform: translateZ(0); }
+/* Double-tap on a button zooms on iOS unless the element declares it handles its own gestures. */
+button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
