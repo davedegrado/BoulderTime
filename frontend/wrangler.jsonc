@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Cloudflare Workers with static assets: the app is served from the Vite build, with no Worker code of its own.
+  // (Cloudflare Pages is legacy; this is the current way to host a single-page app.)
+  "name": "bouldertime",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist/",
+    // Any path the person opens directly (/gyms/crimp, /activity, a shared boulder link) must load the app,
+    // which then routes on the client. Without this, deep links would 404.
+    "not_found_handling": "single-page-application"
+  }
+}

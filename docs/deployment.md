@@ -37,15 +37,20 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
    (proxy status **DNS only**, grey cloud, so Railway can issue the certificate).
 5. **Usage → set a budget alert.** Billing is usage-based with no spending cap by default.
 
-## 3. Cloudflare Pages (frontend)
+## 3. Cloudflare Workers (frontend)
 
-1. Workers & Pages → Create → Pages → connect the repository.
-2. Build: root directory `frontend`, command `npm ci && npm run build`, output `dist`.
+Cloudflare Pages is legacy; the app is deployed as a Worker serving static assets, configured by
+`frontend/wrangler.jsonc`.
+
+1. Workers & Pages → Create → Workers → **Import a repository** → connect the repository.
+2. Build: root directory (**Path**) `frontend`, build command `npm ci && npm run build`,
+   deploy command `npx wrangler deploy`. `wrangler.jsonc` says where the built files are and makes every route
+   load the app.
 3. **Environment variables**: `VITE_SUPABASE_URL` = `https://<project-ref>.supabase.co`, `VITE_SUPABASE_ANON_KEY` =
    the anon/publishable key (public by design), `VITE_API_BASE_URL` = `https://api.bouldertime.com`,
    `VITE_MAP_TILE_URL` and `VITE_MAP_ATTRIBUTION` from your tile provider (e.g. MapTiler).
 4. Custom domains: `bouldertime.com` (and `www.bouldertime.com` redirecting to it).
-5. `frontend/public/_redirects` serves the app for every route; `_headers` adds security and caching headers.
+5. `frontend/public/_headers` adds security and caching headers; `_redirects` is kept for anything still on Pages.
 
 ## 4. First admin
 

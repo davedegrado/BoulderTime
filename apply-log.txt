@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Password reset flow and Italian email templates
-applicata: Password reset flow and Italian email templates
+Applying: Host the app as a Cloudflare Worker with static assets (Pages is legacy)
+applicata: Host the app as a Cloudflare Worker with static assets (Pages
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -8,7 +8,7 @@ OK
 == 4. MIGRAZIONE ==
 già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 40 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
       Tests  85 passed (85)
 OK
