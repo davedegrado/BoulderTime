@@ -1,14 +1,14 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Leaderboard visibility: climbers can opt out, gyms report, BoulderTime excludes; gym Instagram and Facebook links
-applicata: Leaderboard visibility: climbers can opt out, gyms report,
+Applying: Draw Instagram and Facebook marks for the gym info list
+applicata: Draw Instagram and Facebook marks for the gym info list
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-OK
+già presente
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   155, Skipped:     0, Total:   155, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   155, Skipped:     0, Total:   155, Duration: 1 m 46 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
       Tests  88 passed (88)
 OK
