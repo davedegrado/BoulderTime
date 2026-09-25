@@ -54,3 +54,20 @@ internal sealed class GymAnnouncementConfiguration : IEntityTypeConfiguration<Gy
         b.HasIndex(x => new { x.GymId, x.CreatedAt });
     }
 }
+
+internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<PushSubscription>
+{
+    public void Configure(EntityTypeBuilder<PushSubscription> b)
+    {
+        b.ToTable("push_subscriptions");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Endpoint).HasMaxLength(PushSubscription.EndpointMaxLength).IsRequired();
+        b.Property(x => x.P256dh).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Auth).HasMaxLength(100).IsRequired();
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        // One row per device: the endpoint is the device's address at its push service.
+        b.HasIndex(x => x.Endpoint).IsUnique();
+        b.HasIndex(x => x.UserId);
+    }
+}

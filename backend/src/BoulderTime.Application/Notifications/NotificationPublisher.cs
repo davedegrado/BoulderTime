@@ -16,7 +16,7 @@ namespace BoulderTime.Application.Notifications;
 ///   • follow-level "notifications off" and the user's category settings are respected;
 ///   • bursts with a collapse key fold into one unread notification.
 /// </summary>
-public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
+public sealed class NotificationPublisher(IAppDbContext db, IClock clock, IPushQueue push)
 {
     public async Task AnnouncementAsync(GymAnnouncement a, Gym gym, string? sectorName, CancellationToken ct)
     {
@@ -149,6 +149,11 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
             : await db.Notifications.Where(n => n.CollapseKey == collapseKey && n.ReadAt == null && recipients.Contains(n.UserId)).ToDictionaryAsync(n => n.UserId, ct);
 
         var rendered = new Dictionary<string, NotificationText>();
+        // Only gym and sector news is worth a phone buzz; comments, likes and moderation outcomes stay in the app.
+        var pushable = type is NotificationType.GymAnnouncement or NotificationType.SectorRetraced
+            or NotificationType.NewBouldersInSector or NotificationType.NewBouldersAtGym;
+        var toPush = new List<(Guid UserId, NotificationText Text, string? Link)>();
+
         foreach (var userId in recipients)
         {
             var language = Language.Normalize(languages.GetValueOrDefault(userId));
@@ -162,8 +167,13 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock)
             {
                 var fresh = Render(language);
                 db.Notifications.Add(Notification.Create(userId, type, fresh.Title, fresh.Body, relatedType, relatedId, gymId, link, collapseKey, now));
+                if (pushable) toPush.Add((userId, fresh, link));
             }
         }
+
+        // Queued after the database work: a slow push service must never hold up setting boulders.
+        foreach (var (userId, message, target) in toPush)
+            push.Enqueue(userId, new PushMessage(message.Title, message.Body ?? "", target ?? "/", collapseKey));
 
         NotificationText Render(string language)
         {

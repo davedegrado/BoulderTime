@@ -14,4 +14,9 @@
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The push encryption is verified against a real decrypt in the test project. -->
+    <InternalsVisibleTo Include="BoulderTime.Tests" />
+  </ItemGroup>
+
 </Project>

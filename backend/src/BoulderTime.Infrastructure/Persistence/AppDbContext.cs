@@ -52,6 +52,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<GymAnnouncement> GymAnnouncements => Set<GymAnnouncement>();
     public DbSet<EarlyPartnership> EarlyPartnerships => Set<EarlyPartnership>();
     public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

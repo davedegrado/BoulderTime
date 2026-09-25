@@ -32,6 +32,8 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
 | `Storage__Provider` | `Supabase` |
 | `Cors__AllowedOrigins__0` | `https://bouldertime.com` |
 | `Geocoding__Email` | a contact address (OpenStreetMap usage policy) |
+| `Push__PublicKey`, `Push__PrivateKey` | web push keys, from `dotnet run --project src/BoulderTime.Api -- generate-push-keys` (private one is a **secret**) |
+| `Push__Subject` | `mailto:support@bouldertime.com` |
 
 4. **Settings → Networking → Custom domain**: `api.bouldertime.com`; add the CNAME it shows in Cloudflare DNS
    (proxy status **DNS only**, grey cloud, so Railway can issue the certificate).

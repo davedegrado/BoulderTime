@@ -6,6 +6,9 @@ import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { disablePush, enablePush, needsInstallFirst, pushStatus, pushSupportedHere } from "@/features/notifications/push";
 
 const CATEGORIES: { key: keyof NotificationSettings; label: string; description: string }[] = [
   { key: "gymUpdates", label: "Gym updates", description: "New boulders, announcements, events and schedule changes at gyms you follow." },
@@ -13,6 +16,54 @@ const CATEGORIES: { key: keyof NotificationSettings; label: string; description:
   { key: "boulderUpdates", label: "Boulder updates", description: "Changes, new official beta and comments on boulders you follow or are projecting." },
   { key: "myContent", label: "Your videos and reports", description: "When your videos are reviewed or your reports are handled." },
 ];
+
+/**
+ * Notifications with the app closed. Kept above the per-category switches because it answers a different question:
+ * those decide what you are told, this decides whether your phone buzzes at all.
+ */
+function PhoneNotifications() {
+  const status = useQuery({ queryKey: ["push", "status"], queryFn: pushStatus, enabled: pushSupportedHere() });
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+
+  if (!pushSupportedHere() || status.data?.available === false) return null;
+
+  async function toggle(on: boolean) {
+    setBusy(true);
+    try {
+      if (!on) {
+        await disablePush();
+        toast.success(t("Phone notifications off"));
+      } else {
+        const outcome = await enablePush(status.data?.publicKey ?? "");
+        if (outcome === "denied") toast.error(t("Your phone refused notifications. Turn them on for BoulderTime in the phone's settings."));
+        else if (outcome === "unsupported") toast.error(t("This browser can't do notifications."));
+        else toast.success(t("Phone notifications on"));
+      }
+      await status.refetch();
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card stack" aria-labelledby="phone-title">
+      <h2 id="phone-title" className="section__title">{t("On your phone")}</h2>
+      {needsInstallFirst() ? (
+        <p className="notice">{t("On iPhone, notifications arrive only once BoulderTime is on your home screen: tap Share, then “Add to Home Screen”, and open it from there.")}</p>
+      ) : (
+        <Toggle
+          label={t("Notifications on this phone")}
+          description={t("New boulders, retraces and gym updates reach you even with the app closed. What you receive follows the settings below.")}
+          checked={status.data?.subscribedOnThisDevice ?? false}
+          disabled={busy || status.isPending}
+          onChange={toggle} />
+      )}
+    </section>
+  );
+}
 
 export function NotificationSettingsPage() {
   const settings = useNotificationSettings();
@@ -28,6 +79,8 @@ export function NotificationSettingsPage() {
         <Link to="/notifications" className="manage-head__back" aria-label={t("Back to notifications")}><ArrowLeft aria-hidden /></Link>
         <h1 className="page__title">{t("Notification settings")}</h1>
       </header>
+
+      <PhoneNotifications />
 
       <section className="card stack" aria-label={t("Categories")}>
         {settings.isPending ? <LoadingState /> : settings.isError ? <ErrorState error={settings.error} onRetry={() => settings.refetch()} />

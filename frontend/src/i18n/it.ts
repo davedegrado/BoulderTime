@@ -741,4 +741,13 @@ export const it: Record<string, string> = {
   "Facebook": "Facebook",
   "@yourgym or the full link": "@tuapalestra oppure il link completo",
   "The link to your page": "Il link alla tua pagina",
+  // ---- Push notifications ----
+  "On your phone": "Sul telefono",
+  "Notifications on this phone": "Notifiche su questo telefono",
+  "New boulders, retraces and gym updates reach you even with the app closed. What you receive follows the settings below.": "Blocchi nuovi, ritracciature e novità della palestra ti arrivano anche ad app chiusa. Cosa ricevi dipende dalle impostazioni qui sotto.",
+  "Phone notifications on": "Notifiche sul telefono attive",
+  "Phone notifications off": "Notifiche sul telefono disattivate",
+  "Your phone refused notifications. Turn them on for BoulderTime in the phone's settings.": "Il telefono ha rifiutato le notifiche. Attivale per BoulderTime dalle impostazioni del telefono.",
+  "This browser can't do notifications.": "Questo browser non supporta le notifiche.",
+  "On iPhone, notifications arrive only once BoulderTime is on your home screen: tap Share, then “Add to Home Screen”, and open it from there.": "Su iPhone le notifiche arrivano solo quando BoulderTime è nella schermata Home: tocca Condividi, poi “Aggiungi a Home”, e aprila da lì.",
 };

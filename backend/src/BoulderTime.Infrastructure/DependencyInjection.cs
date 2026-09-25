@@ -1,4 +1,6 @@
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Infrastructure.Push;
+using Microsoft.Extensions.Options;
 using BoulderTime.Infrastructure.Persistence;
 using BoulderTime.Infrastructure.Seeding;
 using BoulderTime.Infrastructure.Storage;
@@ -30,6 +32,14 @@ public static class DependencyInjection
                 c.Timeout = TimeSpan.FromSeconds(10);
                 c.DefaultRequestHeaders.UserAgent.ParseAdd("BoulderTime/1.0 (+https://github.com/davedegrado/BoulderTime)");
             });
+        // Web push: the sender talks to the browsers' push services, the dispatcher does it outside the request.
+        services.Configure<WebPushOptions>(configuration.GetSection("Push"));
+        services.AddHttpClient<IPushSender, WebPushSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddSingleton<IPushConfig>(sp => new PushConfig(sp.GetRequiredService<IOptions<WebPushOptions>>().Value.PublicKey));
+        services.AddSingleton<PushDispatcher>();
+        services.AddSingleton<IPushQueue>(sp => sp.GetRequiredService<PushDispatcher>());
+        services.AddHostedService(sp => sp.GetRequiredService<PushDispatcher>());
+
         return services;
     }
 
@@ -66,3 +76,7 @@ public static class DependencyInjection
             })
             .UseSnakeCaseNamingConvention();
 }
+
+
+/// <summary>Exposes the public VAPID key to the application layer without handing it the whole options object.</summary>
+internal sealed record PushConfig(string? PublicKey) : IPushConfig;

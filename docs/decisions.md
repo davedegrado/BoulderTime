@@ -352,3 +352,22 @@ would start an argument with staff who only reported. Nobody else sees the exclu
 
 Gym profiles also carry optional Instagram and Facebook links. Handles and full links are both accepted, anything
 that isn't a link to that network is refused, so the profile can't be used to send climbers elsewhere.
+
+## ADR-023 · Push notifications
+Phone notifications use Web Push, so there is no app store and no third-party notification service: the message goes
+from our API to the browser vendor's push service, encrypted end to end. The push service sees ciphertext only.
+
+**No external library.** VAPID signing (RFC 8292) and payload encryption (RFC 8291, aes128gcm) are implemented on
+.NET's own cryptography, about 80 lines, and verified by a test that decrypts a real message the way a browser would
+and checks another device's keys cannot. One less dependency to trust in the path that handles user data.
+
+**Only gym and sector news is pushed:** new boulders, retraces, announcements and events. Comments, likes and
+moderation outcomes stay in the app — a buzzing phone is a cost, and those don't repay it. The existing per-category
+preferences decide both, so turning a category off silences it everywhere.
+
+**Sending happens outside the request** through a bounded queue and a background dispatcher: setting twenty boulders
+must not wait for twenty push services, and a lost notification is better than a stuck request. Devices that report
+themselves gone, or fail five times, are removed.
+
+**On iPhone, push works only once the app is on the home screen** (an Apple restriction). The settings screen says so
+instead of showing a switch that would do nothing.

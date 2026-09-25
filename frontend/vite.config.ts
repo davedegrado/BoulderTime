@@ -13,6 +13,8 @@ export default defineConfig({
       manifest: false, // public/manifest.webmanifest is the source of truth
       injectRegister: null, // registered in main.tsx
       workbox: {
+        // Our own push handling is added to the generated service worker rather than replacing it.
+        importScripts: ["/push-sw.js"],
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
         globIgnores: ["**/app-icon-1024.png", "**/app-icon-512.png"], // store/maskable sizes: not needed offline
         navigateFallback: "/index.html",

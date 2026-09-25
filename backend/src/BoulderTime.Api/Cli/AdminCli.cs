@@ -14,7 +14,7 @@ namespace BoulderTime.Api.Cli;
 public static class AdminCli
 {
     public static bool IsCommand(string[] args) =>
-        args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin";
+        args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin" or "generate-push-keys";
 
     public static async Task<int> RunAsync(WebApplication app, string[] args)
     {
@@ -23,6 +23,21 @@ public static class AdminCli
 
         switch (args[0])
         {
+            case "generate-push-keys":
+            {
+                // Run once. The pair identifies BoulderTime to the browsers' push services; only the public half
+                // ever leaves the server, handed to each device when it subscribes.
+                using var key = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+                var parameters = key.ExportParameters(includePrivateParameters: true);
+                var publicKey = BoulderTime.Infrastructure.Push.WebPushSender.Base64Url([0x04, .. parameters.Q.X!, .. parameters.Q.Y!]);
+                var privateKey = BoulderTime.Infrastructure.Push.WebPushSender.Base64Url(parameters.D!);
+                Console.WriteLine("Set these on the API (Railway -> Variables). Keep the private one secret:");
+                Console.WriteLine($"Push__PublicKey={publicKey}");
+                Console.WriteLine($"Push__PrivateKey={privateKey}");
+                Console.WriteLine("Push__Subject=mailto:support@bouldertime.com");
+                return 0;
+            }
+
             case "migrate":
                 await db.Database.MigrateAsync();
                 Console.WriteLine("Database is up to date.");

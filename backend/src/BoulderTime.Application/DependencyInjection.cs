@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<ImageService>();
         services.AddScoped<PartnerService>();
         services.AddScoped<LeaderboardVisibilityService>();
+        services.AddScoped<PushSubscriptionService>();
         return services;
     }
 }
