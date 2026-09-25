@@ -347,7 +347,7 @@ create one (never on themselves, one open report per gym and climber) but cannot
 own members would turn a ranking dispute into a membership dispute.
 
 **An excluded climber is told, without a reason.** Their own profile says they don't appear and points at
-supporto@bouldertime.com. Saying nothing would read as a broken app and send the complaint to the gym; saying why
+support@bouldertime.com. Saying nothing would read as a broken app and send the complaint to the gym; saying why
 would start an argument with staff who only reported. Nobody else sees the exclusion.
 
 Gym profiles also carry optional Instagram and Facebook links. Handles and full links are both accepted, anything

@@ -19,6 +19,7 @@ import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useProfile } from "@/features/climbing/api";
 import { useLeaderboardVisibility } from "@/features/users/api";
 import { Toggle } from "@/features/notifications/NotificationBits";
+import { SUPPORT_EMAIL } from "@/lib/contact";
 
 export function ProfilePage() {
   const { signOut } = useAuth();
@@ -109,7 +110,7 @@ export function ProfilePage() {
           })} />
         {user.leaderboardExcluded && (
           <p className="notice">
-            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: "supporto@bouldertime.com" })}
+            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: SUPPORT_EMAIL })}
           </p>
         )}
       </section>
