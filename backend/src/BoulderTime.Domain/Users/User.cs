@@ -30,6 +30,18 @@ public class User : IAuditable
     /// </summary>
     public bool IsPlatformAdmin { get; private set; }
 
+    /// <summary>The person chose not to appear in leaderboards. Their own activity and history stay untouched.</summary>
+    public bool LeaderboardOptOut { get; private set; }
+
+    /// <summary>
+    /// Set by a BoulderTime administrator when sends look implausible. Kept apart from <see cref="LeaderboardOptOut"/>
+    /// so that clearing one never clears the other, and so the person can still be told why they are missing.
+    /// </summary>
+    public DateTimeOffset? LeaderboardExcludedAt { get; private set; }
+    public Guid? LeaderboardExcludedByUserId { get; private set; }
+
+    public bool AppearsInLeaderboards => !LeaderboardOptOut && LeaderboardExcludedAt is null;
+
     /// <summary>Profiles are public by default; the field exists so privacy settings can be added without a remodel.</summary>
     public ProfileVisibility ProfileVisibility { get; private set; } = ProfileVisibility.Public;
 
@@ -71,6 +83,20 @@ public class User : IAuditable
 
     public void GrantPlatformAdmin() => IsPlatformAdmin = true;
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;
+
+    public void SetLeaderboardOptOut(bool optOut) => LeaderboardOptOut = optOut;
+
+    public void ExcludeFromLeaderboards(Guid byUserId, DateTimeOffset now)
+    {
+        LeaderboardExcludedAt = now;
+        LeaderboardExcludedByUserId = byUserId;
+    }
+
+    public void AllowInLeaderboards()
+    {
+        LeaderboardExcludedAt = null;
+        LeaderboardExcludedByUserId = null;
+    }
 
     public static string NormalizeEmail(string email)
     {

@@ -27,6 +27,8 @@ export interface GymDetail extends GymSummary {
   description: string | null;
   address: string | null;
   website: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
   email: string | null;
   phone: string | null;
   createdAt: string;
@@ -55,6 +57,8 @@ export interface UpdateGymInput {
   website: string;
   email: string;
   phone: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
   latitude?: number | null;
   longitude?: number | null;
   clearLocation?: boolean;

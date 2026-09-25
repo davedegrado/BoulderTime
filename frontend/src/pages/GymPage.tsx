@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
+import { AtSign, Users, ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
 import { useGym, useSectors, type GymDetail } from "@/features/gyms/api";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Badge } from "@/components/Badge";
@@ -193,6 +193,20 @@ function InfoTab({ gym }: { gym: GymDetail }) {
           <li className="list__row">
             <Globe className="list__icon" aria-hidden />
             <a className="list__main list__link" href={gym.website} target="_blank" rel="noreferrer">{gym.website.replace(/^https?:\/\//, "")}</a>
+          </li>
+        )}
+        {gym.instagramUrl && (
+          <li className="list__row">
+            <AtSign className="list__icon" aria-hidden />
+            <a className="list__main list__link" href={gym.instagramUrl} target="_blank" rel="noreferrer">
+              {gym.instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")}
+            </a>
+          </li>
+        )}
+        {gym.facebookUrl && (
+          <li className="list__row">
+            <Users className="list__icon" aria-hidden />
+            <a className="list__main list__link" href={gym.facebookUrl} target="_blank" rel="noreferrer">{translate("Facebook")}</a>
           </li>
         )}
         {gym.email && (

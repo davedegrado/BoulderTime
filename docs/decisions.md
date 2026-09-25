@@ -334,3 +334,21 @@ Wording goes through i18n ("Palestra Fondatrice" / "Fondatrice" where space is t
 - **Dependency audit:** the remaining advisories are in dev-only tooling (Vite dev server on Windows, Vitest UI server),
   neither of which ships or runs in production; fixing them requires major upgrades and is scheduled separately.
   The one advisory affecting a shipped library (react-router open redirect) is mitigated by the check above.
+
+## ADR-022 · Who appears in leaderboards
+Two independent switches, both stored on the user: `leaderboard_opt_out` (the climber's own choice) and
+`leaderboard_excluded_at` (set by a BoulderTime administrator). Either one removes the person from every board.
+
+**Hidden means absent, not zero.** A zero-point row would still publish the name next to an implausible-looking
+result; the row simply isn't there.
+
+**Gyms report, BoulderTime decides.** `leaderboard_reports` holds a gym's flag with a reason; staff of that gym can
+create one (never on themselves, one open report per gym and climber) but cannot exclude anyone — a gym judging its
+own members would turn a ranking dispute into a membership dispute.
+
+**An excluded climber is told, without a reason.** Their own profile says they don't appear and points at
+supporto@bouldertime.com. Saying nothing would read as a broken app and send the complaint to the gym; saying why
+would start an argument with staff who only reported. Nobody else sees the exclusion.
+
+Gym profiles also carry optional Instagram and Facebook links. Handles and full links are both accepted, anything
+that isn't a link to that network is refused, so the profile can't be used to send climbers elsewhere.

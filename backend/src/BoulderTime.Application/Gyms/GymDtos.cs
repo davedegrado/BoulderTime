@@ -21,7 +21,7 @@ public sealed record GeocodeResultDto(double Latitude, double Longitude, string 
 
 public sealed record GymDetailDto(
     Guid Id, string Slug, string Name, string? Description, string? Address, string City,
-    string? Website, string? Email, string? Phone, string? LogoUrl, string? CoverImageUrl,
+    string? Website, string? Email, string? Phone, string? InstagramUrl, string? FacebookUrl, string? LogoUrl, string? CoverImageUrl,
     GymStatus Status, DateTimeOffset CreatedAt,
     /// <summary>The viewer's role at this gym (null when anonymous or not staff). Drives "Manage gym" UI only.</summary>
     GymRole? ViewerRole,
@@ -34,13 +34,14 @@ public sealed record GymDetailDto(
     DateTimeOffset? EarlyPartnerSince = null)
 {
     public static GymDetailDto From(Gym g, GymRole? viewerRole) => new(
-        g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone,
+        g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone, g.InstagramUrl, g.FacebookUrl,
         g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude,
         IsFoundingGym: g.IsFoundingGym);
 }
 
 /// <param name="Latitude">Set both coordinates, or send ClearLocation to remove them; omit both to keep the current ones.</param>
 public sealed record UpdateGymRequest(string? Name, string? Description, string? Address, string? City, string? Website, string? Email, string? Phone,
+    string? InstagramUrl, string? FacebookUrl,
     double? Latitude = null, double? Longitude = null, bool? ClearLocation = null);
 
 public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Description, string? ImageUrl, int SortOrder, bool IsActive, bool IsFollowing = false)

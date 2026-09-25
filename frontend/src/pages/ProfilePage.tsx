@@ -17,6 +17,8 @@ import { useSetAvatar } from "@/features/images/api";
 import { LANGUAGES, t, useI18n, type Language } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useProfile } from "@/features/climbing/api";
+import { useLeaderboardVisibility } from "@/features/users/api";
+import { Toggle } from "@/features/notifications/NotificationBits";
 
 export function ProfilePage() {
   const { signOut } = useAuth();
@@ -24,6 +26,7 @@ export function ProfilePage() {
   const update = useUpdateProfile();
   const { language, setLanguage } = useI18n();
   const profile = useProfile(me.data?.id);
+  const visibility = useLeaderboardVisibility();
   const setAvatar = useSetAvatar();
   const toast = useToast();
   const [displayName, setDisplayName] = useState("");
@@ -91,6 +94,24 @@ export function ProfilePage() {
           <p className="field__hint">{t("Also used for the notifications you receive.")}</p>
           <Button type="submit" loading={update.isPending} disabled={!dirty}>{t("Save changes")}</Button>
         </form>
+      </section>
+
+      <section className="section" aria-labelledby="board-title">
+        <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
+        <Toggle
+          label={t("Don't show me in leaderboards")}
+          description={t("Your sends and history stay yours: you simply don't appear in any gym's ranking.")}
+          checked={user.leaderboardOptOut}
+          disabled={visibility.isPending}
+          onChange={(hidden) => visibility.mutate(hidden, {
+            onSuccess: () => toast.success(hidden ? t("You no longer appear in leaderboards") : t("You appear in leaderboards again")),
+            onError: (e) => toast.error(errorMessage(e)),
+          })} />
+        {user.leaderboardExcluded && (
+          <p className="notice">
+            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: "supporto@bouldertime.com" })}
+          </p>
+        )}
       </section>
 
       {(user.staffGyms.length > 0 || user.isPlatformAdmin) && (

@@ -26,6 +26,10 @@ public class Gym : IAuditable
     public string? Website { get; private set; }
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
+
+    /// <summary>Social profiles, both optional: most gyms post their resets on Instagram rather than on a website.</summary>
+    public string? InstagramUrl { get; private set; }
+    public string? FacebookUrl { get; private set; }
     public string? LogoUrl { get; private set; }
     public string? LogoPath { get; private set; }
     public string? CoverImageUrl { get; private set; }
@@ -51,7 +55,8 @@ public class Gym : IAuditable
         return gym;
     }
 
-    public void UpdateProfile(string name, string? description, string? address, string city, string? website, string? email, string? phone)
+    public void UpdateProfile(string name, string? description, string? address, string city, string? website, string? email, string? phone,
+        string? instagramUrl = null, string? facebookUrl = null)
     {
         Name = name.Trim();
         Description = Clean(description);
@@ -60,6 +65,29 @@ public class Gym : IAuditable
         Website = Clean(website);
         Email = Clean(email)?.ToLowerInvariant();
         Phone = Clean(phone);
+        InstagramUrl = SocialUrl(instagramUrl, "instagram.com");
+        FacebookUrl = SocialUrl(facebookUrl, "facebook.com");
+    }
+
+    /// <summary>
+    /// Accepts what gyms actually paste: a full link, or just the handle. Anything that is not a link to that
+    /// network is refused, so the profile can't be used to point climbers somewhere else.
+    /// </summary>
+    private static string? SocialUrl(string? value, string host)
+    {
+        var text = Clean(value);
+        if (text is null) return null;
+        if (text.StartsWith('@')) text = text[1..];
+        if (!text.Contains('/') && !text.Contains(' ') && !text.Contains('.'))
+            return $"https://{host}/{text}";
+        if (!text.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !text.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            text = "https://" + text;
+        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            throw new ArgumentException($"Use a link to {host}.", nameof(value));
+        var domain = uri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? uri.Host[4..] : uri.Host;
+        if (!domain.Equals(host, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"Use a link to {host}.", nameof(value));
+        return uri.ToString();
     }
 
     /// <returns>The replaced storage path, if any, so the old file can be deleted.</returns>

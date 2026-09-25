@@ -34,6 +34,7 @@ const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard").then((m
 const AdminCandidates = lazy(() => import("@/pages/admin/AdminCandidates").then((m) => ({ default: m.AdminCandidates })));
 const AdminGyms = lazy(() => import("@/pages/admin/AdminGyms").then((m) => ({ default: m.AdminGyms })));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers").then((m) => ({ default: m.AdminUsers })));
+const AdminLeaderboards = lazy(() => import("@/pages/admin/AdminLeaderboards").then((m) => ({ default: m.AdminLeaderboards })));
 const AdminPartners = lazy(() => import("@/pages/admin/AdminPartners").then((m) => ({ default: m.AdminPartners })));
 const AdminReports = lazy(() => import("@/pages/admin/AdminReports").then((m) => ({ default: m.AdminReports })));
 const NotificationSettingsPage = lazy(() => import("@/pages/NotificationSettingsPage").then((m) => ({ default: m.NotificationSettingsPage })));
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
           { path: "candidates", element: <AdminCandidates /> },
           { path: "reports", element: <AdminReports /> },
           { path: "partners", element: <AdminPartners /> },
+          { path: "leaderboards", element: <AdminLeaderboards /> },
           { path: "gyms", element: <AdminGyms /> },
           { path: "users", element: <AdminUsers /> },
         ],

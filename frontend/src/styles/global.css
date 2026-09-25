@@ -767,3 +767,7 @@ html, body { overscroll-behavior: none; }
 .app-shell__nav, .tabs { transform: translateZ(0); }
 /* Double-tap on a button zooms on iOS unless the element declares it handles its own gestures. */
 button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
+
+.board__report { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--bt-ink-3); cursor: pointer; }
+.board__report svg { width: 18px; height: 18px; }
+.board__report:hover, .board__report:focus-visible { background: var(--bt-surface-2); color: var(--bt-ink); }

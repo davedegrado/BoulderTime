@@ -6,6 +6,7 @@ using BoulderTime.Domain.Follows;
 using BoulderTime.Domain.Notifications;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Gyms;
+using BoulderTime.Domain.Leaderboards;
 using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ public interface IAppDbContext
     DbSet<NotificationSettings> NotificationSettings { get; }
     DbSet<GymAnnouncement> GymAnnouncements { get; }
     DbSet<EarlyPartnership> EarlyPartnerships { get; }
+    DbSet<LeaderboardReport> LeaderboardReports { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

@@ -22,6 +22,10 @@ export interface CurrentUser {
   staffGyms: StaffGym[];
   pendingInvitations: number;
   language: "it" | "en";
+  /** The climber chose to stay out of leaderboards. */
+  leaderboardOptOut: boolean;
+  /** BoulderTime excluded them; shown only to themselves, so a missing name doesn't read as a broken app. */
+  leaderboardExcluded: boolean;
 }
 
 export interface UpdateProfileInput {
@@ -49,5 +53,18 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (input: UpdateProfileInput) => api.patch<CurrentUser>("/api/users/me", input),
     onSuccess: (user) => qc.setQueryData(userKeys.me, user),
+  });
+}
+
+
+/** Hides or shows the climber in every leaderboard. */
+export function useLeaderboardVisibility() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (hidden: boolean) => api.put("/api/users/me/leaderboard-visibility", { hidden }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.me });
+      qc.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
   });
 }

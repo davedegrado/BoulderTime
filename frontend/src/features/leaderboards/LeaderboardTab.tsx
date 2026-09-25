@@ -8,6 +8,13 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { inkOn } from "@/features/boulders/holdColors";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
+import { Flag } from "lucide-react";
+import { useCurrentUser } from "@/features/users/api";
+import { useReportClimber } from "@/features/leaderboards/api";
+import { TextField } from "@/components/TextField";
+import { Button } from "@/components/Button";
+import { useToast } from "@/components/Toast";
+import { errorMessage } from "@/lib/apiError";
 
 const METRICS: LeaderboardMetric[] = ["POINTS", "COMPLETED", "HIGHEST"];
 const PERIODS: LeaderboardPeriod[] = ["WEEK", "MONTH", "YEAR", "ALL"];
@@ -23,7 +30,7 @@ function Value({ entry, metric }: { entry: LeaderboardEntry; metric: Leaderboard
   return <span className="board__value">{entry.points} <small>{t("pts")}</small></span>;
 }
 
-function Row({ entry, metric }: { entry: LeaderboardEntry; metric: LeaderboardMetric }) {
+function Row({ entry, metric, onReport }: { entry: LeaderboardEntry; metric: LeaderboardMetric; onReport?: (entry: LeaderboardEntry) => void }) {
   return (
     <li className={`board__row ${entry.isViewer ? "is-viewer" : ""} ${entry.position <= 3 ? `is-top is-top-${entry.position}` : ""}`}>
       <span className="board__position" aria-label={t("Position {position}", { position: entry.position })}>{entry.position}</span>
@@ -32,17 +39,48 @@ function Row({ entry, metric }: { entry: LeaderboardEntry; metric: LeaderboardMe
         <span className="board__name">{entry.climber.displayName}{entry.isViewer && <span className="list__you"> · you</span>}</span>
       </Link>
       <Value entry={entry} metric={metric} />
+      {onReport && !entry.isViewer && (
+        <button type="button" className="board__report" onClick={() => onReport(entry)}
+          aria-label={t("Report {name} to BoulderTime", { name: entry.climber.displayName })}>
+          <Flag aria-hidden />
+        </button>
+      )}
     </li>
   );
 }
 
 /** Per-gym leaderboard. Rankings are computed live; grades are only compared within this gym's scales. */
+/** Asks the reporting staff member what looks wrong. Only BoulderTime sees it. */
+function ReportPanel({ entry, busy, onCancel, onSend }: {
+  entry: LeaderboardEntry; busy: boolean; onCancel: () => void; onSend: (reason: string) => void;
+}) {
+  const [reason, setReason] = useState("");
+  return (
+    <section className="card stack" aria-label={t("Report {name} to BoulderTime", { name: entry.climber.displayName })}>
+      <p className="list__title">{t("Report {name} to BoulderTime", { name: entry.climber.displayName })}</p>
+      <p className="field__hint">{t("Only BoulderTime sees this. The climber isn't told, and nothing changes in your gym.")}</p>
+      <TextField label={t("What looks wrong?")} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500}
+        hint={t("For example: thirty sends in ten minutes, or grades nobody at the gym climbs.")} />
+      <div className="row">
+        <Button disabled={reason.trim().length === 0} loading={busy} onClick={() => onSend(reason.trim())}>{t("Send report")}</Button>
+        <Button variant="ghost" onClick={onCancel}>{t("Cancel")}</Button>
+      </div>
+    </section>
+  );
+}
+
 export function LeaderboardTab({ gymId }: { gymId: string }) {
   const { session } = useAuth();
   const [metric, setMetric] = useState<LeaderboardMetric>("POINTS");
   const [period, setPeriod] = useState<LeaderboardPeriod>("MONTH");
   const [explain, setExplain] = useState(false);
   const board = useLeaderboard(gymId, metric, period);
+  // Staff of this gym can flag results that look implausible. BoulderTime decides; the gym never excludes anyone.
+  const me = useCurrentUser();
+  const isStaff = (me.data?.staffGyms ?? []).some((g) => g.gymId === gymId) || (me.data?.isPlatformAdmin ?? false);
+  const [reporting, setReporting] = useState<LeaderboardEntry | null>(null);
+  const report = useReportClimber(gymId);
+  const toast = useToast();
 
   return (
     <div className="stack">
@@ -76,11 +114,18 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
                   body={session ? t("Mark boulders as completed to get on the board.") : t("Sign in and log your sends to get on the board.")} />
               ) : (
                 <ol className="board" aria-label={t("{metric} leaderboard", { metric: metricLabel[metric] })}>
-                  {b.entries.map((e) => <Row key={e.climber.userId} entry={e} metric={metric} />)}
+                  {b.entries.map((e) => <Row key={e.climber.userId} entry={e} metric={metric} onReport={isStaff ? setReporting : undefined} />)}
                 </ol>
               )}
               {viewerOutside && b.viewer && (
                 <ol className="board board--viewer" aria-label={t("Your position")}><Row entry={b.viewer} metric={metric} /></ol>
+              )}
+              {reporting && (
+                <ReportPanel entry={reporting} busy={report.isPending} onCancel={() => setReporting(null)}
+                  onSend={(reason) => report.mutate({ userId: reporting.climber.userId, reason }, {
+                    onSuccess: () => { toast.success(t("Sent to BoulderTime. We'll look into it.")); setReporting(null); },
+                    onError: (e) => toast.error(errorMessage(e)),
+                  })} />
               )}
             </>
           );

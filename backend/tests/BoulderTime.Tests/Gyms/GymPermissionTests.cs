@@ -53,6 +53,29 @@ public sealed class GymPermissionTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task Social_links_accept_a_handle_or_a_link_and_refuse_anything_else()
+    {
+        var gym = await _f.GymAsync();
+        var admin = await _f.UserAsync();
+        await _f.StaffAsync(gym, admin, GymRole.Admin);
+
+        async Task<HttpResponseMessage> Save(object body) => await admin.Client.PatchAsJsonAsync($"/api/gyms/{gym.Id}", body);
+
+        // Gyms paste whatever they have: a handle, a full link, or a link with www.
+        var saved = await (await Save(new { name = "Crimp Factory", city = "Milano", instagramUrl = "@crimpfactory", facebookUrl = "www.facebook.com/crimpfactory" })).ReadAsync<GymDetailDto>();
+        saved!.InstagramUrl.Should().Be("https://instagram.com/crimpfactory");
+        saved.FacebookUrl.Should().Be("https://www.facebook.com/crimpfactory");
+
+        // A link to somewhere else is refused: the gym profile is not a place to send climbers anywhere.
+        (await Save(new { name = "Crimp Factory", city = "Milano", instagramUrl = "https://evil.example/crimp" })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        // Both stay optional.
+        var cleared = await (await Save(new { name = "Crimp Factory", city = "Milano" })).ReadAsync<GymDetailDto>();
+        cleared!.InstagramUrl.Should().BeNull();
+        cleared.FacebookUrl.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Staff_of_one_gym_have_no_rights_at_another()
     {
         var mine = await _f.GymAsync();

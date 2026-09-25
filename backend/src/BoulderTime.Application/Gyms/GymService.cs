@@ -120,7 +120,12 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
         var (gym, role) = await access.RequireRoleAsync(gymId, Domain.Staff.GymRole.Admin, ct);
         GymValidation.ValidateProfile(r.Name, r.City, r.Description, r.Address, r.Website, r.Email, r.Phone);
         GymValidation.ValidateLocation(r.Latitude, r.Longitude);
-        gym.UpdateProfile(r.Name!, r.Description, r.Address, r.City!, r.Website, r.Email, r.Phone);
+        try { gym.UpdateProfile(r.Name!, r.Description, r.Address, r.City!, r.Website, r.Email, r.Phone, r.InstagramUrl, r.FacebookUrl); }
+        catch (ArgumentException e) when (e.ParamName == "value")
+        {
+            var field = e.Message.Contains("instagram", StringComparison.OrdinalIgnoreCase) ? "instagramUrl" : "facebookUrl";
+            throw new ValidationException(field, e.Message);
+        }
         if (r.ClearLocation == true) gym.SetLocation(null, null);
         else if (r.Latitude is not null) gym.SetLocation(r.Latitude, r.Longitude);
         await db.SaveChangesAsync(ct);

@@ -9,6 +9,7 @@ using BoulderTime.Domain.Notifications;
 using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Common;
 using BoulderTime.Domain.Gyms;
+using BoulderTime.Domain.Leaderboards;
 using BoulderTime.Domain.Staff;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
     public DbSet<GymAnnouncement> GymAnnouncements => Set<GymAnnouncement>();
     public DbSet<EarlyPartnership> EarlyPartnerships => Set<EarlyPartnership>();
+    public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

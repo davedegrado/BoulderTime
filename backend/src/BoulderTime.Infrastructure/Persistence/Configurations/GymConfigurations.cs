@@ -31,6 +31,8 @@ internal sealed class GymConfiguration : IEntityTypeConfiguration<Gym>
         b.Property(g => g.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.HasIndex(g => new { g.Status, g.Name });
         b.HasIndex(g => new { g.Status, g.City });
+        b.Property(g => g.InstagramUrl).HasMaxLength(Gym.UrlMaxLength);
+        b.Property(g => g.FacebookUrl).HasMaxLength(Gym.UrlMaxLength);
         b.HasIndex(g => new { g.Latitude, g.Longitude }); // map bounds queries
         // At most one founding gym, guaranteed by the database rather than by application code alone.
         b.HasIndex(g => g.IsFoundingGym).IsUnique().HasFilter("is_founding_gym");

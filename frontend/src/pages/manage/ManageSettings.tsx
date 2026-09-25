@@ -26,6 +26,7 @@ export function ManageSettings() {
   const fromGym = (): UpdateGymInput => ({
     name: gym.name, city: gym.city, description: gym.description ?? "", address: gym.address ?? "",
     website: gym.website ?? "", email: gym.email ?? "", phone: gym.phone ?? "",
+    instagramUrl: gym.instagramUrl ?? "", facebookUrl: gym.facebookUrl ?? "",
   });
   const [form, setForm] = useState<UpdateGymInput>(fromGym);
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(gym.latitude != null && gym.longitude != null ? { lat: gym.latitude, lng: gym.longitude } : null);
@@ -85,6 +86,10 @@ export function ManageSettings() {
         <TextField label={t(t("City"))} value={form.city} onChange={set("city")} error={err?.fieldError("city")} />
         <TextField label={t("Address")} value={form.address} onChange={set("address")} error={err?.fieldError("address")} className="form__span" />
         <TextField label={t("Website")} type="url" inputMode="url" placeholder={t("https://")} value={form.website} onChange={set("website")} error={err?.fieldError("website")} />
+        <TextField label={t("Instagram")} placeholder={t("@yourgym or the full link")} value={form.instagramUrl}
+          onChange={set("instagramUrl")} error={err?.fieldError("instagramUrl")} />
+        <TextField label={t("Facebook")} placeholder={t("The link to your page")} value={form.facebookUrl}
+          onChange={set("facebookUrl")} error={err?.fieldError("facebookUrl")} />
         <TextField label={t(t("Email"))} type="email" inputMode="email" value={form.email} onChange={set("email")} error={err?.fieldError("email")} />
         <TextField label={t(t("Phone"))} type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} error={err?.fieldError("phone")} />
       </div>

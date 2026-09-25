@@ -1,15 +1,15 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Hide Google sign-in until the consent screen shows our domain; app-like touch behaviour; finish notification and boulder translations
-applicata: Hide Google sign-in until the consent screen shows our
+Applying: Leaderboard visibility: climbers can opt out, gyms report, BoulderTime excludes; gym Instagram and Facebook links
+applicata: Leaderboard visibility: climbers can opt out, gyms report,
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
 OK
 == 4. MIGRAZIONE ==
-già presente
+OK
 == 5. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 1 m 31 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   155, Skipped:     0, Total:   155, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
 == 6. FRONTEND ==
-      Tests  86 passed (86)
+      Tests  88 passed (88)
 OK
 == ESITO: ok ==
