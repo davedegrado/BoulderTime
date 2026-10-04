@@ -38,6 +38,7 @@ function PhoneNotifications() {
         const outcome = await enablePush(status.data?.publicKey ?? "");
         if (outcome === "denied") toast.error(t("Your phone refused notifications. Turn them on for BoulderTime in the phone's settings."));
         else if (outcome === "unsupported") toast.error(t("This browser can't do notifications."));
+        else if (outcome === "misconfigured") toast.error(t("Phone notifications aren't set up correctly on the server."));
         else toast.success(t("Phone notifications on"));
       }
       await status.refetch();

@@ -35,13 +35,15 @@ export async function pushStatus(): Promise<PushStatus> {
  * Asks for permission and registers this device. Returns why it didn't work, so the app can say something
  * more useful than "failed" — a refused permission can't be asked for again from here.
  */
-export async function enablePush(publicKey: string): Promise<"enabled" | "denied" | "unsupported"> {
+export async function enablePush(publicKey: string): Promise<"enabled" | "denied" | "unsupported" | "misconfigured"> {
   const reg = await registration();
   if (!reg) return "unsupported";
   if ((await Notification.requestPermission()) !== "granted") return "denied";
 
+  let key: ArrayBuffer;
+  try { key = decodeKey(publicKey); } catch { return "misconfigured"; }
   const subscription = (await reg.pushManager.getSubscription())
-    ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: decodeKey(publicKey) }));
+    ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
   const json = subscription.toJSON();
   await api.post("/api/users/me/push", { endpoint: subscription.endpoint, keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth } });
   return "enabled";
@@ -56,7 +58,10 @@ export async function disablePush(): Promise<void> {
 }
 
 /** The server sends the key as base64url; the browser wants raw bytes. */
-function decodeKey(value: string): ArrayBuffer {
+function decodeKey(raw: string): ArrayBuffer {
+  // A key pasted with quotes, spaces or a trailing newline is a configuration mistake, not a browser problem.
+  const value = raw.trim().replace(/^"|"$/g, "");
+  if (!/^[A-Za-z0-9\-_]{80,100}$/.test(value)) throw new Error("push_key_invalid");
   const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(value.length + ((4 - (value.length % 4)) % 4), "=");
   const binary = atob(padded);
   const bytes = new Uint8Array(binary.length);

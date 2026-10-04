@@ -9,9 +9,18 @@ namespace BoulderTime.Infrastructure.Push;
 
 public sealed class WebPushOptions
 {
-    /// <summary>VAPID keys identify BoulderTime to the browsers' push services. Generated once; the public one is shared with devices.</summary>
-    public string PublicKey { get; set; } = "";
-    public string PrivateKey { get; set; } = "";
+    private string _publicKey = "";
+    private string _privateKey = "";
+
+    /// <summary>
+    /// VAPID keys identify BoulderTime to the browsers' push services. Generated once; the public one is shared with
+    /// devices. Values arrive from environment variables, where a stray quote, space or newline is easy to paste in
+    /// and would otherwise fail inside the browser with an unreadable error.
+    /// </summary>
+    public string PublicKey { get => _publicKey; set => _publicKey = Clean(value); }
+    public string PrivateKey { get => _privateKey; set => _privateKey = Clean(value); }
+
+    private static string Clean(string? value) => (value ?? "").Trim().Trim('"', '\'').Trim();
     /// <summary>Contact address the push service can use if something is wrong with our sending.</summary>
     public string Subject { get; set; } = "mailto:support@bouldertime.com";
 }

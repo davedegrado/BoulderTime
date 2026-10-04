@@ -750,4 +750,12 @@ export const it: Record<string, string> = {
   "Your phone refused notifications. Turn them on for BoulderTime in the phone's settings.": "Il telefono ha rifiutato le notifiche. Attivale per BoulderTime dalle impostazioni del telefono.",
   "This browser can't do notifications.": "Questo browser non supporta le notifiche.",
   "On iPhone, notifications arrive only once BoulderTime is on your home screen: tap Share, then “Add to Home Screen”, and open it from there.": "Su iPhone le notifiche arrivano solo quando BoulderTime è nella schermata Home: tocca Condividi, poi “Aggiungi a Home”, e aprila da lì.",
+  // ---- Account password ----
+  "Set a password": "Imposta una password",
+  "Set the password": "Imposta la password",
+  "Change password": "Cambia password",
+  "Password set": "Password impostata",
+  "Your account was created with Google. Set a password to be able to sign in with your email too.": "Il tuo account è stato creato con Google. Imposta una password per poter entrare anche con l'email.",
+  "The password couldn't be changed. Sign out, sign in again and retry.": "Non è stato possibile cambiare la password. Esci, rientra e riprova.",
+  "Phone notifications aren't set up correctly on the server.": "Le notifiche sul telefono non sono configurate correttamente sul server.",
 };

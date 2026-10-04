@@ -20,14 +20,18 @@ import { useProfile } from "@/features/climbing/api";
 import { useLeaderboardVisibility } from "@/features/users/api";
 import { Toggle } from "@/features/notifications/NotificationBits";
 import { SUPPORT_EMAIL } from "@/lib/contact";
+import { PasswordSection } from "@/features/users/PasswordSection";
 
 export function ProfilePage() {
-  const { signOut } = useAuth();
+  const { session, signOut } = useAuth();
   const me = useCurrentUser();
   const update = useUpdateProfile();
   const { language, setLanguage } = useI18n();
   const profile = useProfile(me.data?.id);
   const visibility = useLeaderboardVisibility();
+  // Accounts created with Google have no password of their own; Supabase lists the sign-in methods on the session.
+  const providers = (session?.user?.app_metadata?.providers as string[] | undefined) ?? [];
+  const hasPassword = providers.length === 0 || providers.includes("email");
   const setAvatar = useSetAvatar();
   const toast = useToast();
   const [displayName, setDisplayName] = useState("");
@@ -96,6 +100,8 @@ export function ProfilePage() {
           <Button type="submit" loading={update.isPending} disabled={!dirty}>{t("Save changes")}</Button>
         </form>
       </section>
+
+      <PasswordSection hasPassword={hasPassword} />
 
       <section className="section" aria-labelledby="board-title">
         <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
