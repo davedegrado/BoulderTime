@@ -371,3 +371,22 @@ themselves gone, or fail five times, are removed.
 
 **On iPhone, push works only once the app is on the home screen** (an Apple restriction). The settings screen says so
 instead of showing a switch that would do nothing.
+
+## ADR-024 · Deleting an account
+The person deletes their own account from the profile; nobody has to write an email and wait.
+
+**Two frictions on purpose.** The address has to be typed out (a plain "are you sure?" is tapped by accident), and
+the data survives **seven days** before being erased, so a decision taken in a bad moment can be undone. The account
+leaves the leaderboards immediately: being on the way out shouldn't leave you ranked.
+
+**Erasure anonymises rather than cascades.** Everything personal is deleted — name, email, photo, attempts, sends,
+ratings, grade suggestions, comments, likes, community videos including the stored files, follows, notifications,
+registered devices, staff memberships — and the Supabase sign-in is removed so the account cannot come back. The user
+row survives as a nameless placeholder because the boulders that person set and the official beta they filmed belong
+to the gym, and deleting the row would take the gym's own content with it.
+
+**The only owner of a gym can't leave** without handing ownership over: otherwise a gym would be stranded with no one
+able to manage it.
+
+A daily background sweep does the erasing, three minutes after start and then every 24 hours: a deadline nobody
+checks is not a promise.

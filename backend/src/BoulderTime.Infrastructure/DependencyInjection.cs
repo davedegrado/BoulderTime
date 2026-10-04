@@ -40,6 +40,10 @@ public static class DependencyInjection
         services.AddSingleton<IPushQueue>(sp => sp.GetRequiredService<PushDispatcher>());
         services.AddHostedService(sp => sp.GetRequiredService<PushDispatcher>());
 
+        // Deleting an account: removing the sign-in, and the daily sweep that erases accounts past their week.
+        services.AddHttpClient<IAuthAdmin, Supabase.SupabaseAuthAdmin>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHostedService<Users.AccountErasureWorker>();
+
         return services;
     }
 

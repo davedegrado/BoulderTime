@@ -34,6 +34,14 @@ public class User : IAuditable
     public bool LeaderboardOptOut { get; private set; }
 
     /// <summary>
+    /// When the person asked to delete their account. The account is hidden from everyone immediately but kept for
+    /// a week, so a decision taken in a bad moment can be undone; after that it is erased for good.
+    /// </summary>
+    public DateTimeOffset? DeletionRequestedAt { get; private set; }
+
+    public bool IsPendingDeletion => DeletionRequestedAt is not null;
+
+    /// <summary>
     /// Set by a BoulderTime administrator when sends look implausible. Kept apart from <see cref="LeaderboardOptOut"/>
     /// so that clearing one never clears the other, and so the person can still be told why they are missing.
     /// </summary>
@@ -85,6 +93,26 @@ public class User : IAuditable
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;
 
     public void SetLeaderboardOptOut(bool optOut) => LeaderboardOptOut = optOut;
+
+    public void RequestDeletion(DateTimeOffset now) => DeletionRequestedAt ??= now;
+
+    public void CancelDeletion() => DeletionRequestedAt = null;
+
+    /// <summary>
+    /// Strips everything personal, leaving a nameless placeholder so the gym's own content (boulders set, official
+    /// beta) keeps working. The address is replaced rather than blanked, because it must stay unique and must not
+    /// allow signing in again.
+    /// </summary>
+    public void Anonymise(DateTimeOffset now)
+    {
+        DisplayName = "Utente eliminato";
+        Email = $"deleted-{Id:N}@deleted.invalid";
+        AvatarUrl = null;
+        AvatarPath = null;
+        IsPlatformAdmin = false;
+        LeaderboardOptOut = true;
+        DeletionRequestedAt = now;
+    }
 
     public void ExcludeFromLeaderboards(Guid byUserId, DateTimeOffset now)
     {

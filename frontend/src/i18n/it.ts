@@ -758,4 +758,17 @@ export const it: Record<string, string> = {
   "Your account was created with Google. Set a password to be able to sign in with your email too.": "Il tuo account è stato creato con Google. Imposta una password per poter entrare anche con l'email.",
   "The password couldn't be changed. Sign out, sign in again and retry.": "Non è stato possibile cambiare la password. Esci, rientra e riprova.",
   "Phone notifications aren't set up correctly on the server.": "Le notifiche sul telefono non sono configurate correttamente sul server.",
+  // ---- Account deletion ----
+  "Account deletion": "Cancellazione dell'account",
+  "Delete my account": "Elimina il mio account",
+  "Deleting removes your profile, your climbing history, your comments and your videos.": "Eliminando l'account spariscono profilo, storico delle arrampicate, commenti e video.",
+  "These are erased for good: profile and photo, attempts and sends, ratings and grade suggestions, comments, your videos, the gyms you follow.": "Vengono cancellati per sempre: profilo e foto, tentativi e completati, valutazioni e proposte di grado, commenti, i tuoi video, le palestre che segui.",
+  "These stay with the gym, without your name: boulders you set and official beta you filmed.": "Restano alla palestra, senza il tuo nome: i blocchi che hai tracciato e le beta ufficiali che hai girato.",
+  "You have 7 days to change your mind. After that it can't be undone.": "Hai 7 giorni per ripensarci. Dopo non si torna indietro.",
+  "Type {email} to confirm": "Scrivi {email} per confermare",
+  "Need help instead? Write to {email}.": "Hai bisogno di aiuto invece? Scrivi a {email}.",
+  "Account scheduled for deletion": "Account in cancellazione",
+  "Your account will be erased on {date}. Until then you can bring it back, and nothing is lost.": "Il tuo account sarà cancellato il {date}. Fino ad allora puoi ripristinarlo e non perdi nulla.",
+  "Keep my account": "Mantieni il mio account",
+  "Your account is active again": "Il tuo account è di nuovo attivo",
 };

@@ -47,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<PartnerService>();
         services.AddScoped<LeaderboardVisibilityService>();
         services.AddScoped<PushSubscriptionService>();
+        services.AddScoped<AccountDeletionService>();
+        services.AddScoped<AccountEraser>();
         return services;
     }
 }

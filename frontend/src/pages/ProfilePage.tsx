@@ -21,6 +21,7 @@ import { useLeaderboardVisibility } from "@/features/users/api";
 import { Toggle } from "@/features/notifications/NotificationBits";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { PasswordSection } from "@/features/users/PasswordSection";
+import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
 
 export function ProfilePage() {
   const { session, signOut } = useAuth();
@@ -102,6 +103,8 @@ export function ProfilePage() {
       </section>
 
       <PasswordSection hasPassword={hasPassword} />
+
+      <DeleteAccountSection email={user.email} />
 
       <section className="section" aria-labelledby="board-title">
         <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
