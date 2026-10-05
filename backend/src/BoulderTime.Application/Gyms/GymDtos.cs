@@ -31,12 +31,14 @@ public sealed record GymDetailDto(
     double? Longitude = null,
     bool IsFoundingGym = false,
     bool IsEarlyPartner = false,
+    /// <summary>Climbers of this gym can upload their own beta.</summary>
+    bool CommunityVideosEnabled = false,
     DateTimeOffset? EarlyPartnerSince = null)
 {
     public static GymDetailDto From(Gym g, GymRole? viewerRole) => new(
         g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone, g.InstagramUrl, g.FacebookUrl,
         g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude,
-        IsFoundingGym: g.IsFoundingGym);
+        IsFoundingGym: g.IsFoundingGym, CommunityVideosEnabled: g.CommunityVideosEnabled);
 }
 
 /// <param name="Latitude">Set both coordinates, or send ClearLocation to remove them; omit both to keep the current ones.</param>

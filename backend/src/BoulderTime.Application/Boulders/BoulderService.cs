@@ -76,7 +76,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 
         return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
-            b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following);
+            b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled);
     }
 
     // ---------- Photo upload ----------
@@ -182,10 +182,33 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             await notifications.SectorsRetracedAsync(gym,
                 groups.Select(g => (sectors[g.Key], (IReadOnlyList<Guid>)g.Select(b => b.Id).ToList())).ToList(), userId, ct);
         }
+        await ReleaseBetaVideosAsync(removed.Select(b => b.Id).ToList(), ct);
         await db.SaveChangesAsync(ct);
 
         var bySector = groups.Select(g => new SectorRemovalDto(g.Key, sectors.GetValueOrDefault(g.Key)?.Name ?? "", g.Count())).ToList();
         return new RemoveBouldersResult(removed.Count, bySector);
+    }
+
+    /// <summary>
+    /// A removed boulder keeps its history but not its official beta: the video shows a route that is no longer on
+    /// the wall, and it is the heaviest thing we store. Deleting it also frees a slot in the gym's beta allowance.
+    /// Climbers' own videos are left alone — they belong to the people who filmed them, not to the gym.
+    /// </summary>
+    private async Task ReleaseBetaVideosAsync(List<Guid> boulderIds, CancellationToken ct)
+    {
+        if (boulderIds.Count == 0) return;
+        var betas = await db.BoulderBetas.Where(b => boulderIds.Contains(b.BoulderId)).ToListAsync(ct);
+        foreach (var beta in betas)
+        {
+            foreach (var path in new[] { beta.StoragePath, beta.ThumbnailPath })
+            {
+                if (string.IsNullOrWhiteSpace(path)) continue;
+                // A file that refuses to go must not stop the retrace: the wall has already changed.
+                try { await storage.DeleteAsync(StorageBuckets.OfficialBeta, path, ct); }
+                catch (Exception) { /* left for the storage clean-up to pick up */ }
+            }
+        }
+        db.BoulderBetas.RemoveRange(betas);
     }
 
     public async Task<BoulderDetailDto> RestoreAsync(Guid boulderId, CancellationToken ct = default)

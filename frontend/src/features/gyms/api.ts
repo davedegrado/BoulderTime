@@ -18,6 +18,8 @@ export interface GymSummary {
   isFoundingGym: boolean;
   /** Currently in the early-adopter programme; several gyms can be. */
   isEarlyPartner: boolean;
+  /** Climbers of this gym may upload their own beta. */
+  communityVideosEnabled?: boolean;
 }
 
 export interface GymPin { id: string; slug: string; name: string; city: string; logoUrl: string | null; latitude: number; longitude: number }

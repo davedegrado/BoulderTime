@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Building2, MailPlus, Plus, Settings2 } from "lucide-react";
+import { Clapperboard, Building2, MailPlus, Plus, Settings2 } from "lucide-react";
 import { useAdminGyms, useInviteOwner, useSetGymStatus, type AdminGym } from "@/features/admin/api";
 import { CreateGymForm } from "@/pages/admin/CreateGymForm";
 import { SearchField } from "@/components/SearchField";
@@ -14,6 +14,7 @@ import { ApiError, errorMessage } from "@/lib/apiError";
 import { useDebounced } from "@/lib/useDebounced";
 import { gymStatusLabel, type GymStatus } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
+import { VideoAllowanceCard } from "@/features/admin/VideoAllowanceCard";
 
 const STATUS_OPTIONS = [
   { value: "", label: t("All statuses") },
@@ -53,6 +54,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
   const inviteOwner = useInviteOwner();
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
   const [email, setEmail] = useState("");
   const inviteError = inviteOwner.error instanceof ApiError ? inviteOwner.error.fieldError("email") : undefined;
 
@@ -74,6 +76,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
         <Badge tone={gym.status === "ACTIVE" ? "success" : gym.status === "DRAFT" ? "orange" : "neutral"}>{gymStatusLabel[gym.status]}</Badge>
       </header>
       {gym.ownerCount === 0 && <p className="notice notice--inline">{t("No owner yet — invite one so the gym can manage itself.")}</p>}
+      {videoOpen && <VideoAllowanceCard gymId={gym.id} />}
       <div className="form__actions">
         <SelectField label={t("Status of {name}", { name: gym.name })} hideLabel value={gym.status} disabled={setStatus.isPending}
           options={STATUS_OPTIONS.slice(1)}
@@ -81,7 +84,8 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
             onSuccess: (g) => toast.success(t("{name} is now {status}", { name: g.name, status: gymStatusLabel[g.status].toLowerCase() })),
             onError: (err) => toast.error(errorMessage(err)),
           })} />
-        <Button variant="secondary" icon={<MailPlus aria-hidden />} onClick={() => setInviting((v) => !v)}>{t(t("Invite owner"))}</Button>
+        <Button variant="secondary" icon={<MailPlus aria-hidden />} onClick={() => setInviting((v) => !v)}>{t("Invite owner")}</Button>
+        <Button variant="ghost" icon={<Clapperboard aria-hidden />} onClick={() => setVideoOpen((v) => !v)}>{t("Video allowance")}</Button>
         <Link to={`/manage/${gym.slug}`} className="btn btn--ghost"><Settings2 aria-hidden /><span>{t("Manage")}</span></Link>
       </div>
       {inviting && (

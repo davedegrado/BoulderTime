@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Upload, Video as VideoIcon, X, XCircle } from "lucide-react";
+import { Lock, ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Upload, Video as VideoIcon, X, XCircle } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { uploadVideo, useBeta, useSaveBeta, useVideoMutations, useVideos, type UploadedVideo, type Video } from "@/features/community/api";
 import { ReportButton } from "@/features/community/ReportButton";
@@ -150,7 +150,7 @@ function Thumb({ video, onOpen, status }: { video: Video; onOpen: () => void; st
   );
 }
 
-export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
+export function CommunityVideosSection({ boulderId, enabled }: { boulderId: string; enabled: boolean }) {
   const { session } = useAuth();
   const videos = useVideos(boulderId);
   const m = useVideoMutations(boulderId);
@@ -168,7 +168,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
   return (
     <section className="section" aria-labelledby="videos-title">
       <div className="section__row">
-        <h2 id="videos-title" className="section__title">Community videos{total > 0 && ` (${total})`}</h2>
+        <h2 id="videos-title" className="section__title">{t("Community videos")}{total > 0 && ` (${total})`}</h2>
         {approved.length > 2 && (
           <div className="rail-arrows">
             <button type="button" className="icon-btn" onClick={() => scroll(-1)} aria-label={t("Scroll videos left")}><ChevronLeft aria-hidden /></button>
@@ -207,7 +207,15 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
           </>
         )}
 
-      {session && (
+      {/* Locked rather than hidden: climbers should see the feature exists and is coming, not wonder where it went. */}
+      {!enabled && (
+        <p className="notice notice--inline">
+          <Lock aria-hidden />
+          {t("Climber videos aren't open at this gym yet. The gym's official beta is still here.")}
+        </p>
+      )}
+
+      {session && enabled && (
         <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel={t("Send for review")} busy={m.submit.isPending}
           onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success(t("Sent! It appears once the gym approves it.")))} />
       )}

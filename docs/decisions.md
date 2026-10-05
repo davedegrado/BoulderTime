@@ -418,3 +418,21 @@ so there would be nowhere to record it. Minors under 14 are not allowed to regis
 verification, because none is meaningful and claiming one would be a lie.
 
 **These are drafts.** They need a professional's review before the app is opened to the public.
+
+## ADR-026 · How much video a gym may keep
+Video is the one cost that grows without anyone deciding to, so the allowance is per gym and set by BoulderTime.
+
+**Climber videos are off for a new gym.** The feature stays visible on the boulder, locked, with a line saying it
+isn't open at this gym yet: a gym being shown the app should see what is coming, and a climber should not wonder
+where the button went. The API refuses the upload too — a hidden button is not a limit.
+
+**Official beta has a per-gym cap**, 20 by default, `null` for no limit. Replacing the beta of a boulder that already
+has one is always allowed, because it costs no extra storage. The cap is checked before an upload ticket is issued,
+so nothing lands in storage that the gym may not keep.
+
+**Removing a boulder deletes its official beta**, file and thumbnail. The video showed a route that is no longer on
+the wall, it is the heaviest thing stored for that boulder, and deleting it frees a slot in the gym's allowance.
+Climbers' own videos are left alone: they belong to the people who filmed them.
+
+The numbers behind this: a 30-second beta is 20–40 MB, and Supabase's free tier holds 1 GB. Five gyms uploading
+twenty videos a week would fill it in a month, so the allowance exists to make that a decision rather than a surprise.

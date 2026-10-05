@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace BoulderTime.Application.Gyms;
 
 public sealed record SetFoundingGymRequest(bool? IsFoundingGym);
+public sealed record SetVideoAllowanceRequest(bool? CommunityVideosEnabled, int? OfficialBetaLimit, bool? Unlimited);
+public sealed record VideoAllowanceDto(Guid GymId, string GymName, bool CommunityVideosEnabled, int? OfficialBetaLimit, int OfficialBetaUsed);
 public sealed record StartEarlyPartnerRequest(DateTimeOffset? StartedAt, string? Note);
 public sealed record EarlyPartnerDto(Guid Id, Guid GymId, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, string? Note, bool IsActive);
 public sealed record PartnerGymDto(GymSummaryDto Gym, EarlyPartnerDto? EarlyPartner);
@@ -64,6 +66,40 @@ public sealed class PartnerService(IAppDbContext db, GymAccess access, ICurrentU
             IsEarlyPartner = await IsEarlyPartnerAsync(gymId, ct),
             EarlyPartnerSince = (await CurrentPartnershipAsync(gymId, ct))?.StartedAt,
         };
+    }
+
+    /// <summary>
+    /// How much video a gym may keep. Reserved to BoulderTime because it is a cost decision: storage is shared,
+    /// and a gym cannot grant itself more of it.
+    /// </summary>
+    public async Task<VideoAllowanceDto> SetVideoAllowanceAsync(Guid gymId, SetVideoAllowanceRequest r, CancellationToken ct = default)
+    {
+        await access.RequirePlatformAdminAsync(ct);
+        var gym = await db.Gyms.FirstOrDefaultAsync(g => g.Id == gymId, ct) ?? throw new NotFoundException("Gym", gymId);
+        if (r.CommunityVideosEnabled is not { } enabled) throw new ValidationException("communityVideosEnabled", "Say whether climber videos are allowed.");
+
+        var limit = r.Unlimited == true ? (int?)null : r.OfficialBetaLimit;
+        if (r.Unlimited != true && limit is null or < 0)
+            throw new ValidationException("officialBetaLimit", "Give a limit of zero or more, or choose no limit.");
+
+        gym.SetVideoAllowance(enabled, limit);
+        await db.SaveChangesAsync(ct);
+        return await VideoAllowanceAsync(gym, ct);
+    }
+
+    public async Task<VideoAllowanceDto> GetVideoAllowanceAsync(Guid gymId, CancellationToken ct = default)
+    {
+        await access.RequirePlatformAdminAsync(ct);
+        var gym = await db.Gyms.AsNoTracking().FirstOrDefaultAsync(g => g.Id == gymId, ct) ?? throw new NotFoundException("Gym", gymId);
+        return await VideoAllowanceAsync(gym, ct);
+    }
+
+    private async Task<VideoAllowanceDto> VideoAllowanceAsync(Domain.Gyms.Gym gym, CancellationToken ct)
+    {
+        var used = await db.BoulderBetas.AsNoTracking()
+            .Join(db.Boulders, b => b.BoulderId, x => x.Id, (b, x) => x.GymId)
+            .CountAsync(id => id == gym.Id, ct);
+        return new VideoAllowanceDto(gym.Id, gym.Name, gym.CommunityVideosEnabled, gym.OfficialBetaLimit, used);
     }
 
     public async Task<EarlyPartnerDto> StartEarlyPartnerAsync(Guid gymId, StartEarlyPartnerRequest r, CancellationToken ct = default)

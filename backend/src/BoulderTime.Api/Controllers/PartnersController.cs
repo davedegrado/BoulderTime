@@ -22,6 +22,14 @@ public sealed class PartnersController(PartnerService partners) : ControllerBase
     public Task<GymDetailDto> SetFounding(Guid gymId, [FromBody] SetFoundingGymRequest request, CancellationToken ct) =>
         partners.SetFoundingGymAsync(gymId, request, ct);
 
+    /// <summary>What a gym may keep in video: climber uploads on or off, and how many official betas.</summary>
+    [HttpGet("gyms/{gymId:guid}/video-allowance")]
+    public Task<VideoAllowanceDto> VideoAllowance(Guid gymId, CancellationToken ct) => partners.GetVideoAllowanceAsync(gymId, ct);
+
+    [HttpPut("gyms/{gymId:guid}/video-allowance")]
+    public Task<VideoAllowanceDto> SetVideoAllowance(Guid gymId, [FromBody] SetVideoAllowanceRequest request, CancellationToken ct) =>
+        partners.SetVideoAllowanceAsync(gymId, request, ct);
+
     [HttpPost("gyms/{gymId:guid}/early-partner")]
     public Task<EarlyPartnerDto> StartEarlyPartner(Guid gymId, [FromBody] StartEarlyPartnerRequest request, CancellationToken ct) =>
         partners.StartEarlyPartnerAsync(gymId, request, ct);

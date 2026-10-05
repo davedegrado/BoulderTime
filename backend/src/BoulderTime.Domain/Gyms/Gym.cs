@@ -42,6 +42,20 @@ public class Gym : IAuditable
     /// at most one gym can hold it (guaranteed by a partial unique index) and only platform admins can move it.
     /// </summary>
     public bool IsFoundingGym { get; private set; }
+
+    /// <summary>
+    /// Whether climbers of this gym can upload their own beta. Off for a new gym: community video is the one thing
+    /// that fills storage without anyone deciding to, so it is granted gym by gym rather than assumed.
+    /// </summary>
+    public bool CommunityVideosEnabled { get; private set; }
+
+    /// <summary>
+    /// How many official beta videos the gym may keep at once. Null means no limit. A number keeps a single
+    /// enthusiastic gym from using up the storage everyone shares.
+    /// </summary>
+    public int? OfficialBetaLimit { get; private set; } = DefaultOfficialBetaLimit;
+
+    public const int DefaultOfficialBetaLimit = 20;
     public GymStatus Status { get; private set; } = GymStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -111,6 +125,14 @@ public class Gym : IAuditable
     public void SetStatus(GymStatus status) => Status = status;
 
     public void SetFoundingGym(bool isFounding) => IsFoundingGym = isFounding;
+
+    /// <summary>Platform-level video allowances. Only BoulderTime administrators change these.</summary>
+    public void SetVideoAllowance(bool communityVideosEnabled, int? officialBetaLimit)
+    {
+        if (officialBetaLimit is < 0) throw new ArgumentException("A limit can't be negative.", nameof(officialBetaLimit));
+        CommunityVideosEnabled = communityVideosEnabled;
+        OfficialBetaLimit = officialBetaLimit;
+    }
 
     /// <summary>Both values or neither.</summary>
     public void SetLocation(double? latitude, double? longitude)

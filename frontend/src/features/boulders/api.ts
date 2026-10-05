@@ -26,6 +26,8 @@ export interface BoulderDetail extends BoulderSummary {
   setter: { userId: string; displayName: string; avatarUrl: string | null } | null;
   viewerRole: GymRole | null;
   isFollowing: boolean;
+  /** Whether climbers of this gym may upload their own beta. */
+  communityVideosEnabled: boolean;
 }
 
 export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";

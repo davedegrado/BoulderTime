@@ -788,4 +788,15 @@ export const it: Record<string, string> = {
   "I have read and accept the terms of use and the privacy notice.": "Ho letto e accetto i termini d'uso e l'informativa sulla privacy.",
   "Continue": "Continua",
   "Reload the app and read the current terms.": "Ricarica l'app e leggi i termini aggiornati.",
+  // ---- Per-gym video allowance ----
+  "Climber videos aren't open at this gym yet. The gym's official beta is still here.": "I video dei climber non sono ancora attivi in questa palestra. La beta ufficiale della palestra resta disponibile.",
+  "Climber videos aren't available at this gym yet.": "I video dei climber non sono ancora disponibili in questa palestra.",
+  "Video allowance": "Video consentiti",
+  "Climber videos": "Video dei climber",
+  "Climbers of this gym can upload their own beta. Off by default: video is what fills the storage.": "I climber di questa palestra possono caricare la propria beta. Di base è spento: i video sono ciò che riempie lo spazio.",
+  "Official beta videos": "Beta ufficiali",
+  "No limit": "Nessun limite",
+  "{used} of {limit} used": "{used} su {limit} usate",
+  "{used} used": "{used} usate",
+  "Video allowance saved": "Limiti video salvati",
 };

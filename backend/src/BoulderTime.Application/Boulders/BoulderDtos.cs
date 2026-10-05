@@ -25,7 +25,9 @@ public sealed record BoulderDetailDto(
     Guid Id, Guid GymId, string GymSlug, string GymName, Guid SectorId, string SectorName, string PhotoUrl, string PhotoPath,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades, PersonDto? Setter,
     BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt, GymRole? ViewerRole,
-    RatingSummaryDto Rating, ViewerProgressDto? Viewer, bool IsFollowing);
+    RatingSummaryDto Rating, ViewerProgressDto? Viewer, bool IsFollowing,
+    /// <summary>Whether climbers of this gym may upload their own beta; the app shows a lock when they may not.</summary>
+    bool CommunityVideosEnabled = false);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 

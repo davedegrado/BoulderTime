@@ -64,6 +64,10 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
             ? await boulders.RequireStaffAsync(boulderId, GymRole.Staff, ct)
             : await boulders.RequireVisibleAsync(boulderId, ct);
 
+        // Checked here, before any file is accepted: hiding the button in the app is not a limit.
+        if (!IsBeta(kind)) RequireCommunityVideosEnabled(scope.Gym);
+        else if (!IsThumbnail(kind)) await RequireBetaAllowanceAsync(scope.Gym, boulderId, ct);
+
         if (IsThumbnail(kind))
         {
             new Validator()
@@ -80,6 +84,31 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
             .ThrowIfInvalid();
         var path = $"{Prefix(scope.Gym.Id, boulderId, kind)}{Guid.NewGuid():N}.{VideoTypes[r.ContentType!]}";
         return await storage.CreateUploadTicketAsync(Bucket(kind), path, r.ContentType!.ToLowerInvariant(), MaxVideoBytes, ct);
+    }
+
+    /// <summary>Community video is granted gym by gym: a gym without it keeps the feature visible but locked.</summary>
+    private static void RequireCommunityVideosEnabled(Domain.Gyms.Gym gym)
+    {
+        if (!gym.CommunityVideosEnabled)
+            throw new ConflictException("Climber videos aren't available at this gym yet.", "community_videos_disabled");
+    }
+
+    /// <summary>
+    /// A gym may keep only so many official beta videos at once. Replacing the beta of a boulder that already has
+    /// one is always allowed: it costs no extra storage.
+    /// </summary>
+    private async Task RequireBetaAllowanceAsync(Domain.Gyms.Gym gym, Guid boulderId, CancellationToken ct)
+    {
+        if (gym.OfficialBetaLimit is not { } limit) return;
+        if (await db.BoulderBetas.AsNoTracking().AnyAsync(b => b.BoulderId == boulderId, ct)) return;
+
+        var used = await db.BoulderBetas.AsNoTracking()
+            .Join(db.Boulders, b => b.BoulderId, x => x.Id, (b, x) => x.GymId)
+            .CountAsync(gymId => gymId == gym.Id, ct);
+        if (used >= limit)
+            throw new ConflictException(
+                $"This gym can keep {limit} official beta videos. Remove one before adding another, or ask BoulderTime for more.",
+                "beta_limit_reached");
     }
 
     // ---------- Official beta ----------

@@ -119,3 +119,30 @@ export function usePartnerMutations() {
     }),
   };
 }
+
+
+export interface VideoAllowance {
+  gymId: string; gymName: string; communityVideosEnabled: boolean; officialBetaLimit: number | null; officialBetaUsed: number;
+}
+
+/** What a gym may keep in video. Platform admins only: storage is a shared cost. */
+export function useVideoAllowance(gymId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "video-allowance", gymId],
+    queryFn: ({ signal }) => api.get<VideoAllowance>(`/api/admin/gyms/${gymId}/video-allowance`, { signal }),
+    enabled: Boolean(gymId),
+  });
+}
+
+export function useSaveVideoAllowance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ gymId, communityVideosEnabled, officialBetaLimit, unlimited }:
+      { gymId: string; communityVideosEnabled: boolean; officialBetaLimit?: number; unlimited: boolean }) =>
+      api.put<VideoAllowance>(`/api/admin/gyms/${gymId}/video-allowance`, { communityVideosEnabled, officialBetaLimit, unlimited }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      qc.invalidateQueries({ queryKey: ["boulders"] });
+    },
+  });
+}
