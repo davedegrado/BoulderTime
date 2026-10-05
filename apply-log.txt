@@ -1,24 +1,25 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Fix the account eraser: real collection and bucket names, thumbnails deleted too
-applicata: Fix the account eraser: real collection and bucket names,
+Applying: Rename the deletion action: Request hides ControllerBase.Request and the build treats warnings as errors
+applicata: Rename the deletion action: Request hides
 == 1b. MIGRAZIONE ==
 Build started...
-Build failed. Use dotnet build to see the errors.
-FALLITA
+Build succeeded.
+Done. To undo this action, use 'ef migrations remove'
+creata
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
-/workspaces/BoulderTime/backend/src/BoulderTime.Api/Controllers/AccountDeletionController.cs(18,36): error CS0108: 'AccountDeletionController.Request(DeleteAccountRequest, CancellationToken)' hides inherited member 'ControllerBase.Request'. Use the new keyword if hiding was intended. [/workspaces/BoulderTime/backend/src/BoulderTime.Api/BoulderTime.Api.csproj]
 
-Build FAILED.
-
-/workspaces/BoulderTime/backend/src/BoulderTime.Api/Controllers/AccountDeletionController.cs(18,36): error CS0108: 'AccountDeletionController.Request(DeleteAccountRequest, CancellationToken)' hides inherited member 'ControllerBase.Request'. Use the new keyword if hiding was intended. [/workspaces/BoulderTime/backend/src/BoulderTime.Api/BoulderTime.Api.csproj]
+Build succeeded.
     0 Warning(s)
-    1 Error(s)
+    0 Error(s)
 
-Time Elapsed 00:00:04.75
-FALLITO
+Time Elapsed 00:00:13.84
+OK
 == 4. TEST BACKEND ==
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   165, Skipped:     0, Total:   165, Duration: 1 m 44 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
       Tests  90 passed (90)
 vite v5.4.21 building for production...
@@ -70,7 +71,7 @@ dist/assets/App-D-rcIXWN.js                       536.52 kB │ gzip: 150.70 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.20s
+✓ built in 5.11s
 
 PWA v0.21.2
 mode      generateSW
@@ -79,4 +80,4 @@ files generated
   dist/sw.js
   dist/workbox-4e9e9954.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
