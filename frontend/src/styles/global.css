@@ -781,3 +781,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .legal__list { padding-left: var(--bt-5); display: flex; flex-direction: column; gap: 6px; }
 .legal__switch { text-align: center; }
 .auth-legal { text-align: center; }
+
+.legal-gate { max-width: 34rem; margin: 0 auto; padding-top: var(--bt-6); }
+.check { display: flex; gap: var(--bt-3); align-items: flex-start; cursor: pointer; line-height: 1.5; }
+.check input { width: 22px; height: 22px; margin-top: 2px; flex-shrink: 0; accent-color: var(--bt-orange); }

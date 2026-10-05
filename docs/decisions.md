@@ -407,8 +407,14 @@ in both documents and in the sign-up flow.
 **Retention is what the app enforces:** account data until deletion plus seven days, rejected videos 30 days,
 technical logs about 90. Promising shorter periods than the code delivers would be worse than promising nothing.
 
-**No consent checkbox at sign-up:** a visible line with both links, which is accepted practice for a free service and
-one less thing between a climber and their first send. Minors under 14 are not allowed to register; there is no age
+**A tick, recorded with its version.** The first time someone signs in they must tick "I have read and accept"
+before the app opens; the acceptance is stored with the version of the documents they saw
+(`users.accepted_legal_version` and `accepted_legal_at`). The server refuses an acceptance for any version other than
+the current one, so an app showing old text cannot record agreement to new terms, and raising
+`LegalDocuments.CurrentVersion` asks everyone again — which is why bumping it is a decision, not a side effect of
+editing a typo. This replaces the earlier plan of an implicit line at sign-up: an app holding videos of people who
+never signed up needs to be able to show what the uploader agreed to, and the account does not exist yet at sign-up,
+so there would be nowhere to record it. Minors under 14 are not allowed to register; there is no age
 verification, because none is meaningful and claiming one would be a lie.
 
 **These are drafts.** They need a professional's review before the app is opened to the public.

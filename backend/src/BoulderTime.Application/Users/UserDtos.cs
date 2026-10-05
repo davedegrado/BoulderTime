@@ -22,11 +22,16 @@ public sealed record CurrentUserDto(
     /// BoulderTime excluded this climber from leaderboards. Shown only to the person themselves, so that a missing
     /// name reads as a decision they can ask about rather than as a broken app.
     /// </summary>
-    bool LeaderboardExcluded = false)
+    bool LeaderboardExcluded = false,
+    /// <summary>The version of the terms and privacy notice this person accepted, if any.</summary>
+    string? AcceptedLegalVersion = null,
+    /// <summary>True when the documents changed (or were never accepted) and the app must ask before going on.</summary>
+    bool LegalAcceptanceNeeded = false)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
         new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language,
-            u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null);
+            u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null,
+            u.AcceptedLegalVersion, u.AcceptedLegalVersion != LegalDocuments.CurrentVersion);
 }
 
 public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);

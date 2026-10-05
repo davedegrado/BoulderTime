@@ -39,6 +39,13 @@ public class User : IAuditable
     /// </summary>
     public DateTimeOffset? DeletionRequestedAt { get; private set; }
 
+    /// <summary>
+    /// Which version of the terms and privacy notice this person accepted, and when. The version matters as much as
+    /// the date: without it we would know that someone agreed, but not to what.
+    /// </summary>
+    public string? AcceptedLegalVersion { get; private set; }
+    public DateTimeOffset? AcceptedLegalAt { get; private set; }
+
     public bool IsPendingDeletion => DeletionRequestedAt is not null;
 
     /// <summary>
@@ -93,6 +100,12 @@ public class User : IAuditable
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;
 
     public void SetLeaderboardOptOut(bool optOut) => LeaderboardOptOut = optOut;
+
+    public void AcceptLegal(string version, DateTimeOffset now)
+    {
+        AcceptedLegalVersion = version;
+        AcceptedLegalAt = now;
+    }
 
     public void RequestDeletion(DateTimeOffset now) => DeletionRequestedAt ??= now;
 

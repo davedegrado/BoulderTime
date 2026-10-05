@@ -781,4 +781,11 @@ export const it: Record<string, string> = {
   "terms of use": "termini d'uso",
   "and the": "e l'",
   "privacy notice": "informativa sulla privacy",
+  "Before you start": "Prima di cominciare",
+  "We've updated our terms": "Abbiamo aggiornato i termini",
+  "Read the terms of use and the privacy notice. They explain what we do with your data, and what you promise when you upload a video of other people.": "Leggi i termini d'uso e l'informativa sulla privacy. Spiegano cosa facciamo con i tuoi dati e cosa ti impegni a rispettare quando carichi un video con altre persone.",
+  "The terms of use and the privacy notice have changed. Please read them and accept to continue.": "I termini d'uso e l'informativa sulla privacy sono cambiati. Leggili e accettali per continuare.",
+  "I have read and accept the terms of use and the privacy notice.": "Ho letto e accetto i termini d'uso e l'informativa sulla privacy.",
+  "Continue": "Continua",
+  "Reload the app and read the current terms.": "Ricarica l'app e leggi i termini aggiornati.",
 };

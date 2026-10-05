@@ -26,6 +26,10 @@ export interface CurrentUser {
   leaderboardOptOut: boolean;
   /** BoulderTime excluded them; shown only to themselves, so a missing name doesn't read as a broken app. */
   leaderboardExcluded: boolean;
+  /** The version of the terms this person accepted, if any. */
+  acceptedLegalVersion: string | null;
+  /** True when the terms changed, or were never accepted: the app asks before letting them in. */
+  legalAcceptanceNeeded: boolean;
 }
 
 export interface UpdateProfileInput {

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { Home, Compass, Activity, Bell, UserRound, LogIn, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -10,6 +10,7 @@ import { OfflineBanner, RouteAnnouncer } from "@/components/AppChrome";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/States";
 import { plural, t } from "@/i18n/i18n";
+import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -32,9 +33,15 @@ export function AppShell() {
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
+  // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
+  const onLegalPage = ["/privacy", "/termini", "/terms"].includes(useLocation().pathname);
+  const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
+
   const badge = (to: string) => to === "/notifications" && unread > 0
     ? <span className="nav-badge" aria-label={plural(unread, "{count} unread notification", "{count} unread notifications")}>{unread > 99 ? "99+" : unread}</span>
     : null;
+
+  if (mustAccept) return <AcceptLegalPage returning={Boolean(me.data?.acceptedLegalVersion)} />;
 
   return (
     <div className="shell">
