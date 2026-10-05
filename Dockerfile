@@ -1,5 +1,8 @@
-# BoulderTime API. Built from the repository root (Railway's default context):
-#   docker build -f backend/Dockerfile .
+# BoulderTime API.
+#
+# Kept at the repository root on purpose: hosting platforms look here first and build it without being told,
+# which is one fewer setting that can be lost or ignored. Build context is the root:
+#   docker build .
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY backend/global.json backend/Directory.Build.props backend/Directory.Packages.props backend/

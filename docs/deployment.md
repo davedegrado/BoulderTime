@@ -20,8 +20,9 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
 ## 2. Railway (API)
 
 1. New project → **Deploy from GitHub repo** → authorise the private repository. Region: **EU West**.
-2. `railway.json` at the repository root tells Railway to build `backend/Dockerfile`, run migrations before each
-   deploy, and health-check `/api/health`.
+2. The `Dockerfile` sits at the repository root so Railway builds it by default, without depending on a dashboard
+   setting; `railway.json` adds the pre-deploy migration and the `/api/health` check. If a deployment log mentions
+   **Railpack**, the platform is guessing instead of using the Dockerfile: check Settings → Build.
 3. **Variables** (Settings → Variables):
 
 | Variable | Value |
