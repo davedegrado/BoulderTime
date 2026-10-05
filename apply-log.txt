@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Delete your account from the profile, with seven days to undo it and erasure that leaves the gym's content standing
-applicata: Delete your account from the profile, with seven days to undo
+Applying: Fix the account eraser: real collection and bucket names, thumbnails deleted too
+applicata: Fix the account eraser: real collection and bucket names,
 == 1b. MIGRAZIONE ==
 Build started...
 Build failed. Use dotnet build to see the errors.
@@ -8,23 +8,15 @@ FALLITA
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(38,35): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(39,63): error CS0103: The name 'Buckets' does not exist in the current context [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(40,77): error CS0103: The name 'Buckets' does not exist in the current context [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(42,12): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(42,49): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Api/Controllers/AccountDeletionController.cs(18,36): error CS0108: 'AccountDeletionController.Request(DeleteAccountRequest, CancellationToken)' hides inherited member 'ControllerBase.Request'. Use the new keyword if hiding was intended. [/workspaces/BoulderTime/backend/src/BoulderTime.Api/BoulderTime.Api.csproj]
 
 Build FAILED.
 
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(38,35): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(39,63): error CS0103: The name 'Buckets' does not exist in the current context [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(40,77): error CS0103: The name 'Buckets' does not exist in the current context [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(42,12): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
-/workspaces/BoulderTime/backend/src/BoulderTime.Application/Users/AccountEraser.cs(42,49): error CS1061: 'IAppDbContext' does not contain a definition for 'CommunityVideos' and no accessible extension method 'CommunityVideos' accepting a first argument of type 'IAppDbContext' could be found (are you missing a using directive or an assembly reference?) [/workspaces/BoulderTime/backend/src/BoulderTime.Application/BoulderTime.Application.csproj]
+/workspaces/BoulderTime/backend/src/BoulderTime.Api/Controllers/AccountDeletionController.cs(18,36): error CS0108: 'AccountDeletionController.Request(DeleteAccountRequest, CancellationToken)' hides inherited member 'ControllerBase.Request'. Use the new keyword if hiding was intended. [/workspaces/BoulderTime/backend/src/BoulderTime.Api/BoulderTime.Api.csproj]
     0 Warning(s)
-    5 Error(s)
+    1 Error(s)
 
-Time Elapsed 00:00:04.25
+Time Elapsed 00:00:04.75
 FALLITO
 == 4. TEST BACKEND ==
 == 5. FRONTEND ==
@@ -78,7 +70,7 @@ dist/assets/App-D-rcIXWN.js                       536.52 kB │ gzip: 150.70 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 4.84s
+✓ built in 5.20s
 
 PWA v0.21.2
 mode      generateSW
