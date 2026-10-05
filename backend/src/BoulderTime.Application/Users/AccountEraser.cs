@@ -35,11 +35,15 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         if (user is null) return;
 
         // Files first: a row removed without its file would leave the video reachable by its signed URL.
-        var videoPaths = await db.CommunityVideos.Where(v => v.UserId == userId).Select(v => v.StoragePath).ToListAsync(ct);
-        foreach (var path in videoPaths) await TryDeleteAsync(Buckets.CommunityVideos, path, ct);
-        if (user.AvatarPath is { Length: > 0 } avatar) await TryDeleteAsync(Buckets.Avatars, avatar, ct);
+        var videos = await db.BoulderVideos.Where(v => v.UserId == userId).ToListAsync(ct);
+        foreach (var video in videos)
+        {
+            await TryDeleteAsync(StorageBuckets.CommunityVideos, video.StoragePath, ct);
+            if (video.ThumbnailPath is { Length: > 0 } thumbnail) await TryDeleteAsync(StorageBuckets.CommunityVideos, thumbnail, ct);
+        }
+        if (user.AvatarPath is { Length: > 0 } avatar) await TryDeleteAsync(StorageBuckets.Avatars, avatar, ct);
 
-        db.CommunityVideos.RemoveRange(await db.CommunityVideos.Where(v => v.UserId == userId).ToListAsync(ct));
+        db.BoulderVideos.RemoveRange(videos);
         db.CommentLikes.RemoveRange(await db.CommentLikes.Where(x => x.UserId == userId).ToListAsync(ct));
         db.Comments.RemoveRange(await db.Comments.Where(x => x.UserId == userId).ToListAsync(ct));
         db.GradeSuggestions.RemoveRange(await db.GradeSuggestions.Where(x => x.UserId == userId).ToListAsync(ct));
