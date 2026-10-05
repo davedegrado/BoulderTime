@@ -1,5 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-già presente: Accepting the terms is a recorded tick, with the version,
+Applying: Move the Dockerfile to the repository root so Railway builds it without being told
+applicata: Move the Dockerfile to the repository root so Railway builds
 == 1b. MIGRAZIONE ==
 già presente
 == 2. STRUMENTI ==
@@ -10,12 +11,12 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:27.45
+Time Elapsed 00:00:29.07
 OK
 == 4. TEST BACKEND ==
 A total of 1 test files matched the specified pattern.
 
-Passed!  - Failed:     0, Passed:   169, Skipped:     0, Total:   169, Duration: 1 m 43 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   169, Skipped:     0, Total:   169, Duration: 1 m 45 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
       Tests  96 passed (96)
 vite v5.4.21 building for production...
@@ -67,7 +68,7 @@ dist/assets/App-_xuhOKK6.js                       548.45 kB │ gzip: 155.30 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.15s
+✓ built in 5.13s
 
 PWA v0.21.2
 mode      generateSW
