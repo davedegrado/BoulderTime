@@ -104,6 +104,15 @@ export function ProfilePage() {
 
       <PasswordSection hasPassword={hasPassword} />
 
+      <section className="section" aria-labelledby="legal-title">
+        <h2 id="legal-title" className="section__title">{t("Terms and privacy")}</h2>
+        <ul className="list card">
+          <li className="list__row"><Link className="list__main list__link" to="/termini">{t("Terms of use")}</Link></li>
+          <li className="list__row"><Link className="list__main list__link" to="/privacy">{t("Privacy notice")}</Link></li>
+          <li className="list__row"><a className="list__main list__link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
+        </ul>
+      </section>
+
       <DeleteAccountSection email={user.email} />
 
       <section className="section" aria-labelledby="board-title">

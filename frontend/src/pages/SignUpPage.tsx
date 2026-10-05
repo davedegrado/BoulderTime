@@ -65,6 +65,11 @@ export function SignUpPage() {
         <TextField label={t("Display name")} autoComplete="nickname" value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={errors.displayName} hint={t("Shown on comments and leaderboards.")} />
         <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
         <TextField label={t("Password")} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} hint={t("At least 8 characters.")} />
+        <p className="field__hint auth-legal">
+          {t("Creating an account means you accept the")}{" "}
+          <Link to="/termini">{t("terms of use")}</Link>{" "}{t("and the")}{" "}
+          <Link to="/privacy">{t("privacy notice")}</Link>.
+        </p>
         <Button type="submit" block loading={busy === "password"} disabled={busy !== null}>{t("Create account")}</Button>
       </form>
     </AuthLayout>

@@ -771,3 +771,13 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .board__report { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--bt-ink-3); cursor: pointer; }
 .board__report svg { width: 18px; height: 18px; }
 .board__report:hover, .board__report:focus-visible { background: var(--bt-surface-2); color: var(--bt-ink); }
+
+/* ---------- Privacy notice and terms ---------- */
+.legal { max-width: 46rem; }
+.legal__body { display: flex; flex-direction: column; gap: var(--bt-3); }
+.legal__h1 { font-size: var(--bt-text-xl); font-weight: 800; margin: 0; }
+.legal__h2 { font-size: var(--bt-text-lg); font-weight: 700; margin: var(--bt-4) 0 0; }
+.legal__p, .legal__list { margin: 0; line-height: 1.6; color: var(--bt-ink-2); }
+.legal__list { padding-left: var(--bt-5); display: flex; flex-direction: column; gap: 6px; }
+.legal__switch { text-align: center; }
+.auth-legal { text-align: center; }

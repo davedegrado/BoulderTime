@@ -390,3 +390,25 @@ able to manage it.
 
 A daily background sweep does the erasing, three minutes after start and then every 24 hours: a deadline nobody
 checks is not a promise.
+
+## ADR-025 · Privacy notice and terms
+Both are written against what the app does, not from a template, and both live in the repository
+(`frontend/src/pages/legal/`) so they change with the code rather than drifting from it. A test asserts that the
+promises they make are ones the app keeps: the seven-day deletion window, the 14-year age limit, the leaderboard
+opt-out, and the list of services that process data.
+
+**Controller:** Davide Luisi, Modena, reachable at support@bouldertime.com. Still a person rather than a company,
+which is accurate today and takes five minutes to change later.
+
+**Videos rest on consent**, and the uploader declares they have the consent of anyone recognisable. Anyone filmed can
+ask for removal without giving a reason. This is the part of the app most likely to cause real harm, so it is stated
+in both documents and in the sign-up flow.
+
+**Retention is what the app enforces:** account data until deletion plus seven days, rejected videos 30 days,
+technical logs about 90. Promising shorter periods than the code delivers would be worse than promising nothing.
+
+**No consent checkbox at sign-up:** a visible line with both links, which is accepted practice for a free service and
+one less thing between a climber and their first send. Minors under 14 are not allowed to register; there is no age
+verification, because none is meaningful and claiming one would be a lie.
+
+**These are drafts.** They need a professional's review before the app is opened to the public.

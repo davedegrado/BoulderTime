@@ -771,4 +771,14 @@ export const it: Record<string, string> = {
   "Your account will be erased on {date}. Until then you can bring it back, and nothing is lost.": "Il tuo account sarà cancellato il {date}. Fino ad allora puoi ripristinarlo e non perdi nulla.",
   "Keep my account": "Mantieni il mio account",
   "Your account is active again": "Il tuo account è di nuovo attivo",
+  // ---- Terms and privacy ----
+  "Terms and privacy": "Termini e privacy",
+  "Terms of use": "Termini d'uso",
+  "Privacy notice": "Informativa sulla privacy",
+  "Read the terms of use": "Leggi i termini d'uso",
+  "Read the privacy notice": "Leggi l'informativa sulla privacy",
+  "Creating an account means you accept the": "Creando l'account accetti i",
+  "terms of use": "termini d'uso",
+  "and the": "e l'",
+  "privacy notice": "informativa sulla privacy",
 };
