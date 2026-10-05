@@ -15,7 +15,7 @@ public sealed class AccountDeletionController(AccountDeletionService service) : 
     public Task<DeletionStatusDto> Status(CancellationToken ct) => service.StatusAsync(ct);
 
     [HttpPost]
-    public Task<DeletionStatusDto> Request([FromBody] DeleteAccountRequest request, CancellationToken ct) =>
+    public Task<DeletionStatusDto> RequestDeletion([FromBody] DeleteAccountRequest request, CancellationToken ct) =>
         service.RequestAsync(request, ct);
 
     /// <summary>Brings the account back, within the grace period.</summary>
