@@ -800,4 +800,7 @@ export const it: Record<string, string> = {
   "{used} used": "{used} usate",
   "Video allowance saved": "Limiti video salvati",
   "This gym has used all its official beta videos. Remove one from another boulder, or ask BoulderTime for more.": "Questa palestra ha usato tutte le beta ufficiali disponibili. Rimuovine una da un altro blocco, oppure chiedi a BoulderTime di alzare il limite.",
+  "Ungraded": "Non gradato",
+  "Official grade": "Grado ufficiale",
+  "You can leave it ungraded and add the grade later: climbers can still log it and suggest one.": "Puoi lasciarlo non gradato e aggiungere il grado dopo: i climber possono comunque registrarlo e proporre un grado.",
 };

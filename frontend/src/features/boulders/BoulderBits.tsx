@@ -22,7 +22,7 @@ export function GradeBadge({ grade, size = "md" }: { grade: BoulderGrade; size?:
 /** Primary grade large, other systems small after it: "YELLOW · 6A · V3". */
 export function GradeLine({ grades, size = "md" }: { grades: BoulderGrade[]; size?: "md" | "lg" }) {
   const [primary, ...rest] = grades;
-  if (!primary) return null;
+  if (!primary) return <span className={`grade grade--text grade--ungraded grade--${size}`}>{t("Ungraded")}</span>;
   return (
     <span className="grade-line" aria-label={t("Grade {grades}", { grades: grades.map((g) => `${dataLabel(g.label)} (${dataLabel(g.systemName)})`).join(", ") })}>
       <GradeBadge grade={primary} size={size} />

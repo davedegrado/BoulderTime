@@ -99,7 +99,7 @@ describe("Staff boulder management", () => {
     expect(await screen.findByText(/2 boulders removed/)).toBeInTheDocument();
   });
 
-  it("requires photo, sector, hold colour and a grade before saving a new boulder", async () => {
+  it("requires photo, sector and hold colour before saving, but not a grade", async () => {
     setupManage();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
 
@@ -112,7 +112,8 @@ describe("Staff boulder management", () => {
     expect(screen.getByText("Add a photo of the boulder.")).toBeInTheDocument();
     expect(screen.getByText("Choose a sector.")).toBeInTheDocument();
     expect(screen.getByText("Choose the hold colour.")).toBeInTheDocument();
-    expect(screen.getByText("Give the boulder at least one official grade.")).toBeInTheDocument();
+    // A boulder can go on the wall before setters decide its grade.
+    expect(screen.queryByText("Give the boulder at least one official grade.")).not.toBeInTheDocument();
     expect(calls.some((c) => c.method === "POST")).toBe(false);
   });
 
@@ -125,5 +126,15 @@ describe("Staff boulder management", () => {
     expect(input.accept).toContain("image/");
     // "capture" would force the camera and hide the photo library on phones.
     expect(input.hasAttribute("capture")).toBe(false);
+  });
+});
+
+
+describe("Ungraded boulders", () => {
+  it("say so where the grade usually is", async () => {
+    const { GradeLine } = await import("@/features/boulders/BoulderBits");
+    const { render } = await import("@testing-library/react");
+    render(<GradeLine grades={[]} />);
+    expect(screen.getByText("Ungraded")).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Boulders;
+using BoulderTime.Application.Leaderboards;
 using BoulderTime.Application.Common;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Grading;
@@ -31,6 +32,37 @@ public sealed class BoulderTests(PostgresFixture postgres) : IAsyncLifetime
         var staff = await _f.UserAsync();
         await _f.StaffAsync(gym, staff, GymRole.Staff);
         return (gym, sector, staff, font, color);
+    }
+
+    [Fact]
+    public async Task A_boulder_can_go_on_the_wall_ungraded_and_get_its_grade_later()
+    {
+        var (gym, sector, staff, font, _) = await SetupAsync();
+        var photo = await staff.UploadPhotoAsync(_f, gym);
+
+        // Setters often put a boulder up before deciding its colour.
+        var res = await staff.Client.PostAsJsonAsync($"/api/gyms/{gym.Id}/boulders", new
+        {
+            sectorId = sector.Id, photoPath = photo, holdColor = "BLUE", grades = Array.Empty<object>(),
+        });
+        res.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = (await res.ReadAsync<BoulderDetailDto>())!;
+        created.Grades.Should().BeEmpty();
+
+        // A climber can log it straight away, and it counts as a send without points.
+        var climber = await _f.UserAsync();
+        (await climber.Client.PutAsJsonAsync($"/api/boulders/{created.Id}/attempt", new { attempts = 2, completed = true })).EnsureSuccessStatusCode();
+        var before = (await (await climber.Client.GetAsync($"/api/gyms/{gym.Id}/leaderboard?period=ALL")).ReadAsync<LeaderboardDto>())!;
+        before.Entries.Should().ContainSingle(e => e.Climber.UserId == climber.Id && e.Completed == 1 && e.Points == 0);
+
+        // Once graded, the points arrive for everyone who already sent it — nobody has to log it again.
+        (await staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", new
+        {
+            sectorId = sector.Id, photoPath = photo, holdColor = "BLUE",
+            grades = new[] { new { gradeSystemId = font.Id, gradeValueId = font.Values.Single(v => v.Label == "6A").Id } },
+        })).EnsureSuccessStatusCode();
+        var after = (await (await climber.Client.GetAsync($"/api/gyms/{gym.Id}/leaderboard?period=ALL")).ReadAsync<LeaderboardDto>())!;
+        after.Entries.Should().ContainSingle(e => e.Climber.UserId == climber.Id && e.Points > 0);
     }
 
     [Fact]

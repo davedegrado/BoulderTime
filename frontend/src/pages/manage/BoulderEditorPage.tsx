@@ -64,7 +64,6 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     if (!file && !initial) local.photoPath = t("Add a photo of the boulder.");
     if (!sectorId) local.sectorId = t("Choose a sector.");
     if (!holdColor) local.holdColor = t("Choose the hold colour.");
-    if (!Object.values(grades).some(Boolean)) local.grades = t("Give the boulder at least one official grade.");
     setErrors(local);
     if (Object.keys(local).length) return;
 
@@ -125,7 +124,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
       {/* Official grades — one control per active system */}
       <section className="editor__section" aria-labelledby="grades-label">
-        <p id="grades-label" className="field__label">{t("Official grade *")}</p>
+        <p id="grades-label" className="field__label">{t("Official grade")}</p>
+        <p className="field__hint">{t("You can leave it ungraded and add the grade later: climbers can still log it and suggest one.")}</p>
         <div className="form__grid">
           {activeSystems.map((system) => (
             <SelectField key={system.id} label={dataLabel(system.name)} value={grades[system.id] ?? ""}

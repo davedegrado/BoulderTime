@@ -248,7 +248,6 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         v.Check(r.SectorId is not null, "sectorId", "Choose a sector.")
          .Check(photo.Length > 0, "photoPath", "Add a photo of the boulder.")
          .Check(r.HoldColor is not null && Enum.IsDefined(r.HoldColor.Value), "holdColor", "Choose the hold colour.")
-         .Check(r.Grades is { Count: > 0 }, "grades", "Give the boulder at least one official grade.")
          .ThrowIfInvalid();
 
         if (!await db.Sectors.AnyAsync(s => s.Id == r.SectorId && s.GymId == gymId && s.IsActive, ct))
@@ -271,11 +270,13 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             }
         }
 
-        var choices = r.Grades!;
+        // A boulder can go on the wall before it has a grade: setters often decide the colour later. Climbers see it
+        // as ungraded and can still suggest one; the leaderboard counts the send and adds the points once it's graded.
+        var choices = r.Grades ?? [];
         var systemIds = choices.Select(c => c.GradeSystemId).ToList();
         if (choices.Any(c => c.GradeSystemId is null || c.GradeValueId is null) || systemIds.Distinct().Count() != systemIds.Count)
             v.Check(false, "grades", "Pick one grade per grading system.");
-        else
+        else if (choices.Count > 0)
         {
             var valueIds = choices.Select(c => c.GradeValueId!.Value).ToList();
             var matches = await db.GradeValues.AsNoTracking()
