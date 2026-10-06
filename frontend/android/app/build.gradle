@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// Set by CI: BT_VERSION_CODE grows with every build, BT_VERSION_NAME comes from frontend/package.json.
+def btVersionCode = Integer.parseInt(System.getenv("BT_VERSION_CODE") ?: "1")
+def btVersionName = System.getenv("BT_VERSION_NAME") ?: "0.1.0"
+
 android {
     namespace = "com.bouldertime.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,9 +11,8 @@ android {
         applicationId "com.bouldertime.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Set by CI: BT_VERSION_CODE grows with every build, BT_VERSION_NAME comes from frontend/package.json.
-        versionCode (System.getenv("BT_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("BT_VERSION_NAME") ?: "0.1.0"
+        versionCode btVersionCode
+        versionName btVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

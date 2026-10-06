@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to a new release on its own, and a build machine changing underneath is a surprise.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -28,7 +29,7 @@ jobs:
       VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
       VITE_MAP_ATTRIBUTION: ${{ vars.VITE_MAP_ATTRIBUTION }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check the build settings are there
         run: |
@@ -37,7 +38,7 @@ jobs:
           done
           case "$VITE_API_BASE_URL" in https://*) ;; *) echo "::error::VITE_API_BASE_URL must be a full https:// address inside the app"; exit 1;; esac
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -49,7 +50,7 @@ jobs:
       - name: Copy it into the Android project
         run: npx cap sync android
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -64,7 +65,7 @@ jobs:
           mkdir -p ../../out
           cp app/build/outputs/apk/debug/app-debug.apk "../../out/BoulderTime-${BT_VERSION_NAME}-${BT_VERSION_CODE}.apk"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: BoulderTime-android-${{ github.run_number }}
           path: out/*.apk
