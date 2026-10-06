@@ -46,10 +46,23 @@ interface GymMapProps {
 }
 
 /** Explore map: user position (blue dot) and gym pins with a popup linking to the gym. */
+/**
+ * The tile provider's attribution must be shown in full; Leaflet's own "Leaflet" prefix is optional and is what
+ * pushes "© OpenStreetMap contributors" off the edge on a phone. Dropping the prefix keeps the required credit visible.
+ */
+function AttributionWithoutPrefix() {
+  const map = useMap();
+  useEffect(() => {
+    map.attributionControl.setPrefix(false);
+  }, [map]);
+  return null;
+}
+
 export function GymMap({ pins, userPosition, focus, onBounds }: GymMapProps) {
   const start = useMemo(() => focus ?? (userPosition ? { ...userPosition, zoom: 12 } : ITALY), []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <MapContainer center={[start.lat, start.lng]} zoom={start.zoom} className="gym-map" scrollWheelZoom attributionControl>
+      <AttributionWithoutPrefix />
       <TileLayer url={env.mapTileUrl} attribution={env.mapAttribution} maxZoom={19} />
       <BoundsWatcher onBounds={onBounds} />
       <Recenter center={focus} zoom={focus?.zoom ?? 12} />
@@ -78,6 +91,7 @@ export function LocationPicker({ value, onChange }: { value: { lat: number; lng:
   const start = value ?? ITALY;
   return (
     <MapContainer center={[start.lat, start.lng]} zoom={value ? 16 : ITALY.zoom} className="gym-map gym-map--picker" scrollWheelZoom={false}>
+      <AttributionWithoutPrefix />
       <TileLayer url={env.mapTileUrl} attribution={env.mapAttribution} maxZoom={19} />
       <PickerEvents onPick={onChange} />
       <Recenter center={value} zoom={16} />
@@ -98,6 +112,7 @@ function PickerEvents({ onPick }: { onPick: (v: { lat: number; lng: number }) =>
 export function StaticGymMap({ lat, lng, name }: { lat: number; lng: number; name: string }) {
   return (
     <MapContainer center={[lat, lng]} zoom={15} className="gym-map gym-map--static" scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} touchZoom={false}>
+      <AttributionWithoutPrefix />
       <TileLayer url={env.mapTileUrl} attribution={env.mapAttribution} />
       <Marker position={[lat, lng]} icon={pinIcon(name, null)} title={name} />
     </MapContainer>
