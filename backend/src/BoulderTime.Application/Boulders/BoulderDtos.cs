@@ -27,7 +27,12 @@ public sealed record BoulderDetailDto(
     BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt, GymRole? ViewerRole,
     RatingSummaryDto Rating, ViewerProgressDto? Viewer, bool IsFollowing,
     /// <summary>Whether climbers of this gym may upload their own beta; the app shows a lock when they may not.</summary>
-    bool CommunityVideosEnabled = false);
+    bool CommunityVideosEnabled = false,
+    /// <summary>
+    /// Whether the gym may still add an official beta to this boulder. False when its allowance is full and this
+    /// boulder has none: the app hides the upload rather than letting someone film and fail at the last step.
+    /// </summary>
+    bool CanAddOfficialBeta = true);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 

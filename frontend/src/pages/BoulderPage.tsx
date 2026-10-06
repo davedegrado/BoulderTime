@@ -85,7 +85,7 @@ export function BoulderPage() {
           </li>
         </ul>
 
-        <BetaSection boulderId={b.id} isStaff={!!b.viewerRole} />
+        <BetaSection boulderId={b.id} canAdd={b.canAddOfficialBeta ?? true} isStaff={!!b.viewerRole} />
         <CommunityVideosSection boulderId={b.id} enabled={b.communityVideosEnabled ?? false} />
         <CommunityGradeSection boulderId={b.id} />
         <CommentsSection boulderId={b.id} />

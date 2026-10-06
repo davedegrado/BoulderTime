@@ -78,7 +78,7 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
   );
 }
 
-export function BetaSection({ boulderId, isStaff }: { boulderId: string; isStaff: boolean }) {
+export function BetaSection({ boulderId, isStaff, canAdd = true }: { boulderId: string; isStaff: boolean; canAdd?: boolean }) {
   const beta = useBeta(boulderId);
   const save = useSaveBeta(boulderId);
   const toast = useToast();
@@ -98,7 +98,14 @@ export function BetaSection({ boulderId, isStaff }: { boulderId: string; isStaff
           <p className="list__sub">{t("By {name}", { name: beta.data.uploadedBy.displayName })}</p>
         </>
       ) : <p className="list__sub">{t("No official beta yet.")}</p>}
-      {isStaff && (replacing || !beta.data ? (
+      {/* Told before filming, not after uploading: the limit is the gym's, and hitting it at the last step wastes real work. */}
+      {isStaff && !beta.data && !canAdd && (
+        <p className="notice notice--inline">
+          <Lock aria-hidden />
+          {t("This gym has used all its official beta videos. Remove one from another boulder, or ask BoulderTime for more.")}
+        </p>
+      )}
+      {isStaff && (canAdd || beta.data) && (replacing || !beta.data ? (
         <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? t("Replace beta") : t("Publish beta")} busy={save.isPending}
           onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => { setReplacing(false); toast.success(t("Official beta published")); })} />
       ) : (

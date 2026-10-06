@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Gyms;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Tests.Climbing;
@@ -119,6 +120,27 @@ public sealed class VideoAllowanceTests(PostgresFixture postgres) : IAsyncLifeti
         var admin = await _f.UserAsync(platformAdmin: true);
         var allowance = (await (await admin.Client.GetAsync($"/api/admin/gyms/{world.Gym.Id}/video-allowance")).ReadAsync<VideoAllowanceDto>())!;
         allowance.OfficialBetaUsed.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task The_boulder_says_whether_a_new_beta_is_still_allowed()
+    {
+        var world = await ClimbingWorld.CreateAsync(_f);
+        var admin = await _f.UserAsync(platformAdmin: true);
+        var withBeta = await world.BoulderAsync("6A");
+        var without = await world.BoulderAsync("6B");
+        await admin.Client.PutAsJsonAsync($"/api/admin/gyms/{world.Gym.Id}/video-allowance",
+            new { communityVideosEnabled = false, officialBetaLimit = 1 });
+        var path = await world.Staff.UploadVideoAsync(_f, withBeta.Id, "BETA");
+        await world.Staff.Client.PutAsJsonAsync($"/api/boulders/{withBeta.Id}/beta", new { storagePath = path });
+
+        async Task<BoulderDetailDto> Detail(Guid id) =>
+            (await (await world.Staff.Client.GetAsync($"/api/boulders/{id}")).ReadAsync<BoulderDetailDto>())!;
+
+        // The app asks before showing the upload, so nobody films a video that will be refused at the last step.
+        (await Detail(without.Id)).CanAddOfficialBeta.Should().BeFalse();
+        // Replacing an existing one costs no extra storage, so it stays possible.
+        (await Detail(withBeta.Id)).CanAddOfficialBeta.Should().BeTrue();
     }
 
     [Fact]

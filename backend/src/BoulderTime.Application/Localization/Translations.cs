@@ -102,6 +102,11 @@ public static partial class Translations
         ("Use active grades from this gym's grading systems.", "Usa gradi attivi delle scale di questa palestra."),
         ("Pick a grade from this gym's grading systems.", "Scegli un grado tra le scale di questa palestra."),
 
+        // ---- Video allowance ----
+        ("Climber videos aren't available at this gym yet.", "I video dei climber non sono ancora disponibili in questa palestra."),
+        ("This gym can keep {0} official beta videos. Remove one before adding another, or ask BoulderTime for more.",
+            "Questa palestra può tenere {0} beta ufficiali. Rimuovine una prima di aggiungerne un'altra, oppure chiedi a BoulderTime di alzare il limite."),
+
         // ---- Boulders ----
         ("Add a photo of the boulder.", "Aggiungi una foto del blocco."),
         ("Choose the hold colour.", "Scegli il colore delle prese."),

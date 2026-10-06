@@ -28,6 +28,8 @@ export interface BoulderDetail extends BoulderSummary {
   isFollowing: boolean;
   /** Whether climbers of this gym may upload their own beta. */
   communityVideosEnabled: boolean;
+  /** False when the gym's official-beta allowance is full and this boulder has none. */
+  canAddOfficialBeta: boolean;
 }
 
 export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";

@@ -799,4 +799,5 @@ export const it: Record<string, string> = {
   "{used} of {limit} used": "{used} su {limit} usate",
   "{used} used": "{used} usate",
   "Video allowance saved": "Limiti video salvati",
+  "This gym has used all its official beta videos. Remove one from another boulder, or ask BoulderTime for more.": "Questa palestra ha usato tutte le beta ufficiali disponibili. Rimuovine una da un altro blocco, oppure chiedi a BoulderTime di alzare il limite.",
 };

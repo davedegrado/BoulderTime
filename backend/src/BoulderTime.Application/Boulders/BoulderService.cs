@@ -76,7 +76,22 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 
         return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
-            b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled);
+            b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
+            await CanAddBetaAsync(gym, b.Id, ct));
+    }
+
+    /// <summary>
+    /// Replacing an existing beta is always possible: it costs no extra storage. Only a brand-new one counts
+    /// against the gym's allowance.
+    /// </summary>
+    private async Task<bool> CanAddBetaAsync(Domain.Gyms.Gym gym, Guid boulderId, CancellationToken ct)
+    {
+        if (gym.OfficialBetaLimit is not { } limit) return true;
+        if (await db.BoulderBetas.AsNoTracking().AnyAsync(x => x.BoulderId == boulderId, ct)) return true;
+        var used = await db.BoulderBetas.AsNoTracking()
+            .Join(db.Boulders, x => x.BoulderId, b => b.Id, (x, b) => b.GymId)
+            .CountAsync(id => id == gym.Id, ct);
+        return used < limit;
     }
 
     // ---------- Photo upload ----------
