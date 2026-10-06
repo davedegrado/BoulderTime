@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { t } from "@/i18n/i18n";
+import { publicOrigin } from "@/lib/native";
 
 interface AuthContextValue {
   session: Session | null;
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { display_name: displayName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${publicOrigin()}/auth/callback`,
       },
     });
     if (error) throw new Error(friendlyAuthError(error.message));
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const next = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback${next}` },
+      options: { redirectTo: `${publicOrigin()}/auth/callback${next}` },
     });
     if (error) throw new Error(friendlyAuthError(error.message));
   }, []);

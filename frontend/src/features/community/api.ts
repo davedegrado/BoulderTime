@@ -6,6 +6,7 @@ import { ApiError, defaultMessage } from "@/lib/apiError";
 import type { PagedResult } from "@/lib/paging";
 import type { BoulderSummary } from "@/features/boulders/api";
 import type { GradeSystemType } from "@/features/grading/api";
+import { apiOrigin } from "@/config/env";
 
 export interface Person { userId: string; displayName: string; avatarUrl: string | null }
 
@@ -90,7 +91,7 @@ export async function uploadResumable(ticket: UploadTicket & { resumable: Resuma
   return new Promise((resolve, reject) => {
     const r = ticket.resumable;
     const upload = new TusUpload(file, {
-      endpoint: new URL(r.endpoint, window.location.origin).href,
+      endpoint: new URL(r.endpoint, apiOrigin()).href,
       headers: r.headers,
       metadata: r.metadata,
       chunkSize: r.chunkSize,

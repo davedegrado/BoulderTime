@@ -1,0 +1,71 @@
+# Builds the Android app from the same frontend as the website, on GitHub's machines: nobody needs Android Studio.
+# Every run leaves an installable APK under the run's "Artifacts".
+name: Android app
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Public build settings, the same ones Cloudflare uses for the website (Settings → Secrets and variables →
+      # Actions → Variables). They end up inside the app, so none of them is a secret.
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
+      VITE_MAP_ATTRIBUTION: ${{ vars.VITE_MAP_ATTRIBUTION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the build settings are there
+        run: |
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY VITE_API_BASE_URL; do
+            if [ -z "${!name}" ]; then echo "::error::Missing repository variable $name (Settings → Secrets and variables → Actions → Variables)"; exit 1; fi
+          done
+          case "$VITE_API_BASE_URL" in https://*) ;; *) echo "::error::VITE_API_BASE_URL must be a full https:// address inside the app"; exit 1;; esac
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build the web app
+        run: npm ci && npm run build
+
+      - name: Copy it into the Android project
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build the APK
+        working-directory: frontend/android
+        run: |
+          export BT_VERSION_NAME=$(node -p "require('../package.json').version")
+          export BT_VERSION_CODE=${{ github.run_number }}
+          ./gradlew assembleDebug --no-daemon
+          mkdir -p ../../out
+          cp app/build/outputs/apk/debug/app-debug.apk "../../out/BoulderTime-${BT_VERSION_NAME}-${BT_VERSION_CODE}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoulderTime-android-${{ github.run_number }}
+          path: out/*.apk
+          retention-days: 30

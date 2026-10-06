@@ -436,3 +436,23 @@ Climbers' own videos are left alone: they belong to the people who filmed them.
 
 The numbers behind this: a 30-second beta is 20–40 MB, and Supabase's free tier holds 1 GB. Five gyms uploading
 twenty videos a week would fill it in a month, so the allowance exists to make that a decision rather than a surprise.
+
+## ADR-027 · Store apps with Capacitor
+The store apps wrap the same React build as the website. No second frontend, no rewrite: Capacitor copies
+`frontend/dist` into native projects that live under `frontend/android` (and `frontend/ios` later).
+
+**First milestone: an installable Android app** built by GitHub Actions, so neither Android Studio nor a Mac is
+needed. It ships the web app unchanged plus four native behaviours: no service worker inside the app, Android's back
+button, status bar and splash screen.
+
+**Native code is reached through one module** (`lib/native.ts`). Plugins are imported only when running natively, so
+the website and the PWA don't load them; the only cost on the web is the few lines that answer "am I in an app?".
+
+**Links that leave the app use the website's address.** Inside the app the page is `https://localhost`, which an email
+cannot point at; confirmation and reset links therefore go to `https://bouldertime.com`. Universal links (next
+milestone) will make those open the app directly. The same reasoning fixed one real bug: resumable upload endpoints
+were resolved against the page address and would have pointed at `localhost` inside the app.
+
+**Next milestones, in order:** universal and app links; native push through Firebase (Web Push does not work inside
+an app); blocking users, which Apple requires for apps with user content; signed release builds and the stores. The
+native camera plugin is deferred: the upload fields already open the system camera inside the app.

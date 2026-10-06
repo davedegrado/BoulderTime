@@ -6,6 +6,7 @@ import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
 import { supabase } from "@/lib/supabase";
 import { t } from "@/i18n/i18n";
+import { publicOrigin } from "@/lib/native";
 
 /**
  * Asks Supabase to email a password-reset link. The answer is the same whether or not an account exists for the
@@ -27,7 +28,7 @@ export function ForgotPasswordPage() {
     setBusy(true);
     setError(null);
     const { error: failure } = await supabase.auth.resetPasswordForEmail(address, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${publicOrigin()}/reset-password`,
     });
     setBusy(false);
     // Only a rate limit is worth reporting; anything else would reveal whether the account exists.

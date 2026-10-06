@@ -40,3 +40,4 @@ frontend/.env.local
 
 # Local object storage used in development
 backend/.local-storage/
+out/
