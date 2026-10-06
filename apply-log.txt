@@ -1,11 +1,8 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Per-gym video allowance: climber videos off by default, a cap on official beta, and beta deleted with the boulder
-applicata: Per-gym video allowance: climber videos off by default, a cap
+Applying: Test gyms and demo gyms allow climber videos; production defaults stay off and stay tested
+applicata: Test gyms and demo gyms allow climber videos; production
 == 1b. MIGRAZIONE ==
-Build started...
-Build succeeded.
-Done. To undo this action, use 'ef migrations remove'
-creata
+già presente
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -14,12 +11,12 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:16.05
+Time Elapsed 00:00:28.27
 OK
 == 4. TEST BACKEND ==
-[xUnit.net 00:01:31.58]     BoulderTime.Tests.Community.VideoThumbnailAndPagingTests.Approved_videos_are_paged_and_the_viewers_videos_in_review_come_separately [FAIL]
+[xUnit.net 00:01:29.80]     BoulderTime.Tests.Community.VideoAllowanceTests.Removing_a_boulder_takes_its_official_beta_with_it [FAIL]
 
-Failed!  - Failed:    11, Passed:   164, Skipped:     0, Total:   175, Duration: 1 m 45 s - BoulderTime.Tests.dll (net8.0)
+Failed!  - Failed:     2, Passed:   173, Skipped:     0, Total:   175, Duration: 1 m 51 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
       Tests  97 passed (97)
 vite v5.4.21 building for production...
@@ -71,7 +68,7 @@ dist/assets/App-BaLv2oEw.js                       549.87 kB │ gzip: 155.70 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.03s
+✓ built in 5.99s
 
 PWA v0.21.2
 mode      generateSW
