@@ -3,6 +3,13 @@
  * Brand: Charcoal #1A1A1A, Orange #FF7A2E, Light #F8F8F8, Inter.
  */
 :root {
+  /* Safe areas (notch, status bar, home indicator). Browsers report them through env(); Android's in-app WebView
+     often reports zero there, so Capacitor injects the same values as --safe-area-inset-*. Taking the larger of the
+     two works everywhere and never counts an inset twice. */
+  --bt-safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --bt-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --bt-safe-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+  --bt-safe-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
   /* Brand */
   --bt-charcoal: #1a1a1a;
   --bt-orange: #ff7a2e;
