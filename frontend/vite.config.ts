@@ -18,7 +18,9 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
         globIgnores: ["**/app-icon-1024.png", "**/app-icon-512.png"], // store/maskable sizes: not needed offline
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
+        // Pages the app doesn't own: the offline copy must not answer for them. /.well-known holds the files Android
+        // and iOS read to verify app links; served as the app shell they showed BoulderTime's "not found" page.
+        navigateFallbackDenylist: [/^\/api\//, /^\/\.well-known\//],
         runtimeCaching: [
           {
             // Public images (boulder photos, gym images, avatars): immutable paths, so cache-first is safe.
