@@ -145,7 +145,8 @@ public sealed class BoulderTests(PostgresFixture postgres) : IAsyncLifetime
         async Task<HttpStatusCode> Create(object grades) => (await staff.Client.PostAsJsonAsync($"/api/gyms/{gym.Id}/boulders",
             new { sectorId = sector.Id, photoPath = photo, holdColor = "RED", grades })).StatusCode;
 
-        (await Create(Array.Empty<object>())).Should().Be(HttpStatusCode.BadRequest);
+        // No grades at all is allowed (an ungraded boulder); see A_boulder_can_go_on_the_wall_ungraded_and_get_its_grade_later.
+        // Every grade that *is* given must still come from this gym's active systems, one per system.
         (await Create(new[] { new { gradeSystemId = foreignSystem.Id, gradeValueId = foreignSystem.Values[3].Id } })).Should().Be(HttpStatusCode.BadRequest);
         (await Create(new[] { new { gradeSystemId = font.Id, gradeValueId = font.Values[5].Id }, new { gradeSystemId = font.Id, gradeValueId = font.Values[6].Id } })).Should().Be(HttpStatusCode.BadRequest);
         (await Create(new[] { new { gradeSystemId = font.Id, gradeValueId = foreignSystem.Values[3].Id } })).Should().Be(HttpStatusCode.BadRequest);
