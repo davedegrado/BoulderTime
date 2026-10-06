@@ -64,6 +64,8 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 gym = Gym.Create(d.Name, d.Slug, d.City);
                 gym.UpdateProfile(d.Name, d.Description, d.Address, d.City, $"https://example.com/{d.Slug}", $"info@{d.Slug}.example.com", "+39 02 0000 0000");
                 gym.SetStatus(GymStatus.Active);
+            // Demo gyms show the feature complete; real gyms start without it.
+            gym.SetVideoAllowance(communityVideosEnabled: true, officialBetaLimit: null);
                 db.Gyms.Add(gym);
                 for (var i = 0; i < d.Sectors.Length; i++)
                     db.Sectors.Add(Sector.Create(gym.Id, d.Sectors[i], null, i));

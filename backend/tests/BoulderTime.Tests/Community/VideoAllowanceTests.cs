@@ -23,19 +23,25 @@ public sealed class VideoAllowanceTests(PostgresFixture postgres) : IAsyncLifeti
         new { kind, contentType = "video/mp4", sizeBytes = 2_000_000 };
 
     [Fact]
-    public async Task A_new_gym_starts_with_climber_videos_off_and_a_beta_limit()
+    public void A_new_gym_starts_with_climber_videos_off_and_a_beta_limit()
     {
-        var gym = await _f.GymAsync(GymStatus.Active);
+        // Straight from the domain: the test factory relaxes both, production does not.
+        var gym = Gym.Create("Crimp Factory", "crimp-factory-defaults", "Milano");
 
-        var stored = await _f.Db(db => db.Gyms.FirstAsync(g => g.Id == gym.Id));
-        stored.CommunityVideosEnabled.Should().BeFalse();
-        stored.OfficialBetaLimit.Should().Be(Gym.DefaultOfficialBetaLimit);
+        gym.CommunityVideosEnabled.Should().BeFalse();
+        gym.OfficialBetaLimit.Should().Be(Gym.DefaultOfficialBetaLimit);
     }
 
     [Fact]
     public async Task Climbers_cannot_upload_until_BoulderTime_turns_it_on_for_that_gym()
     {
         var world = await ClimbingWorld.CreateAsync(_f);
+        await _f.Db(async db =>
+        {
+            var gym = await db.Gyms.FirstAsync(g => g.Id == world.Gym.Id);
+            gym.SetVideoAllowance(false, 20); // as a gym starts in production
+            return await db.SaveChangesAsync();
+        });
         var boulder = await world.BoulderAsync("6A");
         var climber = await _f.UserAsync();
         var admin = await _f.UserAsync(platformAdmin: true);

@@ -42,12 +42,18 @@ public static class TestData
         return new TestUser(id, email.ToLowerInvariant(), client);
     }
 
-    public static Task<Gym> GymAsync(this ApiFactory f, GymStatus status = GymStatus.Active, string? name = null, string city = "Milano") =>
+    /// <param name="communityVideos">
+    /// Test gyms allow climber videos by default, because most tests are about what happens once a gym has them.
+    /// The production default (off until BoulderTime grants it) is covered by <c>VideoAllowanceTests</c>.
+    /// </param>
+    public static Task<Gym> GymAsync(this ApiFactory f, GymStatus status = GymStatus.Active, string? name = null, string city = "Milano",
+        bool communityVideos = true) =>
         f.WithDbAsync(async db =>
         {
             name ??= $"Gym {Guid.NewGuid():N}"[..12];
             var gym = Gym.Create(name, BoulderTime.Domain.Common.Slug.From(name) + "-" + Guid.NewGuid().ToString("N")[..6], city);
             gym.SetStatus(status);
+            gym.SetVideoAllowance(communityVideos, officialBetaLimit: null);
             db.Gyms.Add(gym);
             await db.SaveChangesAsync();
             return gym;
