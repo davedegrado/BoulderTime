@@ -61,6 +61,12 @@ public sealed class VideoAllowanceTests(PostgresFixture postgres) : IAsyncLifeti
     {
         var world = await ClimbingWorld.CreateAsync(_f);
         var climber = await _f.UserAsync();
+        await _f.Db(async db =>
+        {
+            var gym = await db.Gyms.FirstAsync(g => g.Id == world.Gym.Id);
+            gym.SetVideoAllowance(false, 20); // as a gym starts in production
+            return await db.SaveChangesAsync();
+        });
 
         foreach (var user in new[] { world.Staff, climber })
         {
@@ -107,7 +113,7 @@ public sealed class VideoAllowanceTests(PostgresFixture postgres) : IAsyncLifeti
 
         // The beta showed a route that is no longer on the wall, and it was the heaviest thing we kept for it.
         (await _f.Db(db => db.BoulderBetas.CountAsync(b => b.BoulderId == boulder.Id))).Should().Be(0);
-        (await _f.CreateClient().GetAsync($"/api/boulders/{boulder.Id}/beta")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await _f.CreateClient().GetAsync($"/api/boulders/{boulder.Id}/beta")).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // The slot it occupied is free again.
         var admin = await _f.UserAsync(platformAdmin: true);
