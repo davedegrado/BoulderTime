@@ -6,11 +6,11 @@
       <tr><td style="padding:8px 32px;font-size:20px;font-weight:700;">Conferma il nuovo indirizzo</td></tr>
       <tr><td style="padding:8px 32px;font-size:16px;line-height:1.5;">Hai chiesto di usare {{ .NewEmail }} per il tuo account BoulderTime al posto di {{ .Email }}.</td></tr>
       <tr><td style="padding:16px 32px;">
-        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;background:#FF7A2E;color:#1A1A1A;border-radius:999px;font-weight:700;text-decoration:none;">Conferma il nuovo indirizzo</a>
+        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/profile" style="display:inline-block;padding:14px 24px;background:#FF7A2E;color:#1A1A1A;border-radius:999px;font-weight:700;text-decoration:none;">Conferma il nuovo indirizzo</a>
       </td></tr>
       <tr><td style="padding:8px 32px;font-size:14px;line-height:1.5;color:#555555;">
         Se il pulsante non funziona, copia questo indirizzo nel browser:<br>
-        <span style="word-break:break-all;">{{ .ConfirmationURL }}</span>
+        <span style="word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/profile</span>
       </td></tr>
       <tr><td style="padding:8px 32px 32px;font-size:14px;line-height:1.5;color:#555555;">Se non sei stato tu, ignora questa email e l'indirizzo resterà invariato.</td></tr>
     </table>

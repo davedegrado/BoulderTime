@@ -456,3 +456,17 @@ were resolved against the page address and would have pointed at `localhost` ins
 **Next milestones, in order:** universal and app links; native push through Firebase (Web Push does not work inside
 an app); blocking users, which Apple requires for apps with user content; signed release builds and the stores. The
 native camera plugin is deferred: the upload fields already open the system camera inside the app.
+
+## ADR-028 · Links that open the app, and email links that work anywhere
+**Email links carry a token, not a code.** Supabase's default confirmation link ends in a PKCE code that can only be
+exchanged in the browser where sign-up started. With an app that breaks easily: sign up in the app, open the email,
+the link lands in the browser and the sign-in fails. The templates now point to `/auth/confirm?token_hash=…`, which
+the server verifies on its own (`verifyOtp`), so the link works in the app, in any browser and on any device, and it
+goes straight to bouldertime.com, which is what App Links need. `/auth/callback` stays for OAuth.
+
+**App Links over a custom scheme.** `https://bouldertime.com` links, verified through `assetlinks.json`, rather than
+`bouldertime://`: one link works for everyone — in the app if installed, on the website otherwise — and no other app
+can claim it. Only our hosts are followed inside the app; anything else handed to it is ignored.
+
+**The signing key is checked against the published file on every build.** A mismatch would not fail anything visible;
+links would just start opening in the browser. Making the build fail turns that into something someone notices.

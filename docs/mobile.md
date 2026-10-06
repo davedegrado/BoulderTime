@@ -41,7 +41,25 @@ values Cloudflare uses for the website:
 `frontend/package.json` `version` is the version people see (`0.1.0`). The build number is the GitHub Actions run
 number, so every build is higher than the previous one without editing a file.
 
+## Links that open the app
+
+`https://bouldertime.com/...` links open in the Android app (App Links). Android checks the claim against
+`frontend/public/.well-known/assetlinks.json`, which names the app and the SHA-256 fingerprint of its signing key; the
+CI build fails if the APK is signed with a key that file doesn't list, because otherwise links would quietly open in
+the browser instead. When the app is on Google Play, add Play's app-signing fingerprint (Play Console → App
+integrity) to the same list.
+
+Email links go to `/auth/confirm?token_hash=…&type=…` instead of Supabase's default code link: the token is checked
+by the server, so the link works in the app, in any browser and on any device. The templates are in
+`docs/email-templates/` and have to be pasted into Supabase.
+
+## Signing
+
+Release builds are signed with the upload key from four repository **secrets**: `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. The key itself is kept by the owner, outside
+the repository (`*.jks` is git-ignored). Losing it means the app can no longer be updated under the same name. Without
+the secrets the workflow falls back to a debug APK.
+
 ## Not yet
 
-Signed release builds, Google Play, iOS, native push, universal links and blocking users come in the next
-milestones; see ADR-027.
+Google Play, iOS (and its universal links), native push and blocking users come in the next milestones; see ADR-027.

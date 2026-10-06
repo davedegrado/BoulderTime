@@ -16,9 +16,23 @@ export function publicOrigin(): string {
   return isNativeApp() ? PUBLIC_ORIGIN : window.location.origin;
 }
 
+const OUR_HOSTS = new Set(["bouldertime.com", "www.bouldertime.com"]);
+
 /**
- * Wires the few native behaviours the app needs from its first version:
+ * The in-app path for a link the phone handed to the app, or null when the link isn't ours.
+ * Only bouldertime.com links are followed: anything else reaching the app is ignored rather than trusted.
+ */
+export function appPathFromUrl(url: string): string | null {
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { return null; }
+  if (parsed.protocol !== "https:" || !OUR_HOSTS.has(parsed.hostname)) return null;
+  return `${parsed.pathname || "/"}${parsed.search}${parsed.hash}`;
+}
+
+/**
+ * Wires the few native behaviours the app needs:
  * - Android's back button walks back through the app instead of closing it, and only exits from the first screen;
+ * - bouldertime.com links opened on the phone go to the matching page in the app;
  * - the status bar uses dark text on the app's light header;
  * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between.
  * Plugins are imported here, on demand, so the web build never ships them.
@@ -36,6 +50,20 @@ export async function startNativeShell(): Promise<void> {
     if (canGoBack) window.history.back();
     else App.exitApp();
   });
+
+  // A bouldertime.com link opened on the phone (an email, a shared boulder) lands on the same page inside the app.
+  // The app may be cold-started by the link (getLaunchUrl) or already running (appUrlOpen); the same link is never
+  // followed twice, because email links carry one-time tokens.
+  let lastLink = "";
+  const follow = (url: string | undefined) => {
+    if (!url || url === lastLink) return;
+    const path = appPathFromUrl(url);
+    if (!path) return;
+    lastLink = url;
+    void import("@/app/router").then(({ router }) => router.navigate(path));
+  };
+  App.addListener("appUrlOpen", ({ url }) => follow(url));
+  void App.getLaunchUrl().then((launch) => follow(launch?.url)).catch(() => {});
 
   try {
     await StatusBar.setStyle({ style: Style.Light });

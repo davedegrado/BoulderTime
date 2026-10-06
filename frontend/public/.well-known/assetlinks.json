@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bouldertime.app",
+      "sha256_cert_fingerprints": [
+        "74:E9:81:DE:46:73:60:F4:3E:F0:58:A1:21:95:39:2A:29:1D:E1:66:0C:DB:E7:45:E5:20:6E:13:57:C0:00:87"
+      ]
+    }
+  }
+]

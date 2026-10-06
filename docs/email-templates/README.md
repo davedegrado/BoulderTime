@@ -1,7 +1,12 @@
 # Email templates (Italian)
 
 Supabase → **Authentication → Emails → Templates**. For each template, paste the subject and the HTML file.
-`{{ .ConfirmationURL }}`, `{{ .Email }}` and `{{ .NewEmail }}` are filled in by Supabase.
+`{{ .SiteURL }}`, `{{ .TokenHash }}`, `{{ .Email }}` and `{{ .NewEmail }}` are filled in by Supabase.
+
+**The links go to `/auth/confirm` with a token, not to `{{ .ConfirmationURL }}`.** The default link carries a code
+that only works in the browser where sign-up started, so a person who signs up in the app and opens the email in the
+browser (or on another device) would see a failed sign-in. The token is checked by the server and works anywhere.
+It also points straight at bouldertime.com, which is what lets the phone open the link in the app.
 
 | Supabase template | Subject | File |
 |---|---|---|

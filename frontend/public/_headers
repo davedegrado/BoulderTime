@@ -8,3 +8,8 @@
 # Hashed build assets never change: cache them for a year.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# App Links / Universal Links verification files: read by Android and iOS, must be JSON and current.
+/.well-known/*
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600

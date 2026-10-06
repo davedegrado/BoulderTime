@@ -4,6 +4,10 @@ apply plugin: 'com.android.application'
 def btVersionCode = Integer.parseInt(System.getenv("BT_VERSION_CODE") ?: "1")
 def btVersionName = System.getenv("BT_VERSION_NAME") ?: "0.1.0"
 
+// Release signing, from CI secrets. The key never lives in the repository; without it, release builds stay unsigned
+// and only debug builds are produced.
+def btKeystorePath = System.getenv("BT_KEYSTORE_PATH")
+
 android {
     namespace = "com.bouldertime.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -20,8 +24,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (btKeystorePath) {
+            release {
+                storeFile file(btKeystorePath)
+                storePassword System.getenv("BT_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("BT_KEY_ALIAS")
+                keyPassword System.getenv("BT_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (btKeystorePath) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

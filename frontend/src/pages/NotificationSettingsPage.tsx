@@ -31,7 +31,7 @@ function PhoneNotifications() {
     return (
       <section className="card stack" aria-labelledby="phone-title">
         <h2 id="phone-title" className="section__title">{t("On your phone")}</h2>
-        <p className="field__hint">{t("Notifications with the app closed are coming in the next update of the app. Until then you'll find everything here in Notifications.")}</p>
+        <p className="field__hint">{t("Notifications with the app closed are coming with an update of the app. Until then you'll find everything here in Notifications.")}</p>
       </section>
     );
   }

@@ -6,11 +6,11 @@
       <tr><td style="padding:8px 32px;font-size:20px;font-weight:700;">Conferma il tuo indirizzo email</td></tr>
       <tr><td style="padding:8px 32px;font-size:16px;line-height:1.5;">Ciao! Hai creato un account su BoulderTime con {{ .Email }}. Conferma l'indirizzo per iniziare a registrare i tuoi blocchi.</td></tr>
       <tr><td style="padding:16px 32px;">
-        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;background:#FF7A2E;color:#1A1A1A;border-radius:999px;font-weight:700;text-decoration:none;">Conferma l'email</a>
+        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" style="display:inline-block;padding:14px 24px;background:#FF7A2E;color:#1A1A1A;border-radius:999px;font-weight:700;text-decoration:none;">Conferma l'email</a>
       </td></tr>
       <tr><td style="padding:8px 32px;font-size:14px;line-height:1.5;color:#555555;">
         Se il pulsante non funziona, copia questo indirizzo nel browser:<br>
-        <span style="word-break:break-all;">{{ .ConfirmationURL }}</span>
+        <span style="word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email</span>
       </td></tr>
       <tr><td style="padding:8px 32px 32px;font-size:14px;line-height:1.5;color:#555555;">Se non sei stato tu a registrarti, ignora questa email: senza conferma l'account non viene attivato.</td></tr>
     </table>

@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { RouteErrorPage } from "@/pages/RouteErrorPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LegalPage } from "@/pages/legal/LegalPage";
+import { ConfirmEmailPage } from "@/pages/ConfirmEmailPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/auth/RequireAuth";
@@ -45,6 +46,8 @@ export const router = createBrowserRouter([
   { path: "/sign-in", element: <SignInPage /> },
   { path: "/sign-up", element: <SignUpPage /> },
   { path: "/auth/callback", element: <AuthCallbackPage /> },
+  // Email links (confirmation, reset, email change). Kept apart from /auth/callback, which serves OAuth.
+  { path: "/auth/confirm", element: <ConfirmEmailPage /> },
   // Readable without an account: people decide whether to sign up after reading them.
   { path: "/privacy", element: <LegalPage document="privacy" /> },
   { path: "/termini", element: <LegalPage document="terms" /> },
