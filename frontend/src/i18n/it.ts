@@ -807,4 +807,9 @@ export const it: Record<string, string> = {
   "This link no longer works": "Questo link non funziona più",
   "It may have expired or already been used. If you've already confirmed your email, just sign in.": "Potrebbe essere scaduto o già usato. Se hai già confermato l'email, accedi pure.",
   "Checking the link": "Verifico il link",
+  "Add a photo": "Aggiungi una foto",
+  "Add a video": "Aggiungi un video",
+  "Take a photo": "Scatta una foto",
+  "Record a video": "Registra un video",
+  "Choose from the gallery": "Scegli dalla galleria",
 };

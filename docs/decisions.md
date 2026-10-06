@@ -455,7 +455,7 @@ were resolved against the page address and would have pointed at `localhost` ins
 
 **Next milestones, in order:** universal and app links; native push through Firebase (Web Push does not work inside
 an app); blocking users, which Apple requires for apps with user content; signed release builds and the stores. The
-native camera plugin is deferred: the upload fields already open the system camera inside the app.
+native camera plugin is not needed: see ADR-029.
 
 ## ADR-028 · Links that open the app, and email links that work anywhere
 **Email links carry a token, not a code.** Supabase's default confirmation link ends in a PKCE code that can only be
@@ -470,3 +470,10 @@ can claim it. Only our hosts are followed inside the app; anything else handed t
 
 **The signing key is checked against the published file on every build.** A mismatch would not fail anything visible;
 links would just start opening in the browser. Making the build fail turns that into something someone notices.
+
+## ADR-029 · Camera or gallery inside the app
+ADR-027 assumed the upload fields would offer camera and library inside the app as they do in a browser. On Android
+they don't: Capacitor's WebView opens the gallery for a plain file field and the camera for one with `capture`, never a
+choice. Rather than add the camera plugin, the app asks first and opens the matching field (`MediaInput`). It covers
+photos and videos alike, keeps the browser behaviour untouched, and the same component serves the web, the PWA and both
+apps. Camera permission is requested by Capacitor on first use.

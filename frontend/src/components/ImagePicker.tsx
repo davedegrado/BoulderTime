@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/Button";
 import { t } from "@/i18n/i18n";
+import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 
 interface ImagePickerProps {
   label: string;
@@ -15,17 +16,16 @@ interface ImagePickerProps {
 
 /** Preview + "Change"/"Remove" controls for a single image. */
 export function ImagePicker({ label, hint, preview, hasImage, busy, onPick, onRemove }: ImagePickerProps) {
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<MediaInputHandle>(null);
   return (
     <div className="image-picker">
       <div className="image-picker__preview">{preview}</div>
       <div className="image-picker__body">
         <span className="field__label">{label}</span>
         {hint && <span className="field__hint">{hint}</span>}
-        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); e.target.value = ""; }} />
+        <MediaInput ref={input} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={(f) => { if (f) onPick(f); }} />
         <div className="form__actions">
-          <Button variant="secondary" icon={<ImagePlus aria-hidden />} loading={busy} onClick={() => input.current?.click()}>
+          <Button variant="secondary" icon={<ImagePlus aria-hidden />} loading={busy} onClick={() => input.current?.open()}>
             {hasImage ? t("Change") : t("Upload")}
           </Button>
           {hasImage && <Button variant="ghost" icon={<Trash2 aria-hidden />} disabled={busy} onClick={onRemove}>{t("Remove")}</Button>}

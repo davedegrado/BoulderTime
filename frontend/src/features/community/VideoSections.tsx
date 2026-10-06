@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
+import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 
 function Player({ src, poster, label, autoPlay }: { src: string; poster?: string | null; label: string; autoPlay?: boolean }) {
   return <video className="player" src={src} poster={poster ?? undefined} controls playsInline preload="metadata" autoPlay={autoPlay} aria-label={label} />;
@@ -20,7 +21,7 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
   boulderId: string; kind: "COMMUNITY" | "BETA"; submitLabel: string; busy?: boolean;
   onUploaded: (video: UploadedVideo, caption: string) => Promise<unknown>;
 }) {
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<MediaInputHandle>(null);
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
@@ -52,9 +53,9 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
 
   return (
     <div className="uploader">
-      <input ref={input} type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <MediaInput ref={input} kind="video" accept="video/mp4,video/quicktime,video/webm,video/*" onFile={(f) => setFile(f ?? null)} />
       {!file ? (
-        <Button variant="secondary" icon={<Upload aria-hidden />} onClick={() => input.current?.click()}>{t("Choose a video")}</Button>
+        <Button variant="secondary" icon={<Upload aria-hidden />} onClick={() => input.current?.open()}>{t("Choose a video")}</Button>
       ) : (
         <>
           {previewUrl && (

@@ -14,6 +14,7 @@ import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
+import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
@@ -34,7 +35,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const staff = useStaff(gym.id);
   const create = useCreateBoulder(gym.id);
   const update = useUpdateBoulder(initial?.id ?? "");
-  const fileInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<MediaInputHandle>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(initial?.photoUrl ?? null);
@@ -109,13 +110,13 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       {/* Photo */}
       <section className="editor__section" aria-labelledby="photo-label">
         <p id="photo-label" className="field__label">{t("Photo *")}</p>
-        <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.click()}>
+        <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.open()}>
           {preview ? <img src={preview} alt={t("Selected boulder")} /> : (
             <span className="photo-picker__empty"><Camera aria-hidden /><span>{t("Take or choose a photo")}</span></span>
           )}
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
-        <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden onChange={(e) => pickFile(e.target.files?.[0])} />
+        <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={pickFile} />
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
 

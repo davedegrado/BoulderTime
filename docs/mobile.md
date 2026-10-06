@@ -41,6 +41,13 @@ values Cloudflare uses for the website:
 `frontend/package.json` `version` is the version people see (`0.1.0`). The build number is the GitHub Actions run
 number, so every build is higher than the previous one without editing a file.
 
+## Photos and videos
+
+Every upload goes through `components/MediaInput.tsx`. In a browser it is a plain file field, which already offers
+camera and library. Inside the app Android's WebView doesn't: without `capture` it opens the gallery only, with it the
+camera only (see Capacitor's `BridgeWebChromeClient.onShowFileChooser`). So in the app the field first asks
+"take a photo / choose from the gallery" and opens the matching one. No camera plugin needed.
+
 ## Links that open the app
 
 `https://bouldertime.com/...` links open in the Android app (App Links). Android checks the claim against

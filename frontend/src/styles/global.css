@@ -793,3 +793,14 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .check input { width: 22px; height: 22px; margin-top: 2px; flex-shrink: 0; accent-color: var(--bt-orange); }
 
 .grade--ungraded { background: var(--bt-surface-2); color: var(--bt-ink-2); border: 1px dashed var(--bt-line); font-weight: 600; }
+
+/* ---------- Camera-or-gallery choice (store app) ---------- */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 120; background: rgb(0 0 0 / 0.4); display: flex; align-items: flex-end; }
+.sheet { width: 100%; background: var(--bt-surface); border-radius: var(--bt-radius-lg) var(--bt-radius-lg) 0 0;
+  padding: var(--bt-3) var(--bt-3) calc(var(--bt-3) + var(--bt-safe-bottom)); display: flex; flex-direction: column; gap: var(--bt-1); }
+.sheet__option { display: flex; align-items: center; gap: var(--bt-3); min-height: 56px; padding: 0 var(--bt-4); border: 0;
+  border-radius: var(--bt-radius-md); background: transparent; color: var(--bt-ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.sheet__option:active { background: var(--bt-surface-2); }
+.sheet__option svg { width: 22px; height: 22px; }
+.sheet__cancel { min-height: 48px; margin-top: var(--bt-2); border: 0; border-radius: var(--bt-radius-md); background: var(--bt-surface-2);
+  color: var(--bt-ink); font: inherit; font-weight: 700; cursor: pointer; }

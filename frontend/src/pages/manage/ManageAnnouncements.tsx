@@ -16,6 +16,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
+import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 
 export function ManageAnnouncements() {
   const { gym } = useManagedGym();
@@ -64,7 +65,7 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
   const m = useAnnouncementMutations(gymId);
   const sectors = useSectors(gymId);
   const toast = useToast();
-  const fileInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<MediaInputHandle>(null);
   const [type, setType] = useState<AnnouncementType>(initial?.type ?? "ANNOUNCEMENT");
   const [title, setTitle] = useState(initial?.title ?? prefill.title);
   const [content, setContent] = useState(initial?.content ?? "");
@@ -127,9 +128,9 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
       <div className="editor__section">
         <span className="field__label">{t("Image")}</span>
         {imagePreview && <img className="announcement__image" src={imagePreview} alt="" />}
-        <input ref={fileInput} type="file" accept="image/*" hidden onChange={(e) => pickImage(e.target.files?.[0])} />
+        <MediaInput ref={fileInput} kind="image" accept="image/*" onFile={pickImage} />
         <div className="form__actions">
-          <Button variant="secondary" icon={<ImagePlus aria-hidden />} onClick={() => fileInput.current?.click()} loading={uploading}>{imagePreview ? t("Change image") : t("Add image")}</Button>
+          <Button variant="secondary" icon={<ImagePlus aria-hidden />} onClick={() => fileInput.current?.open()} loading={uploading}>{imagePreview ? t("Change image") : t("Add image")}</Button>
           {imagePreview && <Button variant="ghost" onClick={() => { setImagePath(null); setImagePreview(null); }}>{t(t("Remove image"))}</Button>}
         </div>
         {err?.fieldError("imagePath") && <p className="field__error">{err.fieldError("imagePath")}</p>}
