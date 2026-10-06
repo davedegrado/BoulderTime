@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Boulders can go on the wall ungraded; sends count and earn points once the grade is set
-applicata: Boulders can go on the wall ungraded; sends count and earn
+Applying: Update the grade validation test: no grades is now an ungraded boulder, not an error
+applicata: Update the grade validation test: no grades is now an
 == 1b. MIGRAZIONE ==
 già presente
 == 2. STRUMENTI ==
@@ -11,14 +11,13 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:28.48
+Time Elapsed 00:00:27.05
 OK
 == 4. TEST BACKEND ==
-[xUnit.net 00:01:39.01]     BoulderTime.Tests.Boulders.BoulderTests.Grades_must_come_from_this_gyms_active_systems_one_per_system [FAIL]
-Failed!  - Failed:     1, Passed:   176, Skipped:     0, Total:   177, Duration: 1 m 44 s - BoulderTime.Tests.dll (net8.0)
-[xUnit.net 00:01:39.01]     BoulderTime.Tests.Boulders.BoulderTests.Grades_must_come_from_this_gyms_active_systems_one_per_system [FAIL]
+Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
+A total of 1 test files matched the specified pattern.
 
-Failed!  - Failed:     1, Passed:   176, Skipped:     0, Total:   177, Duration: 1 m 44 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 38 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
       Tests  98 passed (98)
 vite v5.4.21 building for production...
@@ -70,7 +69,7 @@ dist/assets/App-C2TeA5aX.js                       550.77 kB │ gzip: 155.98 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 4.78s
+✓ built in 4.76s
 
 PWA v0.21.2
 mode      generateSW
@@ -79,4 +78,4 @@ files generated
   dist/sw.js
   dist/workbox-4e9e9954.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
