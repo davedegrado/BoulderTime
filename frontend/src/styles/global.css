@@ -81,7 +81,7 @@ svg { flex-shrink: 0; }
 }
 
 /* ---------- Page structure ---------- */
-.page { overflow-x: clip; max-width: var(--bt-content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--bt-8); }
+.page { max-width: var(--bt-content-max); margin: 0 auto; display: flex; flex-direction: column; gap: var(--bt-8); }
 .page--narrow { max-width: 560px; }
 .page__header { display: flex; flex-direction: column; gap: var(--bt-1); }
 .page__title { font-size: var(--bt-text-2xl); font-weight: 800; }
@@ -710,8 +710,10 @@ svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { .video-rail, .rail { scroll-behavior: auto; } }
 
 /* ---------- Maps ---------- */
-.map-card { position: relative; margin: 0 calc(-1 * var(--bt-4)); }
-@media (min-width: 720px) { .map-card { margin: 0; border-radius: var(--bt-radius-lg); overflow: hidden; border: 1px solid var(--bt-line); } }
+/* Inside the page margins on every screen. It used to bleed to the screen edge on phones, but the page clips
+   anything wider than itself (so long values can't widen the layout), and the bleed was being cut off — taking the
+   attribution and the locate button with it. */
+.map-card { position: relative; margin: 0; border-radius: var(--bt-radius-lg); overflow: hidden; border: 1px solid var(--bt-line); }
 .gym-map { width: 100%; height: 46vh; min-height: 280px; max-height: 520px; background: var(--bt-surface-2); z-index: 0; }
 .gym-map--picker { height: 280px; min-height: 0; border-radius: var(--bt-radius-md); border: 1px solid var(--bt-line); }
 .gym-map--static { height: 180px; min-height: 0; border-radius: var(--bt-radius-md); overflow: hidden; }
@@ -761,6 +763,10 @@ svg { flex-shrink: 0; }
 /* ---------- Installed app behaviour ---------- */
 /* Without this the whole page rubber-bands on iOS: the bottom bar drifts and headers detach while dragging. */
 html, body { overscroll-behavior: none; }
+/* The safety net against sideways scrolling sits on the document, not on each page: a page-level clip also cut off
+   everything designed to reach the screen edge (video rails, announcement images, the sub-navigation). clip, unlike
+   hidden, creates no scroll container, so sticky headers keep working. */
+html, body { overflow-x: clip; }
 /* A drag that starts on a horizontal strip (tabs, chips, thumbnails) must not drag the page with it. */
 .tabs, .chips, .subnav, .video-strip { overscroll-behavior-x: contain; touch-action: pan-x; }
 /* Sticky elements stay put instead of sliding while the page settles. */

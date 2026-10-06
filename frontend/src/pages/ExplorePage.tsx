@@ -70,7 +70,7 @@ export function ExplorePage() {
             aria-label={t("Center the map on my position")}>
             <LocateFixed aria-hidden />
           </button>
-          {location.status === "locating" && <p className="map-card__note">Finding your position…</p>}
+          {location.status === "locating" && <p className="map-card__note">{t("Finding your position…")}</p>}
           {location.status === "denied" && <p className="map-card__note">{t("Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.")}</p>}
         </section>
       ) : search.isPending ? (
