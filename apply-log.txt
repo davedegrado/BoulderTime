@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Store apps, first milestone: Capacitor Android project built by GitHub Actions, same frontend as the website
-applicata: Store apps, first milestone: Capacitor Android project built
+Applying: Android build: compute the version before assigning it (Groovy parsed the old line as a call), current actions, pinned runner
+applicata: Android build: compute the version before assigning it
 == 1b. MIGRAZIONE ==
 già presente
 == 2. STRUMENTI ==
@@ -11,13 +11,13 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:27.36
+Time Elapsed 00:00:26.23
 OK
 == 4. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 48 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 47 s - BoulderTime.Tests.dll (net8.0)
 A total of 1 test files matched the specified pattern.
 
-Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 48 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 47 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
       Tests  101 passed (101)
 vite v5.4.21 building for production...
@@ -74,7 +74,7 @@ dist/assets/App-DZ70M3ZZ.js                       550.80 kB │ gzip: 155.99 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.25s
+✓ built in 5.21s
 
 PWA v0.21.2
 mode      generateSW
