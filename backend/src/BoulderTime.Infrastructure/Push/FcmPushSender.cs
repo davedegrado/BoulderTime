@@ -43,28 +43,9 @@ public sealed class FcmPushSender(HttpClient http, IConfiguration configuration,
             return PushResult.Failed;
         }
 
-        // Both halves are deliberate: `notification` is what the system tray shows while the app is closed, and
-        // `data` carries the page to open when the notification is tapped.
-        var payload = new
-        {
-            message = new
-            {
-                token = target.Address,
-                notification = new { title = message.Title, body = message.Body },
-                data = new { url = message.Url },
-                android = new
-                {
-                    collapse_key = message.Tag,
-                    priority = "high",
-                    notification = new { tag = message.Tag, click_action = "FLUTTER_NOTIFICATION_CLICK" },
-                },
-                apns = new { payload = new { aps = new { sound = "default", thread_id = message.Tag } } },
-            },
-        };
-
         using var request = new HttpRequestMessage(HttpMethod.Post, $"https://fcm.googleapis.com/v1/projects/{_account.ProjectId}/messages:send")
         {
-            Content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json"),
+            Content = new StringContent(Payload(target, message), Encoding.UTF8, "application/json"),
         };
         request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {accessToken}");
 
@@ -116,6 +97,32 @@ public sealed class FcmPushSender(HttpClient http, IConfiguration configuration,
         }
         finally { _tokenLock.Release(); }
     }
+
+    /// <summary>
+    /// The message as Firebase expects it.
+    ///
+    /// Both halves are deliberate: `notification` is what the system shows while the app is closed, and `data`
+    /// carries the page to open when it is tapped. There is deliberately **no `click_action`**: that names an
+    /// activity to start, and an app with no activity declaring it simply does nothing when the notification is
+    /// tapped. Left out, Firebase opens the app itself and Capacitor hands the data to the app.
+    /// </summary>
+    internal static string Payload(PushTarget target, PushMessage message) => JsonSerializer.Serialize(new
+    {
+        message = new
+        {
+            token = target.Address,
+            notification = new { title = message.Title, body = message.Body },
+            data = new { url = message.Url },
+            android = new
+            {
+                collapse_key = message.Tag,
+                priority = "high",
+                // Same tag replaces rather than stacks, matching what the web notifications do.
+                notification = new { tag = message.Tag },
+            },
+            apns = new { payload = new { aps = new { sound = "default", thread_id = message.Tag } } },
+        },
+    }, JsonOptions);
 
     /// <summary>The service account proving who we are: a JWT signed with its private key (RFC 7523).</summary>
     internal static string SignedAssertion(ServiceAccount account, DateTimeOffset? now = null)

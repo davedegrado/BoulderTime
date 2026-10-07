@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using BoulderTime.Application.Abstractions;
+using BoulderTime.Domain.Notifications;
 using BoulderTime.Infrastructure.Push;
 
 namespace BoulderTime.Tests.Push;
@@ -61,6 +63,31 @@ public sealed class FirebaseSenderTests
         key.VerifyData(Encoding.ASCII.GetBytes($"{parts[0]}.{parts[1]}"), FromBase64Url(parts[2]),
             HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).Should().BeTrue();
         account.ProjectId.Should().Be("bouldertime-test");
+    }
+
+    [Fact]
+    public void The_message_opens_the_app_and_says_which_page_to_go_to()
+    {
+        var target = new PushTarget(PushPlatform.Native, "fcm-token", "", "");
+        var message = new PushMessage("Nuovi blocchi", "Grotta ritracciata", "/gyms/rock-n-fire", "gym-1");
+
+        using var payload = JsonDocument.Parse(FcmPushSender.Payload(target, message));
+        var sent = payload.RootElement.GetProperty("message");
+
+        sent.GetProperty("token").GetString().Should().Be("fcm-token");
+        // The title and body are what the system shows while the app is closed.
+        sent.GetProperty("notification").GetProperty("title").GetString().Should().Be("Nuovi blocchi");
+        sent.GetProperty("notification").GetProperty("body").GetString().Should().Be("Grotta ritracciata");
+        // The page to open travels in the data, which the app reads when the notification is tapped.
+        sent.GetProperty("data").GetProperty("url").GetString().Should().Be("/gyms/rock-n-fire");
+
+        // No click_action: it names an activity to start, and an app without one does nothing when tapped. Firebase
+        // opens the app itself when it is absent.
+        var android = sent.GetProperty("android");
+        android.GetProperty("notification").TryGetProperty("click_action", out _).Should().BeFalse();
+        // The same tag replaces an earlier notification instead of stacking another one.
+        android.GetProperty("notification").GetProperty("tag").GetString().Should().Be("gym-1");
+        android.GetProperty("collapse_key").GetString().Should().Be("gym-1");
     }
 
     [Fact]

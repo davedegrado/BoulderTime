@@ -511,6 +511,12 @@ no `google-services.json`, and Capacitor rethrows whatever a plugin throws, whic
 JavaScript can catch it. So CI sets `VITE_PUSH_NATIVE` from the same condition that writes the file, and the app only
 reaches the plugin when that says yes; otherwise the settings screen says this version cannot do notifications.
 
+**The message sets no `click_action`.** That field names an activity to start, and a notification whose action no
+activity declares does nothing at all when tapped — which is what a stray Flutter convention in the payload caused.
+Left out, Firebase opens the app, Capacitor feeds the launch intent through `onNewIntent` (cold start included) and
+the app reads the page to open from the message's data. The payload is built by a function a test reads, so the
+shape is asserted rather than assumed.
+
 **Notifications carry their own icon.** Android draws a notification icon from its alpha channel alone, and the app
 icon has none to speak of, so it arrives as a filled square — which is what the first real notification showed. The
 status-bar icon is the mark cut out of a transparent canvas, at every density, tinted with BoulderTime's orange.
