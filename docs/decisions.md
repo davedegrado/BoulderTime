@@ -511,5 +511,9 @@ no `google-services.json`, and Capacitor rethrows whatever a plugin throws, whic
 JavaScript can catch it. So CI sets `VITE_PUSH_NATIVE` from the same condition that writes the file, and the app only
 reaches the plugin when that says yes; otherwise the settings screen says this version cannot do notifications.
 
+**Notifications carry their own icon.** Android draws a notification icon from its alpha channel alone, and the app
+icon has none to speak of, so it arrives as a filled square — which is what the first real notification showed. The
+status-bar icon is the mark cut out of a transparent canvas, at every density, tinted with BoulderTime's orange.
+
 **`google-services.json` is not committed.** The repository is public and the file names the Firebase project; CI
 writes it from a secret, and a build without that secret produces an app without notifications and says so.

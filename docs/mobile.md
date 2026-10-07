@@ -72,6 +72,10 @@ Setting it up, once:
 4. **Railway → Variables:** `Push__ServiceAccountJson` = that JSON on one line. Keep it secret: it can send
    notifications to every BoulderTime device.
 
+**The notification icon** is its own file (`res/drawable-*/ic_stat_bouldertime.png`), declared in the manifest.
+Android keeps only a notification icon's silhouette, and the app icon is fully opaque, so without this one every
+notification shows a filled square. Regenerating the Android project drops the declaration, so a test asserts it.
+
 iOS additionally needs an APNs key uploaded to Firebase; that comes with the iOS milestone.
 
 ## Links that open the app

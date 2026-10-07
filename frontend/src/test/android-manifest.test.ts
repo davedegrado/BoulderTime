@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const manifest = readFileSync(resolve(__dirname, "../../android/app/src/main/AndroidManifest.xml"), "utf8");
@@ -18,6 +18,16 @@ describe("What the Android app must declare for the camera", () => {
 
   it("asks for camera permission", () => {
     expect(manifest).toContain("android.permission.CAMERA");
+  });
+
+  it("has its own notification icon, or Android shows a filled square", () => {
+    // The app icon is fully opaque; Android keeps only a notification icon's silhouette, so it would arrive as a blob.
+    expect(manifest).toContain("com.google.firebase.messaging.default_notification_icon");
+    expect(manifest).toContain("@drawable/ic_stat_bouldertime");
+    for (const density of ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"]) {
+      expect(existsSync(resolve(__dirname, `../../android/app/src/main/res/drawable-${density}/ic_stat_bouldertime.png`)))
+        .toBe(true);
+    }
   });
 
   it("shares the folder a captured photo is written to", () => {

@@ -35,6 +35,15 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Android shows only a notification icon's silhouette, so the app icon would arrive as a filled square.
+             This one is the mark cut out of a transparent canvas, tinted with the colour below. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_bouldertime" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/bt_notification" />
     </application>
 
     <!-- Android 11 and later hide other apps unless they are declared here. Without this, Capacitor's check for a

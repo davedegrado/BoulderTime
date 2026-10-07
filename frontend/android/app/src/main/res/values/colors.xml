@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tints the notification icon and the app's name in the shade. BoulderTime's orange. -->
+    <color name="bt_notification">#E8641E</color>
+</resources>
