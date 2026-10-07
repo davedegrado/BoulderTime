@@ -64,7 +64,10 @@ Setting it up, once:
 1. **Firebase console** → create a project (analytics not needed) → add an **Android** app with package name
    `com.bouldertime.app` → download `google-services.json`.
 2. **GitHub → Settings → Secrets and variables → Actions → Secrets:** `ANDROID_GOOGLE_SERVICES_JSON` = the contents of
-   that file. It is written into the build by CI and never committed; without it the app builds without notifications.
+   that file. It is written into the build by CI and never committed. The same secret also sets `VITE_PUSH_NATIVE`,
+   which is how the app knows whether it may talk to the notification plugin at all: without Firebase the plugin
+   throws inside Android and Capacitor turns that into a crash (`Bridge.callPluginMethod` rethrows), so a build
+   without the secret shows "this version can't do notifications" instead of a switch.
 3. **Firebase console** → Project settings → **Service accounts** → *Generate new private key* → a JSON file.
 4. **Railway → Variables:** `Push__ServiceAccountJson` = that JSON on one line. Keep it secret: it can send
    notifications to every BoulderTime device.

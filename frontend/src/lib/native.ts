@@ -66,16 +66,20 @@ export async function startNativeShell(): Promise<void> {
   App.addListener("appUrlOpen", ({ url }) => follow(url));
 
   // Tapping a notification opens the page it is about. The url travels in the message's data, as the sender puts it.
-  try {
-    const { PushNotifications } = await import("@capacitor/push-notifications");
-    await PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
-      const url = notification.data?.url;
-      if (typeof url !== "string" || url.length === 0) return;
-      const path = url.startsWith("/") ? url : appPathFromUrl(url);
-      if (path) void import("@/app/router").then(({ router }) => router.navigate(path));
-    });
-  } catch {
-    // Notifications are a bonus here; failing to listen must not stop the app from starting.
+  // Only when this build carries its Firebase settings: without them the plugin throws, and Capacitor turns that into
+  // a crash. Everything after this point still has to run, so it is a branch and never an early return.
+  if (import.meta.env.VITE_PUSH_NATIVE === "1") {
+    try {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      await PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
+        const url = notification.data?.url;
+        if (typeof url !== "string" || url.length === 0) return;
+        const path = url.startsWith("/") ? url : appPathFromUrl(url);
+        if (path) void import("@/app/router").then(({ router }) => router.navigate(path));
+      });
+    } catch {
+      // Notifications are a bonus here; failing to listen must not stop the app from starting.
+    }
   }
   void App.getLaunchUrl().then((launch) => follow(launch?.url)).catch(() => {});
 

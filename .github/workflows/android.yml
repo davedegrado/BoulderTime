@@ -31,6 +31,9 @@ jobs:
       # Secrets can't be tested in `if:` directly; this says whether the signing key is configured.
       HAS_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       HAS_FIREBASE: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON != '' }}
+      # Read by the web build, and set from the same condition that writes google-services.json below, so the app can
+      # never offer notifications it was not built to receive — asking the plugin would crash it.
+      VITE_PUSH_NATIVE: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON != '' && '1' || '' }}
     steps:
       - uses: actions/checkout@v5
 

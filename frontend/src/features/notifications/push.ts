@@ -8,7 +8,7 @@ export interface PushStatus { available: boolean; publicKey: string | null; subs
  * browser needs a service worker and the Push API, and on iPhone the app has to be on the home screen first.
  */
 export function pushSupportedHere(): boolean {
-  if (isNativeApp()) return true;
+  if (isNativeApp()) return nativePushInThisBuild();
   return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
@@ -41,12 +41,22 @@ export async function pushStatus(): Promise<PushStatus> {
 }
 
 /**
+ * Whether this build of the app can receive notifications at all — that is, whether it was built with its Firebase
+ * settings. Asking the plugin is not an option: without them it throws inside Android, and Capacitor rethrows that,
+ * which closes the app. So the build says, and we never call the plugin unless it can answer.
+ */
+export function nativePushInThisBuild(): boolean {
+  return isNativeApp() && import.meta.env.VITE_PUSH_NATIVE === "1";
+}
+
+/**
  * The store app's own notification token, remembered for as long as the app runs. Firebase hands it over through a
  * listener rather than returning it, so registering means asking and then waiting for the answer.
  */
 let nativeToken: string | undefined;
 
 async function enableNativePush(): Promise<"enabled" | "denied" | "unsupported"> {
+  if (!nativePushInThisBuild()) return "unsupported";
   const { PushNotifications } = await import("@capacitor/push-notifications");
 
   const asked = await PushNotifications.requestPermissions();
@@ -68,6 +78,7 @@ async function enableNativePush(): Promise<"enabled" | "denied" | "unsupported">
 }
 
 async function disableNativePush(): Promise<void> {
+  if (!nativePushInThisBuild()) return;
   const { PushNotifications } = await import("@capacitor/push-notifications");
   const token = nativeToken;
   // Removing the stored notifications too, so the tray doesn't keep showing what we stopped sending.

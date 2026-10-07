@@ -25,8 +25,16 @@ vi.mock("@capacitor/push-notifications", () => ({
   },
 }));
 
-beforeEach(() => { calls.length = 0; listeners.clear(); registerCalled.mockClear(); permission.mockResolvedValue({ receive: "granted" }); });
-afterEach(() => native.mockReset());
+beforeEach(() => {
+  calls.length = 0;
+  listeners.clear();
+  registerCalled.mockClear();
+  permission.mockClear();
+  permission.mockResolvedValue({ receive: "granted" });
+  // What CI sets when the build carries its Firebase settings.
+  vi.stubEnv("VITE_PUSH_NATIVE", "1");
+});
+afterEach(() => { native.mockReset(); vi.unstubAllEnvs(); });
 
 describe("Notifications inside the store app", () => {
   it("registers the phone with its Firebase token, not with browser keys", async () => {
@@ -70,10 +78,27 @@ describe("Notifications inside the store app", () => {
     expect(calls).toContainEqual({ method: "DELETE", path: "/api/users/me/push?address=fcm-token-123" });
   });
 
-  it("is always available in the app, with no install step to explain", async () => {
+  it("is available in the app, with no install step to explain", async () => {
     native.mockReturnValue(true);
     const { pushSupportedHere, needsInstallFirst } = await import("@/features/notifications/push");
     expect(pushSupportedHere()).toBe(true);
     expect(needsInstallFirst()).toBe(false);
+  });
+
+  it("never touches the plugin in a build without Firebase, because that closes the app", async () => {
+    // Capacitor rethrows what the plugin throws (Bridge.callPluginMethod), so a missing Firebase config is a crash,
+    // not an error we could catch. The build says whether it has one, and nothing asks the plugin otherwise.
+    native.mockReturnValue(true);
+    vi.stubEnv("VITE_PUSH_NATIVE", "");
+    const { enablePush, disablePush, pushSupportedHere, nativePushInThisBuild } = await import("@/features/notifications/push");
+
+    expect(nativePushInThisBuild()).toBe(false);
+    expect(pushSupportedHere()).toBe(false);
+    await expect(enablePush("")).resolves.toBe("unsupported");
+    await expect(disablePush()).resolves.toBeUndefined();
+
+    expect(registerCalled).not.toHaveBeenCalled();
+    expect(permission).not.toHaveBeenCalled();
+    expect(calls).toHaveLength(0);
   });
 });

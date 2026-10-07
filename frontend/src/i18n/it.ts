@@ -811,4 +811,5 @@ export const it: Record<string, string> = {
   "Take a photo": "Scatta una foto",
   "Record a video": "Registra un video",
   "Choose from the gallery": "Scegli dalla galleria",
+  "This version of the app can't do notifications. Update it from the store, or use BoulderTime in the browser.": "Questa versione dell'app non supporta le notifiche. Aggiornala dallo store, oppure usa BoulderTime dal browser.",
 };

@@ -506,5 +506,10 @@ registration and then failing the unique index on the empty values left behind â
 before switching to the new version, so a column the running version still reads must not vanish under it. The new
 `platform` column defaults to Web, which is what every existing row was.
 
+**A build without Firebase must not offer notifications.** `FirebaseMessaging.getInstance()` throws when the app has
+no `google-services.json`, and Capacitor rethrows whatever a plugin throws, which closes the app â€” nothing in
+JavaScript can catch it. So CI sets `VITE_PUSH_NATIVE` from the same condition that writes the file, and the app only
+reaches the plugin when that says yes; otherwise the settings screen says this version cannot do notifications.
+
 **`google-services.json` is not committed.** The repository is public and the file names the Firebase project; CI
 writes it from a secret, and a build without that secret produces an app without notifications and says so.
