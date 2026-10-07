@@ -8,7 +8,9 @@ import type { HoldColor } from "@/features/boulders/holdColors";
 import { prepareImage } from "@/features/boulders/imageResize";
 import { t } from "@/i18n/i18n";
 
-export type BoulderStatus = "ACTIVE" | "REMOVED";
+export type BoulderStatus = "ACTIVE" | "REMOVED" | "DELETED";
+/** The two a list can be asked for. A deleted boulder is in no list, so asking for it is an error, not a filter. */
+export type BrowsableStatus = "ACTIVE" | "REMOVED";
 
 export interface BoulderGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gradeValueId: string; label: string; rank: number; colorHex: string | null }
 
@@ -16,7 +18,8 @@ export interface RatingSummary { average: number | null; count: number }
 export interface ViewerProgress { attempts: number; completed: boolean; completedAt: string | null; rating: number | null }
 
 export interface BoulderSummary {
-  id: string; gymId: string; gymName: string; sectorId: string; sectorName: string; photoUrl: string;
+  /** Null for a deleted boulder: it survives only inside the history of the climbers who sent it. */
+  id: string; gymId: string; gymName: string; sectorId: string; sectorName: string; photoUrl: string | null;
   holdColor: HoldColor; grades: BoulderGrade[]; status: BoulderStatus; createdAt: string; removedAt: string | null;
   rating: RatingSummary; viewer: ViewerProgress | null;
 }
@@ -32,8 +35,11 @@ export interface BoulderDetail extends BoulderSummary {
   canAddOfficialBeta: boolean;
 }
 
+/** What deleting a boulder would take with it. `sends` is what it would NOT take. */
+export interface DeletionImpact { sends: number; comments: number; videos: number; hasBeta: boolean }
+
 export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";
-export interface BoulderFilters { status?: BoulderStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string }
+export interface BoulderFilters { status?: BrowsableStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string }
 
 export interface SaveBoulderInput {
   sectorId: string; photoPath: string; thumbnailPath?: string | null; holdColor: HoldColor;
@@ -139,4 +145,19 @@ export function useRemoveBoulders(gymId: string) {
 export function useRestoreBoulder() {
   const invalidate = useInvalidateBoulders();
   return useMutation({ mutationFn: (boulderId: string) => api.post<BoulderDetail>(`/api/boulders/${boulderId}/restore`), onSuccess: invalidate });
+}
+
+/** Read before showing the confirmation: afterwards there is nothing left to count. */
+export function useDeletionImpact(boulderId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...boulderKeys.detail(boulderId), "deletion-impact"],
+    queryFn: ({ signal }) => api.get<DeletionImpact>(`/api/boulders/${boulderId}/deletion-impact`, { signal }),
+    enabled,
+  });
+}
+
+/** Erases a removed boulder from the gym. Climbers keep their sends; nothing else survives, and there is no undo. */
+export function useDeleteBoulder() {
+  const invalidate = useInvalidateBoulders();
+  return useMutation({ mutationFn: (boulderId: string) => api.delete(`/api/boulders/${boulderId}`), onSuccess: invalidate });
 }

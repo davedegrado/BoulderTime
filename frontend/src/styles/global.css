@@ -416,6 +416,11 @@ svg { flex-shrink: 0; }
 .editor__head { display: flex; align-items: center; gap: var(--bt-2); }
 .editor__section { display: flex; flex-direction: column; gap: var(--bt-2); margin: 0; padding: 0; border: 0; min-width: 0; }
 /* Set apart from the fields above it, and below the save button: removing is not a way of saving. */
+/* A boulder with no photo left: the gym deleted it, and only the sends it carries keep it alive. */
+.boulder-card__gone, .history-row__thumb--gone { display: grid; place-items: center; width: 100%; height: 100%; background: var(--bt-surface-2); color: var(--bt-ink-3); }
+.boulder-card__gone svg { width: 32px; height: 32px; }
+.history-row__thumb--gone svg { width: 20px; height: 20px; }
+.history-row--gone { cursor: default; }
 .editor__danger { gap: var(--bt-3); padding-top: var(--bt-4); border-top: 1px solid var(--bt-line); align-items: flex-start; }
 .editor__submit { position: sticky; bottom: calc(var(--bt-tabbar-h) + var(--bt-safe-bottom) + var(--bt-2)); padding-top: var(--bt-2); background: linear-gradient(to bottom, transparent, var(--bt-light) 30%); }
 @media (min-width: 960px) { .editor__submit { bottom: var(--bt-4); } }

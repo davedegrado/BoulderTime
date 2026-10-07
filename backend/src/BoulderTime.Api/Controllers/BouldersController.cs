@@ -64,4 +64,12 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
 
     [HttpPost("api/boulders/{boulderId:guid}/restore"), Authorize]
     public Task<BoulderDetailDto> Restore(Guid boulderId, CancellationToken ct) => boulders.RestoreAsync(boulderId, ct);
+
+    /// <summary>What deleting this boulder would take with it. Read before showing the confirmation.</summary>
+    [HttpGet("api/boulders/{boulderId:guid}/deletion-impact"), Authorize]
+    public Task<DeletionImpactDto> DeletionImpact(Guid boulderId, CancellationToken ct) => boulders.DeletionImpactAsync(boulderId, ct);
+
+    /// <summary>Erases a removed boulder from the gym. Climbers keep their sends; nothing else survives.</summary>
+    [HttpDelete("api/boulders/{boulderId:guid}"), Authorize]
+    public async Task<IActionResult> Delete(Guid boulderId, CancellationToken ct) { await boulders.DeleteAsync(boulderId, ct); return NoContent(); }
 }

@@ -98,26 +98,35 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
 
 function BouldersTab({ gymId }: { gymId: string }) {
   const [filters, setFilters] = useState<BoulderFilters>({});
+  const showingRemoved = filters.status === "REMOVED";
   const sectors = useSectors(gymId);
   const systems = useGradeSystems(gymId);
   const boulders = useBoulders(gymId, filters);
   const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
   const total = boulders.data?.pages[0]?.total ?? 0;
-  const filtered = Object.values(filters).some(Boolean);
+  // Status is a tab, not a filter: an empty "taken down" list means nothing has come off the wall, not that the
+  // filters are too narrow, and "clear filters" must not throw the reader back to the other tab.
+  const { status: _status, ...narrowing } = filters;
+  const filtered = Object.values(narrowing).some(Boolean);
 
   return (
     <div className="stack">
-      <BoulderFiltersBar filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
+      {/* A boulder you sent is part of your history long after it comes off the wall, so climbers can look back. */}
+      <div className="chips" role="radiogroup" aria-label={translate("Boulder status")}>
+        <button role="radio" aria-checked={!showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: undefined })}>{translate("On the wall")}</button>
+        <button role="radio" aria-checked={showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: "REMOVED" })}>{translate("Taken down")}</button>
+      </div>
+      <BoulderFiltersBar filters={filters} onChange={(f) => setFilters({ ...f, status: filters.status })} sectors={sectors.data ?? []} systems={systems.data ?? []} />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (
           <EmptyState icon={<Mountain />}
-            title={filtered ? translate("No boulders match these filters") : translate("No boulders on the wall yet")}
-            body={filtered ? translate("Try another sector, grade or hold colour.") : translate("This gym hasn't added its current boulders yet.")}
-            action={filtered ? <Button variant="secondary" onClick={() => setFilters({})}>{translate("Clear filters")}</Button> : undefined} />
+            title={filtered ? translate("No boulders match these filters") : showingRemoved ? translate("Nothing has been taken down yet") : translate("No boulders on the wall yet")}
+            body={filtered ? translate("Try another sector, grade or hold colour.") : showingRemoved ? translate("Boulders that come off the wall stay here, so you can find what you climbed.") : translate("This gym hasn't added its current boulders yet.")}
+            action={filtered ? <Button variant="secondary" onClick={() => setFilters({ status: filters.status })}>{translate("Clear filters")}</Button> : undefined} />
         ) : (
           <>
-            <p className="section__meta">{plural(total, "{count} boulder", "{count} boulders")}</p>
+            <p className="section__meta">{showingRemoved ? plural(total, "{count} taken down", "{count} taken down") : plural(total, "{count} boulder", "{count} boulders")}</p>
             <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{translate("Show more")}</Button>}
           </>

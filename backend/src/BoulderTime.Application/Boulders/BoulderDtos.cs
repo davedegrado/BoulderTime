@@ -12,14 +12,23 @@ public sealed record RatingSummaryDto(double? Average, int Count);
 /// <summary>The signed-in viewer's own tracking of a boulder; null when anonymous or never tracked.</summary>
 public sealed record ViewerProgressDto(int Attempts, bool Completed, DateTimeOffset? CompletedAt, int? Rating);
 
-/// <param name="PhotoUrl">Card image: the small thumbnail when available, otherwise the full photo.</param>
+/// <param name="PhotoUrl">
+/// Card image: the small thumbnail when available, otherwise the full photo. Null for a deleted boulder, which
+/// keeps no photo — it survives only inside the history of the climbers who sent it.
+/// </param>
 public sealed record BoulderSummaryDto(
-    Guid Id, Guid GymId, string GymName, Guid SectorId, string SectorName, string PhotoUrl,
+    Guid Id, Guid GymId, string GymName, Guid SectorId, string SectorName, string? PhotoUrl,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades,
     BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt,
     RatingSummaryDto Rating, ViewerProgressDto? Viewer);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
+
+/// <summary>
+/// What deleting a boulder would take with it, shown to staff before they confirm. <see cref="Sends"/> is the one
+/// thing deletion does NOT take: it is here so staff can see how many people climbed it before erasing the rest.
+/// </summary>
+public sealed record DeletionImpactDto(int Sends, int Comments, int Videos, bool HasBeta);
 
 public sealed record BoulderDetailDto(
     Guid Id, Guid GymId, string GymSlug, string GymName, Guid SectorId, string SectorName, string PhotoUrl, string PhotoPath,

@@ -20,6 +20,9 @@ public sealed class BoulderAccess(IAppDbContext db, GymAccess access)
     public async Task<BoulderScope> RequireVisibleAsync(Guid boulderId, CancellationToken ct)
     {
         var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        // A deleted boulder has no page: its photo, beta, videos and comments are gone, so there is nothing to show.
+        // The row is alive only to hold up the sends in climbers' history, and those are read from history.
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == boulder.GymId, ct);
         var role = await access.GetRoleAsync(gym.Id, ct);
         if (!gym.IsPubliclyVisible && role is null) throw new NotFoundException("Boulder", boulderId);

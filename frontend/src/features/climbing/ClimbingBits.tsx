@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bell, BellRing, Check, Star } from "lucide-react";
+import { Bell, BellRing, Check, MountainSnow, Star } from "lucide-react";
 import type { RatingSummary } from "@/features/boulders/api";
 import type { HighestGrade, HistoryItem, WeekActivity } from "@/features/climbing/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
@@ -47,10 +47,13 @@ export function FollowButton({ following, onToggle, label = t("Follow"), loading
 /** "✓ Yellow · 6A — Cave · Crimp Factory — Completed 12 Sept 2026 · 3 attempts · Boulder removed" */
 export function HistoryRow({ item }: { item: HistoryItem }) {
   const b = item.boulder;
-  return (
-    <li>
-      <Link to={`/boulders/${b.id}`} className="history-row">
-        <img className="history-row__thumb" src={b.photoUrl} alt="" loading="lazy" />
+  // A deleted boulder keeps its place in the history it belongs to, but there is no page left to open.
+  const gone = b.status === "DELETED";
+  const inside = (
+    <>
+        {b.photoUrl
+          ? <img className="history-row__thumb" src={b.photoUrl} alt="" loading="lazy" />
+          : <span className="history-row__thumb history-row__thumb--gone" aria-hidden><MountainSnow /></span>}
         <div className="history-row__main">
           <div className="history-row__top">
             {item.completed ? <span className="sent-mark" aria-label={t("Completed")}><Check aria-hidden /></span> : <span className="project-mark">{t("Project")}</span>}
@@ -64,9 +67,16 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
           <div className="history-row__tags">
             <HoldBadge color={b.holdColor} compact />
             {b.status === "REMOVED" && <span className="tag">{t("Boulder removed")}</span>}
+            {gone && <span className="tag">{t("No longer at the gym")}</span>}
           </div>
         </div>
-      </Link>
+    </>
+  );
+  return (
+    <li>
+      {gone
+        ? <div className="history-row history-row--gone">{inside}</div>
+        : <Link to={`/boulders/${b.id}`} className="history-row">{inside}</Link>}
     </li>
   );
 }

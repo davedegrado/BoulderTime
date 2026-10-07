@@ -116,6 +116,7 @@ public static partial class Translations
         ("Remove at most {0} boulders at once.", "Rimuovi al massimo {0} blocchi alla volta."),
         ("Some selected boulders don't belong to this gym.", "Alcuni blocchi selezionati non appartengono a questa palestra."),
         ("Its sector is hidden. Show the sector again before restoring this boulder.", "Il suo settore è nascosto. Rendi di nuovo visibile il settore prima di ripristinare il blocco."),
+        ("Take the boulder off the wall first, then delete it.", "Smonta prima il blocco dalla parete, poi eliminalo."),
         ("Upload a JPEG, PNG or WebP photo.", "Carica una foto JPEG, PNG o WebP."),
         ("Upload a JPEG, PNG or WebP image.", "Carica un'immagine JPEG, PNG o WebP."),
         ("Photos must be under {0} MB.", "Le foto devono pesare meno di {0} MB."),

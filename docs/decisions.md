@@ -594,3 +594,24 @@ key has an Italian entry. Both were made to fail on purpose before being trusted
 A related fix: 98 calls were written `t(t("…"))`. The inner call returned Italian and the outer one then looked up
 that Italian as if it were an English key, logging a missing-translation warning and surviving only by falling
 through. They are all single calls now.
+
+## ADR-035 · A boulder off the wall, and a boulder erased
+Two different things were both called "removed".
+
+**Removed is public.** A boulder that comes off the wall stays visible to everyone, not just staff. Climbers asked
+for it and they are right: a send is part of your history, and hiding the boulder would mean the day a sector is
+retraced your send quietly stops existing. The gym page has a "taken down" tab beside "on the wall".
+
+**Deleted erases the gym's side and only the gym's side.** Staff needed a way to be rid of a mistake, a duplicate,
+or a boulder nobody should find again. Deleting takes the photo, the official beta, climbers' videos, comments,
+ratings, grade suggestions, follows and the reports about any of them, and frees the storage behind them.
+
+**It never takes the sends.** A climber's history and their points are theirs, not the gym's, and a gym tidying its
+wall must not quietly take points off people who did the work. So the row survives, emptied, together with its
+official grades — the leaderboard scores a send by its grade, so dropping those would silently zero it — and every
+list and page stops showing it. In history it appears without a photo, labelled, and is no longer a link, because
+there is no page left to open. The confirmation says both halves: what goes, and that the sends stay.
+
+**Only a gym admin, only after it is off the wall, and there is no undo.** Setters take boulders down; erasing one
+is a different decision. Restoring a deleted boulder is refused rather than half-done: there is no photo to restore
+it to.

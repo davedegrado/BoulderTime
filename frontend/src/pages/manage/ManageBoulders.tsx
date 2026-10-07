@@ -6,6 +6,7 @@ import { useBoulders, useRemoveBoulders, useRestoreBoulder, type BoulderFilters,
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
+import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -13,6 +14,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { plural, t } from "@/i18n/i18n";
+import { atLeast } from "@/features/staff/roles";
 
 export function ManageBoulders() {
   const { gym } = useManagedGym();
@@ -106,6 +108,7 @@ export function ManageBoulders() {
                     onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
                     {t("Restore")}
                   </Button>
+                  {atLeast(gym.viewerRole, "ADMIN") && <DeleteBoulderButton boulderId={b.id} />}
                 </div>
               ) : (
                 <BoulderCard key={b.id} boulder={b} to={`/manage/${gym.slug}/boulders/${b.id}/edit`}

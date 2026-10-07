@@ -32,7 +32,7 @@ export function BoulderPage() {
   return (
     <article className="page page--flush boulder-page">
       <div className="boulder-page__photo">
-        <img src={b.photoUrl} alt={t("Boulder in {sector}", { sector: b.sectorName })} />
+        {b.photoUrl && <img src={b.photoUrl} alt={t("Boulder in {sector}", { sector: b.sectorName })} />}
         <Link to={`/gyms/${b.gymSlug}`} className="boulder-page__back" aria-label={t("Back to {name}", { name: b.gymName })}><ArrowLeft aria-hidden /></Link>
       </div>
 

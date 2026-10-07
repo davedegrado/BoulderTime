@@ -31,9 +31,11 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var role = await access.GetRoleAsync(gymId, ct);
         if (!gym.IsPubliclyVisible && role is null) throw new NotFoundException("Gym", gymId);
 
+        // Climbers see removed boulders too: the ones they have already climbed are part of their own history, and
+        // hiding them would mean a send stops existing the day the sector is retraced. Deleted ones are gone for
+        // everybody, staff included — there is nothing left of them but the sends they carry.
         var status = q.Status ?? BoulderStatus.Active;
-        if (status == BoulderStatus.Removed && role is null)
-            throw new ForbiddenException("Only staff can browse removed boulders.", "gym_staff_required");
+        if (status == BoulderStatus.Deleted) throw new NotFoundException("Gym", gymId);
 
         var (page, size) = Paging.Normalize(q.Page, q.PageSize, 24);
         var query = db.Boulders.AsNoTracking().Where(b => b.GymId == gymId && b.Status == status);
@@ -227,6 +229,80 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
             }
         }
         db.BoulderBetas.RemoveRange(betas);
+    }
+
+    /// <summary>
+    /// What deleting this boulder would cost, so staff decide knowing it rather than guessing. Counted before the
+    /// deed, because afterwards there is nothing left to count.
+    /// </summary>
+    public async Task<DeletionImpactDto> DeletionImpactAsync(Guid boulderId, CancellationToken ct = default)
+    {
+        var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
+        return new DeletionImpactDto(
+            await db.BoulderAttempts.CountAsync(a => a.BoulderId == boulderId && a.Completed, ct),
+            await db.Comments.CountAsync(c => c.BoulderId == boulderId, ct),
+            await db.BoulderVideos.CountAsync(v => v.BoulderId == boulderId, ct),
+            await db.BoulderBetas.AnyAsync(b => b.BoulderId == boulderId, ct));
+    }
+
+    /// <summary>
+    /// Erases a removed boulder from the gym: photo, beta, climbers' videos, comments, ratings, grade suggestions
+    /// and follows all go, and the storage behind them is freed.
+    ///
+    /// What does NOT go is the sends. A climber's history and their points are theirs, not the gym's, and a gym
+    /// tidying its wall must not quietly take points off people who did the work. So the row stays as a marker,
+    /// with its official grades — the leaderboard scores a send from the grade, so losing those would zero it —
+    /// and every list and page stops showing it. It cannot be undone: there is nothing left to restore.
+    /// </summary>
+    public async Task DeleteAsync(Guid boulderId, CancellationToken ct = default)
+    {
+        var boulder = await db.Boulders.FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        await access.RequireRoleAsync(boulder.GymId, GymRole.Admin, ct);
+        if (boulder.Status == BoulderStatus.Deleted) return;
+        if (boulder.Status != BoulderStatus.Removed)
+            throw new ConflictException("Take the boulder off the wall first, then delete it.", "boulder_not_removed");
+
+        await ReleaseBetaVideosAsync([boulderId], ct);
+        var videoIds = await ReleaseClimberVideosAsync(boulderId, ct);
+        var comments = await db.Comments.Where(c => c.BoulderId == boulderId).ToListAsync(ct);
+        db.Comments.RemoveRange(comments);   // their likes cascade
+        db.BoulderRatings.RemoveRange(await db.BoulderRatings.Where(r => r.BoulderId == boulderId).ToListAsync(ct));
+        db.GradeSuggestions.RemoveRange(await db.GradeSuggestions.Where(s => s.BoulderId == boulderId).ToListAsync(ct));
+        db.BoulderFollows.RemoveRange(await db.BoulderFollows.Where(f => f.BoulderId == boulderId).ToListAsync(ct));
+
+        // Reports point at content by id with no foreign key, so nothing would stop them outliving what they are
+        // about and leaving the moderation queue full of rows that open onto nothing.
+        var reported = comments.Select(c => c.Id).Concat(videoIds).Append(boulderId).ToList();
+        db.Reports.RemoveRange(await db.Reports.Where(r => reported.Contains(r.EntityId)).ToListAsync(ct));
+
+        foreach (var path in boulder.Delete(currentUser.UserId, clock.UtcNow))
+        {
+            try { await storage.DeleteAsync(StorageBuckets.BoulderImages, path, ct); }
+            catch (Exception) { /* the row is going either way; the file is left for the storage clean-up */ }
+        }
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Climbers' own videos survive a removal, because they belong to the people who filmed them. They do not
+    /// survive a deletion: the boulder they show no longer exists anywhere, so there is nothing left to watch.
+    /// </summary>
+    /// <returns>The ids of the videos that went, so their reports can go with them.</returns>
+    private async Task<List<Guid>> ReleaseClimberVideosAsync(Guid boulderId, CancellationToken ct)
+    {
+        var videos = await db.BoulderVideos.Where(v => v.BoulderId == boulderId).ToListAsync(ct);
+        foreach (var video in videos)
+        {
+            foreach (var path in new[] { video.StoragePath, video.ThumbnailPath })
+            {
+                if (string.IsNullOrWhiteSpace(path)) continue;
+                try { await storage.DeleteAsync(StorageBuckets.CommunityVideos, path, ct); }
+                catch (Exception) { /* left for the storage clean-up to pick up */ }
+            }
+        }
+        db.BoulderVideos.RemoveRange(videos);
+        return videos.Select(v => v.Id).ToList();
     }
 
     public async Task<BoulderDetailDto> RestoreAsync(Guid boulderId, CancellationToken ct = default)

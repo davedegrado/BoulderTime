@@ -26,6 +26,7 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Per-gym video allowance: climber videos off by default, beta cap (ADR-026) | **Done** | allowance, cap and clean-up tests |
 | — | Boulders can go up ungraded and be graded later | **Done** | ungraded-send and scoring tests |
 | — | The official beta can be a link to Instagram/YouTube instead of an upload (ADR-032) | **Done** | address-validation, allowance and swap tests |
+| — | Taken-down boulders stay visible to climbers; gyms can erase one for good (ADR-035) | **Done** | visibility, history-survival and permission tests |
 
 ## Store apps (in progress)
 

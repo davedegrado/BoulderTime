@@ -6,6 +6,11 @@ public enum BoulderStatus
 {
     Active = 0,
     Removed = 1,
+    /// <summary>
+    /// Erased by the gym. The row survives only to hold up climbers' history: its photo, videos, comments and
+    /// ratings are gone and no list or page shows it any more, but the sends it carries still count.
+    /// </summary>
+    Deleted = 2,
 }
 
 /// <summary>
@@ -71,6 +76,25 @@ public class Boulder : IAuditable
         Status = BoulderStatus.Active;
         RemovedAt = null;
         RemovedByUserId = null;
+    }
+
+    /// <summary>
+    /// Erases the boulder from the gym. The row stays, because climbers' sends point at it and those are theirs,
+    /// not the gym's — but everything the gym put on it goes, starting with the photo. There is no way back:
+    /// a deleted boulder cannot be restored, because there is nothing left to restore it to.
+    /// </summary>
+    /// <returns>Storage paths that are no longer referenced, so they can be deleted.</returns>
+    public IReadOnlyList<string> Delete(Guid? byUserId, DateTimeOffset now)
+    {
+        var obsolete = new List<string>();
+        if (PhotoPath.Length > 0) obsolete.Add(PhotoPath);
+        if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
+        PhotoPath = string.Empty;
+        ThumbnailPath = null;
+        Status = BoulderStatus.Deleted;
+        RemovedAt ??= now;
+        RemovedByUserId ??= byUserId;
+        return obsolete;
     }
 }
 

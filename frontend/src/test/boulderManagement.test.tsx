@@ -1,5 +1,5 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
@@ -26,6 +26,8 @@ import { BetaEditor } from "@/features/community/BetaEditor";
 import { CommunityGradeSection } from "@/features/community/CommunityGradeSection";
 import { ProgressTracker } from "@/features/climbing/ProgressTracker";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
+import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
+import { HistoryRow } from "@/features/climbing/ClimbingBits";
 
 const person = { userId: "u2", displayName: "Anna", avatarUrl: null };
 const beta = (over: object = {}) => ({
@@ -135,5 +137,46 @@ describe("Removing boulders", () => {
     render(<MemoryRouter initialEntries={["/m"]}>{grid({ onLongPress: vi.fn() })}</MemoryRouter>);
     await userEvent.click(screen.getByRole("link"));
     expect(await screen.findByText("Boulder editor")).toBeInTheDocument();
+  });
+});
+
+describe("Boulders that are no longer on the wall", () => {
+  const deleted = {
+    ...summary, status: "DELETED", photoUrl: null, removedAt: "2026-10-02T10:00:00Z",
+  };
+
+  it("keeps a deleted boulder in the history, without a photo and without a page to open", () => {
+    renderAt("/p", "/p", <HistoryRow item={{
+      boulder: deleted as never, attempts: 3, completed: true,
+      completedAt: "2026-10-01T10:00:00Z", updatedAt: "2026-10-01T10:00:00Z", rating: null,
+    }} />);
+
+    // The send is still theirs: grade, sector and attempts are all there.
+    expect(screen.getByText("6A")).toBeInTheDocument();
+    expect(screen.getByText(/3 attempts/)).toBeInTheDocument();
+    expect(screen.getByText("No longer at the gym")).toBeInTheDocument();
+    // What is gone is the photo and the way in — the page would be a 404.
+    expect(document.querySelector("img")).toBeNull();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("tells staff what deletion destroys and what it leaves alone, before the second tap", async () => {
+    reply("GET", "/api/boulders/b1/deletion-impact", { sends: 7, comments: 2, videos: 0, hasBeta: true });
+    reply("DELETE", "/api/boulders/b1", null);
+    renderAt("/m", "/m", <DeleteBoulderButton boulderId="b1" />);
+
+    // Nothing is asked of the server until staff reach for the button.
+    expect(calls).toHaveLength(0);
+    await userEvent.click(screen.getByRole("button", { name: "Delete for good" }));
+
+    expect(await screen.findByText(/Sparisce la foto|Its photo goes/)).toBeInTheDocument();
+    expect(screen.getByText(/2 comments/)).toBeInTheDocument();
+    expect(screen.getByText(/the official beta/)).toBeInTheDocument();
+    // The reassurance matters as much as the warning: a gym tidying its wall is not taking people's points.
+    expect(screen.getByText(/7 climbers keep this in their history/)).toBeInTheDocument();
+
+    // The trigger is replaced by the confirmation, so the second tap is inside it, not a second button beside it.
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete for good" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/boulders/b1")).toBe(true));
   });
 });

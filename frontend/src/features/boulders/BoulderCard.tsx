@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, MountainSnow } from "lucide-react";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
@@ -48,8 +48,11 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   const body = (
     <>
       <div className="boulder-card__photo">
-        <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" />
+        {boulder.photoUrl
+          ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" />
+          : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
         {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
+        {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
         {!selectable && boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
         {!selectable && boulder.viewer && !boulder.viewer.completed && boulder.viewer.attempts > 0 && (
           <span className="boulder-card__tries">{plural(boulder.viewer.attempts, "{count} try", "{count} tries")}</span>
