@@ -49,7 +49,7 @@ export function ManageSettings() {
   useEffect(() => setForm(fromGym()), [gym]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!atLeast(role, "ADMIN")) {
-    return <EmptyState icon={<Lock />} title={t(t("Admins only"))} body={t(t("Ask a gym admin or owner to change the gym's profile."))} />;
+    return <EmptyState icon={<Lock />} title={t("Admins only")} body={t("Ask a gym admin or owner to change the gym's profile.")} />;
   }
 
   const err = update.error instanceof ApiError ? update.error : null;
@@ -73,32 +73,32 @@ export function ManageSettings() {
     <div className="stack">
     <section className="card stack form--wide" aria-labelledby="images-title">
       <h2 id="images-title" className="section__title">{t("Images")}</h2>
-      <ImagePicker label={t(t("Logo"))} hint={t(t("Square, at least 256 × 256 px."))} hasImage={!!gym.logoUrl} busy={setLogo.isPending}
+      <ImagePicker label={t("Logo")} hint={t("Square, at least 256 × 256 px.")} hasImage={!!gym.logoUrl} busy={setLogo.isPending}
         preview={<GymAvatar name={gym.name} logoUrl={gym.logoUrl} size={72} />} {...imageHandlers(setLogo, t("Logo"))} />
-      <ImagePicker label={t(t("Cover photo"))} hint={t(t("Wide photo of your walls, shown at the top of your gym page."))} hasImage={!!gym.coverImageUrl} busy={setCover.isPending}
+      <ImagePicker label={t("Cover photo")} hint={t("Wide photo of your walls, shown at the top of your gym page.")} hasImage={!!gym.coverImageUrl} busy={setCover.isPending}
         preview={gym.coverImageUrl ? <img className="image-picker__cover" src={gym.coverImageUrl} alt="" /> : <span className="image-picker__cover image-picker__cover--empty" aria-hidden />}
         {...imageHandlers(setCover, t("Cover"))} />
     </section>
     <form className="card form form--wide" onSubmit={onSubmit} noValidate>
       <h2 className="section__title">{t("Gym profile")}</h2>
       <div className="form__grid">
-        <TextField label={t(t("Name"))} value={form.name} onChange={set("name")} error={err?.fieldError("name")} />
-        <TextField label={t(t("City"))} value={form.city} onChange={set("city")} error={err?.fieldError("city")} />
+        <TextField label={t("Name")} value={form.name} onChange={set("name")} error={err?.fieldError("name")} />
+        <TextField label={t("City")} value={form.city} onChange={set("city")} error={err?.fieldError("city")} />
         <TextField label={t("Address")} value={form.address} onChange={set("address")} error={err?.fieldError("address")} className="form__span" />
         <TextField label={t("Website")} type="url" inputMode="url" placeholder={t("https://")} value={form.website} onChange={set("website")} error={err?.fieldError("website")} />
         <TextField label={t("Instagram")} placeholder={t("@yourgym or the full link")} value={form.instagramUrl}
           onChange={set("instagramUrl")} error={err?.fieldError("instagramUrl")} />
         <TextField label={t("Facebook")} placeholder={t("The link to your page")} value={form.facebookUrl}
           onChange={set("facebookUrl")} error={err?.fieldError("facebookUrl")} />
-        <TextField label={t(t("Email"))} type="email" inputMode="email" value={form.email} onChange={set("email")} error={err?.fieldError("email")} />
-        <TextField label={t(t("Phone"))} type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} error={err?.fieldError("phone")} />
+        <TextField label={t("Email")} type="email" inputMode="email" value={form.email} onChange={set("email")} error={err?.fieldError("email")} />
+        <TextField label={t("Phone")} type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} error={err?.fieldError("phone")} />
       </div>
       <div className="editor__section">
         <span className="field__label"><MapPin aria-hidden className="title-icon" /> {t("Location on the map")}</span>
         <span className="field__hint">{t("Climbers find you on the Explore map. Look it up from the address, then drag the pin onto your entrance.")}</span>
         <div className="form__actions">
-          <Button variant="secondary" icon={<Search aria-hidden />} loading={geocoding} onClick={findFromAddress} disabled={!form.address && !form.city}>{t(t("Find from address"))}</Button>
-          {position && <Button variant="ghost" onClick={() => setPosition(null)}>{t(t("Remove pin"))}</Button>}
+          <Button variant="secondary" icon={<Search aria-hidden />} loading={geocoding} onClick={findFromAddress} disabled={!form.address && !form.city}>{t("Find from address")}</Button>
+          {position && <Button variant="ghost" onClick={() => setPosition(null)}>{t("Remove pin")}</Button>}
         </div>
         {geocodeNote && <p className="field__hint" role="status">{geocodeNote}</p>}
         <Suspense fallback={<div className="gym-map gym-map--picker gym-map--loading" />}>
@@ -106,8 +106,8 @@ export function ManageSettings() {
         </Suspense>
         {position && <p className="list__sub">{position.lat.toFixed(5)}, {position.lng.toFixed(5)}</p>}
       </div>
-      <TextAreaField label={t(t("Description"))} rows={5} value={form.description} onChange={set("description")} error={err?.fieldError("description")} hint={t(t("What makes your gym special? Shown on your public page."))} />
-      <Button type="submit" icon={<Save aria-hidden />} loading={update.isPending}>{t(t("Save changes"))}</Button>
+      <TextAreaField label={t("Description")} rows={5} value={form.description} onChange={set("description")} error={err?.fieldError("description")} hint={t("What makes your gym special? Shown on your public page.")} />
+      <Button type="submit" icon={<Save aria-hidden />} loading={update.isPending}>{t("Save changes")}</Button>
     </form>
     </div>
   );

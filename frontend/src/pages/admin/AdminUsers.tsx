@@ -16,10 +16,10 @@ export function AdminUsers() {
 
   return (
     <div className="stack">
-      <SearchField label={t(t("Search users"))} placeholder={t(t("Name or email"))} value={text} onChange={setText} />
-      {users.isPending ? <LoadingState label={t(t("Loading users"))} />
+      <SearchField label={t("Search users")} placeholder={t("Name or email")} value={text} onChange={setText} />
+      {users.isPending ? <LoadingState label={t("Loading users")} />
         : users.isError ? <ErrorState error={users.error} onRetry={() => users.refetch()} />
-        : users.data.items.length === 0 ? <EmptyState icon={<UserRound />} title={t(t("No users found"))} />
+        : users.data.items.length === 0 ? <EmptyState icon={<UserRound />} title={t("No users found")} />
         : (
           <>
             <p className="section__meta">{users.data.total} {users.data.total === 1 ? "user" : "users"}</p>
@@ -29,9 +29,9 @@ export function AdminUsers() {
                   <Avatar name={u.displayName} url={null} size={40} />
                   <div className="list__main">
                     <p className="list__title">{u.displayName}</p>
-                    <p className="list__sub">{u.email} · joined {formatDate(u.createdAt)}{u.staffGyms > 0 && ` · staff at ${u.staffGyms}`}</p>
+                    <p className="list__sub">{u.email} · {t("joined {date}", { date: formatDate(u.createdAt) })}{u.staffGyms > 0 && ` · ${t("staff at {count}", { count: u.staffGyms })}`}</p>
                   </div>
-                  {u.isPlatformAdmin && <Badge tone="dark"><ShieldCheck aria-hidden /> {t(t("Admin"))}</Badge>}
+                  {u.isPlatformAdmin && <Badge tone="dark"><ShieldCheck aria-hidden /> {t("Admin")}</Badge>}
                 </li>
               ))}
             </ul>

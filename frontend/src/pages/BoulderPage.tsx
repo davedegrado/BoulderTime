@@ -40,7 +40,7 @@ export function BoulderPage() {
         {removed && (
           <div className="notice" role="note">
             <History aria-hidden />
-            <p>This boulder was removed{b.removedAt ? ` on ${formatDate(b.removedAt)}` : ""}. It stays here so climbers keep their history.</p>
+            <p>{b.removedAt ? t("This boulder was removed on {date}.", { date: formatDate(b.removedAt) }) : t("This boulder was removed.")} {t("It stays here so climbers keep their history.")}</p>
           </div>
         )}
 
@@ -85,13 +85,13 @@ export function BoulderPage() {
           </li>
         </ul>
 
-        <BetaSection boulderId={b.id} canAdd={b.canAddOfficialBeta ?? true} isStaff={!!b.viewerRole} />
+        <BetaSection boulderId={b.id} />
         <CommunityVideosSection boulderId={b.id} enabled={b.communityVideosEnabled ?? false} />
         <CommunityGradeSection boulderId={b.id} />
         <CommentsSection boulderId={b.id} />
 
         <div className="form__actions">
-          <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>More boulders at {b.gymName}</span></Link>
+          <Link to={`/gyms/${b.gymSlug}`} className="btn btn--ghost"><span>{t("More boulders at {gym}", { gym: b.gymName })}</span></Link>
           {session && <ReportButton entityType="BOULDER" entityId={b.id} label={t("Report a problem with this boulder")} />}
         </div>
       </div>

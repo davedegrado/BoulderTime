@@ -566,3 +566,31 @@ can still link, which is more use than being told to delete something.
 
 **The video stays on its own site.** We link out rather than embed: embedding means their player, their cookies and
 a consent question that is theirs to ask, on a page that is ours.
+
+## ADR-033 · Where the beta is published, and where a boulder is removed
+Staff were doing setting work on the climber's page: the boulder's page offered them the beta upload, and a boulder
+could only be removed by selecting it in a list.
+
+**The beta is published in the boulder editor.** It belongs with the photo and the grade — the things that describe
+the boulder as it was set. The climber's page now only plays it. A staff member reading a boulder page is reading,
+not working, and the controls were in the way of that.
+
+**A single boulder is removed from its own editor, silently.** Removing one is a correction. Removing many at once
+is a retrace, which is what followers want to hear about — so the list keeps the notification and the editor does
+not offer it. Both go through the same endpoint, so the history and storage rules are not duplicated.
+
+**Press and hold a card to start selecting**, the way a phone's home screen arms its icons. The press that starts
+the selection does not also open the boulder.
+
+## ADR-034 · English on screen is a bug, and a test says so
+Thirty-eight strings reached the screen without passing through `t()`, including buttons as central as "Mark as
+completed" and "Remove". Reviewing by eye had already missed them twice.
+
+`scripts/find-untranslated.mjs` walks the TypeScript syntax tree — not a regex, which cannot tell JSX text from a
+generic like `useState<string>` and reported 487 false positives when tried — and finds JSX text, read-by-a-person
+attributes and toast messages that are plain strings. A test runs it, and a second test checks that every `t("…")`
+key has an Italian entry. Both were made to fail on purpose before being trusted.
+
+A related fix: 98 calls were written `t(t("…"))`. The inner call returned Italian and the outer one then looked up
+that Italian as if it were an English key, logging a missing-translation warning and surviving only by falling
+through. They are all single calls now.

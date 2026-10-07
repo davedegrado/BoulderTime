@@ -94,7 +94,7 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         </div>
       ) : (
         <Button block className="btn--lg" icon={<Check aria-hidden />} onClick={() => change({ attempts, completed: true })}>
-          Mark as completed
+          {t("Mark as completed")}
         </Button>
       )}
 

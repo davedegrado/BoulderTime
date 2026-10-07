@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { WifiOff } from "lucide-react";
+import { t } from "@/i18n/i18n";
 
 export function useOnlineStatus() {
   const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
@@ -20,7 +21,7 @@ export function OfflineBanner() {
   if (online) return null;
   return (
     <div className="offline-banner" role="status">
-      <WifiOff aria-hidden /> You're offline. Things you've already opened still show; changes need a connection.
+      <WifiOff aria-hidden /> {t("You're offline. Things you've already opened still show; changes need a connection.")}
     </div>
   );
 }

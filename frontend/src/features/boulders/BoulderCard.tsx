@@ -1,3 +1,4 @@
+import { useEffect, useRef, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import type { BoulderSummary } from "@/features/boulders/api";
@@ -11,10 +12,39 @@ interface BoulderCardProps {
   selectable?: boolean;
   selected?: boolean;
   onToggle?: () => void;
+  /** Press and hold to start selecting, the way a phone's home screen arms its icons. */
+  onLongPress?: () => void;
 }
 
+const LONG_PRESS_MS = 450;
+
 /** Image-first card for scanning many boulders: grade and holds are always both visible and always labelled. */
-export function BoulderCard({ boulder, to, selectable, selected, onToggle }: BoulderCardProps) {
+export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress }: BoulderCardProps) {
+  const timer = useRef<number | null>(null);
+  const fired = useRef(false);
+
+  const cancel = () => { if (timer.current !== null) { window.clearTimeout(timer.current); timer.current = null; } };
+  const start = () => {
+    if (!onLongPress) return;
+    fired.current = false;
+    timer.current = window.setTimeout(() => { fired.current = true; onLongPress(); }, LONG_PRESS_MS);
+  };
+  // The hold has already selected the card, so letting the tap through would open the boulder at the same time.
+  const swallowClickAfterHold = (e: MouseEvent) => { if (fired.current) { e.preventDefault(); fired.current = false; } };
+
+  const pressHandlers = onLongPress
+    ? {
+        onPointerDown: start,
+        onPointerUp: cancel,
+        onPointerLeave: cancel,
+        onPointerCancel: cancel,
+        onClick: swallowClickAfterHold,
+        onContextMenu: (e: MouseEvent) => { if (timer.current !== null || fired.current) e.preventDefault(); },
+      }
+    : {};
+
+  useEffect(() => cancel, []);
+
   const body = (
     <>
       <div className="boulder-card__photo">
@@ -45,5 +75,5 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle }: Bou
       </button>
     );
   }
-  return <Link to={to ?? `/boulders/${boulder.id}`} className="boulder-card">{body}</Link>;
+  return <Link to={to ?? `/boulders/${boulder.id}`} className="boulder-card" {...pressHandlers}>{body}</Link>;
 }

@@ -39,13 +39,15 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
 | M5 | Blocking a user (ADR-031) | **Done** |
 | M6 | iOS: Xcode project built in CI, universal links | Next |
-| M6b | Reporting a person and banning an account, platform-wide | Planned — the admin side M5 does not cover |
+| M6b | Reporting a person and banning an account, platform-wide | **Next** — Apple 1.2 says "block abusive users **from the service**", which is this, not M5 |
 | M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
 
 ## Planned, deliberately not started
 
 - **Reporting a person, and banning an account.** Today a report is about a *thing* — a comment, a video, a boulder —
   and there is no platform-wide ban. Blocking (M5) is the reader's own tool and does not give BoulderTime one.
+  Apple's guideline 1.2 asks for "the ability to block abusive users **from the service**", which reads as the
+  operator's power, so this is not optional either. Moved up to M6b.
 - **Interactive gym map by sector.** Tap a sector on a plan of the gym and get its boulders. The hard part is not the
   tapping: it is where the plan comes from, and that each gym's is different. Needs a design pass before any code.
 

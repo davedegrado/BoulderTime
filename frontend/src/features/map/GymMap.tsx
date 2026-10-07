@@ -6,6 +6,7 @@ import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap, useMapEve
 import { env } from "@/config/env";
 import type { Bounds, GymPin } from "@/features/gyms/api";
 import { buildPinHtml } from "@/features/map/pinHtml";
+import { t } from "@/i18n/i18n";
 
 /** Brand pin as an HTML marker (no image assets, so no bundler icon-path issues). */
 function pinIcon(name: string, logoUrl: string | null) {
@@ -68,7 +69,7 @@ export function GymMap({ pins, userPosition, focus, onBounds }: GymMapProps) {
       <Recenter center={focus} zoom={focus?.zoom ?? 12} />
       {userPosition && (
         <CircleMarker center={[userPosition.lat, userPosition.lng]} radius={8} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2F6FDB", fillOpacity: 1 }}>
-          <Popup>You are here</Popup>
+          <Popup>{t("You are here")}</Popup>
         </CircleMarker>
       )}
       {pins.map((p) => (
@@ -77,7 +78,7 @@ export function GymMap({ pins, userPosition, focus, onBounds }: GymMapProps) {
             <div className="pin-popup">
               <strong>{p.name}</strong>
               <span>{p.city}</span>
-              <Link to={`/gyms/${p.slug}`}>Open gym</Link>
+              <Link to={`/gyms/${p.slug}`}>{t("Open gym")}</Link>
             </div>
           </Popup>
         </Marker>

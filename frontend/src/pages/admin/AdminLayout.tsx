@@ -11,7 +11,7 @@ export function AdminLayout() {
   if (me.isPending) return <LoadingState />;
   if (me.isError) return <ErrorState error={me.error} onRetry={() => me.refetch()} />;
   if (!me.data.isPlatformAdmin) {
-    return <EmptyState icon={<ShieldAlert />} title={t(t("BoulderTime administrators only"))} body={t(t("This area manages the platform itself."))} />;
+    return <EmptyState icon={<ShieldAlert />} title={t("BoulderTime administrators only")} body={t("This area manages the platform itself.")} />;
   }
   return (
     <div className="page">
@@ -19,7 +19,7 @@ export function AdminLayout() {
         <p className="manage-head__eyebrow">{t("BoulderTime admin")}</p>
         <h1 className="page__title">{t("Platform")}</h1>
       </header>
-      <SubNav label={t(t("Admin sections"))} items={[
+      <SubNav label={t("Admin sections")} items={[
         { to: "/admin", label: t("Dashboard"), end: true },
         { to: "/admin/candidates", label: t("Suggestions") },
         { to: "/admin/reports", label: t("Reports") },

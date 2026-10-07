@@ -54,7 +54,7 @@ export function AnnouncementCard({ a, showGym = false, actions }: { a: Announcem
           <CalendarDays aria-hidden /> {new Date(a.eventDate).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
         </p>
       )}
-      {a.sectorName && <p className="list__sub">Sector: {a.sectorName}</p>}
+      {a.sectorName && <p className="list__sub">{t("Sector")}: {a.sectorName}</p>}
       <p className="prose">{a.content}</p>
       {actions && <div className="form__actions">{actions}</div>}
     </article>

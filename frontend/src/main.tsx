@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "@/styles/tokens.css";
 import "@/styles/global.css";
 import { isNativeApp, startNativeShell } from "@/lib/native";
+import { t } from "@/i18n/i18n";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -22,7 +23,7 @@ import("@/app/App")
   .catch((err: Error) => {
     root.render(
       <div className="state state--error" role="alert">
-        <h1 className="state__title">BoulderTime couldn't start</h1>
+        <h1 className="state__title">{t("BoulderTime couldn't start")}</h1>
         <p className="state__text">{err.message}</p>
       </div>,
     );

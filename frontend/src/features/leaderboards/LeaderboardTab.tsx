@@ -36,7 +36,7 @@ function Row({ entry, metric, onReport }: { entry: LeaderboardEntry; metric: Lea
       <span className="board__position" aria-label={t("Position {position}", { position: entry.position })}>{entry.position}</span>
       <Link to={`/users/${entry.climber.userId}`} className="board__climber">
         <Avatar name={entry.climber.displayName} url={entry.climber.avatarUrl} size={36} />
-        <span className="board__name">{entry.climber.displayName}{entry.isViewer && <span className="list__you"> · you</span>}</span>
+        <span className="board__name">{entry.climber.displayName}{entry.isViewer && <span className="list__you"> · {t("you")}</span>}</span>
       </Link>
       <Value entry={entry} metric={metric} />
       {onReport && !entry.isViewer && (

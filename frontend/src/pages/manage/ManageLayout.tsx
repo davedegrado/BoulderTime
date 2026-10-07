@@ -25,7 +25,7 @@ export function ManageLayout() {
   const { slug = "" } = useParams();
   const gym = useGym(slug);
 
-  if (gym.isPending) return <LoadingState label={t(t("Loading gym"))} />;
+  if (gym.isPending) return <LoadingState label={t("Loading gym")} />;
   if (gym.isError) {
     if (gym.error instanceof ApiError && gym.error.isNotFound) return <NoAccess />;
     return <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
@@ -60,7 +60,7 @@ export function ManageLayout() {
             <Badge tone="orange">{roleLabel[role]}</Badge>
           </div>
         </header>
-        <SubNav items={items} label={t(t("Staff area sections"))} />
+        <SubNav items={items} label={t("Staff area sections")} />
         <Outlet />
       </div>
     </ManageContext.Provider>
@@ -71,8 +71,8 @@ function NoAccess() {
   return (
     <EmptyState
       icon={<Lock />}
-      title={t(t("This area is for gym staff"))}
-      body={t(t("You're not on the staff of this gym. Staff join by invitation from a gym admin."))}
+      title={t("This area is for gym staff")}
+      body={t("You're not on the staff of this gym. Staff join by invitation from a gym admin.")}
       action={<Link to="/" className="btn btn--primary"><span>{t("Go home")}</span></Link>}
     />
   );

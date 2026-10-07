@@ -19,7 +19,7 @@ export function ManageGrading() {
   const systems = useGradeSystems(gym.id);
   const canEdit = atLeast(role, "ADMIN");
 
-  if (systems.isPending) return <LoadingState label={t(t("Loading grading"))} />;
+  if (systems.isPending) return <LoadingState label={t("Loading grading")} />;
   if (systems.isError) return <ErrorState error={systems.error} onRetry={() => systems.refetch()} />;
 
   return (
@@ -27,7 +27,7 @@ export function ManageGrading() {
       <p className="field__hint">{t("Boulders get one official grade per active system. Colour grades describe difficulty only — hold colour is set separately on each boulder.")}</p>
       {canEdit && <AddSystem gymId={gym.id} existing={systems.data} />}
       {systems.data.length === 0
-        ? <EmptyState icon={<Ruler />} title={t(t("No grading systems yet"))} body={canEdit ? t("Add the grading your gym uses. You can run more than one.") : t("Ask a gym admin to set up grading.")} />
+        ? <EmptyState icon={<Ruler />} title={t("No grading systems yet")} body={canEdit ? t("Add the grading your gym uses. You can run more than one.") : t("Ask a gym admin to set up grading.")} />
         : systems.data.map((s) => <SystemCard key={s.id} gymId={gym.id} system={s} canEdit={canEdit} />)}
     </div>
   );
@@ -49,7 +49,7 @@ function AddSystem({ gymId, existing }: { gymId: string; existing: GradeSystem[]
 
   return (
     <form className="inline-form card" onSubmit={onSubmit}>
-      <SelectField label={t(t("Add a grading system"))} value={type} onChange={(e) => setType(e.target.value as GradeSystemType)}
+      <SelectField label={t("Add a grading system")} value={type} onChange={(e) => setType(e.target.value as GradeSystemType)}
         options={(Object.keys(gradeSystemTypeLabel) as GradeSystemType[]).map((t) => ({ value: t, label: gradeSystemTypeLabel[t] }))} />
       <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending}>{t("Add")}</Button>
     </form>
@@ -93,7 +93,7 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
           <p className="list__sub">{gradeSystemTypeLabel[system.type]} · {plural(active.length, "{count} grade", "{count} grades")} · {t("easiest first")}</p>
         </div>
         <div className="form__actions">
-          {!system.isActive && <Badge>{t(t("Hidden"))}</Badge>}
+          {!system.isActive && <Badge>{t("Hidden")}</Badge>}
           {canEdit && (
             <button type="button" className="icon-btn" disabled={update.isPending}
               aria-label={system.isActive ? t("Hide {name}", { name: dataLabel(system.name) }) : t("Show {name}", { name: dataLabel(system.name) })}
@@ -126,7 +126,7 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
                   onChange={(e) => setRows((rs) => rs.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} />
                 {isColor && (
                   <label className="color-input">
-                    <span className="sr-only">Grade colour for {r.label}</span>
+                    <span className="sr-only">{t("Grade colour for {grade}", { grade: r.label })}</span>
                     <input type="color" value={r.colorHex} onChange={(e) => setRows((rs) => rs.map((x, k) => (k === i ? { ...x, colorHex: e.target.value } : x)))} />
                   </label>
                 )}
@@ -136,9 +136,9 @@ function SystemCard({ gymId, system, canEdit }: { gymId: string; system: GradeSy
           </ol>
           <p className="field__hint">{t("Retired grades stay on existing boulders but can't be used for new ones.")}</p>
           <div className="form__actions">
-            <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setRows((rs) => [...rs, { label: "", colorHex: "#888888" }])}>{t(t("Add grade"))}</Button>
-            <Button icon={<Save aria-hidden />} loading={setValues.isPending} onClick={save}>{t(t("Save"))}</Button>
-            <Button variant="ghost" icon={<X aria-hidden />} onClick={() => setEditing(false)}>{t(t("Cancel"))}</Button>
+            <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setRows((rs) => [...rs, { label: "", colorHex: "#888888" }])}>{t("Add grade")}</Button>
+            <Button icon={<Save aria-hidden />} loading={setValues.isPending} onClick={save}>{t("Save")}</Button>
+            <Button variant="ghost" icon={<X aria-hidden />} onClick={() => setEditing(false)}>{t("Cancel")}</Button>
           </div>
         </div>
       )}

@@ -34,16 +34,16 @@ export function AdminGyms() {
   return (
     <div className="stack">
       {creating ? <CreateGymForm onCancel={() => setCreating(false)} /> : (
-        <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>{t(t("New gym"))}</Button>
+        <Button variant="secondary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>{t("New gym")}</Button>
       )}
       <div className="filters">
-        <SearchField label={t(t("Search gyms"))} placeholder={t(t("Name or city"))} value={text} onChange={setText} />
-        <SelectField label={t(t("Status"))} hideLabel value={status} options={STATUS_OPTIONS}
+        <SearchField label={t("Search gyms")} placeholder={t("Name or city")} value={text} onChange={setText} />
+        <SelectField label={t("Status")} hideLabel value={status} options={STATUS_OPTIONS}
           onChange={(e) => setParams((p) => { e.target.value ? p.set("status", e.target.value) : p.delete("status"); return p; }, { replace: true })} />
       </div>
-      {gyms.isPending ? <LoadingState label={t(t("Loading gyms"))} />
+      {gyms.isPending ? <LoadingState label={t("Loading gyms")} />
         : gyms.isError ? <ErrorState error={gyms.error} onRetry={() => gyms.refetch()} />
-        : gyms.data.items.length === 0 ? <EmptyState icon={<Building2 />} title={t(t("No gyms found"))} />
+        : gyms.data.items.length === 0 ? <EmptyState icon={<Building2 />} title={t("No gyms found")} />
         : <div className="stack">{gyms.data.items.map((g) => <AdminGymCard key={g.id} gym={g} />)}</div>}
     </div>
   );
@@ -90,8 +90,8 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
       </div>
       {inviting && (
         <form className="inline-form" onSubmit={onInvite} noValidate>
-          <TextField label={t(t("Owner's email"))} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={inviteError} autoFocus />
-          <Button type="submit" loading={inviteOwner.isPending} disabled={!email.trim()}>{t(t("Send"))}</Button>
+          <TextField label={t("Owner's email")} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={inviteError} autoFocus />
+          <Button type="submit" loading={inviteOwner.isPending} disabled={!email.trim()}>{t("Send")}</Button>
         </form>
       )}
     </article>

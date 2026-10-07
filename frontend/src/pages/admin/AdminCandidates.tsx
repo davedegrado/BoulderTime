@@ -31,9 +31,9 @@ export function AdminCandidates() {
           <button key={f.label} role="radio" aria-checked={status === f.value} className="chip" onClick={() => setStatus(f.value)}>{f.label}</button>
         ))}
       </div>
-      {list.isPending ? <LoadingState label={t(t("Loading suggestions"))} />
+      {list.isPending ? <LoadingState label={t("Loading suggestions")} />
         : list.isError ? <ErrorState error={list.error} onRetry={() => list.refetch()} />
-        : list.data.items.length === 0 ? <EmptyState icon={<Inbox />} title={t(t("Nothing here"))} body={status === "PENDING" ? t("No new gym suggestions. Nice and tidy.") : t("No suggestions with this status.")} />
+        : list.data.items.length === 0 ? <EmptyState icon={<Inbox />} title={t("Nothing here")} body={status === "PENDING" ? t("No new gym suggestions. Nice and tidy.") : t("No suggestions with this status.")} />
         : <div className="stack">{list.data.items.map((c) => <CandidateCard key={c.id} candidate={c} />)}</div>}
     </div>
   );
@@ -58,7 +58,7 @@ function CandidateCard({ candidate: c }: { candidate: GymCandidate }) {
       <header className="candidate__head">
         <div>
           <h3 className="list__title">{c.gymName}</h3>
-          <p className="list__sub">{c.city} · suggested by {c.submittedBy ?? "a climber"} on {formatDate(c.createdAt)}</p>
+          <p className="list__sub">{c.city} · {t("suggested by {name} on {date}", { name: c.submittedBy ?? t("a climber"), date: formatDate(c.createdAt) })}</p>
         </div>
         <Badge tone={c.status === "ACCEPTED" ? "success" : c.status === "REJECTED" ? "danger" : c.status === "CONTACTED" ? "orange" : "neutral"}>
           {candidateStatusLabel[c.status]}
@@ -75,9 +75,9 @@ function CandidateCard({ candidate: c }: { candidate: GymCandidate }) {
         <Link to="/admin/gyms" className="btn btn--secondary"><span>{t("Gym created — open gyms")}</span></Link>
       ) : (
         <div className="form__actions">
-          <Button onClick={() => setCreating(true)}>{t(t("Create gym"))}</Button>
-          {c.status !== "CONTACTED" && <Button variant="secondary" onClick={() => act("CONTACTED")} disabled={setStatus.isPending}>{t(t("Mark contacted"))}</Button>}
-          {c.status !== "REJECTED" && <Button variant="ghost" onClick={() => act("REJECTED")} disabled={setStatus.isPending}>{t(t("Reject"))}</Button>}
+          <Button onClick={() => setCreating(true)}>{t("Create gym")}</Button>
+          {c.status !== "CONTACTED" && <Button variant="secondary" onClick={() => act("CONTACTED")} disabled={setStatus.isPending}>{t("Mark contacted")}</Button>}
+          {c.status !== "REJECTED" && <Button variant="ghost" onClick={() => act("REJECTED")} disabled={setStatus.isPending}>{t("Reject")}</Button>}
         </div>
       )}
     </article>

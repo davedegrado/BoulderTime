@@ -7,7 +7,7 @@ import { t } from "@/i18n/i18n";
 export function AuthLayout({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="auth">
-      <Link to="/" className="auth__brand" aria-label="BoulderTime home"><Logo variant="horizontal" height={64} /></Link>
+      <Link to="/" className="auth__brand" aria-label={t("BoulderTime home")}><Logo variant="horizontal" height={64} /></Link>
       <div className="auth__card">
         <h1 className="auth__title">{title}</h1>
         {children}

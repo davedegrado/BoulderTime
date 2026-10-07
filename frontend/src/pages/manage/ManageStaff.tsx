@@ -30,7 +30,7 @@ export function ManageStaff() {
 
       <section className="section" aria-labelledby="members-title">
         <h2 id="members-title" className="section__title">{t("Team")}</h2>
-        {staff.isPending ? <LoadingState label={t(t("Loading staff"))} />
+        {staff.isPending ? <LoadingState label={t("Loading staff")} />
           : staff.isError ? <ErrorState error={staff.error} onRetry={() => staff.refetch()} />
           : (
             <ul className="list">
@@ -70,9 +70,9 @@ function InviteForm({ gymId, actorRole }: { gymId: string; actorRole: GymRole })
     <form className="card form" onSubmit={onSubmit} noValidate>
       <h2 className="section__title">{t("Invite someone")}</h2>
       <p className="field__hint">{t("They'll see the invitation in BoulderTime after signing in with this email. It expires in 7 days.")}</p>
-      <TextField label={t(t("Email"))} type="email" inputMode="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} error={err?.fieldError("email")} />
-      <SelectField label={t(t("Role"))} value={role} onChange={(e) => setRole(e.target.value as GymRole)} options={grantableRoles(actorRole).map((r) => ({ value: r, label: roleLabel[r] }))} />
-      <Button type="submit" icon={<MailPlus aria-hidden />} loading={invite.isPending} disabled={!email.trim()}>{t(t("Send invitation"))}</Button>
+      <TextField label={t("Email")} type="email" inputMode="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} error={err?.fieldError("email")} />
+      <SelectField label={t("Role")} value={role} onChange={(e) => setRole(e.target.value as GymRole)} options={grantableRoles(actorRole).map((r) => ({ value: r, label: roleLabel[r] }))} />
+      <Button type="submit" icon={<MailPlus aria-hidden />} loading={invite.isPending} disabled={!email.trim()}>{t("Send invitation")}</Button>
     </form>
   );
 }
@@ -89,7 +89,7 @@ function MemberRow({ member, gymId, gymSlug, actorRole, isMe }: { member: StaffM
     <li className="list__row list__row--wrap">
       <Avatar name={member.displayName} url={member.avatarUrl} size={40} />
       <div className="list__main">
-        <p className="list__title">{member.displayName}{isMe && <span className="list__you"> · you</span>}</p>
+        <p className="list__title">{member.displayName}{isMe && <span className="list__you"> · {t("you")}</span>}</p>
         <p className="list__sub">{member.email}</p>
       </div>
       <div className="list__actions">
@@ -109,17 +109,17 @@ function MemberRow({ member, gymId, gymSlug, actorRole, isMe }: { member: StaffM
           <Badge tone={member.role === "OWNER" ? "orange" : "neutral"}>{roleLabel[member.role]}</Badge>
         )}
         {isMe ? (
-          <ConfirmButton icon={<LogOut aria-hidden />} confirmLabel={t(t("Tap to leave"))} loading={remove.isPending}
+          <ConfirmButton icon={<LogOut aria-hidden />} confirmLabel={t("Tap to leave")} loading={remove.isPending}
             onConfirm={() => remove.mutate(member.userId, {
               onSuccess: () => { toast.success(t("You left the staff")); navigate(`/gyms/${gymSlug}`); },
               onError: (err) => toast.error(errorMessage(err)),
-            })}>{t(t("Leave"))}</ConfirmButton>
+            })}>{t("Leave")}</ConfirmButton>
         ) : manageable && (
-          <ConfirmButton icon={<UserMinus aria-hidden />} confirmLabel={t(t("Tap to remove"))} loading={remove.isPending}
+          <ConfirmButton icon={<UserMinus aria-hidden />} confirmLabel={t("Tap to remove")} loading={remove.isPending}
             onConfirm={() => remove.mutate(member.userId, {
               onSuccess: () => toast.success(t("{name} removed", { name: member.displayName })),
               onError: (err) => toast.error(errorMessage(err)),
-            })}>{t(t("Remove"))}</ConfirmButton>
+            })}>{t("Remove")}</ConfirmButton>
         )}
       </div>
     </li>
@@ -136,12 +136,12 @@ function InvitationRow({ gymId, id, email, role, expiresAt, invitedBy, canRevoke
       <MailPlus className="list__icon" aria-hidden />
       <div className="list__main">
         <p className="list__title">{email}</p>
-        <p className="list__sub">{roleLabel[role]} · by {invitedBy} · expires {relativeDays(expiresAt)}</p>
+        <p className="list__sub">{roleLabel[role]} · {t("by {name}", { name: invitedBy })} · {t("expires {when}", { when: relativeDays(expiresAt) })}</p>
       </div>
       {canRevoke && (
-        <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t(t("Tap to revoke"))} loading={revoke.isPending}
+        <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Tap to revoke")} loading={revoke.isPending}
           onConfirm={() => revoke.mutate(id, { onSuccess: () => toast.success(t("Invitation revoked")), onError: (err) => toast.error(errorMessage(err)) })}>
-          Revoke
+          {t("Revoke")}
         </ConfirmButton>
       )}
     </li>

@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react";
+import { t } from "@/i18n/i18n";
 
 interface SearchFieldProps {
   value: string;
@@ -22,7 +23,7 @@ export function SearchField({ value, onChange, placeholder, label }: SearchField
         onChange={(e) => onChange(e.target.value)}
       />
       {value && (
-        <button type="button" className="search__clear" onClick={() => onChange("")} aria-label="Clear search">
+        <button type="button" className="search__clear" onClick={() => onChange("")} aria-label={t("Clear search")}>
           <X aria-hidden />
         </button>
       )}

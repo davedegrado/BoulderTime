@@ -1,25 +1,27 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, ImagePlus, Save } from "lucide-react";
+import { ArrowLeft, Camera, ImagePlus, Save, Trash2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useStaff } from "@/features/staff/api";
-import { uploadBoulderPhoto, useBoulder, useCreateBoulder, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
+import { uploadBoulderPhoto, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
 import { HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
 import { Button } from "@/components/Button";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
+import { BetaEditor } from "@/features/community/BetaEditor";
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
   const existing = useBoulder(boulderId);
-  if (boulderId && existing.isPending) return <LoadingState label={t(t("Loading boulder"))} />;
+  if (boulderId && existing.isPending) return <LoadingState label={t("Loading boulder")} />;
   if (boulderId && existing.isError) return <ErrorState error={existing.error} onRetry={() => existing.refetch()} />;
   return <BoulderEditor key={boulderId ?? "new"} initial={existing.data} />;
 }
@@ -35,6 +37,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const staff = useStaff(gym.id);
   const create = useCreateBoulder(gym.id);
   const update = useUpdateBoulder(initial?.id ?? "");
+  const remove = useRemoveBoulders(gym.id);
   const fileInput = useRef<MediaInputHandle>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -120,7 +123,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
 
-      <SelectField label={t(t("Sector *"))} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
+      <SelectField label={t("Sector *")} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
         options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
 
       {/* Official grades — one control per active system */}
@@ -153,12 +156,36 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         {errors.holdColor && <p id="hold-error" className="field__error">{errors.holdColor}</p>}
       </fieldset>
 
-      <SelectField label={t(t("Setter"))} value={setterUserId} onChange={(e) => setSetterUserId(e.target.value)} error={errors.setterUserId}
+      <SelectField label={t("Setter")} value={setterUserId} onChange={(e) => setSetterUserId(e.target.value)} error={errors.setterUserId}
         options={[{ value: "", label: t("Not specified") }, ...(staff.data ?? []).map((m) => ({ value: m.userId, label: m.displayName }))]} />
+
+      {/* The beta belongs to whoever sets the boulder, so it is published here and not from the climber's page. */}
+      {initial && (
+        <section className="editor__section" aria-labelledby="beta-editor-label">
+          <p id="beta-editor-label" className="field__label">{t("Official beta")}</p>
+          <BetaEditor boulderId={initial.id} canAdd={initial.canAddOfficialBeta} />
+        </section>
+      )}
 
       <div className="editor__submit">
         <Button type="submit" block icon={<Save aria-hidden />} loading={busy}>{busy ? busyLabel : initial ? t("Save changes") : t("Add boulder")}</Button>
       </div>
+
+      {/* Removing one boulder is a correction, so it is silent. A whole sector coming down is a retrace: that is
+          done from the list, where followers can be told once per sector instead of once per boulder. */}
+      {initial && initial.status !== "REMOVED" && (
+        <section className="editor__section editor__danger" aria-labelledby="remove-label">
+          <p id="remove-label" className="field__label">{t("Remove this boulder")}</p>
+          <p className="field__hint">{t("It leaves the wall but stays in climbers' history. Nobody is notified — for a whole retrace, select the boulders from the list instead.")}</p>
+          <ConfirmButton variant="danger" icon={<Trash2 aria-hidden />} confirmLabel={t("Tap again to remove")} loading={remove.isPending}
+            onConfirm={() => remove.mutate({ boulderIds: [initial.id], notifyFollowers: false }, {
+              onSuccess: () => { toast.success(t("Boulder removed")); navigate(`/manage/${gym.slug}/boulders`); },
+              onError: (e) => toast.error(errorMessage(e)),
+            })}>
+            {t("Remove")}
+          </ConfirmButton>
+        </section>
+      )}
     </form>
   );
 }

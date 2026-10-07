@@ -8,6 +8,7 @@ import type { GymDetail, GymSummary, Sector } from "@/features/gyms/api";
 import { gymKeys } from "@/features/gyms/api";
 import type { GradeSystemType } from "@/features/grading/api";
 import type { Announcement } from "@/features/notifications/api";
+import { communityKeys } from "@/features/community/api";
 
 export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null }
 export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number }
@@ -68,6 +69,9 @@ function useProgressCache(boulderId: string) {
     qc.setQueryData<BoulderDetail>(boulderKeys.detail(boulderId), (d) => (d ? { ...d, viewer: viewer ?? null } : d));
     qc.invalidateQueries({ queryKey: ["boulders"], refetchType: "none" });
     qc.invalidateQueries({ queryKey: ["climbing"] });
+    // Trying the boulder is what earns the right to suggest a grade, and the answer to "may I?" is inside this
+    // query. Without this, the climber records an attempt and the grade vote stays hidden until a page reload.
+    qc.invalidateQueries({ queryKey: communityKeys.consensus(boulderId) });
   };
 }
 

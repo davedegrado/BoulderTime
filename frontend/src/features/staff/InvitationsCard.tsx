@@ -23,9 +23,9 @@ export function InvitationsCard({ count }: { count: number }) {
           return (
             <li key={inv.id} className="invites__item">
               <p className="invites__text">
-                <strong>{inv.invitedBy}</strong> {t("invited you to join")} <strong>{inv.gymName}</strong> ({inv.gymCity}) as <strong>{roleLabel[inv.role]}</strong>.
+                <strong>{inv.invitedBy}</strong> {t("invited you to join")} <strong>{inv.gymName}</strong> ({inv.gymCity}) {t("as")} <strong>{roleLabel[inv.role]}</strong>.
               </p>
-              <p className="invites__meta">Expires {relativeDays(inv.expiresAt)}</p>
+              <p className="invites__meta">{t("Expires")} {relativeDays(inv.expiresAt)}</p>
               <div className="invites__actions">
                 <Button
                   icon={<Check aria-hidden />}

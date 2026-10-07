@@ -20,7 +20,7 @@ import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
-import { plural, t as translate } from "@/i18n/i18n";
+import { t, plural, t as translate } from "@/i18n/i18n";
 import { GymBadges } from "@/features/gyms/GymBadges";
 import { FacebookIcon, InstagramIcon } from "@/components/BrandIcons";
 
@@ -52,7 +52,7 @@ export function GymPage() {
               <h1 className="page__title">{g.name}</h1>
               <GymBadges isFoundingGym={g.isFoundingGym} isEarlyPartner={g.isEarlyPartner} />
             <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
-              {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · only staff can see this</Badge>}
+              {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · {t("only staff can see this")}</Badge>}
             </div>
             <div className="gym-hero__actions">
               <GymFollowControls gym={g} />

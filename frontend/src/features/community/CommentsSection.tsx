@@ -32,7 +32,7 @@ export function CommentsSection({ boulderId }: { boulderId: string }) {
 
   return (
     <section className="section" aria-labelledby="comments-title">
-      <h2 id="comments-title" className="section__title">Comments{items.length > 0 && ` (${comments.data?.pages[0]?.total})`}</h2>
+      <h2 id="comments-title" className="section__title">{t("Comments")}{items.length > 0 && ` (${comments.data?.pages[0]?.total})`}</h2>
       {comments.isPending ? <LoadingState label={t("Loading comments")} />
         : comments.isError ? <ErrorState error={comments.error} onRetry={() => comments.refetch()} />
         : items.length === 0 ? <EmptyState icon={<MessageSquare />} title={t("No comments yet")} body={t("Share a tip, a key hold or how it went.")} />

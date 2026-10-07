@@ -32,7 +32,7 @@ export function AuthCallbackPage() {
         icon={<AlertTriangle />}
         title={t("Sign-in didn't complete")}
         body={providerError ?? t("The sign-in link may have expired or been opened in a different browser.")}
-        action={<Link to="/sign-in" className="btn btn--primary"><span>Back to sign in</span></Link>}
+        action={<Link to="/sign-in" className="btn btn--primary"><span>{t("Back to sign in")}</span></Link>}
       />
     );
   }

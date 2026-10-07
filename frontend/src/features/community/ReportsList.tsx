@@ -27,7 +27,7 @@ export function ReportsList({ scope, showGym = false }: { scope: string; showGym
           </button>
         ))}
       </div>
-      {reports.isPending ? <LoadingState label={t(t("Loading reports"))} />
+      {reports.isPending ? <LoadingState label={t("Loading reports")} />
         : reports.isError ? <ErrorState error={reports.error} onRetry={() => reports.refetch()} />
         : reports.data.items.length === 0 ? <EmptyState icon={<Flag />} title={status === "PENDING" ? t("No open reports") : t("Nothing here")} body={status === "PENDING" ? t("All clear.") : undefined} />
         : reports.data.items.map((r) => <ReportCard key={r.id} report={r} showGym={showGym} />)}
@@ -55,12 +55,12 @@ function ReportCard({ report: r, showGym }: { report: Report; showGym: boolean }
       </header>
       {r.excerpt && <blockquote className="report__excerpt">{r.excerpt}</blockquote>}
       {r.description && <p className="prose">“{r.description}”</p>}
-      {r.resolutionNote && <p className="list__sub">Note: {r.resolutionNote}</p>}
+      {r.resolutionNote && <p className="list__sub">{t("Note")}: {r.resolutionNote}</p>}
       {r.boulderId !== "00000000-0000-0000-0000-000000000000" && <Link to={`/boulders/${r.boulderId}`} className="section__link">{t("Open boulder")}</Link>}
 
       {r.status === "PENDING" && (
         <>
-          <TextField label={t(t("Note (optional)"))} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />
+          <TextField label={t("Note (optional)")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />
           <div className="form__actions">
             {r.entityType !== "BOULDER" && (
               <Button variant="danger" icon={<ShieldOff aria-hidden />} loading={close.isPending}
@@ -68,8 +68,8 @@ function ReportCard({ report: r, showGym }: { report: Report; showGym: boolean }
                 {r.entityType === "COMMENT" ? t("Hide comment") : t("Reject video")}
               </Button>
             )}
-            <Button variant="secondary" icon={<CheckCircle2 aria-hidden />} loading={close.isPending} onClick={() => act({}, t("Marked as resolved"))}>{t(t("Resolved"))}</Button>
-            <Button variant="ghost" icon={<XCircle aria-hidden />} loading={close.isPending} onClick={() => act({ dismiss: true }, t("Report dismissed"))}>{t(t("Dismiss"))}</Button>
+            <Button variant="secondary" icon={<CheckCircle2 aria-hidden />} loading={close.isPending} onClick={() => act({}, t("Marked as resolved"))}>{t("Resolved")}</Button>
+            <Button variant="ghost" icon={<XCircle aria-hidden />} loading={close.isPending} onClick={() => act({ dismiss: true }, t("Report dismissed"))}>{t("Dismiss")}</Button>
           </div>
         </>
       )}

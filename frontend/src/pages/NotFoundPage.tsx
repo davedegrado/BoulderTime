@@ -4,5 +4,5 @@ import { SearchX } from "lucide-react";
 import { EmptyState } from "@/components/States";
 
 export function NotFoundPage() {
-  return <EmptyState icon={<SearchX />} title="There's nothing here" body="The link may be wrong, or this page was removed." action={<Link to="/" className="btn btn--primary"><span>{t("Go home")}</span></Link>} />;
+  return <EmptyState icon={<SearchX />} title={t("There's nothing here")} body={t("The link may be wrong, or this page was removed.")} action={<Link to="/" className="btn btn--primary"><span>{t("Go home")}</span></Link>} />;
 }

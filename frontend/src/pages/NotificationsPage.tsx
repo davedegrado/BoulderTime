@@ -33,7 +33,7 @@ export function NotificationsPage() {
 
       {unread > 0 && (
         <Button variant="secondary" icon={<CheckCheck aria-hidden />} onClick={() => markRead.mutate("all")} loading={markRead.isPending && markRead.variables === "all"}>
-          Mark all as read
+          {t("Mark all as read")}
         </Button>
       )}
 

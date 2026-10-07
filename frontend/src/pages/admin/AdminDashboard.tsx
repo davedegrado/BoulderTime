@@ -6,7 +6,7 @@ import { t } from "@/i18n/i18n";
 
 export function AdminDashboard() {
   const dash = useAdminDashboard();
-  if (dash.isPending) return <LoadingState label={t(t("Loading dashboard"))} />;
+  if (dash.isPending) return <LoadingState label={t("Loading dashboard")} />;
   if (dash.isError) return <ErrorState error={dash.error} onRetry={() => dash.refetch()} />;
   const d = dash.data;
   return (
