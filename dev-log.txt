@@ -1,0 +1,20 @@
+== FAILED: Migrations failed ==
+Wed Oct  7 09:40:03 UTC 2026
+
+== docker logs bt-db ==
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-10-07 09:39:26.026 UTC [1] LOG:  starting PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-10-07 09:39:26.027 UTC [1] LOG:  listening on IPv4 address "127.0.0.1", port 54322
+2026-10-07 09:39:26.028 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.54322"
+2026-10-07 09:39:26.033 UTC [44] LOG:  database system was interrupted; last known up at 2026-09-18 09:02:51 UTC
+2026-10-07 09:39:26.135 UTC [44] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-10-07 09:39:26.161 UTC [44] LOG:  redo starts at 0/17B8D48
+2026-10-07 09:39:26.161 UTC [44] LOG:  invalid record length at 0/17B8E30: expected at least 24, got 0
+2026-10-07 09:39:26.161 UTC [44] LOG:  redo done at 0/17B8DF8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-10-07 09:39:26.164 UTC [42] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-10-07 09:39:26.168 UTC [42] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.006 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/17B8E30, redo lsn=0/17B8E30
+2026-10-07 09:39:26.177 UTC [1] LOG:  database system is ready to accept connections
+
+== docker logs bt-auth ==
