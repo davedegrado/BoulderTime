@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Taken-down boulders stay visible, and a gym can erase one for good
-applicata: Taken-down boulders stay visible, and a gym can erase one
+Applying: Close every door a deleted boulder could come back through
+applicata: Close every door a deleted boulder could come back through
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -12,50 +12,22 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:07.75
+Time Elapsed 00:00:09.77
 OK
 == 5. TEST BACKEND ==
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ConflictException: You are the only owner of a gym. Make someone else an owner first, or write to support@bouldertime.com.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ValidationException: One or more fields are invalid.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.NotFoundException: Invitation was not found.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ConflictException: This invitation has expired or was already answered.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-      BoulderTime.Application.Common.ForbiddenException: You can't invite someone with that role.
-         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
-fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
-Total tests: 210
+--- test falliti ---
+      Failed executing DbCommand (5ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?', @p3='?' (DbType = Guid), @p4='?', @p5='?' (DbType = Boolean), @p6='?', @p7='?' (DbType = Int32), @p8='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+[xUnit.net 00:02:21.17]     BoulderTime.Tests.Boulders.DeletingBouldersTests.A_deleted_boulder_is_gone_from_the_gym_for_everyone_including_staff [FAIL]
+  Failed BoulderTime.Tests.Boulders.DeletingBouldersTests.A_deleted_boulder_is_gone_from_the_gym_for_everyone_including_staff [265 ms]
+     Failed: 1
+  Error Message:
+   Expected (world.Staff.Client.GetAsync($"/api/boulders/{boulder.Id}")).StatusCode to be HttpStatusCode.NotFound {value: 404}, but found HttpStatusCode.OK {value: 200}.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+Total tests: 211
 == 6. FRONTEND ==
       Tests  132 passed (132)
 vite v5.4.21 building for production...
@@ -113,7 +85,7 @@ dist/assets/router-DB5fdV44.js                    512.85 kB │ gzip: 142.56 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 4.94s
+✓ built in 5.41s
 
 PWA v0.21.2
 mode      generateSW
