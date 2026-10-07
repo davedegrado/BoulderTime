@@ -1,27 +1,24 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Bring the README and the roadmap up to date: live in production, store-app milestones, real limitations
-applicata: Bring the README and the roadmap up to date: live in
-Applying: Notifications inside the store apps, through Firebase: one queue, one sender per platform
-applicata: Notifications inside the store apps, through Firebase: one
+Applying: Keep the push device's column name, so the migration adds without dropping
+applicata: Keep the push device's column name, so the migration adds
 == 2. STRUMENTI ==
+Tool 'dotnet-ef' was successfully updated from version '8.0.11' to version '10.0.12'.
 OK
-== 3. BUILD BACKEND ==
+== 3. MIGRAZIONE ==
+Build started...
+Build succeeded.
+Done. To undo this action, use 'ef migrations remove'
+creata: Model202610070833
+== 4. BUILD BACKEND ==
 
 Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:28.34
+Time Elapsed 00:00:11.95
 OK
-== 4. TEST BACKEND ==
-[xUnit.net 00:00:14.89]     BoulderTime.Tests.Users.AccountDeletionTests.Erasing_removes_what_is_personal_and_leaves_the_gyms_content_standing [FAIL]
-[xUnit.net 00:00:45.30]     BoulderTime.Tests.Push.PushSubscriptionTests.A_store_app_registers_with_its_notification_token_instead_of_browser_keys [FAIL]
-[xUnit.net 00:00:46.70]     BoulderTime.Tests.Push.PushSubscriptionTests.A_phone_and_a_browser_are_two_devices_of_the_same_person [FAIL]
-[xUnit.net 00:00:47.91]     BoulderTime.Tests.Push.PushSubscriptionTests.A_device_registers_once_however_many_times_it_subscribes [FAIL]
-[xUnit.net 00:00:48.34]     BoulderTime.Tests.Push.PushSubscriptionTests.Turning_notifications_off_removes_the_device [FAIL]
-[xUnit.net 00:00:48.91]     BoulderTime.Tests.Push.PushSubscriptionTests.A_device_that_changes_hands_follows_the_person_signed_in_on_it [FAIL]
-Failed!  - Failed:     6, Passed:   177, Skipped:     0, Total:   183, Duration: 1 m 49 s - BoulderTime.Tests.dll (net8.0)
-== 5. FRONTEND ==
+== 5. TEST BACKEND ==
+== 6. FRONTEND ==
       Tests  120 passed (120)
 vite v5.4.21 building for production...
 transforming...
@@ -79,7 +76,7 @@ dist/assets/router-BYdlUsQR.js                    546.50 kB │ gzip: 155.29 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 4.97s
+✓ built in 4.83s
 
 PWA v0.21.2
 mode      generateSW
@@ -88,4 +85,4 @@ files generated
   dist/sw.js
   dist/workbox-4e9e9954.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
