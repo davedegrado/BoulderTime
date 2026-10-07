@@ -28,3 +28,20 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(u => u.UpdatedAt).IsRequired();
     }
 }
+
+
+internal sealed class UserBlockConfiguration : IEntityTypeConfiguration<UserBlock>
+{
+    public void Configure(EntityTypeBuilder<UserBlock> b)
+    {
+        b.ToTable("user_blocks");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Reason).HasMaxLength(UserBlock.ReasonMaxLength);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.BlockerUserId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.BlockedUserId).OnDelete(DeleteBehavior.Cascade);
+        // Blocking the same person twice is one block, not two.
+        b.HasIndex(x => new { x.BlockerUserId, x.BlockedUserId }).IsUnique();
+        b.HasIndex(x => x.BlockedUserId);
+    }
+}

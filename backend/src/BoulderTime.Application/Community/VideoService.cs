@@ -33,7 +33,7 @@ public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulde
 /// Both live in PRIVATE buckets; every URL handed out is short-lived and only issued to viewers allowed to see the video:
 /// approved videos → anyone who can see the boulder; pending/rejected → the uploader and the gym's staff.
 /// </summary>
-public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
+public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Users.BlockedPeople blocked)
 {
     public const long MaxVideoBytes = 100 * 1024 * 1024;
     public const long MaxThumbnailBytes = 1024 * 1024;
@@ -168,6 +168,8 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         await boulders.RequireVisibleAsync(boulderId, ct);
         var (p, size) = Paging.Normalize(page, pageSize, VideosPageSize);
         var approved = db.BoulderVideos.AsNoTracking().Where(v => v.BoulderId == boulderId && v.Status == VideoStatus.Approved);
+        var hidden = await blocked.ForViewerAsync(ct);
+        if (hidden.Count > 0) approved = approved.Where(v => !hidden.Contains(v.UserId));
         var total = await approved.CountAsync(ct);
         var rows = await approved.OrderByDescending(v => v.ReviewedAt).ThenByDescending(v => v.CreatedAt).Skip((p - 1) * size).Take(size).ToListAsync(ct);
 

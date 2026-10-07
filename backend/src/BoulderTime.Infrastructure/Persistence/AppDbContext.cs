@@ -53,6 +53,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<EarlyPartnership> EarlyPartnerships => Set<EarlyPartnership>();
     public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+    public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

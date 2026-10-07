@@ -36,13 +36,12 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M2 | App Links, release signing, email links that work on any device (ADR-028) | **Done** |
 | M3 | Camera or gallery inside the app (ADR-029) | **Done** |
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
-| M5 | Blocking a user — Apple requires it for apps with user content | Next |
-| M6 | Google Play: closed test, store listing, release | Needs a Play account |
-| M7 | iOS: Xcode project, universal links, App Store | Needs an Apple account |
+| M5 | Blocking a user (ADR-031) | **Done** |
+| M6 | iOS: Xcode project built in CI, universal links | Next |
+| M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
 
 ## Known limitations (deliberate, not forgotten)
 
-- **Blocking another user** is not possible; reporting and gym-side moderation are. M5 adds it.
 - **Staff invitation emails** are not sent: invitations appear in the app after signing in with the invited address.
 - **Video transcoding** is not done, so an iPhone `.mov` (HEVC) may not play in every desktop browser or on Android.
 - **No cross-gym leaderboard:** grades from different gyms are not comparable, so it is intentionally absent.

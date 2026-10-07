@@ -72,3 +72,26 @@ export function useLeaderboardVisibility() {
     },
   });
 }
+
+
+export interface BlockedPerson { userId: string; displayName: string; avatarUrl: string | null; blockedAt: string }
+
+/** People you have chosen not to see. Personal and immediate: no moderator is involved. */
+export function useBlockedPeople() {
+  return useQuery({
+    queryKey: ["users", "me", "blocks"],
+    queryFn: ({ signal }) => api.get<BlockedPerson[]>("/api/users/me/blocks", { signal }),
+  });
+}
+
+export function useBlockPerson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, blocked, reason }: { userId: string; blocked: boolean; reason?: string }) =>
+      blocked ? api.put(`/api/users/me/blocks/${userId}`, { reason }) : api.delete(`/api/users/me/blocks/${userId}`),
+    onSuccess: () => {
+      // Comments and videos are filtered server-side, so everything the person appears in has to be refetched.
+      qc.invalidateQueries();
+    },
+  });
+}

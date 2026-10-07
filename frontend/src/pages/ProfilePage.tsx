@@ -22,6 +22,7 @@ import { Toggle } from "@/features/notifications/NotificationBits";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { PasswordSection } from "@/features/users/PasswordSection";
 import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
+import { BlockedList } from "@/features/users/BlockedList";
 
 export function ProfilePage() {
   const { session, signOut } = useAuth();
@@ -101,6 +102,8 @@ export function ProfilePage() {
           <Button type="submit" loading={update.isPending} disabled={!dirty}>{t("Save changes")}</Button>
         </form>
       </section>
+
+      <BlockedList />
 
       <PasswordSection hasPassword={hasPassword} />
 

@@ -6,9 +6,13 @@ import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
+import { Ban } from "lucide-react";
+import { useAuth } from "@/auth/AuthProvider";
+import { BlockAction } from "@/features/users/BlockAction";
 
 export function UserProfilePage() {
   const { id } = useParams();
+  const { session } = useAuth();
   const profile = useProfile(id);
   const p = profile.data;
 
@@ -21,7 +25,14 @@ export function UserProfilePage() {
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
           <StaffDistinctions distinctions={p.staffDistinctions} />
         </div>
+        {!p.isMe && session && <BlockAction userId={p.id} displayName={p.displayName} isBlocked={p.isBlocked} />}
       </div>
+      {p.isBlocked && (
+        <p className="notice notice--inline">
+          <Ban aria-hidden />
+          {t("You've blocked {name}. Their comments and videos are hidden from you, and yours from them. They aren't told.", { name: p.displayName })}
+        </p>
+      )}
       {p.followedGyms.length > 0 && (
         <div className="gym-chips" aria-label={t("Gyms")}>
           {p.followedGyms.map((g) => (

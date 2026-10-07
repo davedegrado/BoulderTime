@@ -19,6 +19,8 @@ export interface Profile {
   followedGyms: GymSummary[]; recentCompletions: HistoryItem[];
   /** Earned by being staff of a distinguished gym — following one is not enough. */
   staffDistinctions: StaffDistinction[];
+  /** Whether you have blocked this person. Only you ever see it. */
+  isBlocked: boolean;
 }
 
 export interface StaffDistinction {

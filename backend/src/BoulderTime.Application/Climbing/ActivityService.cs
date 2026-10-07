@@ -32,7 +32,9 @@ public sealed record ProfileDto(
     Guid Id, string DisplayName, string? AvatarUrl, DateTimeOffset MemberSince, bool IsMe,
     ClimbingStatsDto Stats, IReadOnlyList<HighestGradeDto> HighestGrades, IReadOnlyList<WeekActivityDto> Weekly,
     IReadOnlyList<GymSummaryDto> FollowedGyms, IReadOnlyList<ClimbHistoryItemDto> RecentCompletions,
-    IReadOnlyList<StaffDistinctionDto> StaffDistinctions);
+    IReadOnlyList<StaffDistinctionDto> StaffDistinctions,
+    /// <summary>Whether the viewer has blocked this person. Only the viewer ever sees it.</summary>
+    bool IsBlocked = false);
 
 public sealed record HomeGymDto(GymSummaryDto Gym, bool IsFavorite, int ActiveBoulders, int NewThisWeek);
 
@@ -43,7 +45,7 @@ public sealed record HomeDto(
     IReadOnlyList<Notifications.AnnouncementDto> Updates);
 
 /// <summary>Personal climbing history, statistics, public profiles and the Home screen. All computed on read.</summary>
-public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners)
+public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners, Users.BlockedPeople blocked)
 {
     public const int Weeks = 12;
 
@@ -77,7 +79,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
-            await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct));
+            await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
+            (await blocked.ForViewerAsync(ct)).Contains(userId));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)

@@ -523,3 +523,18 @@ status-bar icon is the mark cut out of a transparent canvas, at every density, t
 
 **`google-services.json` is not committed.** The repository is public and the file names the Firebase project; CI
 writes it from a secret, and a build without that secret produces an app without notifications and says so.
+
+## ADR-031 · Blocking someone
+Apple requires apps with user content to let people block abusive users, and it is worth having anyway: reporting
+asks someone else to act and takes time, blocking is the reader's own decision and takes effect at once.
+
+**Both directions.** A block hides what each writes from the other. Hiding one way only would leave the blocked
+person replying to someone who has stopped reading, which is the situation the block was meant to end.
+
+**Silent, and personal.** The blocked person is not told and sees nothing change; everyone else still sees both
+people's comments and videos. Blocking removes nothing — it is a setting, not moderation.
+
+**Gym staff still moderate what they blocked.** Filtering their view too would make blocking a moderator a way to
+put content beyond reach.
+
+The list of blocked people lives in the profile, so a block made months ago can still be found and undone.

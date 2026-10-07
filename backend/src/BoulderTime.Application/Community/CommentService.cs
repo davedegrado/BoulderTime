@@ -17,7 +17,7 @@ public sealed record SaveCommentRequest(string? Content);
 /// Flat comments. Everyone sees visible comments; staff of the gym also see hidden ones (marked) so they can unhide.
 /// Authors edit or delete their own; staff hide/unhide. Likes are one per user.
 /// </summary>
-public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications)
+public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications, Users.BlockedPeople blocked)
 {
     public async Task<PagedResult<CommentDto>> ListAsync(Guid boulderId, int? page, int? pageSize, CancellationToken ct = default)
     {
@@ -26,6 +26,14 @@ public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICu
         var q = db.Comments.AsNoTracking().Where(c => c.BoulderId == boulderId);
         var viewerId = currentUser.UserId;
         if (!scope.IsStaff) q = q.Where(c => c.Status == CommentStatus.Visible || c.UserId == viewerId);
+
+        // Blocking is personal, so it hides for this reader only; staff still moderate everything, including what
+        // they personally blocked, or a block would be a way to escape moderation.
+        if (!scope.IsStaff)
+        {
+            var hidden = await blocked.ForViewerAsync(ct);
+            if (hidden.Count > 0) q = q.Where(c => !hidden.Contains(c.UserId));
+        }
 
         var total = await q.CountAsync(ct);
         var rows = await q.OrderBy(c => c.CreatedAt).Skip((p - 1) * size).Take(size).ToListAsync(ct);

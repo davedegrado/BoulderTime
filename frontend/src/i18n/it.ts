@@ -812,4 +812,12 @@ export const it: Record<string, string> = {
   "Record a video": "Registra un video",
   "Choose from the gallery": "Scegli dalla galleria",
   "This version of the app can't do notifications. Update it from the store, or use BoulderTime in the browser.": "Questa versione dell'app non supporta le notifiche. Aggiornala dallo store, oppure usa BoulderTime dal browser.",
+  // ---- Blocking someone ----
+  "Block": "Blocca",
+  "Unblock": "Sblocca",
+  "Blocked people": "Persone bloccate",
+  "{name} is blocked": "{name} è bloccato",
+  "{name} is unblocked": "{name} è sbloccato",
+  "You won't see what {name} writes, and they won't see what you write. They aren't told, and you can undo it any time.": "Non vedrai più quello che scrive {name}, e lui non vedrà quello che scrivi tu. Non viene avvisato, e puoi annullare quando vuoi.",
+  "You've blocked {name}. Their comments and videos are hidden from you, and yours from them. They aren't told.": "Hai bloccato {name}. I suoi commenti e i suoi video non ti compaiono, e i tuoi non compaiono a lui. Non viene avvisato.",
 };
