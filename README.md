@@ -10,9 +10,11 @@ problems, suggest grades, watch beta and keep a climbing history that survives r
 
 One account can be a climber, staff at several gyms and a platform administrator at the same time.
 
-> **Build status:** phases 1–8 are complete and verified, together with the founding gym and early-partner
-> distinctions and the pre-deployment security hardening. **Phase 9 (seed data, final checks, deployment) is next.**
-> Status per phase, and the deliberate limitations, are in [`docs/roadmap.md`](docs/roadmap.md).
+> **Build status:** live in production at **[bouldertime.com](https://bouldertime.com)**. Phases 1–9 are complete and
+> verified, along with privacy and terms, account deletion, leaderboard visibility and per-gym video allowances.
+> The **Android app** is built from the same codebase and installs from CI; native push, blocking users and the
+> stores themselves are the milestones in progress. Status and the deliberate limitations:
+> [`docs/roadmap.md`](docs/roadmap.md).
 
 ## 2. Architecture
 
@@ -21,11 +23,19 @@ and authorization live in the API; the browser uses Supabase only to sign in. Fu
 [`docs/architecture.md`](docs/architecture.md). Key decisions: [`docs/decisions.md`](docs/decisions.md).
 
 ```
-/frontend   React + TypeScript + Vite
-/backend    ASP.NET Core 8 Web API (Domain / Application / Infrastructure / Api / Tests)
-/database   Supabase-side SQL (schema hardening, storage policies)
-/docs       Architecture, decisions, roadmap, brand
+/frontend          React + TypeScript + Vite
+/frontend/android  The Android app: the same build, wrapped by Capacitor (docs/mobile.md)
+/backend           ASP.NET Core 8 Web API (Domain / Application / Infrastructure / Api / Tests)
+/database          Supabase-side SQL (schema hardening, storage policies)
+/docs              Architecture, decisions, roadmap, mobile, deployment, brand
 ```
+
+The website, the installable PWA and the store apps are **one frontend**: Capacitor copies `frontend/dist` into the
+native projects and adds a thin shell. What differs inside an app, and what has to be configured outside the
+repository, is in [`docs/mobile.md`](docs/mobile.md).
+
+In production: Cloudflare Workers serves the frontend, Railway (Amsterdam) runs the API, Supabase (Frankfurt) holds
+the database, auth and storage, Resend sends the email, MapTiler serves the map tiles.
 
 ## See it running (GitHub Codespaces, works from a phone)
 
@@ -202,8 +212,10 @@ Step-by-step guide with the exact variables: [`docs/deployment.md`](docs/deploym
 - **Auth keys:** stay on asymmetric JWT signing keys; the API refreshes JWKS every 10 minutes and on unknown key ids, so rotation needs no redeploy.
 - **Storage:** run `database/supabase/storage.sql` once; video buckets must stay private.
 - **Maps:** OpenStreetMap's tiles are for light use only — set `VITE_MAP_TILE_URL` and `VITE_MAP_ATTRIBUTION` to a tile
-  provider before going public.
+  provider before going public. Add `localhost` to the key's allowed origins, or the map stays blank inside the app.
+- **Store apps:** `Cors__AllowedOrigins__*` must include `https://localhost` (Android) and, later,
+  `capacitor://localhost` (iOS); see [`docs/mobile.md`](docs/mobile.md).
 - **Observability:** every error response carries a `traceId` that matches server logs.
 
-Known limitations (push notifications, staff invitation emails, video transcoding, no cross-gym leaderboard) are listed
-in [`docs/roadmap.md`](docs/roadmap.md).
+Known limitations (push inside the store app, blocking users, staff invitation emails, video transcoding, no
+cross-gym leaderboard) are listed in [`docs/roadmap.md`](docs/roadmap.md).

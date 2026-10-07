@@ -3,34 +3,60 @@
 Status reflects the code in this repository, verified by the checks listed in the last column — not by intent.
 Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 
+## Shipped
+
 | Phase | Scope | Status | Verified by |
 |---|---|---|---|
 | 1 | Foundation: repo, frontend, backend, Supabase auth, base UI, routing, config | **Done** | build, migration, backend tests |
-| 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | **Done** — backend and screens | role/permission tests, staff and admin screens |
+| 2 | Gyms, sectors, staff, invitations, gym candidates, platform admin | **Done** | role/permission tests, staff and admin screens |
 | 3 | Boulders, photos, hold colours, grading systems, official grades, active/removed | **Done** | boulder, grading and upload tests |
 | 4 | Attempts, completions, activity, ratings, follows | **Done** | climbing and follow tests |
 | 5 | Comments, likes, grade suggestions, official beta, community videos, moderation | **Done** | community, moderation and signed-URL tests |
 | 6 | Notifications, announcements, subscriptions, preferences | **Done** | notification targeting and collapse tests |
 | 7 | Leaderboards | **Done** | scoring, period and ranking tests |
 | 8 | Polish: images, installable app, accessibility, performance, maps, video previews | **Done** | image, map and polish tests |
+| 9 | Seed data, final checks, docs, **deployment** | **Done** — live at [bouldertime.com](https://bouldertime.com) | health check, deployed stack |
 | — | Italian and English throughout (ADR-018, ADR-019) | **Done** | translation coverage test |
 | — | Founding gym and early partners (ADR-020) | **Done** | authorisation, uniqueness and badge tests |
 | — | Security hardening (ADR-021) | **Done** | open-redirect, rate-limit and header checks |
-| 9 | Seed data, final checks, docs, deployment | Next | — |
+| — | Leaderboard opt-out, reports and exclusion (ADR-022) | **Done** | visibility and moderation tests |
+| — | Push notifications on the web and the installed PWA (ADR-023) | **Done** | encryption round-trip, subscription tests |
+| — | Account deletion from the profile, seven-day grace (ADR-024) | **Done** | deletion, grace and erasure tests |
+| — | Privacy notice and terms, acceptance recorded with its version (ADR-025, ADR-026) | **Done** | promise-matching and acceptance tests |
+| — | Per-gym video allowance: climber videos off by default, beta cap (ADR-026) | **Done** | allowance, cap and clean-up tests |
+| — | Boulders can go up ungraded and be graded later | **Done** | ungraded-send and scoring tests |
+
+## Store apps (in progress)
+
+One codebase: the website, the installable PWA and the store apps are the same React build (ADR-027).
+
+| Milestone | Scope | Status |
+|---|---|---|
+| M1 | Capacitor, Android project, no service worker in the app, back button, status bar, splash, icons, APK built by CI | **Done** |
+| M2 | App Links, release signing, email links that work on any device (ADR-028) | **Done** |
+| M3 | Camera or gallery inside the app (ADR-029) | **Done** |
+| M4 | Native push through Firebase: Web Push does not reach a closed store app | Next |
+| M5 | Blocking a user — Apple requires it for apps with user content | After M4 |
+| M6 | Google Play: closed test, store listing, release | Needs a Play account |
+| M7 | iOS: Xcode project, universal links, App Store | Needs an Apple account |
 
 ## Known limitations (deliberate, not forgotten)
 
-- **Push notifications** to a closed app are not implemented; the notification records and preferences that feed them are.
+- **Push notifications inside the store app** don't work yet: those in use are the browser's, which a native app
+  cannot receive. The web and the installed PWA have them. M4 fixes this.
+- **Blocking another user** is not possible; reporting and gym-side moderation are. M5 adds it.
 - **Staff invitation emails** are not sent: invitations appear in the app after signing in with the invited address.
-- **Video transcoding** is not done, so an iPhone `.mov` (HEVC) may not play in every desktop browser.
+- **Video transcoding** is not done, so an iPhone `.mov` (HEVC) may not play in every desktop browser or on Android.
 - **No cross-gym leaderboard:** grades from different gyms are not comparable, so it is intentionally absent.
-- **OpenStreetMap tiles** are for light use; production must set `VITE_MAP_TILE_URL` to a tile provider.
+- **Supabase free tier:** no point-in-time recovery; daily backups only.
 
 ## How each phase is verified
 
 Code is prepared outside the repo, then applied in a GitHub Codespace by an `apply.sh` script that builds the backend
 against the real packages, generates the EF migration, runs all backend tests (Testcontainers) and the frontend
 typecheck/tests/build, and commits the log. `bash scripts/dev.sh` then runs the full stack for a hands-on look.
+The Android app is built by GitHub Actions (`.github/workflows/android.yml`), which attaches an installable APK to
+every run.
 
 ## Temporary placeholders
 
