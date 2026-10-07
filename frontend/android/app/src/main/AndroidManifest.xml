@@ -37,6 +37,17 @@
         </provider>
     </application>
 
+    <!-- Android 11 and later hide other apps unless they are declared here. Without this, Capacitor's check for a
+         camera app finds none and silently opens the gallery instead (BridgeWebChromeClient.showImageCapturePicker). -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.VIDEO_CAPTURE" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

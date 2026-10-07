@@ -477,3 +477,8 @@ they don't: Capacitor's WebView opens the gallery for a plain file field and the
 choice. Rather than add the camera plugin, the app asks first and opens the matching field (`MediaInput`). It covers
 photos and videos alike, keeps the browser behaviour untouched, and the same component serves the web, the PWA and both
 apps. Camera permission is requested by Capacitor on first use.
+
+Two Android declarations are needed for the camera to actually open, and both fail by quietly showing the gallery:
+`<queries>` for the capture intents (Android 11+ hides other apps otherwise, so Capacitor's check finds no camera app)
+and a `file_paths.xml` entry for the folder the photo is written to. A test asserts both, because regenerating the
+Android project would drop them without any error.

@@ -48,6 +48,11 @@ camera and library. Inside the app Android's WebView doesn't: without `capture` 
 camera only (see Capacitor's `BridgeWebChromeClient.onShowFileChooser`). So in the app the field first asks
 "take a photo / choose from the gallery" and opens the matching one. No camera plugin needed.
 
+Two declarations in `android/app/src/main/` make the camera half work, and both fail silently (the gallery opens
+instead): the `<queries>` block for `IMAGE_CAPTURE`/`VIDEO_CAPTURE`, without which Android 11+ reports that no camera
+app exists, and `res/xml/file_paths.xml`, which must cover the folder the photo is written to. Regenerating the Android
+project drops both, so a test asserts they are there.
+
 ## Links that open the app
 
 `https://bouldertime.com/...` links open in the Android app (App Links). Android checks the claim against
