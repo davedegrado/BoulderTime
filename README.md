@@ -193,7 +193,9 @@ redirect that only accepts same-origin paths. Remaining dependency advisories ar
 ## 15. Development workflow
 
 - Work phase by phase (`docs/roadmap.md`). Each phase ends with typecheck, tests and docs updated.
-- Change the model → add an EF migration → commit model, migration and snapshot together.
+- Change the model → `apply.sh` asks EF whether a migration is needed and generates it; model, migration and
+  snapshot are committed together. Schema changes stay backward-compatible: migrations run before the new version
+  is switched in, so the running one must keep working against the new schema.
 - User-visible text goes through `t()`; a test fails if a string has no Italian wording (`frontend/src/i18n`).
 - Backend tests: `cd backend && dotnet test` (Docker must be running; tests start their own PostgreSQL).
 - Architecture-affecting decisions get an entry in `docs/decisions.md` before implementation.

@@ -500,5 +500,11 @@ two characters `\n`, which is how they come out of an environment variable.
 **A missing or broken service account turns app notifications off** and logs it, rather than stopping the API: the
 rest of BoulderTime does not depend on them.
 
+**The device's column keeps its old name.** The property is `Address` now that it holds either a push endpoint or a
+Firebase token, but the column stays `endpoint`: renaming it would drop and recreate the column, losing every
+registration and then failing the unique index on the empty values left behind — and Railway applies migrations
+before switching to the new version, so a column the running version still reads must not vanish under it. The new
+`platform` column defaults to Web, which is what every existing row was.
+
 **`google-services.json` is not committed.** The repository is public and the file names the Firebase project; CI
 writes it from a secret, and a build without that secret produces an app without notifications and says so.

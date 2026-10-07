@@ -62,13 +62,18 @@ internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<P
         b.ToTable("push_subscriptions");
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
-        b.Property(x => x.Address).HasMaxLength(PushSubscription.AddressMaxLength).IsRequired();
-        b.Property(x => x.Platform).HasConversion<int>();
+        // The column keeps its original name while the property is renamed. Two reasons: a rename would drop and
+        // recreate the column, losing every registration and failing the unique index on the empty values left
+        // behind; and Railway applies migrations before switching to the new version, so a column the running
+        // version still reads must not disappear under it.
+        b.Property(x => x.Address).HasColumnName("endpoint").HasMaxLength(PushSubscription.AddressMaxLength).IsRequired();
+        // Existing rows were all browsers, and that is what the default makes them.
+        b.Property(x => x.Platform).HasConversion<int>().HasDefaultValue(PushPlatform.Web);
         b.Property(x => x.P256dh).HasMaxLength(200).IsRequired();
         b.Property(x => x.Auth).HasMaxLength(100).IsRequired();
         b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         // One row per device: the address is the push service URL, or the Firebase token for a store app.
-        b.HasIndex(x => x.Address).IsUnique();
+        b.HasIndex(x => x.Address).IsUnique().HasDatabaseName("ix_push_subscriptions_endpoint");
         b.HasIndex(x => x.UserId);
     }
 }
