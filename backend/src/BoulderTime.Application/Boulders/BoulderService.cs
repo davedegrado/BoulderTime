@@ -143,6 +143,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
     public async Task<BoulderDetailDto> UpdateAsync(Guid boulderId, SaveBoulderRequest r, CancellationToken ct = default)
     {
         var boulder = await db.Boulders.FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
         var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, ct);
         var userId = currentUser.RequireUserId();
@@ -308,6 +309,9 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
     public async Task<BoulderDetailDto> RestoreAsync(Guid boulderId, CancellationToken ct = default)
     {
         var boulder = await db.Boulders.FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        // Loaded by id rather than through the usual visibility check, so the one thing that check does has to be
+        // done here: a deleted boulder does not exist for anybody, and must not be restored into an empty shell.
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
         var sectorActive = await db.Sectors.AnyAsync(s => s.Id == boulder.SectorId && s.IsActive, ct);
         if (!sectorActive) throw new ConflictException("Its sector is hidden. Show the sector again before restoring this boulder.", "sector_inactive");

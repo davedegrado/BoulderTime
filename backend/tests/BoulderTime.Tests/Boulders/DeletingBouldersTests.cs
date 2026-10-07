@@ -88,8 +88,40 @@ public sealed class DeletingBouldersTests(PostgresFixture postgres) : IAsyncLife
         (await world.Staff.Client.GetAsync($"/api/boulders/{boulder.Id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
         // Nor can it be asked for by name, which would otherwise be a way back in.
         (await world.Staff.Client.GetAsync($"/api/gyms/{world.Gym.Id}/boulders?status=DELETED")).StatusCode.Should().Be(HttpStatusCode.NotFound);
-        // And it cannot be restored: there is no photo to restore it to.
+        // There is no way back in. Each of these loads the boulder by id rather than through the visibility check,
+        // so each needs its own guard — and without one, removing a deleted boulder put it back on the removed list
+        // as an empty shell with no photo.
         (await world.Staff.Client.PostAsJsonAsync($"/api/boulders/{boulder.Id}/restore", new { })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await world.Staff.Client.PutAsJsonAsync($"/api/boulders/{boulder.Id}",
+            new { sectorId = world.Sector.Id, photoPath = "x", holdColor = "BLUE", grades = Array.Empty<object>() })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await world.Staff.Client.PostAsJsonAsync($"/api/gyms/{world.Gym.Id}/boulders/remove",
+            new { boulderIds = new[] { boulder.Id }, notifyFollowers = false })).EnsureSuccessStatusCode();
+        (await _f.Db(db => db.Boulders.AsNoTracking().Where(b => b.Id == boulder.Id).Select(b => b.Status).FirstAsync()))
+            .Should().Be(BoulderStatus.Deleted);
+    }
+
+    [Fact]
+    public async Task Nothing_can_be_written_against_a_deleted_boulder()
+    {
+        var world = await ClimbingWorld.CreateAsync(_f);
+        var boulder = await world.BoulderAsync("6A");
+        var climber = await _f.UserAsync();
+        await RemoveAsync(world.Staff, world.Gym.Id, boulder.Id);
+        (await world.Staff.Client.DeleteAsync($"/api/boulders/{boulder.Id}")).EnsureSuccessStatusCode();
+
+        // The row outlives the boulder to hold up history, so every path that looks one up by id has to say it is
+        // gone. Otherwise a climber logs an attempt, follows, or reports something they can never open again.
+        foreach (var response in new[]
+        {
+            await climber.Client.PutAsJsonAsync($"/api/boulders/{boulder.Id}/attempt", new { attempts = 1, completed = true }),
+            await climber.Client.PutAsJsonAsync($"/api/boulders/{boulder.Id}/rating", new { rating = 5 }),
+            await climber.Client.PutAsJsonAsync($"/api/boulders/{boulder.Id}/follow", new { notificationsEnabled = true }),
+            await climber.Client.PostAsJsonAsync($"/api/boulders/{boulder.Id}/comments", new { content = "Ciao" }),
+            await climber.Client.PostAsJsonAsync("/api/reports", new { entityType = "BOULDER", entityId = boulder.Id, reason = "SPAM" }),
+        })
+        {
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
     }
 
     [Fact]

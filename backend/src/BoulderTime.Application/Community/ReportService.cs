@@ -135,7 +135,7 @@ public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymA
     /// <summary>Resolves the boulder a reported item belongs to. Hidden comments only count for their author.</summary>
     private async Task<Guid?> BoulderOfAsync(ReportEntityType type, Guid entityId, Guid userId, CancellationToken ct) => type switch
     {
-        ReportEntityType.Boulder => await db.Boulders.AnyAsync(b => b.Id == entityId, ct) ? entityId : null,
+        ReportEntityType.Boulder => await db.Boulders.AnyAsync(b => b.Id == entityId && b.Status != Domain.Boulders.BoulderStatus.Deleted, ct) ? entityId : null,
         ReportEntityType.Comment => await db.Comments.Where(c => c.Id == entityId && (c.Status == CommentStatus.Visible || c.UserId == userId)).Select(c => (Guid?)c.BoulderId).FirstOrDefaultAsync(ct),
         ReportEntityType.Video => await db.BoulderVideos.Where(v => v.Id == entityId && (v.Status == VideoStatus.Approved || v.UserId == userId)).Select(v => (Guid?)v.BoulderId).FirstOrDefaultAsync(ct),
         _ => null,

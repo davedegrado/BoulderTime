@@ -176,7 +176,9 @@ public sealed class BoulderTests(PostgresFixture postgres) : IAsyncLifetime
 
         (await climber.Client.PostAsJsonAsync($"/api/gyms/{gym.Id}/boulder-photos", new { contentType = "image/jpeg", sizeBytes = 10 })).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await climber.Client.PostAsJsonAsync($"/api/gyms/{gym.Id}/boulders", BoulderTestData.BoulderBody(sector, $"gyms/{gym.Id}/boulders/x.jpg", font, "6A"))).StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        (await climber.Client.GetAsync($"/api/gyms/{gym.Id}/boulders?status=REMOVED")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        // Browsing boulders that have come off the wall is NOT staff-only: a climber's sends are part of their
+        // history, and hiding the boulder would make a send stop existing the day the sector is retraced.
+        (await climber.Client.GetAsync($"/api/gyms/{gym.Id}/boulders?status=REMOVED")).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

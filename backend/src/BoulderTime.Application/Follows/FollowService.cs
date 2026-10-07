@@ -65,7 +65,9 @@ public sealed class FollowService(IAppDbContext db, GymAccess access, ICurrentUs
     public async Task<FollowState> FollowBoulderAsync(Guid boulderId, FollowRequest r, CancellationToken ct = default)
     {
         var userId = currentUser.RequireUserId();
-        var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        var boulder = await db.Boulders.AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == boulderId && b.Status != Domain.Boulders.BoulderStatus.Deleted, ct)
+            ?? throw new NotFoundException("Boulder", boulderId);
         await RequireVisibleGymAsync(boulder.GymId, ct);
         var follow = await db.BoulderFollows.FirstOrDefaultAsync(f => f.UserId == userId && f.BoulderId == boulderId, ct);
         if (follow is null) db.BoulderFollows.Add(follow = BoulderFollow.Create(userId, boulderId, clock.UtcNow));

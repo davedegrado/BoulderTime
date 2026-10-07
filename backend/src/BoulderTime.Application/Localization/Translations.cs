@@ -44,7 +44,6 @@ public static partial class Translations
         ("You don't have permission to do that.", "Non hai i permessi per farlo."),
         ("Only BoulderTime administrators can do this.", "Solo gli amministratori di BoulderTime possono farlo."),
         ("Only this gym's staff can do this.", "Solo lo staff di questa palestra può farlo."),
-        ("Only staff can browse removed boulders.", "Solo lo staff può vedere i blocchi rimossi."),
         ("This needs the {0} role at this gym.", "Serve il ruolo {0} in questa palestra."),
         ("This sign-in method didn't provide an email address.", "Questo metodo di accesso non ha fornito un indirizzo email."),
 

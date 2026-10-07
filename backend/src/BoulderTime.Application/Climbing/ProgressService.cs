@@ -82,7 +82,10 @@ public sealed class ProgressService(IAppDbContext db, GymAccess access, ICurrent
 
     private async Task RequireVisibleBoulderAsync(Guid boulderId, CancellationToken ct)
     {
-        var b = await db.Boulders.AsNoTracking().Where(x => x.Id == boulderId)
+        // Deleted is excluded here and not only in the visibility check: the row outlives the boulder to hold up
+        // history, so every path that finds a boulder by id has to say it does not exist, or a climber could log an
+        // attempt on something they can never open again.
+        var b = await db.Boulders.AsNoTracking().Where(x => x.Id == boulderId && x.Status != Domain.Boulders.BoulderStatus.Deleted)
             .Join(db.Gyms, x => x.GymId, g => g.Id, (x, g) => new { g.Id, g.Status })
             .FirstOrDefaultAsync(ct) ?? throw new NotFoundException("Boulder", boulderId);
         if (b.Status != Domain.Gyms.GymStatus.Active && await access.GetRoleAsync(b.Id, ct) is null)

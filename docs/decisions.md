@@ -615,3 +615,12 @@ there is no page left to open. The confirmation says both halves: what goes, and
 **Only a gym admin, only after it is off the wall, and there is no undo.** Setters take boulders down; erasing one
 is a different decision. Restoring a deleted boulder is refused rather than half-done: there is no photo to restore
 it to.
+
+**A kept row is a trap, and every lookup by id is a door.** The boulder row survives deletion, so code that finds a
+boulder by id still finds it. Four paths did, and each would have let a climber act on a boulder they can never
+open again: logging an attempt or a rating, following it, reporting it, and — worst — bulk removal, which put a
+deleted boulder back on the removed list as an empty shell. Restoring and editing were two more. They are guarded
+one by one, and a test now writes against a deleted boulder through every one of them.
+
+The leaderboard's join is the deliberate exception: it reads attempts against boulders with no status filter, which
+is exactly how a deleted boulder keeps scoring the sends it carries.

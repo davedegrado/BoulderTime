@@ -61,18 +61,22 @@ public class Boulder : IAuditable
         return obsolete;
     }
 
-    /// <returns>False if it was already removed (idempotent bulk operations).</returns>
+    /// <returns>False if it was already removed, or deleted (idempotent bulk operations).</returns>
     public bool Remove(Guid? byUserId, DateTimeOffset now)
     {
-        if (Status == BoulderStatus.Removed) return false;
+        // Deleted is not a milder state than removed: taking a deleted boulder "off the wall" would put it back on
+        // the removed list with no photo and nothing on it. Deletion is the end of the line.
+        if (Status is BoulderStatus.Removed or BoulderStatus.Deleted) return false;
         Status = BoulderStatus.Removed;
         RemovedAt = now;
         RemovedByUserId = byUserId;
         return true;
     }
 
+    /// <summary>Only a removed boulder comes back. A deleted one has no photo and no content to come back to.</summary>
     public void Restore()
     {
+        if (Status == BoulderStatus.Deleted) throw new InvalidOperationException("A deleted boulder cannot be restored.");
         Status = BoulderStatus.Active;
         RemovedAt = null;
         RemovedByUserId = null;
