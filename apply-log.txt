@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Camera or gallery inside the app: Android's in-app view only ever offered one of them
-applicata: Camera or gallery inside the app: Android's in-app view only
+Applying: Let the camera actually open on Android: declare the capture intents Android 11+ requires
+applicata: Let the camera actually open on Android: declare the capture
 == 2. STRUMENTI ==
 OK
 == 3. BUILD BACKEND ==
@@ -9,12 +9,12 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:29.94
+Time Elapsed 00:00:28.15
 OK
 == 4. TEST BACKEND ==
-Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 45 s - BoulderTime.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:   177, Skipped:     0, Total:   177, Duration: 1 m 43 s - BoulderTime.Tests.dll (net8.0)
 == 5. FRONTEND ==
-      Tests  112 passed (112)
+      Tests  115 passed (115)
 vite v5.4.21 building for production...
 transforming...
 ✓ 2166 modules transformed.
@@ -70,7 +70,7 @@ dist/assets/router-DvAFau9X.js                    546.74 kB │ gzip: 155.38 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.03s
+✓ built in 5.11s
 
 PWA v0.21.2
 mode      generateSW
