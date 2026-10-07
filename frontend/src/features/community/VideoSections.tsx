@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Lock, ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Upload, Video as VideoIcon, X, XCircle } from "lucide-react";
+import { ExternalLink, Link2, Lock, ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Upload, Video as VideoIcon, X, XCircle } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { uploadVideo, useBeta, useSaveBeta, useVideoMutations, useVideos, type UploadedVideo, type Video } from "@/features/community/api";
 import { ReportButton } from "@/features/community/ReportButton";
@@ -11,6 +11,7 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
+import { BetaLinkForm } from "@/features/community/BetaLinkForm";
 
 function Player({ src, poster, label, autoPlay }: { src: string; poster?: string | null; label: string; autoPlay?: boolean }) {
   return <video className="player" src={src} poster={poster ?? undefined} controls playsInline preload="metadata" autoPlay={autoPlay} aria-label={label} />;
@@ -79,43 +80,82 @@ function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }: {
   );
 }
 
+/** The site a linked beta points at, for the button's label. Falls back to the host if we don't recognise it. */
+function siteName(url: string): string {
+  let host: string;
+  try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { return t("the video"); }
+  const known: Record<string, string> = {
+    "youtube.com": "YouTube", "youtu.be": "YouTube", "instagram.com": "Instagram",
+    "vimeo.com": "Vimeo", "tiktok.com": "TikTok", "facebook.com": "Facebook", "fb.watch": "Facebook",
+  };
+  return known[host] ?? Object.entries(known).find(([h]) => host.endsWith(`.${h}`))?.[1] ?? host;
+}
+
 export function BetaSection({ boulderId, isStaff, canAdd = true }: { boulderId: string; isStaff: boolean; canAdd?: boolean }) {
   const beta = useBeta(boulderId);
   const save = useSaveBeta(boulderId);
   const toast = useToast();
   const [replacing, setReplacing] = useState(false);
+  // A gym out of upload slots can still link, so that is the form it opens on.
+  const [linking, setLinking] = useState(!canAdd);
 
   if (beta.isPending) return <LoadingState label={t("Loading beta")} />;
   if (beta.isError) return <ErrorState error={beta.error} onRetry={() => beta.refetch()} />;
   if (!beta.data && !isStaff) return null;
+
+  const published = () => { setReplacing(false); toast.success(t("Official beta published")); };
+  const editing = isStaff && (replacing || !beta.data);
 
   return (
     <section className="section card" aria-labelledby="beta-title">
       <h2 id="beta-title" className="section__title"><Clapperboard aria-hidden className="title-icon" /> {t("Official beta")}</h2>
       {beta.data ? (
         <>
-          <Player src={beta.data.videoUrl} poster={beta.data.thumbnailUrl} label={t("Official beta video")} />
+          {/* A linked video stays on its own site: embedding it would need their player, their cookies and their consent. */}
+          {beta.data.externalUrl ? (
+            <a className="beta-link" href={beta.data.externalUrl} target="_blank" rel="noreferrer noopener">
+              <ExternalLink aria-hidden />
+              <span>{t("Watch the beta on {site}", { site: siteName(beta.data.externalUrl) })}</span>
+            </a>
+          ) : (
+            <Player src={beta.data.videoUrl} poster={beta.data.thumbnailUrl} label={t("Official beta video")} />
+          )}
           {beta.data.caption && <p className="prose">{beta.data.caption}</p>}
           <p className="list__sub">{t("By {name}", { name: beta.data.uploadedBy.displayName })}</p>
         </>
       ) : <p className="list__sub">{t("No official beta yet.")}</p>}
+
       {/* Told before filming, not after uploading: the limit is the gym's, and hitting it at the last step wastes real work. */}
-      {isStaff && !beta.data && !canAdd && (
+      {editing && !canAdd && (
         <p className="notice notice--inline">
           <Lock aria-hidden />
-          {t("This gym has used all its official beta videos. Remove one from another boulder, or ask BoulderTime for more.")}
+          {t("This gym has used all its official beta videos. You can still link a video published elsewhere, or remove a beta from another boulder.")}
         </p>
       )}
-      {isStaff && (canAdd || beta.data) && (replacing || !beta.data ? (
-        <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? t("Replace beta") : t("Publish beta")} busy={save.isPending}
-          onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => { setReplacing(false); toast.success(t("Official beta published")); })} />
-      ) : (
+
+      {editing ? (
+        <div className="stack">
+          {linking ? (
+            <BetaLinkForm busy={save.isPending}
+              onSave={(externalUrl, caption) => save.mutateAsync({ externalUrl, caption }).then(published)} />
+          ) : (
+            <VideoUploader boulderId={boulderId} kind="BETA" submitLabel={beta.data ? t("Replace beta") : t("Publish beta")} busy={save.isPending}
+              onUploaded={(v, caption) => save.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(published)} />
+          )}
+          <div className="form__actions">
+            {linking
+              ? canAdd && <Button variant="ghost" icon={<Upload aria-hidden />} onClick={() => setLinking(false)}>{t("Upload a video instead")}</Button>
+              : <Button variant="ghost" icon={<Link2 aria-hidden />} onClick={() => setLinking(true)}>{t("Link a video instead")}</Button>}
+            {beta.data && <Button variant="ghost" onClick={() => setReplacing(false)}>{t("Cancel")}</Button>}
+          </div>
+        </div>
+      ) : isStaff && (
         <div className="form__actions">
-          <Button variant="secondary" onClick={() => setReplacing(true)}>{t("Replace")}</Button>
+          <Button variant="secondary" onClick={() => { setLinking(!canAdd); setReplacing(true); }}>{t("Replace")}</Button>
           <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete beta?")} loading={save.isPending}
             onConfirm={() => save.mutate(null, { onError: (e) => toast.error(errorMessage(e)) })}>{t("Delete")}</ConfirmButton>
         </div>
-      ))}
+      )}
     </section>
   );
 }

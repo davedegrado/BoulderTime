@@ -96,7 +96,8 @@ public sealed class PartnerService(IAppDbContext db, GymAccess access, ICurrentU
 
     private async Task<VideoAllowanceDto> VideoAllowanceAsync(Domain.Gyms.Gym gym, CancellationToken ct)
     {
-        var used = await db.BoulderBetas.AsNoTracking()
+        // Uploads only: the allowance is about what we store, and a linked beta is just an address.
+        var used = await db.BoulderBetas.AsNoTracking().Where(b => b.ExternalUrl == null)
             .Join(db.Boulders, b => b.BoulderId, x => x.Id, (b, x) => x.GymId)
             .CountAsync(id => id == gym.Id, ct);
         return new VideoAllowanceDto(gym.Id, gym.Name, gym.CommunityVideosEnabled, gym.OfficialBetaLimit, used);

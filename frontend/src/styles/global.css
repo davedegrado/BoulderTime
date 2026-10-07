@@ -562,6 +562,10 @@ svg { flex-shrink: 0; }
 
 /* Video */
 .player { width: 100%; max-height: 70vh; border-radius: var(--bt-radius-md); background: #000; }
+/* A beta that lives on Instagram or YouTube: one tap out to it, sized like a tappable row rather than a player. */
+.beta-link { display: flex; align-items: center; gap: var(--bt-3); min-height: 56px; padding: var(--bt-3) var(--bt-4); background: var(--bt-surface-2); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); color: var(--bt-ink); font-weight: 700; text-decoration: none; }
+.beta-link:hover { background: var(--bt-orange-tint); }
+.beta-link svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--bt-orange-ink); }
 .videos { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--bt-4); }
 @media (min-width: 720px) { .videos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .video-item { display: flex; flex-direction: column; gap: var(--bt-2); }

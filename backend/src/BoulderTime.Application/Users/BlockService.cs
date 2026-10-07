@@ -17,12 +17,15 @@ public sealed class BlockService(IAppDbContext db, ICurrentUser currentUser, ICl
     public async Task<IReadOnlyList<BlockedPersonDto>> ListAsync(CancellationToken ct = default)
     {
         var userId = currentUser.RequireUserId();
-        return await db.UserBlocks.AsNoTracking()
+        // Ordered on an anonymous row, not on the DTO: EF Core cannot sort by a member of a type it builds through
+        // a constructor, and asking it to left the whole query untranslatable.
+        var rows = await db.UserBlocks.AsNoTracking()
             .Where(b => b.BlockerUserId == userId)
             .Join(db.Users, b => b.BlockedUserId, u => u.Id,
-                (b, u) => new BlockedPersonDto(u.Id, u.DisplayName, u.AvatarUrl, b.CreatedAt))
-            .OrderBy(b => b.DisplayName)
+                (b, u) => new { u.Id, u.DisplayName, u.AvatarUrl, b.CreatedAt })
+            .OrderBy(x => x.DisplayName)
             .ToListAsync(ct);
+        return rows.Select(x => new BlockedPersonDto(x.Id, x.DisplayName, x.AvatarUrl, x.CreatedAt)).ToList();
     }
 
     public async Task BlockAsync(Guid blockedUserId, BlockUserRequest r, CancellationToken ct = default)

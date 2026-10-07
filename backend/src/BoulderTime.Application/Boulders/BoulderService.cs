@@ -81,14 +81,17 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
     }
 
     /// <summary>
-    /// Replacing an existing beta is always possible: it costs no extra storage. Only a brand-new one counts
-    /// against the gym's allowance.
+    /// Replacing an existing uploaded beta is always possible: it costs no extra storage. Only a brand-new upload
+    /// counts against the gym's allowance — a linked beta stores nothing, so it neither counts nor is ever refused.
+    /// This must agree with VideoService's own check, which is the one that actually refuses: this one only decides
+    /// whether staff are offered the upload button, and offering a button that then fails is the worse answer.
     /// </summary>
     private async Task<bool> CanAddBetaAsync(Domain.Gyms.Gym gym, Guid boulderId, CancellationToken ct)
     {
         if (gym.OfficialBetaLimit is not { } limit) return true;
-        if (await db.BoulderBetas.AsNoTracking().AnyAsync(x => x.BoulderId == boulderId, ct)) return true;
-        var used = await db.BoulderBetas.AsNoTracking()
+        var existing = await db.BoulderBetas.AsNoTracking().FirstOrDefaultAsync(x => x.BoulderId == boulderId, ct);
+        if (existing is not null && !existing.IsLink) return true;
+        var used = await db.BoulderBetas.AsNoTracking().Where(x => x.ExternalUrl == null)
             .Join(db.Boulders, x => x.BoulderId, b => b.Id, (x, b) => b.GymId)
             .CountAsync(id => id == gym.Id, ct);
         return used < limit;
@@ -215,9 +218,9 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
         var betas = await db.BoulderBetas.Where(b => boulderIds.Contains(b.BoulderId)).ToListAsync(ct);
         foreach (var beta in betas)
         {
-            foreach (var path in new[] { beta.StoragePath, beta.ThumbnailPath })
+            // Released() is empty for a linked beta: there is nothing of ours to delete, only the row.
+            foreach (var path in beta.Released())
             {
-                if (string.IsNullOrWhiteSpace(path)) continue;
                 // A file that refuses to go must not stop the retrace: the wall has already changed.
                 try { await storage.DeleteAsync(StorageBuckets.OfficialBeta, path, ct); }
                 catch (Exception) { /* left for the storage clean-up to pick up */ }

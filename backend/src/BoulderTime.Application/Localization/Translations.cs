@@ -104,8 +104,9 @@ public static partial class Translations
 
         // ---- Video allowance ----
         ("Climber videos aren't available at this gym yet.", "I video dei climber non sono ancora disponibili in questa palestra."),
-        ("This gym can keep {0} official beta videos. Remove one before adding another, or ask BoulderTime for more.",
-            "Questa palestra può tenere {0} beta ufficiali. Rimuovine una prima di aggiungerne un'altra, oppure chiedi a BoulderTime di alzare il limite."),
+        ("This gym can keep {0} official beta videos. Remove one before adding another, link a video published on {1}, or ask BoulderTime for more.",
+            "Questa palestra può tenere {0} beta ufficiali. Rimuovine una prima di aggiungerne un'altra, collega un video pubblicato su {1}, oppure chiedi a BoulderTime di alzare il limite."),
+        ("Paste the address of a video on {0}.", "Incolla l'indirizzo di un video su {0}."),
 
         // ---- Boulders ----
         ("Add a photo of the boulder.", "Aggiungi una foto del blocco."),

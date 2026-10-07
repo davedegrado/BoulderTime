@@ -80,7 +80,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            (await blocked.ForViewerAsync(ct)).Contains(userId));
+            await blocked.ViewerBlockedAsync(userId, ct));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)

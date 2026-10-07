@@ -62,6 +62,8 @@ internal sealed class BoulderBetaConfiguration : IEntityTypeConfiguration<Boulde
         b.Property(x => x.StoragePath).HasMaxLength(512).IsRequired();
         b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.Caption).HasMaxLength(BoulderBeta.CaptionMaxLength);
+        // Nullable, so every beta already in the table stays an uploaded one when this column appears.
+        b.Property(x => x.ExternalUrl).HasMaxLength(BoulderBeta.ExternalUrlMaxLength);
         b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<User>().WithMany().HasForeignKey(x => x.UploadedByUserId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => x.BoulderId).IsUnique(); // one official beta per boulder

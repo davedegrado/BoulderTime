@@ -12,8 +12,14 @@ public enum VideoKind { Community = 0, Beta = 1, CommunityThumbnail = 2, BetaThu
 
 public sealed record VideoUploadRequest(VideoKind? Kind, string? ContentType, long? SizeBytes);
 
-public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? ThumbnailUrl, string? Caption, PersonDto UploadedBy, DateTimeOffset UpdatedAt);
-public sealed record SaveBetaRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null);
+/// <summary>
+/// The official beta. <see cref="VideoUrl"/> is a short-lived address of our own file and is empty for a linked
+/// beta; <see cref="ExternalUrl"/> is the public page the video lives on and is null for an uploaded one.
+/// </summary>
+public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? ThumbnailUrl, string? Caption, PersonDto UploadedBy, DateTimeOffset UpdatedAt, string? ExternalUrl = null);
+
+/// <summary>Either <see cref="StoragePath"/> (an upload that finished) or <see cref="ExternalUrl"/> (a link).</summary>
+public sealed record SaveBetaRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null, string? ExternalUrl = null);
 
 public sealed record VideoDto(
     Guid Id, Guid BoulderId, PersonDto Author, string VideoUrl, string? ThumbnailUrl, string? Caption, VideoStatus Status,
@@ -94,20 +100,23 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     }
 
     /// <summary>
-    /// A gym may keep only so many official beta videos at once. Replacing the beta of a boulder that already has
-    /// one is always allowed: it costs no extra storage.
+    /// A gym may keep only so many official beta videos at once. Replacing the beta of a boulder that already has one
+    /// is always allowed: it costs no extra storage. Linked betas are not counted and never blocked — the allowance
+    /// limits the videos we store, and a link stores none, which is also the way out when a gym runs out.
     /// </summary>
     private async Task RequireBetaAllowanceAsync(Domain.Gyms.Gym gym, Guid boulderId, CancellationToken ct)
     {
         if (gym.OfficialBetaLimit is not { } limit) return;
-        if (await db.BoulderBetas.AsNoTracking().AnyAsync(b => b.BoulderId == boulderId, ct)) return;
+        var existing = await db.BoulderBetas.AsNoTracking().FirstOrDefaultAsync(b => b.BoulderId == boulderId, ct);
+        // A boulder whose beta is only a link has no uploaded video yet, so adding one does spend the allowance.
+        if (existing is not null && !existing.IsLink) return;
 
-        var used = await db.BoulderBetas.AsNoTracking()
+        var used = await db.BoulderBetas.AsNoTracking().Where(b => b.ExternalUrl == null)
             .Join(db.Boulders, b => b.BoulderId, x => x.Id, (b, x) => x.GymId)
             .CountAsync(gymId => gymId == gym.Id, ct);
         if (used >= limit)
             throw new ConflictException(
-                $"This gym can keep {limit} official beta videos. Remove one before adding another, or ask BoulderTime for more.",
+                $"This gym can keep {limit} official beta videos. Remove one before adding another, link a video published on {BetaLink.Accepted}, or ask BoulderTime for more.",
                 "beta_limit_reached");
     }
 
@@ -125,6 +134,7 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         var userId = currentUser.RequireUserId();
         var scope = await boulders.RequireStaffAsync(boulderId, GymRole.Staff, ct);
         var beta = await db.BoulderBetas.FirstOrDefaultAsync(b => b.BoulderId == boulderId, ct);
+        if (Input.Trimmed(r.ExternalUrl).Length > 0) return await SaveBetaLinkAsync(boulderId, beta, scope, userId, r, ct);
         var path = Input.Trimmed(r.StoragePath);
         if (path != beta?.StoragePath) await RequireUploadedAsync(VideoKind.Beta, scope, path, ct);
         var thumb = await OptionalThumbnailAsync(VideoKind.BetaThumbnail, scope, r.ThumbnailPath, beta?.ThumbnailPath, ct);
@@ -144,15 +154,40 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         return await ToBetaAsync(beta, ct);
     }
 
+    /// <summary>
+    /// A beta that points at a video already published elsewhere. It uses no storage, so the gym's allowance does not
+    /// apply: the allowance limits what we keep, and here we keep nothing but the address.
+    /// </summary>
+    private async Task<BetaDto> SaveBetaLinkAsync(
+        Guid boulderId, BoulderBeta? beta, Boulders.BoulderScope scope, Guid userId, SaveBetaRequest r, CancellationToken ct)
+    {
+        var url = BetaLink.Normalise(r.ExternalUrl)
+            ?? throw new ValidationException("externalUrl", $"Paste the address of a video on {BetaLink.Accepted}.");
+        ValidateCaption(r.Caption, BoulderBeta.CaptionMaxLength);
+
+        IReadOnlyList<string> replaced = [];
+        var isNewVideo = beta is null || beta.ExternalUrl != url;
+        if (beta is null) db.BoulderBetas.Add(beta = BoulderBeta.CreateLink(boulderId, userId, url, r.Caption));
+        else replaced = beta.ReplaceWithLink(userId, url, r.Caption);
+        if (isNewVideo)
+        {
+            var sectorName = await db.Sectors.AsNoTracking().Where(x => x.Id == scope.Boulder.SectorId).Select(x => x.Name).FirstAsync(ct);
+            await notifications.OfficialBetaAsync(scope.Boulder, scope.Gym, sectorName, userId, ct);
+        }
+        await db.SaveChangesAsync(ct);
+        foreach (var old in replaced) await storage.DeleteAsync(StorageBuckets.OfficialBeta, old, ct);
+        return await ToBetaAsync(beta, ct);
+    }
+
     public async Task DeleteBetaAsync(Guid boulderId, CancellationToken ct = default)
     {
         await boulders.RequireStaffAsync(boulderId, GymRole.Staff, ct);
         var beta = await db.BoulderBetas.FirstOrDefaultAsync(b => b.BoulderId == boulderId, ct);
         if (beta is null) return;
+        var released = beta.Released();
         db.BoulderBetas.Remove(beta);
         await db.SaveChangesAsync(ct);
-        await storage.DeleteAsync(StorageBuckets.OfficialBeta, beta.StoragePath, ct);
-        if (beta.ThumbnailPath is not null) await storage.DeleteAsync(StorageBuckets.OfficialBeta, beta.ThumbnailPath, ct);
+        foreach (var path in released) await storage.DeleteAsync(StorageBuckets.OfficialBeta, path, ct);
     }
 
     // ---------- Community videos ----------
@@ -307,6 +342,8 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     private async Task<BetaDto> ToBetaAsync(BoulderBeta beta, CancellationToken ct)
     {
         var person = await db.Users.AsNoTracking().Where(u => u.Id == beta.UploadedByUserId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstAsync(ct);
+        // A linked beta has no file of ours, so there is no read URL to sign.
+        if (beta.IsLink) return new BetaDto(beta.Id, beta.BoulderId, string.Empty, null, beta.Caption, person, beta.UpdatedAt, beta.ExternalUrl);
         var url = await storage.CreateReadUrlAsync(StorageBuckets.OfficialBeta, beta.StoragePath, ReadUrlLifetime, ct);
         var thumb = beta.ThumbnailPath is null ? null : await storage.CreateReadUrlAsync(StorageBuckets.OfficialBeta, beta.ThumbnailPath, ReadUrlLifetime, ct);
         return new BetaDto(beta.Id, beta.BoulderId, url, thumb, beta.Caption, person, beta.UpdatedAt);

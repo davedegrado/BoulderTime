@@ -538,3 +538,31 @@ people's comments and videos. Blocking removes nothing — it is a setting, not 
 put content beyond reach.
 
 The list of blocked people lives in the profile, so a block made months ago can still be found and undone.
+
+**One query answers "did I block them?", another "whose words do I hide?".** The two-way set above is the wrong
+answer to the first: asked whether the viewer blocked this profile, it says yes to the person who *was* blocked —
+and so tells them, which is exactly what blocking does not do. The profile now asks a one-direction question.
+
+## ADR-032 · A beta can be a link
+Gyms film their beta for Instagram or YouTube before they ever open BoulderTime. Asking them to upload the same
+video again costs them the work twice and costs us the storage, so the official beta may instead be an address.
+
+**One or the other, never both.** A beta holds either a file of ours or an external address. Keeping both would
+leave two things claiming to be the beta, and no answer to which one a climber sees. Swapping an upload for a link
+deletes the file; swapping back clears the address.
+
+**Only video sites, only https, and the host matched on its own labels.** The address is handed to every climber's
+browser, so an open field here would turn a staff account into a way to send a whole gym anywhere. The allowed list
+is YouTube, Instagram, Vimeo, TikTok and Facebook; `youtube.com.example.org` is refused rather than read as YouTube,
+and a site's front page is not a beta.
+
+**The query string is kept.** A YouTube link *is* its `?v=`, so stripping the query to drop tracking parameters
+would have handed out broken links — which is what running the validator over real addresses showed before this
+shipped. The fragment is dropped; the rest is stored as pasted.
+
+**Links do not count against the gym's allowance, and are never refused by it.** The allowance limits the video we
+store, and a link stores none. That also makes it the way out: a gym that has used all its upload slots is told it
+can still link, which is more use than being told to delete something.
+
+**The video stays on its own site.** We link out rather than embed: embedding means their player, their cookies and
+a consent question that is theirs to ask, on a page that is ours.

@@ -2,25 +2,40 @@ using BoulderTime.Domain.Common;
 
 namespace BoulderTime.Domain.Community;
 
-/// <summary>The gym's official beta video for a boulder. One per boulder; staff can replace it. No moderation.</summary>
+/// <summary>
+/// The gym's official beta for a boulder. One per boulder; staff can replace it. No moderation.
+///
+/// It is either an uploaded video (<see cref="StoragePath"/>) or a link to one already published elsewhere —
+/// Instagram, YouTube and the like (<see cref="ExternalUrl"/>) — never both. A link costs the gym no storage and no
+/// upload, which is why many gyms want it: the video is already on their own channel.
+/// </summary>
 public class BoulderBeta : IAuditable
 {
     public const int CaptionMaxLength = 300;
+    public const int ExternalUrlMaxLength = 500;
 
     public Guid Id { get; private set; }
     public Guid BoulderId { get; private set; }
     public Guid UploadedByUserId { get; private set; }
+    /// <summary>Empty when the beta is a link.</summary>
     public string StoragePath { get; private set; } = string.Empty;
     /// <summary>Poster frame captured by the uploading device; optional (some formats can't be decoded in the browser).</summary>
     public string? ThumbnailPath { get; private set; }
+    /// <summary>Set only for a linked beta. The video stays where it was published; we keep the address.</summary>
+    public string? ExternalUrl { get; private set; }
     public string? Caption { get; private set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    public bool IsLink => ExternalUrl is { Length: > 0 };
 
     private BoulderBeta() { }
 
     public static BoulderBeta Create(Guid boulderId, Guid userId, string storagePath, string? thumbnailPath, string? caption) =>
         new() { Id = Guid.NewGuid(), BoulderId = boulderId, UploadedByUserId = userId, StoragePath = storagePath, ThumbnailPath = Clean(thumbnailPath), Caption = Clean(caption) };
+
+    public static BoulderBeta CreateLink(Guid boulderId, Guid userId, string url, string? caption) =>
+        new() { Id = Guid.NewGuid(), BoulderId = boulderId, UploadedByUserId = userId, StoragePath = string.Empty, ExternalUrl = url, Caption = Clean(caption) };
 
     /// <returns>Storage paths that are no longer referenced (old video and/or thumbnail), so they can be deleted.</returns>
     public IReadOnlyList<string> Replace(Guid userId, string storagePath, string? thumbnailPath, string? caption)
@@ -28,7 +43,7 @@ public class BoulderBeta : IAuditable
         var obsolete = new List<string>();
         if (StoragePath != storagePath)
         {
-            obsolete.Add(StoragePath);
+            if (StoragePath.Length > 0) obsolete.Add(StoragePath);
             if (ThumbnailPath is not null && ThumbnailPath != thumbnailPath) obsolete.Add(ThumbnailPath);
             ThumbnailPath = Clean(thumbnailPath);
         }
@@ -39,8 +54,34 @@ public class BoulderBeta : IAuditable
         }
         UploadedByUserId = userId;
         StoragePath = storagePath;
+        ExternalUrl = null;
         Caption = Clean(caption);
         return obsolete;
+    }
+
+    /// <summary>
+    /// Turn this beta into a link. An uploaded video it replaces is released, so swapping an upload for a link gives
+    /// the gym its storage — and its allowance — back.
+    /// </summary>
+    /// <returns>Storage paths that are no longer referenced, so they can be deleted.</returns>
+    public IReadOnlyList<string> ReplaceWithLink(Guid userId, string url, string? caption)
+    {
+        var obsolete = Released();
+        UploadedByUserId = userId;
+        StoragePath = string.Empty;
+        ThumbnailPath = null;
+        ExternalUrl = url;
+        Caption = Clean(caption);
+        return obsolete;
+    }
+
+    /// <summary>Every storage path this beta currently holds, for deletion when it goes away.</summary>
+    public IReadOnlyList<string> Released()
+    {
+        var paths = new List<string>();
+        if (StoragePath.Length > 0) paths.Add(StoragePath);
+        if (ThumbnailPath is not null) paths.Add(ThumbnailPath);
+        return paths;
     }
 
     private static string? Clean(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim();

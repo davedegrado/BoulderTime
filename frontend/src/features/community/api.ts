@@ -24,7 +24,8 @@ export interface SystemConsensus {
 export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemConsensus[] }
 
 export type VideoStatus = "PENDING" | "APPROVED" | "REJECTED";
-export interface Beta { id: string; boulderId: string; videoUrl: string; thumbnailUrl: string | null; caption: string | null; uploadedBy: Person; updatedAt: string }
+/** `videoUrl` is empty and `externalUrl` set when the beta is a link to a video published elsewhere. */
+export interface Beta { id: string; boulderId: string; videoUrl: string; thumbnailUrl: string | null; caption: string | null; uploadedBy: Person; updatedAt: string; externalUrl: string | null }
 export interface Video { id: string; boulderId: string; author: Person; videoUrl: string; thumbnailUrl: string | null; caption: string | null; status: VideoStatus; rejectionReason: string | null; createdAt: string; isMine: boolean }
 export interface BoulderVideos { approved: PagedResult<Video>; mineInReview: Video[] }
 export interface ModerationVideo { video: Video; boulder: BoulderSummary }
@@ -185,10 +186,15 @@ export function useBeta(boulderId: string) {
   return useQuery({ queryKey: communityKeys.beta(boulderId), queryFn: async ({ signal }) => (await api.get<Beta | undefined>(`/api/boulders/${boulderId}/beta`, { signal })) ?? null });
 }
 
+/** One or the other: an upload that finished, or an address to link. */
+export type SaveBeta =
+  | { storagePath: string; caption?: string; thumbnailPath: string | null }
+  | { externalUrl: string; caption?: string };
+
 export function useSaveBeta(boulderId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { storagePath: string; caption: string; thumbnailPath: string | null } | null) =>
+    mutationFn: (input: SaveBeta | null) =>
       input ? api.put<Beta>(`/api/boulders/${boulderId}/beta`, input) : api.delete(`/api/boulders/${boulderId}/beta`),
     onSuccess: () => qc.invalidateQueries({ queryKey: communityKeys.beta(boulderId) }),
   });

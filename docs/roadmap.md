@@ -25,6 +25,7 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Privacy notice and terms, acceptance recorded with its version (ADR-025, ADR-026) | **Done** | promise-matching and acceptance tests |
 | — | Per-gym video allowance: climber videos off by default, beta cap (ADR-026) | **Done** | allowance, cap and clean-up tests |
 | — | Boulders can go up ungraded and be graded later | **Done** | ungraded-send and scoring tests |
+| — | The official beta can be a link to Instagram/YouTube instead of an upload (ADR-032) | **Done** | address-validation, allowance and swap tests |
 
 ## Store apps (in progress)
 
@@ -38,7 +39,15 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
 | M5 | Blocking a user (ADR-031) | **Done** |
 | M6 | iOS: Xcode project built in CI, universal links | Next |
+| M6b | Reporting a person and banning an account, platform-wide | Planned — the admin side M5 does not cover |
 | M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
+
+## Planned, deliberately not started
+
+- **Reporting a person, and banning an account.** Today a report is about a *thing* — a comment, a video, a boulder —
+  and there is no platform-wide ban. Blocking (M5) is the reader's own tool and does not give BoulderTime one.
+- **Interactive gym map by sector.** Tap a sector on a plan of the gym and get its boulders. The hard part is not the
+  tapping: it is where the plan comes from, and that each gym's is different. Needs a design pass before any code.
 
 ## Known limitations (deliberate, not forgotten)
 
