@@ -34,7 +34,10 @@ public static class DependencyInjection
             });
         // Web push: the sender talks to the browsers' push services, the dispatcher does it outside the request.
         services.Configure<WebPushOptions>(configuration.GetSection("Push"));
-        services.AddHttpClient<IPushSender, WebPushSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<WebPushSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<FcmPushSender>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<WebPushSender>());
+        services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<FcmPushSender>());
         services.AddSingleton<IPushConfig>(sp => new PushConfig(sp.GetRequiredService<IOptions<WebPushOptions>>().Value.PublicKey));
         services.AddSingleton<PushDispatcher>();
         services.AddSingleton<IPushQueue>(sp => sp.GetRequiredService<PushDispatcher>());

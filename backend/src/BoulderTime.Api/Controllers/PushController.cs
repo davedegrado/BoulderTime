@@ -1,4 +1,5 @@
 using BoulderTime.Application.Notifications;
+using BoulderTime.Domain.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +12,13 @@ namespace BoulderTime.Api.Controllers;
 [Produces("application/json")]
 public sealed class PushController(PushSubscriptionService service) : ControllerBase
 {
-    /// <summary>Whether push is available here, the key a device needs to subscribe, and whether this one already did.</summary>
+    /// <summary>
+    /// Whether notifications can be delivered to this kind of device, the key a browser needs to subscribe, and
+    /// whether this device is already registered. `address` is the push endpoint, or the app's Firebase token.
+    /// </summary>
     [HttpGet]
-    public Task<PushStatusDto> Status([FromQuery] string? endpoint, CancellationToken ct) => service.StatusAsync(endpoint, ct);
+    public Task<PushStatusDto> Status([FromQuery] string? address, [FromQuery] PushPlatform? platform, CancellationToken ct) =>
+        service.StatusAsync(address, platform, ct);
 
     [HttpPost]
     public async Task<IActionResult> Subscribe([FromBody] SubscribeToPushRequest request, CancellationToken ct)
@@ -22,11 +27,11 @@ public sealed class PushController(PushSubscriptionService service) : Controller
         return NoContent();
     }
 
-    /// <summary>Stops notifications on one device, or on all of them when no endpoint is given.</summary>
+    /// <summary>Stops notifications on one device, or on all of them when no address is given.</summary>
     [HttpDelete]
-    public async Task<IActionResult> Unsubscribe([FromQuery] string? endpoint, CancellationToken ct)
+    public async Task<IActionResult> Unsubscribe([FromQuery] string? address, CancellationToken ct)
     {
-        await service.UnsubscribeAsync(endpoint, ct);
+        await service.UnsubscribeAsync(address, ct);
         return NoContent();
     }
 }

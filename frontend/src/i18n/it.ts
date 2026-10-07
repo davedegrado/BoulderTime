@@ -803,7 +803,6 @@ export const it: Record<string, string> = {
   "Ungraded": "Non gradato",
   "Official grade": "Grado ufficiale",
   "You can leave it ungraded and add the grade later: climbers can still log it and suggest one.": "Puoi lasciarlo non gradato e aggiungere il grado dopo: i climber possono comunque registrarlo e proporre un grado.",
-  "Notifications with the app closed are coming with an update of the app. Until then you'll find everything here in Notifications.": "Le notifiche ad app chiusa arriveranno con un aggiornamento dell'app. Fino ad allora trovi tutto qui negli Avvisi.",
   "This link no longer works": "Questo link non funziona più",
   "It may have expired or already been used. If you've already confirmed your email, just sign in.": "Potrebbe essere scaduto o già usato. Se hai già confermato l'email, accedi pure.",
   "Checking the link": "Verifico il link",

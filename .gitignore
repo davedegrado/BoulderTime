@@ -47,3 +47,6 @@ out/
 *.keystore
 *.p12
 keystore.txt
+
+# Firebase settings for the Android app: added by CI from a secret, never committed.
+google-services.json

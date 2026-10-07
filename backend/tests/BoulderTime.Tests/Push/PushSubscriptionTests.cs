@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using BoulderTime.Domain.Notifications;
 using BoulderTime.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,12 +43,56 @@ public sealed class PushSubscriptionTests(PostgresFixture postgres) : IAsyncLife
     }
 
     [Fact]
+    public async Task A_store_app_registers_with_its_notification_token_instead_of_browser_keys()
+    {
+        var climber = await _f.UserAsync();
+
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-token-abc123" }))
+            .EnsureSuccessStatusCode();
+
+        var device = await _f.Db(db => db.PushSubscriptions.FirstAsync(s => s.UserId == climber.Id));
+        device.Platform.Should().Be(PushPlatform.Native);
+        device.Address.Should().Be("fcm-token-abc123");
+        device.P256dh.Should().BeEmpty();
+
+        // Firebase reissues tokens; the same device registering again updates its row rather than adding one.
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-token-abc123" }))
+            .EnsureSuccessStatusCode();
+        (await _f.Db(db => db.PushSubscriptions.CountAsync(s => s.UserId == climber.Id))).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task A_store_app_without_a_usable_token_is_refused()
+    {
+        var climber = await _f.UserAsync();
+
+        foreach (var token in new[] { "", "   ", "has space" })
+        {
+            (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token }))
+                .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        }
+        (await _f.Db(db => db.PushSubscriptions.CountAsync())).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task A_phone_and_a_browser_are_two_devices_of_the_same_person()
+    {
+        var climber = await _f.UserAsync();
+
+        await climber.Client.PostAsJsonAsync("/api/users/me/push", Device());
+        await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-token-xyz" });
+
+        var devices = await _f.Db(db => db.PushSubscriptions.Where(s => s.UserId == climber.Id).ToListAsync());
+        devices.Select(d => d.Platform).Should().BeEquivalentTo(new[] { PushPlatform.Web, PushPlatform.Native });
+    }
+
+    [Fact]
     public async Task Turning_notifications_off_removes_the_device()
     {
         var climber = await _f.UserAsync();
         await climber.Client.PostAsJsonAsync("/api/users/me/push", Device());
 
-        (await climber.Client.DeleteAsync("/api/users/me/push?endpoint=https%3A%2F%2Fpush.example%2Fabc")).EnsureSuccessStatusCode();
+        (await climber.Client.DeleteAsync("/api/users/me/push?address=https%3A%2F%2Fpush.example%2Fabc")).EnsureSuccessStatusCode();
 
         (await _f.Db(db => db.PushSubscriptions.CountAsync())).Should().Be(0);
     }

@@ -34,6 +34,8 @@ public sealed class WebPushSender(HttpClient http, IOptions<WebPushOptions> opti
 {
     private readonly WebPushOptions _options = options.Value;
 
+    public bool Handles(Domain.Notifications.PushPlatform platform) => platform == Domain.Notifications.PushPlatform.Web;
+
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_options.PublicKey) && !string.IsNullOrWhiteSpace(_options.PrivateKey);
 
     /// <summary>Delivers one message. Returns false when the device is gone and the subscription should be removed.</summary>
@@ -44,12 +46,12 @@ public sealed class WebPushSender(HttpClient http, IOptions<WebPushOptions> opti
         var payload = JsonSerializer.SerializeToUtf8Bytes(message, JsonOptions);
         var body = Encrypt(payload, FromBase64Url(target.P256dh), FromBase64Url(target.Auth));
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, target.Endpoint) { Content = new ByteArrayContent(body) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, target.Address) { Content = new ByteArrayContent(body) };
         request.Content.Headers.ContentType = new("application/octet-stream");
         request.Content.Headers.ContentEncoding.Add("aes128gcm");
         request.Headers.TryAddWithoutValidation("TTL", "86400");          // keep for a day if the device is offline
         request.Headers.TryAddWithoutValidation("Urgency", "normal");
-        request.Headers.TryAddWithoutValidation("Authorization", VapidHeader(new Uri(target.Endpoint)));
+        request.Headers.TryAddWithoutValidation("Authorization", VapidHeader(new Uri(target.Address)));
 
         try
         {

@@ -482,3 +482,23 @@ Two Android declarations are needed for the camera to actually open, and both fa
 `<queries>` for the capture intents (Android 11+ hides other apps otherwise, so Capacitor's check finds no camera app)
 and a `file_paths.xml` entry for the folder the photo is written to. A test asserts both, because regenerating the
 Android project would drop them without any error.
+
+## ADR-030 · Notifications inside the store apps
+Web Push does not reach a store app: there is no service worker inside one. The apps therefore go through Firebase
+Cloud Messaging, which also carries iOS by way of Apple, so there is one sender to write rather than two.
+
+**One queue, two senders.** `IPushSender.Handles(platform)` picks the sender for each device; the dispatcher, the
+preferences and which notifications are worth a buzz are unchanged. A device row now says whether it is a browser or
+an app, and `Address` holds either the push endpoint or the Firebase token — the keys stay empty for an app, which
+needs no payload encryption.
+
+**No Firebase library.** As with Web Push, the service account signs a short-lived JWT with .NET's own RSA, Google
+exchanges it for an access token (cached until just before it expires), and that token sends the message. The signing
+is verified against the service account's public key, including the case where the key's line breaks arrive as the
+two characters `\n`, which is how they come out of an environment variable.
+
+**A missing or broken service account turns app notifications off** and logs it, rather than stopping the API: the
+rest of BoulderTime does not depend on them.
+
+**`google-services.json` is not committed.** The repository is public and the file names the Firebase project; CI
+writes it from a secret, and a build without that secret produces an app without notifications and says so.

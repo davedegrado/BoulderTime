@@ -9,7 +9,6 @@ import { t } from "@/i18n/i18n";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { disablePush, enablePush, needsInstallFirst, pushStatus, pushSupportedHere } from "@/features/notifications/push";
-import { isNativeApp } from "@/lib/native";
 
 const CATEGORIES: { key: keyof NotificationSettings; label: string; description: string }[] = [
   { key: "gymUpdates", label: "Gym updates", description: "New boulders, announcements, events and schedule changes at gyms you follow." },
@@ -27,14 +26,6 @@ function PhoneNotifications() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
-  if (isNativeApp()) {
-    return (
-      <section className="card stack" aria-labelledby="phone-title">
-        <h2 id="phone-title" className="section__title">{t("On your phone")}</h2>
-        <p className="field__hint">{t("Notifications with the app closed are coming with an update of the app. Until then you'll find everything here in Notifications.")}</p>
-      </section>
-    );
-  }
   if (!pushSupportedHere() || status.data?.available === false) return null;
 
   async function toggle(on: boolean) {

@@ -53,6 +53,24 @@ instead): the `<queries>` block for `IMAGE_CAPTURE`/`VIDEO_CAPTURE`, without whi
 app exists, and `res/xml/file_paths.xml`, which must cover the folder the photo is written to. Regenerating the Android
 project drops both, so a test asserts they are there.
 
+## Notifications
+
+Browsers and the installed PWA use Web Push; the store apps cannot — there is no service worker inside a native app —
+so they go through Firebase Cloud Messaging, which reaches Android directly and iOS through Apple. One queue, one set
+of preferences, one sender per platform picked by the device's own `platform` column.
+
+Setting it up, once:
+
+1. **Firebase console** → create a project (analytics not needed) → add an **Android** app with package name
+   `com.bouldertime.app` → download `google-services.json`.
+2. **GitHub → Settings → Secrets and variables → Actions → Secrets:** `ANDROID_GOOGLE_SERVICES_JSON` = the contents of
+   that file. It is written into the build by CI and never committed; without it the app builds without notifications.
+3. **Firebase console** → Project settings → **Service accounts** → *Generate new private key* → a JSON file.
+4. **Railway → Variables:** `Push__ServiceAccountJson` = that JSON on one line. Keep it secret: it can send
+   notifications to every BoulderTime device.
+
+iOS additionally needs an APNs key uploaded to Firebase; that comes with the iOS milestone.
+
 ## Links that open the app
 
 `https://bouldertime.com/...` links open in the Android app (App Links). Android checks the claim against

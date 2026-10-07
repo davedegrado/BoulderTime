@@ -35,15 +35,13 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M1 | Capacitor, Android project, no service worker in the app, back button, status bar, splash, icons, APK built by CI | **Done** |
 | M2 | App Links, release signing, email links that work on any device (ADR-028) | **Done** |
 | M3 | Camera or gallery inside the app (ADR-029) | **Done** |
-| M4 | Native push through Firebase: Web Push does not reach a closed store app | Next |
-| M5 | Blocking a user — Apple requires it for apps with user content | After M4 |
+| M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
+| M5 | Blocking a user — Apple requires it for apps with user content | Next |
 | M6 | Google Play: closed test, store listing, release | Needs a Play account |
 | M7 | iOS: Xcode project, universal links, App Store | Needs an Apple account |
 
 ## Known limitations (deliberate, not forgotten)
 
-- **Push notifications inside the store app** don't work yet: those in use are the browser's, which a native app
-  cannot receive. The web and the installed PWA have them. M4 fixes this.
 - **Blocking another user** is not possible; reporting and gym-side moderation are. M5 adds it.
 - **Staff invitation emails** are not sent: invitations appear in the app after signing in with the invited address.
 - **Video transcoding** is not done, so an iPhone `.mov` (HEVC) may not play in every desktop browser or on Android.

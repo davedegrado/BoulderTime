@@ -12,7 +12,7 @@ namespace BoulderTime.Infrastructure.Push;
 /// Takes queued notifications and delivers them to each of the person's devices, outside the web request.
 /// Devices that have gone away are removed, so the list doesn't fill up with dead phones.
 /// </summary>
-public sealed class PushDispatcher(IServiceScopeFactory scopes, IPushSender sender, ILogger<PushDispatcher> logger)
+public sealed class PushDispatcher(IServiceScopeFactory scopes, IEnumerable<IPushSender> senders, ILogger<PushDispatcher> logger)
     : BackgroundService, IPushQueue
 {
     private readonly Channel<(Guid UserId, PushMessage Message)> _queue =
@@ -24,7 +24,8 @@ public sealed class PushDispatcher(IServiceScopeFactory scopes, IPushSender send
 
     public void Enqueue(Guid userId, PushMessage message)
     {
-        if (!sender.IsConfigured) return;
+        // Nothing configured at all: no queue, no work. One platform being off is decided per device, below.
+        if (!senders.Any(s => s.IsConfigured)) return;
         _queue.Writer.TryWrite((userId, message));
     }
 
@@ -50,7 +51,10 @@ public sealed class PushDispatcher(IServiceScopeFactory scopes, IPushSender send
 
         foreach (var device in devices)
         {
-            var result = await sender.SendAsync(new PushTarget(device.Endpoint, device.P256dh, device.Auth), message, ct);
+            var sender = senders.FirstOrDefault(s => s.Handles(device.Platform) && s.IsConfigured);
+            if (sender is null) continue; // that platform isn't set up; the device stays registered for when it is
+
+            var result = await sender.SendAsync(new PushTarget(device.Platform, device.Address, device.P256dh, device.Auth), message, ct);
             switch (result)
             {
                 case PushResult.Delivered:

@@ -33,6 +33,7 @@ export function appPathFromUrl(url: string): string | null {
  * Wires the few native behaviours the app needs:
  * - Android's back button walks back through the app instead of closing it, and only exits from the first screen;
  * - bouldertime.com links opened on the phone go to the matching page in the app;
+ * - tapping a notification opens the page it is about;
  * - the status bar uses dark text on the app's light header;
  * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between.
  * Plugins are imported here, on demand, so the web build never ships them.
@@ -63,6 +64,19 @@ export async function startNativeShell(): Promise<void> {
     void import("@/app/router").then(({ router }) => router.navigate(path));
   };
   App.addListener("appUrlOpen", ({ url }) => follow(url));
+
+  // Tapping a notification opens the page it is about. The url travels in the message's data, as the sender puts it.
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    await PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
+      const url = notification.data?.url;
+      if (typeof url !== "string" || url.length === 0) return;
+      const path = url.startsWith("/") ? url : appPathFromUrl(url);
+      if (path) void import("@/app/router").then(({ router }) => router.navigate(path));
+    });
+  } catch {
+    // Notifications are a bonus here; failing to listen must not stop the app from starting.
+  }
   void App.getLaunchUrl().then((launch) => follow(launch?.url)).catch(() => {});
 
   try {
