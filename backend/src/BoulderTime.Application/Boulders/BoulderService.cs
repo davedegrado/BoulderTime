@@ -11,7 +11,7 @@ namespace BoulderTime.Application.Boulders;
 /// Boulder lifecycle. Viewing active boulders is public for visible gyms; a removed boulder stays readable by id
 /// forever (climbing history links to it). Creating, editing, removing and restoring need STAFF+.
 /// </summary>
-public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
+public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAccess boulderAccess, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
@@ -62,10 +62,9 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
 
     public async Task<BoulderDetailDto> GetAsync(Guid boulderId, CancellationToken ct = default)
     {
-        var b = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
-        var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == b.GymId, ct);
-        var role = await access.GetRoleAsync(gym.Id, ct);
-        if (!gym.IsPubliclyVisible && role is null) throw new NotFoundException("Boulder", boulderId);
+        // Asks the shared check rather than repeating it. Repeating it is what let a deleted boulder keep its page:
+        // the rule grew a new clause and only the original copy was updated.
+        var (b, gym, role) = await boulderAccess.RequireVisibleAsync(boulderId, ct);
 
         var sector = await db.Sectors.AsNoTracking().Where(s => s.Id == b.SectorId).Select(s => s.Name).FirstAsync(ct);
         var grades = (await reader.GradesAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
@@ -239,6 +238,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, IObjectSt
     public async Task<DeletionImpactDto> DeletionImpactAsync(Guid boulderId, CancellationToken ct = default)
     {
         var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
         return new DeletionImpactDto(
             await db.BoulderAttempts.CountAsync(a => a.BoulderId == boulderId && a.Completed, ct),

@@ -624,3 +624,12 @@ one by one, and a test now writes against a deleted boulder through every one of
 
 The leaderboard's join is the deliberate exception: it reads attempts against boulders with no status filter, which
 is exactly how a deleted boulder keeps scoring the sends it carries.
+
+**The real fault was a rule written twice.** `GetAsync` carried its own copy of the visibility check instead of
+calling the shared one, so when the rule grew a clause — a deleted boulder does not exist — only the original copy
+learned it, and the boulder kept its page. The copy is gone: it now asks `BoulderAccess.RequireVisibleAsync`, which
+already returns the boulder, the gym and the viewer's role it was fetching by hand.
+
+Every method in the application layer that takes a boulderId was then audited one by one. They now fall into three
+groups: the shared check, an explicit status guard, or no boulder lookup at all. Unfollowing is the deliberate
+odd one out — it removes a row without reading the boulder, which stays correct when the boulder is gone.
