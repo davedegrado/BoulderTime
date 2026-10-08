@@ -27,7 +27,10 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-      VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
+      # The app's pages come from capacitor://localhost, and WebKit sends no Referer from there: a MapTiler key that
+      # only allows listed origins answers "Invalid key". VITE_MAP_TILE_URL_IOS, when set, is the URL with a key meant
+      # for the app (see docs/mobile.md); otherwise the website's is used.
+      VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL_IOS || vars.VITE_MAP_TILE_URL }}
       VITE_MAP_ATTRIBUTION: ${{ vars.VITE_MAP_ATTRIBUTION }}
       # No notifications on iOS yet: they need the Firebase SDK in the app and an APNs key (next milestone). Left
       # empty, the app says "this version can't do notifications" instead of asking a plugin that would fail.

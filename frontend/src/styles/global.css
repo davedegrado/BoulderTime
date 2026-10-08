@@ -367,16 +367,21 @@ svg { flex-shrink: 0; }
 .holds--compact .holds__swatch { width: 16px; height: 14px; }
 
 /* Boulder grid & cards */
-.boulder-grid { display: grid; gap: var(--bt-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (min-width: 640px) { .boulder-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1100px) { .boulder-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* A wrapping flex row, not a CSS grid: Safari (and so the iOS app) sized the grid's rows before the cards' photos had a
+   width, and squeezed every card to a thin strip. Here each card's width is fixed first, so its height follows. */
+.boulder-grid { --cols: 2; display: flex; flex-wrap: wrap; gap: var(--bt-3); }
+.boulder-grid > * { flex: 0 0 calc((100% - (var(--cols) - 1) * var(--bt-3)) / var(--cols)); min-width: 0; }
+@media (min-width: 640px) { .boulder-grid { --cols: 3; } }
+@media (min-width: 1100px) { .boulder-grid { --cols: 4; } }
 .boulder-grid__item { display: flex; flex-direction: column; gap: var(--bt-2); }
 .boulder-card { position: relative; display: flex; flex-direction: column; width: 100%; padding: 0; overflow: hidden; text-align: left; font: inherit; color: inherit; text-decoration: none; background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); cursor: pointer; transition: box-shadow 120ms, transform 80ms; }
 .boulder-card:hover { box-shadow: var(--bt-shadow-raised); }
 .boulder-card:active { transform: scale(0.985); }
 .boulder-card--selected { border-color: var(--bt-orange); box-shadow: 0 0 0 2px var(--bt-orange); }
-.boulder-card__photo { position: relative; aspect-ratio: 4 / 5; background: var(--bt-surface-2); }
-.boulder-card__photo img { width: 100%; height: 100%; object-fit: cover; }
+/* 4:5 from the width alone (padding resolves against the width), and never shrunk by the card's flex column. */
+.boulder-card__photo { position: relative; flex: none; height: 0; padding-bottom: 125%; background: var(--bt-surface-2); }
+.boulder-card__photo > img, .boulder-card__photo > .boulder-card__gone { position: absolute; inset: 0; width: 100%; height: 100%; }
+.boulder-card__photo img { object-fit: cover; }
 .boulder-card__ribbon { position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.85); color: #fff; font-size: var(--bt-text-xs); font-weight: 700; }
 .boulder-card__check { position: absolute; right: 8px; top: 8px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgb(255 255 255 / 0.9); box-shadow: inset 0 0 0 2px var(--bt-ink-3); color: transparent; }
 .boulder-card__check svg { width: 18px; height: 18px; }

@@ -104,7 +104,9 @@ Mac (`.github/workflows/ios.yml`) on every push that touches `frontend/`. Nobody
 
 **Today, without an Apple developer account,** the build is unsigned and for the simulator: it proves the app
 compiles with the current Xcode, and the run leaves `BoulderTime-…-simulator.zip` under **Artifacts**. Unzipped, the
-`App.app` inside can be dragged onto the iOS Simulator of any Mac. It can't be installed on an iPhone: that needs a
+`App.app` inside can be dragged onto the iOS Simulator of any Mac, or uploaded as it is to Appetize.io to try it
+from a browser. The simulator has no camera: «Take a photo» offers the photo library and files instead, while an
+iPhone opens the camera. It can't be installed on an iPhone: that needs a
 signature.
 
 What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`), asserted by
@@ -118,7 +120,14 @@ What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`)
 - **iPhone only.** An iPad build would need its own screenshots and review; it can be switched on later.
 - BoulderTime's icon and splash, from `frontend/resources/`.
 
-Inside the app the page address is `capacitor://localhost`, which the API has to allow (above). The same safe-area
+Inside the app the page address is `capacitor://localhost`, which the API has to allow (above).
+
+**Maps on iOS need their own MapTiler key.** The website's key accepts only listed origins, which MapTiler checks
+against the `Referer` of each tile request. Android's pages come from `https://localhost`, so adding `localhost` to the
+key is enough; iOS serves them from `capacitor://localhost` and WebKit sends no `Referer` from there, so every tile
+answers "Invalid key". Create a second key in MapTiler for the app, without origin restrictions (it is inside the app
+anyway, like every map key in a store app), keep an eye on its usage, and save the tile URL with that key as the
+repository variable `VITE_MAP_TILE_URL_IOS`. The iOS workflow uses it when it is set. The same safe-area
 CSS that keeps the installed PWA clear of the notch and the home indicator does it here.
 
 **When the Apple developer account exists** (in this order):
