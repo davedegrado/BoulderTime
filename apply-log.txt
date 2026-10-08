@@ -1,84 +1,87 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Boulder cards squeezed to a strip on iOS, and the map's key there
-applicata: Boulder cards squeezed to a strip on iOS, and the map's key
+Applying: Reporting a person, and suspending an account across BoulderTime
+applicata: Reporting a person, and suspending an account across
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
 == 3. MIGRAZIONE ==
-nessuna modifica al modello
+Build started...
+Build succeeded.
+Done. To undo this action, use 'ef migrations remove'
+creata: Model202610081139
 == 4. BUILD BACKEND ==
 
 Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:08.28
+Time Elapsed 00:00:15.31
 OK
 == 5. TEST BACKEND ==
-Total tests: 211
+Total tests: 217
 test backend: ok
 == 6. FRONTEND ==
-      Tests  141 passed (141)
+      Tests  143 passed (143)
 vite v5.4.21 building for production...
 transforming...
-✓ 2174 modules transformed.
+✓ 2176 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                                     1.45 kB │ gzip:   0.69 kB
 dist/assets/GymMap-CIGW-MKW.css                    15.61 kB │ gzip:   6.46 kB
 dist/assets/index-Dw4qjHSP.css                     56.53 kB │ gzip:  10.58 kB
-dist/assets/web-BM-2mmia.js                         0.12 kB │ gzip:   0.13 kB
-dist/assets/AdminReports-DVOXZM7U.js                0.20 kB │ gzip:   0.18 kB
-dist/assets/SubNav-UyzCLkSC.js                      0.28 kB │ gzip:   0.22 kB
-dist/assets/index-Bvqe0DHX.js                       0.32 kB │ gzip:   0.24 kB
-dist/assets/index-bNhwG-86.js                       0.33 kB │ gzip:   0.24 kB
-dist/assets/index-Bd5G2mvC.js                       0.36 kB │ gzip:   0.24 kB
-dist/assets/inbox-C49t2knf.js                       0.49 kB │ gzip:   0.36 kB
-dist/assets/users-DZiv0oot.js                       0.51 kB │ gzip:   0.35 kB
-dist/assets/mail-plus-C8M7G32Y.js                   0.52 kB │ gzip:   0.36 kB
-dist/assets/save-CSQsXdKu.js                        0.53 kB │ gzip:   0.36 kB
-dist/assets/building-complex-B9-M-Wg2.js            0.62 kB │ gzip:   0.38 kB
-dist/assets/arrow-up-DbJw8Y9R.js                    0.69 kB │ gzip:   0.35 kB
-dist/assets/virtual_pwa-register-CQrbbQI4.js        0.76 kB │ gzip:   0.46 kB
-dist/assets/web-WejGGmaB.js                         0.84 kB │ gzip:   0.40 kB
-dist/assets/AdminUsers-DtUutEOt.js                  1.41 kB │ gzip:   0.75 kB
-dist/assets/AdminLayout-BNqIqKlf.js                 1.54 kB │ gzip:   0.82 kB
-dist/assets/CreateGymForm-B87kPPAl.js               1.69 kB │ gzip:   0.86 kB
-dist/assets/AdminDashboard-Cs_s0ah1.js              2.43 kB │ gzip:   0.93 kB
-dist/assets/ManageLayout-dfyb-3Vt.js                2.45 kB │ gzip:   1.18 kB
-dist/assets/api-Km8ZGQcP.js                         2.74 kB │ gzip:   0.86 kB
-dist/assets/AdminCandidates-CpgM5h29.js             3.00 kB │ gzip:   1.35 kB
-dist/assets/ManageOverview-CJohR3N0.js              3.01 kB │ gzip:   0.95 kB
-dist/assets/AdminLeaderboards-D4lmnUhO.js           3.23 kB │ gzip:   1.16 kB
-dist/assets/ManageModeration-Bm_96qu5.js            3.28 kB │ gzip:   1.40 kB
-dist/assets/ReportsList-DqBUgybM.js                 3.48 kB │ gzip:   1.66 kB
-dist/assets/SuggestGymPage-yp8kUaBh.js              3.63 kB │ gzip:   1.67 kB
-dist/assets/ManageSectors-COsSRbBA.js               3.86 kB │ gzip:   1.57 kB
-dist/assets/AdminPartners-CtTmfRAU.js               4.44 kB │ gzip:   1.54 kB
-dist/assets/AdminGyms-BquBox5o.js                   4.76 kB │ gzip:   2.01 kB
-dist/assets/ManageStaff-CQSVGEah.js                 4.98 kB │ gzip:   2.04 kB
-dist/assets/ManageAnnouncements-BSnAX0zG.js         5.46 kB │ gzip:   2.29 kB
-dist/assets/ManageSettings-8Xc3Q1rb.js              5.54 kB │ gzip:   2.25 kB
+dist/assets/web-CftdNeBN.js                         0.12 kB │ gzip:   0.13 kB
+dist/assets/SubNav-Dk6KaD-k.js                      0.28 kB │ gzip:   0.22 kB
+dist/assets/index-YyIciHnl.js                       0.32 kB │ gzip:   0.24 kB
+dist/assets/index-DbuOXNe0.js                       0.33 kB │ gzip:   0.24 kB
+dist/assets/index-BzN450ss.js                       0.36 kB │ gzip:   0.24 kB
+dist/assets/inbox-MhkbeavL.js                       0.49 kB │ gzip:   0.36 kB
+dist/assets/users-Bqohfb86.js                       0.51 kB │ gzip:   0.35 kB
+dist/assets/mail-plus-C9kQ1GmQ.js                   0.52 kB │ gzip:   0.36 kB
+dist/assets/save-CMzScojF.js                        0.53 kB │ gzip:   0.36 kB
+dist/assets/building-complex-B-B8c0Ll.js            0.62 kB │ gzip:   0.38 kB
+dist/assets/arrow-up-D8cs_bha.js                    0.69 kB │ gzip:   0.35 kB
+dist/assets/virtual_pwa-register-kjIBZfYv.js        0.76 kB │ gzip:   0.46 kB
+dist/assets/web-BGZ7DI5s.js                         0.84 kB │ gzip:   0.40 kB
+dist/assets/AdminLayout-B6X-raXZ.js                 1.04 kB │ gzip:   0.52 kB
+dist/assets/CreateGymForm-CYWMxhxO.js               1.69 kB │ gzip:   0.86 kB
+dist/assets/AdminUsers-DjFsFjR-.js                  2.04 kB │ gzip:   0.96 kB
+dist/assets/ManageLayout-CxTe3svM.js                2.45 kB │ gzip:   1.18 kB
+dist/assets/AdminReports-DOI-aQes.js                2.52 kB │ gzip:   1.18 kB
+dist/assets/AdminDashboard-CoHXSOnt.js              2.74 kB │ gzip:   0.97 kB
+dist/assets/AdminCandidates-s7wi5loo.js             3.00 kB │ gzip:   1.35 kB
+dist/assets/ManageOverview-qo9VuO5Y.js              3.01 kB │ gzip:   0.95 kB
+dist/assets/AdminLeaderboards-7Oi9Ca_3.js           3.23 kB │ gzip:   1.16 kB
+dist/assets/api-BoV65OCn.js                         3.27 kB │ gzip:   0.99 kB
+dist/assets/ManageModeration-DICGF4Bo.js            3.28 kB │ gzip:   1.40 kB
+dist/assets/ReportsList-C-yTp_11.js                 3.48 kB │ gzip:   1.66 kB
+dist/assets/SuggestGymPage-u1qagtcs.js              3.63 kB │ gzip:   1.67 kB
+dist/assets/ManageSectors-DXw6pmku.js               3.86 kB │ gzip:   1.56 kB
+dist/assets/AdminPartners-DY_bFVAz.js               4.44 kB │ gzip:   1.54 kB
+dist/assets/AdminGyms-DwwepBTx.js                   4.76 kB │ gzip:   2.01 kB
+dist/assets/ManageStaff-CUuXgtyW.js                 4.98 kB │ gzip:   2.04 kB
+dist/assets/ManageAnnouncements-D0vgvd3z.js         5.46 kB │ gzip:   2.29 kB
+dist/assets/ManageSettings-Dr3fl9rP.js              5.54 kB │ gzip:   2.25 kB
 dist/assets/workbox-window.prod.es5-BqEJf4Xk.js     5.71 kB │ gzip:   2.34 kB
-dist/assets/ManageGrading-DqyoKqWO.js               5.81 kB │ gzip:   2.44 kB
-dist/assets/BoulderEditorPage-DR7pRuvA.js           6.93 kB │ gzip:   2.73 kB
-dist/assets/NotificationSettingsPage-D5N-NJdr.js    7.11 kB │ gzip:   2.76 kB
-dist/assets/ManageBoulders-C0-Bz4aY.js              7.12 kB │ gzip:   2.77 kB
-dist/assets/App-AIKpkDd_.js                         8.73 kB │ gzip:   2.89 kB
-dist/assets/index-Dg2m6OeV.js                      60.09 kB │ gzip:  15.79 kB
-dist/assets/GymMap-CZMEIw6G.js                    157.92 kB │ gzip:  46.33 kB
-dist/assets/index-6IhOk9N8.js                     201.32 kB │ gzip:  67.01 kB
-dist/assets/router-C5VdP7uk.js                    512.85 kB │ gzip: 142.56 kB
+dist/assets/ManageGrading-CvAn28Ei.js               5.81 kB │ gzip:   2.44 kB
+dist/assets/BoulderEditorPage-BSdXKPji.js           6.93 kB │ gzip:   2.72 kB
+dist/assets/NotificationSettingsPage-BObkrx-1.js    7.11 kB │ gzip:   2.76 kB
+dist/assets/ManageBoulders-TpKornkb.js              7.12 kB │ gzip:   2.76 kB
+dist/assets/App-1FbnW-wr.js                         8.89 kB │ gzip:   2.95 kB
+dist/assets/index-DQeDGIZp.js                      60.09 kB │ gzip:  15.79 kB
+dist/assets/GymMap-B7HbEJ5v.js                    157.92 kB │ gzip:  46.33 kB
+dist/assets/index-DgPcrZA_.js                     203.14 kB │ gzip:  67.58 kB
+dist/assets/router-8M6ziEOT.js                    515.99 kB │ gzip: 143.19 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.14s
+✓ built in 5.69s
 
 PWA v0.21.2
 mode      generateSW
-precache  54 entries (1392.67 KiB)
+precache  54 entries (1400.92 KiB)
 files generated
   dist/sw.js
   dist/workbox-4e9e9954.js
