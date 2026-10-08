@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: A deleted boulder kept its page, because the visibility rule was written twice
-applicata: A deleted boulder kept its page, because the visibility rule
+Applying: An iOS app, as far as it goes without an Apple account
+applicata: An iOS app, as far as it goes without an Apple account
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -12,13 +12,13 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:09.74
+Time Elapsed 00:00:09.47
 OK
 == 5. TEST BACKEND ==
 Total tests: 211
 test backend: ok
 == 6. FRONTEND ==
-      Tests  132 passed (132)
+      Tests  141 passed (141)
 vite v5.4.21 building for production...
 transforming...
 ✓ 2174 modules transformed.
@@ -74,7 +74,7 @@ dist/assets/router-DB5fdV44.js                    512.85 kB │ gzip: 142.56 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.11s
+✓ built in 5.18s
 
 PWA v0.21.2
 mode      generateSW
