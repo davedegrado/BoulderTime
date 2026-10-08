@@ -234,6 +234,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct) ?? throw new NotFoundException("User", userId);
         // Profiles are public by default; this is where future privacy settings plug in.
         if (user.ProfileVisibility != ProfileVisibility.Public && currentUser.UserId != userId) throw new NotFoundException("User", userId);
+        // A suspended account has no public face (ADR-037).
+        if (user.SuspendedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
         return user;
     }
 }

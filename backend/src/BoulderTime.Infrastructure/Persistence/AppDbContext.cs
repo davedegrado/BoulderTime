@@ -54,6 +54,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+    public DbSet<UserReport> UserReports => Set<UserReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

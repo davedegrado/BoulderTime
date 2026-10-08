@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
 import type { GymRole } from "@/lib/format";
+import { t } from "@/i18n/i18n";
 
 export interface StaffGym {
   gymId: string;
@@ -30,6 +31,8 @@ export interface CurrentUser {
   acceptedLegalVersion: string | null;
   /** True when the terms changed, or were never accepted: the app asks before letting them in. */
   legalAcceptanceNeeded: boolean;
+  /** BoulderTime suspended this account: the app shows why and nothing else (ADR-037). */
+  isSuspended?: boolean;
 }
 
 export interface UpdateProfileInput {
@@ -93,5 +96,28 @@ export function useBlockPerson() {
       // Comments and videos are filtered server-side, so everything the person appears in has to be refetched.
       qc.invalidateQueries();
     },
+  });
+}
+
+
+export type PersonReportReason = "HARASSMENT" | "SPAM" | "IMPERSONATION" | "INAPPROPRIATE_PROFILE" | "OTHER";
+
+/** Read at render time, so the labels follow the language in use. */
+export const personReportReasons = (): { value: PersonReportReason; label: string }[] => [
+  { value: "HARASSMENT", label: t("Harassment or insults") },
+  { value: "SPAM", label: t("Spam or advertising") },
+  { value: "IMPERSONATION", label: t("Pretending to be someone else") },
+  { value: "INAPPROPRIATE_PROFILE", label: t("Inappropriate name or photo") },
+  { value: "OTHER", label: t("Other") },
+];
+
+/**
+ * Reports a person — not a single comment — to BoulderTime. Content reports go to the gym; a person spans every gym,
+ * so only BoulderTime decides, and the person is never told who reported them.
+ */
+export function useReportPerson() {
+  return useMutation({
+    mutationFn: ({ userId, reason, description }: { userId: string; reason: PersonReportReason; description?: string }) =>
+      api.post(`/api/users/${userId}/reports`, { reason, description }),
   });
 }

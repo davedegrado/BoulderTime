@@ -9,6 +9,7 @@ import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { Ban } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
+import { ReportPersonAction } from "@/features/users/ReportPersonAction";
 
 export function UserProfilePage() {
   const { id } = useParams();
@@ -33,6 +34,7 @@ export function UserProfilePage() {
           {t("You've blocked {name}. Their comments and videos are hidden from you, and yours from them. They aren't told.", { name: p.displayName })}
         </p>
       )}
+      {!p.isMe && session && <ReportPersonAction userId={p.id} displayName={p.displayName} />}
       {p.followedGyms.length > 0 && (
         <div className="gym-chips" aria-label={t("Gyms")}>
           {p.followedGyms.map((g) => (

@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<AccountDeletionService>();
         services.AddScoped<BlockService>();
         services.AddScoped<BlockedPeople>();
+        services.AddScoped<UserModerationService>();
         services.AddScoped<LegalAcceptanceService>();
         services.AddScoped<AccountEraser>();
         return services;

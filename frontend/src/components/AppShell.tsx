@@ -11,6 +11,7 @@ import { Suspense } from "react";
 import { LoadingState } from "@/components/States";
 import { plural, t } from "@/i18n/i18n";
 import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
+import { SuspendedPage } from "@/pages/SuspendedPage";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -36,11 +37,14 @@ export function AppShell() {
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
   const onLegalPage = ["/privacy", "/termini", "/terms"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
+  // A suspended account sees why, and nothing else: the API refuses everything but this page's two actions.
+  const suspended = Boolean(session) && (me.data?.isSuspended ?? false) && !onLegalPage;
 
   const badge = (to: string) => to === "/notifications" && unread > 0
     ? <span className="nav-badge" aria-label={plural(unread, "{count} unread notification", "{count} unread notifications")}>{unread > 99 ? "99+" : unread}</span>
     : null;
 
+  if (suspended) return <SuspendedPage />;
   if (mustAccept) return <AcceptLegalPage returning={Boolean(me.data?.acceptedLegalVersion)} />;
 
   return (

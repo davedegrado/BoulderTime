@@ -659,3 +659,29 @@ phone in a gym; it is a build setting away when wanted.
 (ADR-030), which needs a Firebase token: the app needs the Firebase Messaging SDK and Firebase an APNs key. That is
 its own milestone; meanwhile the build leaves `VITE_PUSH_NATIVE` empty, the same switch an Android build without
 Firebase settings uses.
+
+## ADR-037 · Reporting a person, and suspending an account
+Until now a report was always about a *thing* — a comment, a video, a boulder — and went to the gym that owns it
+(ADR-011). Blocking (ADR-031) is the reader's own tool. Neither gave BoulderTime a way to stop a person, which Apple's
+guideline 1.2 asks for ("block abusive users from the service") and which a community needs anyway.
+
+**A person is reported to BoulderTime, never to a gym.** Anyone signed in can report someone from their profile, with
+a reason (harassment, spam, impersonation, inappropriate name or photo, other) and optional details. A person spans
+every gym, so no gym judges them; reports land in *Admin › Reports*, above the content reports. Reporting the same
+person again while the first report is open changes nothing: the queue counts people who complained, not taps. The
+reported person is never told who reported them.
+
+**Suspension, not deletion.** An administrator either dismisses a report or suspends the account, from the report or
+directly from *Admin › Users*. Suspending settles every open report about the same person. A suspended account:
+
+- is refused at the door by `AccountSuspensionMiddleware` with `account_suspended`, on every request except reading
+  its own account and deleting it — nobody may be prevented from deleting their data. The check is one primary-key
+  lookup per request, not cached, so a suspension takes effect at once;
+- sees a page that says so and how to object (support@bouldertime.com), with sign-out and account deletion;
+- disappears for everyone else: its comments and videos are filtered like a block (`BlockedPeople.ForViewerAsync`
+  now also returns suspended accounts, for signed-out visitors too), its profile answers 404 and it leaves
+  leaderboards. Gym staff still see its comments in their boulders, so moderation is never blind.
+
+Nothing is deleted, so lifting the suspension gives everything back. Administrators can't suspend themselves or
+another administrator: one admin locking the others out is not moderation, and revoking the role is a deliberate step
+on the command line. The terms of use already say an account that breaks them can be suspended.

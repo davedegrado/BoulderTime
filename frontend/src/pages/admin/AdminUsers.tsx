@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { ShieldCheck, UserRound } from "lucide-react";
-import { useAdminUsers } from "@/features/admin/api";
+import { useAccountSuspension, useAdminUsers } from "@/features/admin/api";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { useToast } from "@/components/Toast";
+import { errorMessage } from "@/lib/apiError";
 import { SearchField } from "@/components/SearchField";
 import { Avatar } from "@/components/Avatar";
 import { Badge } from "@/components/Badge";
@@ -13,6 +16,9 @@ export function AdminUsers() {
   const [text, setText] = useState("");
   const q = useDebounced(text.trim());
   const users = useAdminUsers(q);
+  const { suspend, reinstate } = useAccountSuspension();
+  const toast = useToast();
+  const onError = (e: unknown) => toast.error(errorMessage(e));
 
   return (
     <div className="stack">
@@ -32,6 +38,22 @@ export function AdminUsers() {
                     <p className="list__sub">{u.email} · {t("joined {date}", { date: formatDate(u.createdAt) })}{u.staffGyms > 0 && ` · ${t("staff at {count}", { count: u.staffGyms })}`}</p>
                   </div>
                   {u.isPlatformAdmin && <Badge tone="dark"><ShieldCheck aria-hidden /> {t("Admin")}</Badge>}
+                  {u.isSuspended && <Badge tone="danger">{t("Suspended")}</Badge>}
+                  {u.isSuspended ? (
+                    <ConfirmButton variant="secondary" confirmLabel={t("Reinstate?")} loading={reinstate.isPending}
+                      onConfirm={() => reinstate.mutate(u.id, {
+                        onSuccess: () => toast.success(t("{name}'s account is active again", { name: u.displayName })), onError,
+                      })}>
+                      {t("Reinstate")}
+                    </ConfirmButton>
+                  ) : !u.isPlatformAdmin && (
+                    <ConfirmButton variant="danger" confirmLabel={t("Suspend?")} loading={suspend.isPending}
+                      onConfirm={() => suspend.mutate(u.id, {
+                        onSuccess: () => toast.success(t("{name}'s account is suspended", { name: u.displayName })), onError,
+                      })}>
+                      {t("Suspend")}
+                    </ConfirmButton>
+                  )}
                 </li>
               ))}
             </ul>

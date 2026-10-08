@@ -57,6 +57,20 @@ public class User : IAuditable
 
     public bool AppearsInLeaderboards => !LeaderboardOptOut && LeaderboardExcludedAt is null;
 
+    public const int SuspensionReasonMaxLength = 500;
+
+    /// <summary>
+    /// Set by a BoulderTime administrator when someone abuses the service. A suspended account can sign in but can do
+    /// nothing in BoulderTime except read why and delete itself, and what it wrote is hidden from everyone. Unlike a
+    /// block (one person's choice, ADR-031) this is the operator's decision, and it applies to the whole platform.
+    /// </summary>
+    public DateTimeOffset? SuspendedAt { get; private set; }
+    public Guid? SuspendedByUserId { get; private set; }
+    /// <summary>For administrators only: the person is told that the account is suspended, not the note.</summary>
+    public string? SuspensionReason { get; private set; }
+
+    public bool IsSuspended => SuspendedAt is not null;
+
     /// <summary>Profiles are public by default; the field exists so privacy settings can be added without a remodel.</summary>
     public ProfileVisibility ProfileVisibility { get; private set; } = ProfileVisibility.Public;
 
@@ -137,6 +151,23 @@ public class User : IAuditable
     {
         LeaderboardExcludedAt = null;
         LeaderboardExcludedByUserId = null;
+    }
+
+    public void Suspend(Guid byUserId, string? reason, DateTimeOffset now)
+    {
+        if (byUserId == Id) throw new ArgumentException("An administrator cannot suspend themselves.", nameof(byUserId));
+        var text = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        SuspendedAt = now;
+        SuspendedByUserId = byUserId;
+        SuspensionReason = text is { Length: > SuspensionReasonMaxLength } ? text[..SuspensionReasonMaxLength] : text;
+    }
+
+    /// <summary>Lifts a suspension. What the person wrote becomes visible again: it was hidden, never deleted.</summary>
+    public void Reinstate()
+    {
+        SuspendedAt = null;
+        SuspendedByUserId = null;
+        SuspensionReason = null;
     }
 
     public static string NormalizeEmail(string email)

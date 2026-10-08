@@ -10,11 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Admin;
 
-public sealed record AdminDashboardDto(int TotalGyms, int ActiveGyms, int PendingGymCandidates, int Users, int PendingReports);
+public sealed record AdminDashboardDto(int TotalGyms, int ActiveGyms, int PendingGymCandidates, int Users, int PendingReports, int PendingUserReports = 0);
 
 public sealed record AdminGymDto(Guid Id, string Slug, string Name, string City, GymStatus Status, int StaffCount, int OwnerCount, int PendingInvitations, DateTimeOffset CreatedAt);
 
-public sealed record AdminUserDto(Guid Id, string DisplayName, string Email, bool IsPlatformAdmin, int StaffGyms, DateTimeOffset CreatedAt);
+public sealed record AdminUserDto(Guid Id, string DisplayName, string Email, bool IsPlatformAdmin, int StaffGyms, DateTimeOffset CreatedAt, bool IsSuspended = false);
 
 public sealed record CreateGymRequest(string? Name, string? City, string? Address, string? Website, string? Email, string? Phone, string? Description, Guid? CandidateId,
     double? Latitude = null, double? Longitude = null);
@@ -31,7 +31,8 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
             await db.Gyms.CountAsync(g => g.Status == GymStatus.Active, ct),
             await db.GymCandidates.CountAsync(c => c.Status == GymCandidateStatus.Pending, ct),
             await db.Users.CountAsync(ct),
-            await db.Reports.CountAsync(r => r.Status == Domain.Community.ReportStatus.Pending, ct));
+            await db.Reports.CountAsync(r => r.Status == Domain.Community.ReportStatus.Pending, ct),
+            await db.UserReports.CountAsync(r => r.Status == Domain.Users.UserReportStatus.Pending, ct));
     }
 
     public async Task<PagedResult<AdminGymDto>> ListGymsAsync(string? query, GymStatus? status, int? page, int? pageSize, CancellationToken ct = default)
@@ -124,7 +125,7 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
             .Select(u => new { u, StaffGyms = db.GymStaff.Count(s => s.UserId == u.Id) })
             .ToListAsync(ct);
         return new PagedResult<AdminUserDto>(
-            rows.Select(x => new AdminUserDto(x.u.Id, x.u.DisplayName, x.u.Email, x.u.IsPlatformAdmin, x.StaffGyms, x.u.CreatedAt)).ToList(), p, size, total);
+            rows.Select(x => new AdminUserDto(x.u.Id, x.u.DisplayName, x.u.Email, x.u.IsPlatformAdmin, x.StaffGyms, x.u.CreatedAt, x.u.SuspendedAt != null)).ToList(), p, size, total);
     }
 
     private async Task<string> UniqueSlugAsync(string name, CancellationToken ct)

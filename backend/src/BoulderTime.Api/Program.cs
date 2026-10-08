@@ -76,6 +76,7 @@ app.UseCors();
 if (builder.Configuration.GetValue("RateLimiting:Enabled", true)) app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<UserProvisioningMiddleware>();
+app.UseMiddleware<AccountSuspensionMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

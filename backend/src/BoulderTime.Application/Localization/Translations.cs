@@ -167,6 +167,13 @@ public static partial class Translations
         ("Events and competitions need a date.", "Eventi e gare richiedono una data."),
         ("Choose logo or cover.", "Scegli logo o copertina."),
         ("Settings changed on another device. Refresh and try again.", "Le impostazioni sono cambiate su un altro dispositivo. Ricarica e riprova."),
+
+        // ---- Reporting people & suspensions ----
+        ("This account has been suspended.", "Questo account è stato sospeso."),
+        ("You can't report yourself.", "Non puoi segnalare te stesso."),
+        ("Say whether to suspend the account.", "Indica se sospendere l'account."),
+        ("You can't suspend yourself.", "Non puoi sospendere te stesso."),
+        ("A BoulderTime administrator can't be suspended. Revoke the role first.", "Un amministratore di BoulderTime non può essere sospeso. Togli prima il ruolo."),
     ];
 
     private static readonly Dictionary<string, string> Exact =

@@ -26,12 +26,14 @@ public sealed record CurrentUserDto(
     /// <summary>The version of the terms and privacy notice this person accepted, if any.</summary>
     string? AcceptedLegalVersion = null,
     /// <summary>True when the documents changed (or were never accepted) and the app must ask before going on.</summary>
-    bool LegalAcceptanceNeeded = false)
+    bool LegalAcceptanceNeeded = false,
+    /// <summary>BoulderTime suspended this account: the app shows why and offers nothing else (ADR-037).</summary>
+    bool IsSuspended = false)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
         new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language,
             u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null,
-            u.AcceptedLegalVersion, u.AcceptedLegalVersion != LegalDocuments.CurrentVersion);
+            u.AcceptedLegalVersion, u.AcceptedLegalVersion != LegalDocuments.CurrentVersion, u.IsSuspended);
 }
 
 public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);

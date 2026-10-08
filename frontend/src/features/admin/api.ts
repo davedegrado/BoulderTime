@@ -5,10 +5,12 @@ import type { PagedResult } from "@/lib/paging";
 import type { CandidateStatus, GymStatus } from "@/lib/format";
 import type { GymDetail } from "@/features/gyms/api";
 import type { GymCandidate } from "@/features/candidates/api";
+import type { Person } from "@/features/community/api";
+import type { PersonReportReason } from "@/features/users/api";
 
-export interface AdminDashboard { totalGyms: number; activeGyms: number; pendingGymCandidates: number; users: number; pendingReports: number }
+export interface AdminDashboard { totalGyms: number; activeGyms: number; pendingGymCandidates: number; users: number; pendingReports: number; pendingUserReports?: number }
 export interface AdminGym { id: string; slug: string; name: string; city: string; status: GymStatus; staffCount: number; ownerCount: number; pendingInvitations: number; createdAt: string }
-export interface AdminUser { id: string; displayName: string; email: string; isPlatformAdmin: boolean; staffGyms: number; createdAt: string }
+export interface AdminUser { id: string; displayName: string; email: string; isPlatformAdmin: boolean; staffGyms: number; createdAt: string; isSuspended?: boolean }
 export interface CreateGymInput { name: string; city: string; address?: string; website?: string; email?: string; phone?: string; description?: string; candidateId?: string }
 
 export const adminKeys = {
@@ -145,4 +147,41 @@ export function useSaveVideoAllowance() {
       qc.invalidateQueries({ queryKey: ["boulders"] });
     },
   });
+}
+
+
+export type UserReportStatus = "PENDING" | "SUSPENDED" | "DISMISSED";
+export interface UserReport {
+  id: string; person: Person; reportedBy: Person; reason: PersonReportReason; description: string | null;
+  status: UserReportStatus; createdAt: string; handledAt: string | null; handlingNote: string | null;
+  personIsSuspended: boolean; openReportsAgainstPerson: number;
+}
+
+/** People reported to BoulderTime (ADR-037). Platform admins only. */
+export function useUserReports() {
+  return useQuery({
+    queryKey: ["admin", "user-reports"],
+    queryFn: ({ signal }) => api.get<UserReport[]>("/api/admin/user-reports", { signal }),
+  });
+}
+
+/** Deciding on reports and suspending or reinstating accounts. Everything the person appears in is refetched. */
+export function useAccountSuspension() {
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries();
+  return {
+    handle: useMutation({
+      mutationFn: ({ reportId, suspend, note }: { reportId: string; suspend: boolean; note?: string }) =>
+        api.post<UserReport>(`/api/admin/user-reports/${reportId}/handle`, { suspend, note: note?.trim() || undefined }),
+      onSuccess: invalidate,
+    }),
+    suspend: useMutation({
+      mutationFn: (userId: string) => api.put(`/api/admin/users/${userId}/suspension`, {}),
+      onSuccess: invalidate,
+    }),
+    reinstate: useMutation({
+      mutationFn: (userId: string) => api.delete(`/api/admin/users/${userId}/suspension`),
+      onSuccess: invalidate,
+    }),
+  };
 }

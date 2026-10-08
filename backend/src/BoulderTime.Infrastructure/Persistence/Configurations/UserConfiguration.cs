@@ -24,6 +24,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(u => u.Language).HasMaxLength(5).IsRequired().HasDefaultValue("it");
         b.Property(u => u.IsPlatformAdmin).HasDefaultValue(false);
         b.Property(u => u.ProfileVisibility).HasConversion<string>().HasMaxLength(32).HasDefaultValue(ProfileVisibility.Public);
+        b.Property(u => u.SuspensionReason).HasMaxLength(User.SuspensionReasonMaxLength);
         b.Property(u => u.CreatedAt).IsRequired();
         b.Property(u => u.UpdatedAt).IsRequired();
     }
@@ -43,5 +44,25 @@ internal sealed class UserBlockConfiguration : IEntityTypeConfiguration<UserBloc
         // Blocking the same person twice is one block, not two.
         b.HasIndex(x => new { x.BlockerUserId, x.BlockedUserId }).IsUnique();
         b.HasIndex(x => x.BlockedUserId);
+    }
+}
+
+internal sealed class UserReportConfiguration : IEntityTypeConfiguration<UserReport>
+{
+    public void Configure(EntityTypeBuilder<UserReport> b)
+    {
+        b.ToTable("user_reports");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Reason).HasConversion<string>().HasMaxLength(32);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+        b.Property(x => x.Description).HasMaxLength(UserReport.DescriptionMaxLength);
+        b.Property(x => x.HandlingNote).HasMaxLength(UserReport.DescriptionMaxLength);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.ReportedUserId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.ReportedByUserId).OnDelete(DeleteBehavior.Restrict);
+        // One open report per reporter and person: reporting again changes nothing instead of filling the queue.
+        b.HasIndex(x => new { x.ReportedByUserId, x.ReportedUserId }).IsUnique().HasFilter("status = 'Pending'");
+        b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.ReportedUserId);
     }
 }

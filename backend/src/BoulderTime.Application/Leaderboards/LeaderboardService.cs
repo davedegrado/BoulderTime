@@ -62,10 +62,10 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
             .Where(x => x.GymId == gymId)
             .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new
             {
-                x.UserId, x.BoulderId, x.CompletedAt, u.ProfileVisibility, u.LeaderboardOptOut, u.LeaderboardExcludedAt,
+                x.UserId, x.BoulderId, x.CompletedAt, u.ProfileVisibility, u.LeaderboardOptOut, u.LeaderboardExcludedAt, u.SuspendedAt,
             })
             // Hidden climbers are absent rather than shown with no points: a zero-point row still names them.
-            .Where(x => !x.LeaderboardOptOut && x.LeaderboardExcludedAt == null)
+            .Where(x => !x.LeaderboardOptOut && x.LeaderboardExcludedAt == null && x.SuspendedAt == null)
             .Where(x => x.ProfileVisibility == ProfileVisibility.Public || x.UserId == viewerId)
             .Select(x => new { x.UserId, x.BoulderId, x.CompletedAt })
             .ToListAsync(ct);
