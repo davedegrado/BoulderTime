@@ -422,9 +422,9 @@ verification, because none is meaningful and claiming one would be a lie.
 ## ADR-026 · How much video a gym may keep
 Video is the one cost that grows without anyone deciding to, so the allowance is per gym and set by BoulderTime.
 
-**Climber videos are off for a new gym.** The feature stays visible on the boulder, locked, with a line saying it
-isn't open at this gym yet: a gym being shown the app should see what is coming, and a climber should not wonder
-where the button went. The API refuses the upload too — a hidden button is not a limit.
+**Climber videos are off for a new gym.** Where they are off, the boulder page has no climber-video section at all.
+(It first showed the section locked, with a line saying it wasn't open yet; that read as a broken promise to
+climbers, so since October 2026 it is simply absent.) The API refuses the upload too — a hidden button is not a limit.
 
 **Official beta has a per-gym cap**, 20 by default, `null` for no limit. Replacing the beta of a boulder that already
 has one is always allowed, because it costs no extra storage. The cap is checked before an upload ticket is issued,
@@ -711,4 +711,33 @@ and reports still work against the new account.
 
 Erasure now also removes the person reports (`user_reports`) made by or about the person and the blocks they made or
 received, which ADR-037 and ADR-031 had left behind.
+
+## ADR-039 · iOS notifications through the same Firebase
+The server already sends to the store apps through Firebase Cloud Messaging (ADR-030), and Firebase reaches iPhones
+through Apple. The catch is the token: Capacitor's push plugin hands the app Apple's APNs token, while Firebase only
+sends to its own.
+
+**The token is swapped in the app delegate, not in JavaScript.** Firebase Messaging is added to the iOS project as a
+Swift package. `AppDelegate` gives Apple's token to Firebase and posts Firebase's token to Capacitor in its place, so
+`push.ts`, the `NATIVE` platform and the sender are the same code as on Android. A second plugin
+(`@capacitor-firebase/messaging`) would have done it in JavaScript, but it would also register a second Firebase
+service on Android next to the one that works today.
+
+**Firebase's swizzling is off** (`FirebaseAppDelegateProxyEnabled = false`): Capacitor owns the app delegate and the
+notification centre, and Firebase is told the token explicitly instead.
+
+**The settings file is written by CI, like Android's.** `GoogleService-Info.plist` comes from the
+`IOS_GOOGLE_SERVICE_INFO_PLIST` secret, which also sets `VITE_PUSH_NATIVE`; without it CI writes an empty plist, the
+app skips Firebase and never offers notifications.
+
+**The payload speaks APNs.** The `apns` block of each message now carries `thread-id` and the `apns-collapse-id`
+header, spelled with hyphens as Apple requires (the earlier `thread_id` was silently ignored), so a newer notification
+replaces the older one as `tag` does on Android.
+
+The privacy notice now names Firebase Cloud Messaging and Apple's push service, and the transfer outside the EEA that
+notifications imply (also true of Web Push in the browser), plus the approximate location behind "gyms near me";
+legal version 2026-10-08.2. The iOS privacy manifest and `docs/store-privacy.md` say the same.
+
+Nothing reaches an iPhone until the Apple account exists: APNs needs a key uploaded to Firebase and a signed app whose
+App ID allows push. Everything up to that point is in the repository and built by CI.
 

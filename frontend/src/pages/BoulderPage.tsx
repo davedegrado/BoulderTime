@@ -86,7 +86,7 @@ export function BoulderPage() {
         </ul>
 
         <BetaSection boulderId={b.id} />
-        <CommunityVideosSection boulderId={b.id} enabled={b.communityVideosEnabled ?? false} />
+        {b.communityVideosEnabled && <CommunityVideosSection boulderId={b.id} />}
         <CommunityGradeSection boulderId={b.id} />
         <CommentsSection boulderId={b.id} />
 

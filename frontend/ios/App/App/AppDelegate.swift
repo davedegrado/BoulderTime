@@ -1,14 +1,50 @@
 import UIKit
 import Capacitor
+import FirebaseCore
+import FirebaseMessaging
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    /// Whether this build carries its Firebase settings. The workflow writes GoogleService-Info.plist from a secret,
+    /// or an empty one when the secret is missing; with the empty one the app runs without notifications, and the web
+    /// build (VITE_PUSH_NATIVE, set from the same secret) never offers them.
+    private var firebaseReady = false
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+           let settings = NSDictionary(contentsOfFile: path), settings["GOOGLE_APP_ID"] != nil,
+           let options = FirebaseOptions(contentsOfFile: path) {
+            FirebaseApp.configure(options: options)
+            firebaseReady = true
+        }
         return true
+    }
+
+    // Notifications (ADR-039). Apple hands the app an APNs token; the server sends through Firebase, which needs its
+    // own token. So the APNs token goes to Firebase, and Firebase's token goes to Capacitor, which hands it to the web
+    // app exactly as on Android: the JavaScript side doesn't know the difference.
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        guard firebaseReady else {
+            let error = NSError(domain: "BoulderTime", code: 1, userInfo: [NSLocalizedDescriptionKey: "This build has no Firebase settings."])
+            NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+            return
+        }
+        Messaging.messaging().apnsToken = deviceToken
+        Messaging.messaging().token { token, error in
+            if let token = token {
+                NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: token)
+            } else {
+                let failure = error ?? NSError(domain: "BoulderTime", code: 2, userInfo: [NSLocalizedDescriptionKey: "Firebase returned no token."])
+                NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: failure)
+            }
+        }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

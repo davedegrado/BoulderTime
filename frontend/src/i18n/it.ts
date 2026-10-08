@@ -484,7 +484,7 @@ export const it: Record<string, string> = {
   "Remove pin": "Rimuovi il segnaposto",
   "Found: {place}. Drag the pin if it isn't exactly on your entrance.": "Trovato: {place}. Trascina il segnaposto se non è esattamente sul tuo ingresso.",
   "Couldn't find that address. Tap the map to place the pin.": "Indirizzo non trovato. Tocca la mappa per posizionare il segnaposto.",
-  "New update": "Nuova novità",
+  "New update": "Pubblica una novità",
   "No updates published": "Nessuna novità pubblicata",
   "Tell climbers about new circuits, events, competitions and schedule changes.": "Racconta nuove tracciature, eventi, gare e cambi di orario.",
   "Update saved": "Novità salvata",
@@ -789,7 +789,6 @@ export const it: Record<string, string> = {
   "Continue": "Continua",
   "Reload the app and read the current terms.": "Ricarica l'app e leggi i termini aggiornati.",
   // ---- Per-gym video allowance ----
-  "Climber videos aren't open at this gym yet. The gym's official beta is still here.": "I video dei climber non sono ancora attivi in questa palestra. La beta ufficiale della palestra resta disponibile.",
   "Climber videos aren't available at this gym yet.": "I video dei climber non sono ancora disponibili in questa palestra.",
   "Video allowance": "Video consentiti",
   "Climber videos": "Video dei climber",
@@ -908,4 +907,18 @@ export const it: Record<string, string> = {
   "Reinstate?": "Riattivare?",
   "{name}'s account is suspended": "L'account di {name} è sospeso",
   "{name}'s account is active again": "L'account di {name} è di nuovo attivo",
+
+  // ---- Strings that were shown untranslated ----
+  "Just now": "Proprio ora",
+  "Something went wrong": "Qualcosa è andato storto",
+  "The link may be wrong.": "Il link potrebbe essere sbagliato.",
+  "This screen hit a problem. Reloading usually fixes it.": "Questa schermata ha avuto un problema. Di solito ricaricare la pagina lo risolve.",
+  "Create gym from suggestion": "Crea la palestra dalla proposta",
+  "Followers were notified": "I follower sono stati avvisati",
+  "Published without notifying": "Pubblicata senza avvisare",
+  "Edit update": "Modifica la novità",
+  "Loading…": "Caricamento…",
+
+  // ---- Account deletion page ----
+  "Go to your profile": "Vai al tuo profilo",
 };

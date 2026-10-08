@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Lock, ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Video as VideoIcon, X, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Video as VideoIcon, X, XCircle } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useBeta, useVideoMutations, useVideos, type Video } from "@/features/community/api";
 import { ReportButton } from "@/features/community/ReportButton";
@@ -67,7 +67,11 @@ function Thumb({ video, onOpen, status }: { video: Video; onOpen: () => void; st
   );
 }
 
-export function CommunityVideosSection({ boulderId, enabled }: { boulderId: string; enabled: boolean }) {
+/**
+ * Climbers' videos of a boulder. Only rendered where the gym has them switched on (ADR-026): elsewhere the section
+ * isn't there at all, rather than a locked placeholder.
+ */
+export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
   const { session } = useAuth();
   const videos = useVideos(boulderId);
   const m = useVideoMutations(boulderId);
@@ -104,7 +108,7 @@ export function CommunityVideosSection({ boulderId, enabled }: { boulderId: stri
                 <div className="video-rail">
                   {mine.map((v, i) => (
                     <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "mine", index: i })}
-                      status={<span className={`video-thumb__status video-thumb__status--${v.status.toLowerCase()}`}>{v.status === "PENDING" ? "In review" : "Not approved"}</span>} />
+                      status={<span className={`video-thumb__status video-thumb__status--${v.status.toLowerCase()}`}>{v.status === "PENDING" ? t("In review") : t("Not approved")}</span>} />
                   ))}
                 </div>
               </div>
@@ -116,7 +120,7 @@ export function CommunityVideosSection({ boulderId, enabled }: { boulderId: stri
                 {approved.map((v, i) => <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "approved", index: i })} />)}
                 {videos.hasNextPage && (
                   <button type="button" className="video-thumb video-thumb--more" onClick={() => videos.fetchNextPage()} disabled={videos.isFetchingNextPage}>
-                    <span className="video-thumb__frame"><span className="video-thumb__placeholder">{videos.isFetchingNextPage ? "Loading…" : t("Show {count} more", { count: Math.min(12, total - approved.length) })}</span></span>
+                    <span className="video-thumb__frame"><span className="video-thumb__placeholder">{videos.isFetchingNextPage ? t("Loading…") : t("Show {count} more", { count: Math.min(12, total - approved.length) })}</span></span>
                   </button>
                 )}
               </div>
@@ -124,15 +128,7 @@ export function CommunityVideosSection({ boulderId, enabled }: { boulderId: stri
           </>
         )}
 
-      {/* Locked rather than hidden: climbers should see the feature exists and is coming, not wonder where it went. */}
-      {!enabled && (
-        <p className="notice notice--inline">
-          <Lock aria-hidden />
-          {t("Climber videos aren't open at this gym yet. The gym's official beta is still here.")}
-        </p>
-      )}
-
-      {session && enabled && (
+      {session && (
         <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel={t("Send for review")} busy={m.submit.isPending}
           onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success(t("Sent! It appears once the gym approves it.")))} />
       )}

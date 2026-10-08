@@ -32,9 +32,9 @@ jobs:
       # for the app (see docs/mobile.md); otherwise the website's is used.
       VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL_IOS || vars.VITE_MAP_TILE_URL }}
       VITE_MAP_ATTRIBUTION: ${{ vars.VITE_MAP_ATTRIBUTION }}
-      # No notifications on iOS yet: they need the Firebase SDK in the app and an APNs key (next milestone). Left
-      # empty, the app says "this version can't do notifications" instead of asking a plugin that would fail.
-      VITE_PUSH_NATIVE: ""
+      # Notifications go through Firebase, as on Android (ADR-039). Set from the same condition that writes
+      # GoogleService-Info.plist below, so the app never offers notifications it was not built to receive.
+      VITE_PUSH_NATIVE: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST != '' && '1' || '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -64,6 +64,23 @@ jobs:
 
       - name: Copy it into the iOS project
         run: npx cap sync ios
+
+      - name: Add the Firebase settings the app needs for notifications
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          # Not kept in the repository, like Android's google-services.json. The project always includes the file, so
+          # without the secret an empty one goes in: the app then starts without Firebase and offers no notifications.
+          target=ios/App/App/GoogleService-Info.plist
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::warning::No IOS_GOOGLE_SERVICE_INFO_PLIST secret: this build has no notifications."
+            printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' '<plist version="1.0"><dict/></plist>' > "$target"
+          else
+            printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > "$target"
+            plutil -lint "$target" || { echo "::error::IOS_GOOGLE_SERVICE_INFO_PLIST is not a valid plist"; exit 1; }
+            grep -q '<string>com.bouldertime.app</string>' "$target" \
+              || { echo "::error::IOS_GOOGLE_SERVICE_INFO_PLIST belongs to another app: its BUNDLE_ID must be com.bouldertime.app"; exit 1; }
+          fi
 
       - name: Build the app for the simulator (unsigned)
         working-directory: frontend/ios/App

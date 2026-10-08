@@ -68,6 +68,16 @@ describe("Boulder page", () => {
     expect(screen.getByText("Marco")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
   });
+
+  it("has no climber-video section at all where the gym hasn't switched them on", async () => {
+    reply("GET", "/api/boulders/b1", { ...boulder("b1"), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false, communityVideosEnabled: false });
+    renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
+
+    expect(await screen.findByText("Blue holds")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /community videos|video della community/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/aren't open at this gym/i)).not.toBeInTheDocument();
+    expect(calls.some((c) => c.path.startsWith("/api/boulders/b1/videos"))).toBe(false);
+  });
 });
 
 describe("Staff boulder management", () => {

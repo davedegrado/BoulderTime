@@ -6,6 +6,8 @@ const ios = (path: string) => resolve(__dirname, "../../ios/App", path);
 const infoPlist = readFileSync(ios("App/Info.plist"), "utf8");
 const entitlements = readFileSync(ios("App/App.entitlements"), "utf8");
 const project = readFileSync(ios("App.xcodeproj/project.pbxproj"), "utf8");
+const appDelegate = readFileSync(ios("App/AppDelegate.swift"), "utf8");
+const privacyManifest = readFileSync(ios("App/PrivacyInfo.xcprivacy"), "utf8");
 const sha = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
 /** The text of the `<string>` that follows a key in a plist, or null when the key is missing or empty. */
@@ -53,5 +55,34 @@ describe("What the iOS app must declare", () => {
     for (const name of ["splash-2732x2732", "splash-2732x2732-1", "splash-2732x2732-2"]) {
       expect(sha(ios(`App/Assets.xcassets/Splash.imageset/${name}.png`))).toBe(sha(`${resources}/splash.png`));
     }
+  });
+});
+
+/** Notifications go through Firebase on iOS as on Android (ADR-039); each of these breaks them silently if lost. */
+describe("Notifications in the iOS app", () => {
+  it("may receive them, once the build is signed", () => {
+    expect(entitlements).toMatch(/<key>aps-environment<\/key>\s*<string>development<\/string>/);
+  });
+
+  it("links Firebase Messaging and bundles the Firebase settings the workflow writes", () => {
+    expect(project).toContain('repositoryURL = "https://github.com/firebase/firebase-ios-sdk";');
+    expect(project).toMatch(/productName = FirebaseMessaging;/);
+    expect(project).toMatch(/GoogleService-Info\.plist in Resources \*\/,/);
+  });
+
+  it("hands Firebase's token to Capacitor, not Apple's", () => {
+    // Firebase is told about Apple's token itself, rather than by swizzling the app delegate behind Capacitor's back.
+    expect(infoPlist).toMatch(/<key>FirebaseAppDelegateProxyEnabled<\/key>\s*<false\/>/);
+    expect(appDelegate).toContain("Messaging.messaging().apnsToken = deviceToken");
+    expect(appDelegate).toContain("name: .capacitorDidRegisterForRemoteNotifications, object: token");
+    expect(appDelegate).toContain(".capacitorDidFailToRegisterForRemoteNotifications");
+  });
+});
+
+describe("The iOS privacy manifest", () => {
+  it("is in the app and says BoulderTime tracks nobody", () => {
+    expect(project).toMatch(/PrivacyInfo\.xcprivacy in Resources \*\/,/);
+    expect(privacyManifest).toMatch(/<key>NSPrivacyTracking<\/key>\s*<false\/>/);
+    expect(privacyManifest).not.toMatch(/<key>NSPrivacyCollectedDataTypeTracking<\/key>\s*<true\/>/);
   });
 });

@@ -9,7 +9,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 const SAVE_DELAY_MS = 700;
 
@@ -80,7 +80,7 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
     <section className="card tracker" aria-labelledby="tracker-title">
       <div className="tracker__head">
         <h2 id="tracker-title" className="section__title">{t("Your progress")}</h2>
-        <span className="tracker__status" aria-live="polite">{saving ? "Saving…" : boulder.viewer ? "Saved" : ""}</span>
+        <span className="tracker__status" aria-live="polite">{saving ? t("Saving…") : boulder.viewer ? t("Saved") : ""}</span>
       </div>
 
       {completed ? (
@@ -88,7 +88,7 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
           <span className="sent-mark sent-mark--lg" aria-hidden><Check /></span>
           <div>
             <p className="list__title">{t("Completed")}</p>
-            <p className="list__sub">{boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : "Just now"} · {attempts} {attempts === 1 ? "attempt" : "attempts"}</p>
+            <p className="list__sub">{boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : t("Just now")} · {plural(attempts, "{count} attempt", "{count} attempts")}</p>
           </div>
           <Button variant="ghost" icon={<RotateCcw aria-hidden />} onClick={() => change({ attempts, completed: false })}>{t("Undo")}</Button>
         </div>

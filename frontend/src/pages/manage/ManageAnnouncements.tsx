@@ -44,7 +44,7 @@ export function ManageAnnouncements() {
         : items.length === 0 ? <EmptyState icon={<Megaphone />} title={t("No updates published")} body={t("Tell climbers about new circuits, events, competitions and schedule changes.")} />
         : items.map((a) => (
           <AnnouncementCard key={a.id} a={a} actions={<>
-            <span className="list__sub">{a.notifiedFollowers ? "Followers were notified" : "Published without notifying"}</span>
+            <span className="list__sub">{a.notifiedFollowers ? t("Followers were notified") : t("Published without notifying")}</span>
             <Button variant="secondary" icon={<Pencil aria-hidden />} onClick={() => { setEditing(a); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{t("Edit")}</Button>
             <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete?")} loading={m.remove.isPending && m.remove.variables === a.id}
               onConfirm={() => m.remove.mutate(a.id, { onSuccess: () => toast.success(t("Update deleted")), onError: (e) => toast.error(errorMessage(e)) })}>{t("Delete")}</ConfirmButton>
@@ -112,7 +112,7 @@ function AnnouncementForm({ gymId, initial, prefill, onDone }: { gymId: string; 
   return (
     <form className="card form" onSubmit={onSubmit} noValidate>
       <div className="section__row">
-        <h2 className="section__title">{initial ? "Edit update" : "New update"}</h2>
+        <h2 className="section__title">{initial ? t("Edit update") : t("New update")}</h2>
         <button type="button" className="icon-btn" onClick={onDone} aria-label={t("Close")}><X aria-hidden /></button>
       </div>
       <SelectField label={t("Type")} value={type} onChange={(e) => setType(e.target.value as AnnouncementType)}

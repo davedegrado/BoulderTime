@@ -113,7 +113,7 @@ describe("Community videos", () => {
         vid("v2", { author: person("u1", "Me"), status: "REJECTED", rejectionReason: "Wrong boulder", isMine: true }),
       ],
     });
-    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" enabled />);
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
 
     expect(await screen.findByText("Your videos in review")).toBeInTheDocument();
     expect(screen.getByText("In review")).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe("Community videos", () => {
         ? { approved: { items: page1, page: 1, pageSize: 12, total: 13, hasMore: true }, mineInReview: [] }
         : { approved: { items: [vid("a12")], page: 2, pageSize: 12, total: 13, hasMore: false }, mineInReview: [] });
     })());
-    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" enabled />);
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
 
     expect(await screen.findByRole("heading", { name: "Community videos (13)" })).toBeInTheDocument();
     const rail = screen.getByLabelText("Approved videos");
@@ -188,7 +188,7 @@ describe("Video previews", () => {
       approved: { items: [{ id: "old", boulderId: "b1", author: person("u9", "Anna"), videoUrl: "/old.mov", thumbnailUrl: null, caption: null, status: "APPROVED", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: false }], page: 1, pageSize: 12, total: 1, hasMore: false },
       mineInReview: [],
     });
-    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" enabled />);
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
     const tile = await screen.findByRole("button", { name: /play video by anna/i });
     const frame = tile.querySelector("video")!;
     expect(frame.getAttribute("src")).toBe("/old.mov#t=0.5");
@@ -199,7 +199,7 @@ describe("Video previews", () => {
     reply("GET", "/api/boulders/b1/videos", { approved: { items: [], page: 1, pageSize: 12, total: 0, hasMore: false }, mineInReview: [] });
     URL.createObjectURL = vi.fn(() => "blob:preview");
     URL.revokeObjectURL = vi.fn();
-    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" enabled />);
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
     await screen.findByRole("button", { name: "Choose a video" });
 
     const file = new File([new Uint8Array(10)], "send.mov", { type: "video/quicktime" });
@@ -211,13 +211,3 @@ describe("Video previews", () => {
   });
 });
 
-describe("Climber videos a gym hasn't been granted", () => {
-  it("shows a lock instead of the uploader, and keeps the gym's own beta", async () => {
-    reply("GET", "/api/boulders/b1/videos", { items: [], page: 1, pageSize: 12, total: 0, hasMore: false });
-    renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" enabled={false} />);
-
-    // Locked, not hidden: climbers see the feature exists and is coming.
-    expect(await screen.findByText(/aren't open at this gym yet/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Invia per la revisione|Send for review/i })).not.toBeInTheDocument();
-  });
-});

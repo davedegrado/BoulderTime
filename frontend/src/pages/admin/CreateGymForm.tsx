@@ -30,7 +30,7 @@ export function CreateGymForm({ initial, onCancel }: { initial?: Partial<CreateG
 
   return (
     <form className="card form" onSubmit={onSubmit} noValidate>
-      <h2 className="section__title">{initial?.candidateId ? "Create gym from suggestion" : "New gym"}</h2>
+      <h2 className="section__title">{initial?.candidateId ? t("Create gym from suggestion") : t("New gym")}</h2>
       <p className="field__hint">{t("Gyms start as drafts. Invite an owner, then publish when they are ready.")}</p>
       <TextField label={t("Name")} value={form.name} onChange={set("name")} error={err?.fieldError("name")} />
       <TextField label={t("City")} value={form.city} onChange={set("city")} error={err?.fieldError("city")} />

@@ -7,6 +7,8 @@ import { ToastProvider } from "@/components/Toast";
 import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
 import { LEGAL_VERSION } from "@/pages/legal/version";
 
+vi.mock("@/auth/AuthProvider", () => ({ useAuth: () => ({ session: { access_token: "t" }, signOut: async () => {} }) }));
+
 const posted: { path: string; body: unknown }[] = [];
 vi.mock("@/lib/api", () => ({
   api: { post: async (path: string, body: unknown) => { posted.push({ path, body }); return {}; } },

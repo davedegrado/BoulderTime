@@ -11,8 +11,8 @@ export function RouteErrorPage() {
   return (
     <div className="state state--error" role="alert">
       <div className="state__icon" aria-hidden><AlertTriangle /></div>
-      <h1 className="state__title">{notFound ? "There's nothing here" : "Something went wrong"}</h1>
-      <p className="state__text">{notFound ? "The link may be wrong." : "This screen hit a problem. Reloading usually fixes it."}</p>
+      <h1 className="state__title">{notFound ? t("There's nothing here") : t("Something went wrong")}</h1>
+      <p className="state__text">{notFound ? t("The link may be wrong.") : t("This screen hit a problem. Reloading usually fixes it.")}</p>
       <div className="state__action form__actions">
         {!notFound && <Button icon={<RotateCcw aria-hidden />} onClick={() => window.location.reload()}>{t("Reload")}</Button>}
         <Link to="/" className="btn btn--secondary"><span>{t("Go home")}</span></Link>

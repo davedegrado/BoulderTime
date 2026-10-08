@@ -76,7 +76,23 @@ Setting it up, once:
 Android keeps only a notification icon's silhouette, and the app icon is fully opaque, so without this one every
 notification shows a filled square. Regenerating the Android project drops the declaration, so a test asserts it.
 
-iOS additionally needs an APNs key uploaded to Firebase; that comes with the iOS milestone.
+**iOS** goes through the same Firebase project (ADR-039). Apple hands the app its own APNs token; `AppDelegate.swift`
+passes it to Firebase Messaging and gives Capacitor Firebase's token instead, so the web code, the server and the
+`NATIVE` platform are the same as on Android. Firebase's own swizzling is off (`FirebaseAppDelegateProxyEnabled`), so
+the app delegate stays Capacitor's. Setting it up:
+
+1. **Firebase console** → the same project → add an **iOS** app with bundle ID `com.bouldertime.app` → download
+   `GoogleService-Info.plist`. This needs no Apple account.
+2. **GitHub → Secrets:** `IOS_GOOGLE_SERVICE_INFO_PLIST` = the contents of that file. Like Android's, it sets
+   `VITE_PUSH_NATIVE` for the iOS build and is written into it by CI; without it the build gets an empty file and no
+   notifications.
+3. **Needs the Apple account:** developer.apple.com → Keys → a key with **Apple Push Notifications service (APNs)** →
+   download the `.p8` (only once) → Firebase console → Project settings → Cloud Messaging → Apple app configuration
+   → upload it with the Key ID and the Team ID. Turn on **Push Notifications** for the App ID `com.bouldertime.app`.
+
+Until step 3 nothing can arrive on an iPhone: Apple only delivers to signed apps whose App ID allows push, and the
+simulator build is unsigned. The app already asks for `aps-environment` (`App.entitlements`); signing for the App Store
+turns it into the production environment by itself.
 
 ## Links that open the app
 
@@ -119,6 +135,10 @@ What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`)
   needs the Apple Team ID, so it is not there yet (see below). Until then links simply open in Safari.
 - **iPhone only.** An iPad build would need its own screenshots and review; it can be switched on later.
 - BoulderTime's icon and splash, from `frontend/resources/`.
+- **Notifications:** the `aps-environment` entitlement, Firebase Messaging (Swift Package) and the Firebase settings
+  file the workflow writes (see Notifications above).
+- **The privacy manifest** (`PrivacyInfo.xcprivacy`): no tracking, and the data the app collects, matching
+  `docs/store-privacy.md`.
 
 Inside the app the page address is `capacitor://localhost`, which the API has to allow (above).
 
@@ -133,18 +153,23 @@ CSS that keeps the installed PWA clear of the notch and the home indicator does 
 **When the Apple developer account exists** (in this order):
 
 1. Note the **Team ID** (developer.apple.com → Membership details) and register the App ID `com.bouldertime.app`
-   with **Associated Domains** (and **Push Notifications**, for the notifications milestone).
+   with **Associated Domains** and **Push Notifications**; create the APNs key and upload it to Firebase
+   (Notifications, step 3).
 2. Add `frontend/public/.well-known/apple-app-site-association` (no extension; served as JSON by `_headers`):
    `{"applinks":{"details":[{"appIDs":["<TEAM_ID>.com.bouldertime.app"],"components":[{"/":"*"}]}]}}`.
 3. Add signing to the workflow (distribution certificate and an App Store Connect API key as repository secrets),
    archive with `-sdk iphoneos`, and upload to TestFlight.
 
-**Not yet on iOS:** notifications. The plugin hands back Apple's own token, while the server sends through Firebase
-and needs a Firebase token, so the app needs the Firebase Messaging SDK and Firebase needs an APNs key. Until then the
-iOS build has `VITE_PUSH_NATIVE` empty and says the version can't do notifications, exactly like an Android build
-without `google-services.json`.
+## Sign-in
 
-## Not yet
+Email and password only. Google sign-in is built (`AuthProvider.signInWithGoogle`, `GoogleButton`) but kept out of
+the app: on the free Supabase plan Google's consent screen names `<ref>.supabase.co` instead of BoulderTime. Offering
+it again on iOS also means offering **Sign in with Apple** (App Store guideline 4.8), so the two go together.
 
-The stores themselves (Google Play, then the App Store), iOS notifications and platform-wide reporting come in the
-next milestones; see `docs/roadmap.md`.
+## Before the stores
+
+- **Account deletion without the app:** <https://bouldertime.com/cancella-account> (also `/delete-account`), the
+  page Google Play asks for. It must stay in step with `AccountEraser`.
+- **Privacy forms:** the answers for Play's Data safety and Apple's App Privacy are in `docs/store-privacy.md`.
+- **Google Play:** add Play's app-signing fingerprint to `assetlinks.json` (Links that open the app, above).
+- What is left is in `docs/roadmap.md`.

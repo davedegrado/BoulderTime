@@ -23,10 +23,11 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Push notifications on the web and the installed PWA (ADR-023) | **Done** | encryption round-trip, subscription tests |
 | — | Account deletion from the profile, seven-day grace (ADR-024) | **Done** | deletion, grace and erasure tests |
 | — | Privacy notice and terms, acceptance recorded with its version (ADR-025, ADR-026) | **Done** | promise-matching and acceptance tests |
-| — | Per-gym video allowance: climber videos off by default, beta cap (ADR-026) | **Done** | allowance, cap and clean-up tests |
+| — | Per-gym video allowance: climber videos off by default and hidden where off, beta cap (ADR-026) | **Done** | allowance, cap, clean-up and hidden-section tests |
 | — | Boulders can go up ungraded and be graded later | **Done** | ungraded-send and scoring tests |
 | — | The official beta can be a link to Instagram/YouTube instead of an upload (ADR-032) | **Done** | address-validation, allowance and swap tests |
 | — | Taken-down boulders stay visible to climbers; gyms can erase one for good (ADR-035) | **Done** | visibility, history-survival and permission tests |
+| — | Public account-deletion page, `/cancella-account` (Google Play requirement) | **Done** | legal page tests |
 
 ## Store apps (in progress)
 
@@ -40,19 +41,24 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
 | M5 | Blocking a user (ADR-031) | **Done** |
 | M6 | iOS: Xcode project built in CI, universal links | **Done** for what needs no Apple account: project, permissions, link claim, unsigned simulator build in CI (ADR-036). Signing, `apple-app-site-association` and TestFlight wait for the account |
-| M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase | Next, after M6 |
+| M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase (ADR-039) | **Done** in the app and CI; delivering needs the Apple account's APNs key and a signed build |
 | M6b | Reporting a person and suspending an account, platform-wide (ADR-037); deleting a suspended account no longer escapes it (ADR-038) | **Done** — Apple 1.2's "block abusive users **from the service**" |
-| M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
+| M7 | The stores themselves: Google Play, then App Store. Privacy answers ready (`docs/store-privacy.md`), deletion page live | Needs the accounts |
 
 ## Planned, deliberately not started
 
+- **Converting iPhone videos.** `.mov` (HEVC) uploads should become MP4 (H.264) so they play everywhere. After M7.
+- **Google sign-in (and then Sign in with Apple).** Built but switched off: see `docs/mobile.md` → Sign-in. Comes back
+  with a paid Supabase plan and its custom auth domain.
 - **Interactive gym map by sector.** Tap a sector on a plan of the gym and get its boulders. The hard part is not the
   tapping: it is where the plan comes from, and that each gym's is different. Needs a design pass before any code.
 
 ## Known limitations (deliberate, not forgotten)
 
 - **Staff invitation emails** are not sent: invitations appear in the app after signing in with the invited address.
-- **Video transcoding** is not done, so an iPhone `.mov` (HEVC) may not play in every desktop browser or on Android.
+- **Video transcoding** is not done yet (planned), so an iPhone `.mov` (HEVC) may not play in every desktop browser or
+  on Android.
+- **The privacy notice and terms are drafts** awaiting a lawyer's review, and exist in Italian only.
 - **No cross-gym leaderboard:** grades from different gyms are not comparable, so it is intentionally absent.
 - **Supabase free tier:** no point-in-time recovery; daily backups only.
 

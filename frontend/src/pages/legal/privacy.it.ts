@@ -5,6 +5,7 @@
  * A draft to be reviewed by a professional before opening to the public.
  */
 export const PRIVACY_UPDATED = "2026-10-08";
+// Changed twice on 8 October 2026: see LEGAL_VERSION.
 
 export const PRIVACY_IT = `
 # Informativa sulla privacy
@@ -28,8 +29,11 @@ palestre. Puoi uscire dalle classifiche quando vuoi dal tuo profilo.
 **Se carichi una foto profilo o un video** conserviamo il file e chi l'ha caricato. I video sono visibili solo dopo
 l'approvazione dello staff della palestra.
 
-**Se attivi le notifiche sul telefono** conserviamo l'indirizzo tecnico del tuo dispositivo, che serve solo a
-recapitarle. Puoi disattivarle quando vuoi.
+**Se attivi le notifiche sul telefono** conserviamo l'indirizzo tecnico del tuo dispositivo (un codice generato per
+le notifiche, non l'identificativo del telefono), che serve solo a recapitarle. Puoi disattivarle quando vuoi.
+
+**Se cerchi le palestre vicine a te** l'app usa la posizione del telefono, solo dopo che lo hai permesso. Al server
+arriva una posizione approssimata (circa un chilometro), usata per la ricerca e non salvata nel tuo account.
 
 **Dati tecnici**: indirizzo IP e informazioni sulla richiesta finiscono nei registri dei nostri fornitori, per
 sicurezza e per capire i malfunzionamenti.
@@ -64,8 +68,13 @@ Sono fornitori che agiscono su nostra istruzione, scelti perché tengono i dati 
 - **Resend** (Irlanda): invio delle email di servizio, come la conferma dell'account.
 - **MapTiler / OpenStreetMap**: le mappe della sezione Esplora. Quando apri la mappa, il tuo indirizzo IP è visibile
   al fornitore delle mappe.
+- **Google Firebase Cloud Messaging** e, su iPhone, **Apple Push Notification service**: recapitano le notifiche sul
+  telefono. Ricevono l'indirizzo tecnico del dispositivo e il testo della notifica. Nel browser, le notifiche passano
+  dal servizio del produttore del browser (per esempio Google per Chrome, Apple per Safari, Mozilla per Firefox).
 
-I tuoi dati restano nello Spazio economico europeo.
+I tuoi dati restano nello Spazio economico europeo, con un'eccezione: i servizi di notifica di Google e Apple possono
+trattare i dati che servono a recapitarle anche negli Stati Uniti, con le garanzie previste dal GDPR (EU-US Data
+Privacy Framework e clausole contrattuali standard). Se non attivi le notifiche, questo non avviene.
 
 ## Per quanto tempo
 
@@ -83,7 +92,8 @@ I tuoi dati restano nello Spazio economico europeo.
 
 Puoi accedere ai tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento e chiederne una copia.
 
-La cancellazione la fai da solo: **Profilo → Cancellazione dell'account**. Per tutto il resto scrivi a
+La cancellazione la fai da solo: **Profilo → Cancellazione dell'account** (istruzioni anche su
+bouldertime.com/cancella-account). Per tutto il resto scrivi a
 support@bouldertime.com: rispondiamo entro 30 giorni.
 
 Se ritieni che i tuoi dati siano trattati in modo scorretto puoi rivolgerti al **Garante per la protezione dei dati

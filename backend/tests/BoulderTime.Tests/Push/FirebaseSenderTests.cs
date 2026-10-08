@@ -88,6 +88,24 @@ public sealed class FirebaseSenderTests
         // The same tag replaces an earlier notification instead of stacking another one.
         android.GetProperty("notification").GetProperty("tag").GetString().Should().Be("gym-1");
         android.GetProperty("collapse_key").GetString().Should().Be("gym-1");
+
+        // On an iPhone too: APNs reads hyphenated keys, so these have to be spelled exactly so.
+        var apns = sent.GetProperty("apns");
+        apns.GetProperty("headers").GetProperty("apns-collapse-id").GetString().Should().Be("gym-1");
+        var aps = apns.GetProperty("payload").GetProperty("aps");
+        aps.GetProperty("thread-id").GetString().Should().Be("gym-1");
+        aps.GetProperty("sound").GetString().Should().Be("default");
+    }
+
+    [Fact]
+    public void A_message_without_a_tag_stacks_on_an_iPhone_too()
+    {
+        var target = new PushTarget(PushPlatform.Native, "fcm-token", "", "");
+        using var payload = JsonDocument.Parse(FcmPushSender.Payload(target, new PushMessage("Novità", "Gara sabato", "/gyms/x")));
+        var apns = payload.RootElement.GetProperty("message").GetProperty("apns");
+
+        apns.TryGetProperty("headers", out _).Should().BeFalse();
+        apns.GetProperty("payload").GetProperty("aps").TryGetProperty("thread-id", out _).Should().BeFalse();
     }
 
     [Fact]

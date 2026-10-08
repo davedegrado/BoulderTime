@@ -26,6 +26,8 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>BoulderTime usa la fotocamera per fotografare i blocchi e registrare i video di beta.</string>
 	<key>NSMicrophoneUsageDescription</key>

@@ -7,7 +7,7 @@ flowchart LR
   end
 
   subgraph Supabase
-    AUTH["Supabase Auth<br/>email/password · Google OAuth"]
+    AUTH["Supabase Auth<br/>email/password<br/>(Google OAuth built, off)"]
     STORE["Supabase Storage<br/>avatars · gym images · boulder photos · beta · community videos"]
     PG[("PostgreSQL<br/>schema: bouldertime")]
   end

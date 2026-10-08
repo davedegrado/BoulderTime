@@ -92,7 +92,7 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         return await storage.CreateUploadTicketAsync(Bucket(kind), path, r.ContentType!.ToLowerInvariant(), MaxVideoBytes, ct);
     }
 
-    /// <summary>Community video is granted gym by gym: a gym without it keeps the feature visible but locked.</summary>
+    /// <summary>Community video is granted gym by gym: a gym without it has no climber videos in the app at all.</summary>
     private static void RequireCommunityVideosEnabled(Domain.Gyms.Gym gym)
     {
         if (!gym.CommunityVideosEnabled)

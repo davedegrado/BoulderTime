@@ -120,9 +120,24 @@ public sealed class FcmPushSender(HttpClient http, IConfiguration configuration,
                 // Same tag replaces rather than stacks, matching what the web notifications do.
                 notification = new { tag = message.Tag },
             },
-            apns = new { payload = new { aps = new { sound = "default", thread_id = message.Tag } } },
+            apns = Apns(message.Tag),
         },
     }, JsonOptions);
+
+    /// <summary>
+    /// The iPhone half. APNs spells its keys with hyphens, which no C# property can, hence the dictionaries:
+    /// `thread-id` groups notifications of the same kind, and the `apns-collapse-id` header makes a newer one replace
+    /// the older, as `tag` does on Android. APNs refuses a collapse id over 64 bytes, so a longer tag only groups.
+    /// </summary>
+    private static object Apns(string? tag)
+    {
+        var aps = new Dictionary<string, object> { ["sound"] = "default" };
+        if (tag is null) return new { payload = new { aps } };
+        aps["thread-id"] = tag;
+        return Encoding.UTF8.GetByteCount(tag) <= 64
+            ? new { headers = new Dictionary<string, string> { ["apns-collapse-id"] = tag }, payload = new { aps } }
+            : new { payload = new { aps } };
+    }
 
     /// <summary>The service account proving who we are: a JWT signed with its private key (RFC 7523).</summary>
     internal static string SignedAssertion(ServiceAccount account, DateTimeOffset? now = null)
