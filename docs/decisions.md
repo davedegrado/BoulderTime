@@ -633,3 +633,29 @@ already returns the boulder, the gym and the viewer's role it was fetching by ha
 Every method in the application layer that takes a boulderId was then audited one by one. They now fall into three
 groups: the shared check, an explicit status guard, or no boulder lookup at all. Unfollowing is the deliberate
 odd one out — it removes a row without reading the boulder, which stays correct when the boulder is gone.
+
+## ADR-036 · iOS, as far as it goes without an Apple account
+The iOS app is the same build as the website and the Android app, wrapped by Capacitor in `frontend/ios`. It is
+generated with Swift Package Manager rather than CocoaPods (Capacitor 8's default): nothing to install, and GitHub's
+Macs resolve the packages on their own.
+
+**Built in CI, unsigned, for the simulator.** Signing needs an Apple developer account, which doesn't exist yet. An
+unsigned simulator build still answers the question that matters now — does the app compile with the current Xcode —
+on every push, so the account, when it comes, only adds signing and upload instead of a first build full of
+surprises. The workflow picks the newest stable Xcode on the runner, because Capacitor follows Apple closely.
+
+**What iOS enforces is declared now and guarded by a test.** Usage descriptions for camera, microphone, photo library
+and location: without them iOS closes the app the moment the upload field or the map asks. Regenerating the project
+would drop them silently, as it would the Android declarations (ADR-029).
+
+**Universal links are claimed but not yet vouched for.** The entitlement for `applinks:bouldertime.com` is in the
+project; the website's `apple-app-site-association` needs the Team ID and comes with the account. A placeholder file
+was rejected: it would be public and wrong. Links keep opening in Safari until then, which is today's behaviour.
+
+**iPhone only.** iPad support means separate screenshots and a separate review surface for an app designed for a
+phone in a gym; it is a build setting away when wanted.
+
+**No notifications yet on iOS.** The push plugin returns Apple's token, but the server sends through Firebase
+(ADR-030), which needs a Firebase token: the app needs the Firebase Messaging SDK and Firebase an APNs key. That is
+its own milestone; meanwhile the build leaves `VITE_PUSH_NATIVE` empty, the same switch an Android build without
+Firebase settings uses.

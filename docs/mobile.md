@@ -1,7 +1,7 @@
 # Store apps (Capacitor)
 
 The Android and iOS apps wrap the same build as the website. `frontend/` stays the only frontend: Capacitor copies
-`frontend/dist` into `frontend/android` (and later `frontend/ios`) and adds a thin native shell.
+`frontend/dist` into `frontend/android` and `frontend/ios` and adds a thin native shell.
 
 ## What changes when the code runs inside the app
 
@@ -32,8 +32,8 @@ values Cloudflare uses for the website:
 
 ## One-time configuration outside the repository
 
-- **API (Railway):** add `Cors__AllowedOrigins__1=https://localhost` so the Android app may call the API.
-  iOS will add `capacitor://localhost`.
+- **API (Railway):** add `Cors__AllowedOrigins__1=https://localhost` so the Android app may call the API, and
+  `Cors__AllowedOrigins__2=capacitor://localhost` for the iOS app (iOS serves the app's pages from that address).
 - **MapTiler:** add `localhost` to the key's allowed origins, or the map stays blank inside the app.
 
 ## Versions
@@ -97,6 +97,45 @@ Release builds are signed with the upload key from four repository **secrets**: 
 the repository (`*.jks` is git-ignored). Losing it means the app can no longer be updated under the same name. Without
 the secrets the workflow falls back to a debug APK.
 
+## iOS
+
+The Xcode project lives in `frontend/ios` (Swift Package Manager, no CocoaPods) and is built by GitHub Actions on a
+Mac (`.github/workflows/ios.yml`) on every push that touches `frontend/`. Nobody needs a Mac or Xcode.
+
+**Today, without an Apple developer account,** the build is unsigned and for the simulator: it proves the app
+compiles with the current Xcode, and the run leaves `BoulderTime-…-simulator.zip` under **Artifacts**. Unzipped, the
+`App.app` inside can be dragged onto the iOS Simulator of any Mac. It can't be installed on an iPhone: that needs a
+signature.
+
+What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`), asserted by
+`src/test/ios-project.test.ts` because regenerating the project would drop it:
+
+- **Why it asks** for the camera, the microphone (sound of a recorded video), the photo library and the location.
+  iOS closes an app that opens one of these without a reason, and App Review rejects it. The texts are in Italian.
+- **No export-compliance form** on every upload (`ITSAppUsesNonExemptEncryption = false`: only standard HTTPS).
+- **The claim on `bouldertime.com` links** (Associated Domains). iOS checks it against a file on the website, which
+  needs the Apple Team ID, so it is not there yet (see below). Until then links simply open in Safari.
+- **iPhone only.** An iPad build would need its own screenshots and review; it can be switched on later.
+- BoulderTime's icon and splash, from `frontend/resources/`.
+
+Inside the app the page address is `capacitor://localhost`, which the API has to allow (above). The same safe-area
+CSS that keeps the installed PWA clear of the notch and the home indicator does it here.
+
+**When the Apple developer account exists** (in this order):
+
+1. Note the **Team ID** (developer.apple.com → Membership details) and register the App ID `com.bouldertime.app`
+   with **Associated Domains** (and **Push Notifications**, for the notifications milestone).
+2. Add `frontend/public/.well-known/apple-app-site-association` (no extension; served as JSON by `_headers`):
+   `{"applinks":{"details":[{"appIDs":["<TEAM_ID>.com.bouldertime.app"],"components":[{"/":"*"}]}]}}`.
+3. Add signing to the workflow (distribution certificate and an App Store Connect API key as repository secrets),
+   archive with `-sdk iphoneos`, and upload to TestFlight.
+
+**Not yet on iOS:** notifications. The plugin hands back Apple's own token, while the server sends through Firebase
+and needs a Firebase token, so the app needs the Firebase Messaging SDK and Firebase needs an APNs key. Until then the
+iOS build has `VITE_PUSH_NATIVE` empty and says the version can't do notifications, exactly like an Android build
+without `google-services.json`.
+
 ## Not yet
 
-Google Play, iOS (and its universal links), native push and blocking users come in the next milestones; see ADR-027.
+The stores themselves (Google Play, then the App Store), iOS notifications and platform-wide reporting come in the
+next milestones; see `docs/roadmap.md`.

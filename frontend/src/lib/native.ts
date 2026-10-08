@@ -8,7 +8,8 @@ export const isNativeApp = (): boolean => Capacitor.isNativePlatform();
 
 /**
  * Links that leave the app (email confirmations, password resets) must point at the website, not at the app's own
- * internal address: inside the app `window.location.origin` is https://localhost, which a mail client cannot open.
+ * internal address: inside the app `window.location.origin` is https://localhost (Android) or capacitor://localhost
+ * (iOS), which a mail client cannot open.
  */
 export const PUBLIC_ORIGIN = "https://bouldertime.com";
 
@@ -31,7 +32,8 @@ export function appPathFromUrl(url: string): string | null {
 
 /**
  * Wires the few native behaviours the app needs:
- * - Android's back button walks back through the app instead of closing it, and only exits from the first screen;
+ * - Android's back button walks back through the app instead of closing it, and only exits from the first screen
+ *   (iOS has no back button: the event simply never fires there);
  * - bouldertime.com links opened on the phone go to the matching page in the app;
  * - tapping a notification opens the page it is about;
  * - the status bar uses dark text on the app's light header;
@@ -53,6 +55,7 @@ export async function startNativeShell(): Promise<void> {
   });
 
   // A bouldertime.com link opened on the phone (an email, a shared boulder) lands on the same page inside the app.
+  // Android calls these App Links, iOS universal links; Capacitor delivers both through the same event.
   // The app may be cold-started by the link (getLaunchUrl) or already running (appUrlOpen); the same link is never
   // followed twice, because email links carry one-time tokens.
   let lastLink = "";

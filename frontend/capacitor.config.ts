@@ -12,6 +12,12 @@ const config: CapacitorConfig = {
     // Served from https://localhost inside the app, so secure-context APIs (geolocation, crypto) behave as on the web.
     // The API allows this origin explicitly (Cors__AllowedOrigins on Railway).
   },
+  ios: {
+    // Served from capacitor://localhost: iOS doesn't let an app serve its own pages over https. The API allows this
+    // origin explicitly too (Cors__AllowedOrigins on Railway). The page draws under the status bar and the home
+    // indicator and keeps clear of them with the CSS safe-area insets, as the installed PWA already does.
+    contentInset: "never",
+  },
   server: { androidScheme: "https" },
   plugins: {
     SplashScreen: {

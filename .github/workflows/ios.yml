@@ -1,0 +1,83 @@
+# Builds the iOS app from the same frontend as the website, on GitHub's Macs: nobody needs a Mac of their own.
+# Until there is an Apple developer account the build is unsigned, for the simulator: it proves the app compiles and
+# leaves a BoulderTime.app under the run's "Artifacts" that any Mac can open in the iOS Simulator.
+name: iOS app
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Pinned, like the Android build: a build machine changing underneath is a surprise.
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # The same public build settings as the website and the Android app (Settings → Secrets and variables → Actions
+      # → Variables). They end up inside the app, so none of them is a secret.
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+      VITE_MAP_TILE_URL: ${{ vars.VITE_MAP_TILE_URL }}
+      VITE_MAP_ATTRIBUTION: ${{ vars.VITE_MAP_ATTRIBUTION }}
+      # No notifications on iOS yet: they need the Firebase SDK in the app and an APNs key (next milestone). Left
+      # empty, the app says "this version can't do notifications" instead of asking a plugin that would fail.
+      VITE_PUSH_NATIVE: ""
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the build settings are there
+        run: |
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY VITE_API_BASE_URL; do
+            if [ -z "${!name}" ]; then echo "::error::Missing repository variable $name (Settings → Secrets and variables → Actions → Variables)"; exit 1; fi
+          done
+          case "$VITE_API_BASE_URL" in https://*) ;; *) echo "::error::VITE_API_BASE_URL must be a full https:// address inside the app"; exit 1;; esac
+
+      - name: Use the newest stable Xcode on the machine
+        run: |
+          # Capacitor follows Apple's current Xcode closely; the image's default is often one release behind.
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|release_candidate|_rc' | sort -V | tail -1)
+          echo "Using $xcode"
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build the web app
+        run: npm ci && npm run build
+
+      - name: Copy it into the iOS project
+        run: npx cap sync ios
+
+      - name: Build the app for the simulator (unsigned)
+        working-directory: frontend/ios/App
+        run: |
+          version=$(node -p "require('../../package.json').version")
+          xcodebuild \
+            -project App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            MARKETING_VERSION="$version" CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tail -40   # the step runs with pipefail, so a failed build still fails it
+          mkdir -p ../../../out
+          (cd build/Build/Products/Release-iphonesimulator && ditto -c -k --keepParent App.app "$GITHUB_WORKSPACE/out/BoulderTime-${version}-${{ github.run_number }}-simulator.zip")
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: BoulderTime-ios-simulator-${{ github.run_number }}
+          path: out/*.zip
+          retention-days: 30

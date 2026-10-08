@@ -39,7 +39,8 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M3 | Camera or gallery inside the app (ADR-029) | **Done** |
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
 | M5 | Blocking a user (ADR-031) | **Done** |
-| M6 | iOS: Xcode project built in CI, universal links | Next |
+| M6 | iOS: Xcode project built in CI, universal links | **Done** for what needs no Apple account: project, permissions, link claim, unsigned simulator build in CI (ADR-036). Signing, `apple-app-site-association` and TestFlight wait for the account |
+| M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase | Next, after M6 |
 | M6b | Reporting a person and banning an account, platform-wide | **Next** — Apple 1.2 says "block abusive users **from the service**", which is this, not M5 |
 | M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
 

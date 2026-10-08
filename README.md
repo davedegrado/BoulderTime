@@ -25,6 +25,7 @@ and authorization live in the API; the browser uses Supabase only to sign in. Fu
 ```
 /frontend          React + TypeScript + Vite
 /frontend/android  The Android app: the same build, wrapped by Capacitor (docs/mobile.md)
+/frontend/ios      The iOS app: the same build again, wrapped by Capacitor (docs/mobile.md)
 /backend           ASP.NET Core 8 Web API (Domain / Application / Infrastructure / Api / Tests)
 /database          Supabase-side SQL (schema hardening, storage policies)
 /docs              Architecture, decisions, roadmap, mobile, deployment, brand
@@ -215,8 +216,8 @@ Step-by-step guide with the exact variables: [`docs/deployment.md`](docs/deploym
 - **Storage:** run `database/supabase/storage.sql` once; video buckets must stay private.
 - **Maps:** OpenStreetMap's tiles are for light use only — set `VITE_MAP_TILE_URL` and `VITE_MAP_ATTRIBUTION` to a tile
   provider before going public. Add `localhost` to the key's allowed origins, or the map stays blank inside the app.
-- **Store apps:** `Cors__AllowedOrigins__*` must include `https://localhost` (Android) and, later,
-  `capacitor://localhost` (iOS); see [`docs/mobile.md`](docs/mobile.md).
+- **Store apps:** `Cors__AllowedOrigins__*` must include `https://localhost` (Android) and `capacitor://localhost`
+  (iOS); see [`docs/mobile.md`](docs/mobile.md).
 - **Observability:** every error response carries a `traceId` that matches server logs.
 
 Known limitations (push inside the store app, blocking users, staff invitation emails, video transcoding, no
