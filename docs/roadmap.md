@@ -27,7 +27,7 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Boulders can go up ungraded and be graded later | **Done** | ungraded-send and scoring tests |
 | — | The official beta can be a link to Instagram/YouTube instead of an upload (ADR-032) | **Done** | address-validation, allowance and swap tests |
 | — | Taken-down boulders stay visible to climbers; gyms can erase one for good (ADR-035) | **Done** | visibility, history-survival and permission tests |
-| — | Public account-deletion page, `/cancella-account` (Google Play requirement) | **Done** | legal page tests |
+| — | Public account-deletion page, `/delete-account`, Italian and English (Google Play requirement) | **Done** | deletion page tests |
 
 ## Store apps (in progress)
 

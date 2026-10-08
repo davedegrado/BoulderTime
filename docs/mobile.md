@@ -168,8 +168,8 @@ it again on iOS also means offering **Sign in with Apple** (App Store guideline 
 
 ## Before the stores
 
-- **Account deletion without the app:** <https://bouldertime.com/cancella-account> (also `/delete-account`), the
-  page Google Play asks for. It must stay in step with `AccountEraser`.
+- **Account deletion without the app:** <https://bouldertime.com/delete-account>, the page Google Play asks for, in
+  Italian and English (flags at the top, or `?lang=en`). Both texts must stay in step with `AccountEraser`.
 - **Privacy forms:** the answers for Play's Data safety and Apple's App Privacy are in `docs/store-privacy.md`.
 - **Google Play:** add Play's app-signing fingerprint to `assetlinks.json` (Links that open the app, above).
 - What is left is in `docs/roadmap.md`.

@@ -1,12 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider } from "@/i18n/i18n";
+import userEvent from "@testing-library/user-event";
 import { LegalPage } from "@/pages/legal/LegalPage";
+import { DeletionPage } from "@/pages/legal/DeletionPage";
+import { DELETION_EN, DELETION_IT } from "@/pages/legal/deletion";
 import { PRIVACY_IT } from "@/pages/legal/privacy.it";
 import { TERMS_IT } from "@/pages/legal/terms.it";
-import { DELETION_IT } from "@/pages/legal/deletion.it";
 
-const show = (document: "privacy" | "terms" | "deletion") =>
+const show = (document: "privacy" | "terms") =>
   render(<I18nProvider initial="it"><MemoryRouter><LegalPage document={document} /></MemoryRouter></I18nProvider>);
 
 describe("Privacy notice and terms", () => {
@@ -37,14 +39,43 @@ describe("Privacy notice and terms", () => {
     expect(screen.getByRole("link", { name: "Leggi l'informativa sulla privacy" })).toHaveAttribute("href", "/privacy");
   });
 
-  it("explain account deletion to someone who isn't signed in, as Google Play asks", () => {
-    show("deletion");
+});
+
+describe("Account deletion page", () => {
+  const open = (url: string, initial: "it" | "en" = "it") =>
+    render(<I18nProvider initial={initial}><MemoryRouter initialEntries={[url]}><DeletionPage /></MemoryRouter></I18nProvider>);
+
+  it("explains it to someone who isn't signed in, in the app's language, as Google Play asks", () => {
+    open("/delete-account");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Cancellare l'account BoulderTime");
-    // The same path, grace period and contact as the privacy notice, so the two never disagree.
-    expect(DELETION_IT).toContain("Profilo → Cancellazione dell'account");
-    expect(DELETION_IT).toContain("7 giorni");
-    expect(DELETION_IT).toContain("support@bouldertime.com");
-    expect(PRIVACY_IT).toContain("bouldertime.com/cancella-account");
+    expect(screen.getByRole("button", { name: /Italiano/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("link", { name: "Vai al tuo profilo" })).toHaveAttribute("href", "/profile");
   });
+
+  it("switches to English with the flag, and back", async () => {
+    open("/delete-account");
+    await userEvent.click(screen.getByRole("button", { name: /English/ }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Delete your BoulderTime account");
+    expect(screen.getByRole("link", { name: "Go to your profile" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Italiano/ }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Cancellare l'account BoulderTime");
+  });
+
+  it("opens in the language a link asks for", () => {
+    open("/delete-account?lang=en");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Delete your BoulderTime account");
+  });
+
+  it("says the same in both languages, and the same as the privacy notice", () => {
+    for (const [text, path, days] of [[DELETION_IT, "Profilo → Cancellazione dell'account", "7 giorni"], [DELETION_EN, "Profile → Account deletion", "7 days"]] as const) {
+      expect(text).toContain(path);
+      expect(text).toContain(days);
+      expect(text).toContain("support@bouldertime.com");
+    }
+    // One section for one section, so a change to one language can't go unnoticed in the other.
+    const headings = (text: string) => text.split("\n").filter((l) => l.startsWith("## ")).length;
+    expect(headings(DELETION_EN)).toBe(headings(DELETION_IT));
+    expect(PRIVACY_IT).toContain("bouldertime.com/delete-account");
+  });
 });
+

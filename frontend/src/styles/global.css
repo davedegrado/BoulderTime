@@ -795,13 +795,25 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .board__report:hover, .board__report:focus-visible { background: var(--bt-surface-2); color: var(--bt-ink); }
 
 /* ---------- Privacy notice and terms ---------- */
-.legal { max-width: 46rem; }
+/* Outside the app shell, so the page keeps its own gutter and clears the notch inside the store apps. */
+.legal {
+  max-width: 46rem; gap: var(--bt-4);
+  padding: calc(var(--bt-safe-top) + var(--bt-4)) var(--bt-4) calc(var(--bt-safe-bottom) + var(--bt-8));
+}
 .legal__body { display: flex; flex-direction: column; gap: var(--bt-3); }
 .legal__h1 { font-size: var(--bt-text-xl); font-weight: 800; margin: 0; }
 .legal__h2 { font-size: var(--bt-text-lg); font-weight: 700; margin: var(--bt-4) 0 0; }
 .legal__p, .legal__list { margin: 0; line-height: 1.6; color: var(--bt-ink-2); }
 .legal__list { padding-left: var(--bt-5); display: flex; flex-direction: column; gap: 6px; }
 .legal__switch { text-align: center; }
+.lang-switch { display: flex; justify-content: flex-end; gap: var(--bt-2); }
+.lang-switch__option {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 var(--bt-3);
+  border: 1px solid var(--bt-line); border-radius: 999px; background: var(--bt-surface); color: var(--bt-ink-2);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.lang-switch__option[aria-pressed="true"] { border-color: var(--bt-ink); color: var(--bt-ink); }
+.lang-switch__flag { width: 22px; height: 15px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .12); flex-shrink: 0; }
 .auth-legal { text-align: center; }
 
 .legal-gate { max-width: 34rem; margin: 0 auto; padding-top: var(--bt-6); }

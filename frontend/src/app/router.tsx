@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { RouteErrorPage } from "@/pages/RouteErrorPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LegalPage } from "@/pages/legal/LegalPage";
+import { DeletionPage } from "@/pages/legal/DeletionPage";
 import { ConfirmEmailPage } from "@/pages/ConfirmEmailPage";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { AppShell } from "@/components/AppShell";
@@ -52,8 +53,7 @@ export const router = createBrowserRouter([
   { path: "/privacy", element: <LegalPage document="privacy" /> },
   { path: "/termini", element: <LegalPage document="terms" /> },
   { path: "/terms", element: <LegalPage document="terms" /> },
-  { path: "/cancella-account", element: <LegalPage document="deletion" /> },
-  { path: "/delete-account", element: <LegalPage document="deletion" /> },
+  { path: "/delete-account", element: <DeletionPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
   {

@@ -93,7 +93,7 @@ Privacy Framework e clausole contrattuali standard). Se non attivi le notifiche,
 Puoi accedere ai tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento e chiederne una copia.
 
 La cancellazione la fai da solo: **Profilo → Cancellazione dell'account** (istruzioni anche su
-bouldertime.com/cancella-account). Per tutto il resto scrivi a
+bouldertime.com/delete-account). Per tutto il resto scrivi a
 support@bouldertime.com: rispondiamo entro 30 giorni.
 
 Se ritieni che i tuoi dati siano trattati in modo scorretto puoi rivolgerti al **Garante per la protezione dei dati

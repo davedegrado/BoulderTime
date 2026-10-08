@@ -11,7 +11,7 @@ The general answers are the same on both stores:
   behalf as processors, which neither store counts as "sharing".
 - **Everything travels encrypted** (HTTPS only).
 - **People can delete their account** in the app (Profile → Account deletion) and read how on
-  <https://bouldertime.com/cancella-account>, which works without signing in.
+  <https://bouldertime.com/delete-account>, which works without signing in.
 
 ## What is collected
 
@@ -35,7 +35,7 @@ Play Console → App content → Data safety.
 1. **Does your app collect or share any of the required user data types?** Yes.
 2. **Is all of the user data collected by your app encrypted in transit?** Yes.
 3. **Do you provide a way for users to request that their data is deleted?** Yes, with the URL
-   <https://bouldertime.com/cancella-account>.
+   <https://bouldertime.com/delete-account>.
 4. Data types, each **Collected: yes, Shared: no, Processed ephemerally: no**, purpose **App functionality** (email also
    **Account management**):
    - Personal info → **Name**, **Email address**, **User IDs** (required)

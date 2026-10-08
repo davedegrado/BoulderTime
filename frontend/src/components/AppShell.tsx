@@ -35,7 +35,7 @@ export function AppShell() {
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
-  const onLegalPage = ["/privacy", "/termini", "/terms", "/cancella-account", "/delete-account"].includes(useLocation().pathname);
+  const onLegalPage = ["/privacy", "/termini", "/terms", "/delete-account"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
   // A suspended account sees why, and nothing else: the API refuses everything but this page's two actions.
   const suspended = Boolean(session) && (me.data?.isSuspended ?? false) && !onLegalPage;
