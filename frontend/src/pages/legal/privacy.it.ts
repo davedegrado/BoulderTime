@@ -4,12 +4,12 @@
  *
  * A draft to be reviewed by a professional before opening to the public.
  */
-export const PRIVACY_UPDATED = "2026-10-05";
+export const PRIVACY_UPDATED = "2026-10-08";
 
 export const PRIVACY_IT = `
 # Informativa sulla privacy
 
-Ultimo aggiornamento: 5 ottobre 2026
+Ultimo aggiornamento: 8 ottobre 2026
 
 ## Chi tratta i tuoi dati
 
@@ -40,7 +40,8 @@ Non usiamo cookie di profilazione, non facciamo pubblicità e non vendiamo i tuo
 
 - **Esecuzione del servizio** per account, attività e contenuti: senza questi dati l'app non funziona.
 - **Consenso** per i video che carichi e per le notifiche sul telefono: puoi ritirarlo in qualsiasi momento.
-- **Legittimo interesse** per la sicurezza del servizio e la moderazione dei contenuti segnalati.
+- **Legittimo interesse** per la sicurezza del servizio, la moderazione dei contenuti e delle persone segnalate e la
+  sospensione degli account che violano le regole.
 
 ## I video e le altre persone
 
@@ -71,6 +72,10 @@ I tuoi dati restano nello Spazio economico europeo.
 - **Finché hai l'account.** Quando lo cancelli, hai **7 giorni** per ripensarci; poi i dati personali sono eliminati.
 - **Video rifiutati** dalla moderazione: eliminati entro 30 giorni.
 - **Registri tecnici**: circa 90 giorni.
+- **Account sospesi.** Se un account sospeso per violazione delle regole viene cancellato, conserviamo per **2 anni**
+  soltanto un'impronta crittografica (hash) del suo indirizzo email, da cui l'indirizzo non si può ricavare. Serve
+  unicamente a riconoscere un nuovo account creato con lo stesso indirizzo, che parte sospeso finché non lo
+  valutiamo. Le segnalazioni fatte da te o su di te sono invece eliminate con l'account.
 - Restano, senza il tuo nome, i contenuti che appartengono alla palestra: i blocchi che hai tracciato e le beta
   ufficiali, se facevi parte dello staff.
 

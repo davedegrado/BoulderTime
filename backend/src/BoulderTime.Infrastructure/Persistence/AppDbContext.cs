@@ -55,6 +55,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
+    public DbSet<SuspendedEmail> SuspendedEmails => Set<SuspendedEmail>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

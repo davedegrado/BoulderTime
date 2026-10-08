@@ -41,7 +41,7 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M5 | Blocking a user (ADR-031) | **Done** |
 | M6 | iOS: Xcode project built in CI, universal links | **Done** for what needs no Apple account: project, permissions, link claim, unsigned simulator build in CI (ADR-036). Signing, `apple-app-site-association` and TestFlight wait for the account |
 | M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase | Next, after M6 |
-| M6b | Reporting a person and suspending an account, platform-wide (ADR-037) | **Done** — Apple 1.2's "block abusive users **from the service**" |
+| M6b | Reporting a person and suspending an account, platform-wide (ADR-037); deleting a suspended account no longer escapes it (ADR-038) | **Done** — Apple 1.2's "block abusive users **from the service**" |
 | M7 | The stores themselves: Google Play, then App Store | Needs the accounts |
 
 ## Planned, deliberately not started

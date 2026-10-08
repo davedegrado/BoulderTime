@@ -162,6 +162,20 @@ public class User : IAuditable
         SuspensionReason = text is { Length: > SuspensionReasonMaxLength } ? text[..SuspensionReasonMaxLength] : text;
     }
 
+    /// <summary>
+    /// A new account whose address belonged to a suspended account that was deleted: the suspension carries over, with
+    /// nobody as its author, until an administrator looks at it (ADR-038).
+    /// </summary>
+    public void CarrySuspensionOver(DateTimeOffset now)
+    {
+        SuspendedAt = now;
+        SuspendedByUserId = null;
+        SuspensionReason = CarriedOverSuspensionReason;
+    }
+
+    public const string CarriedOverSuspensionReason =
+        "Nuovo account con l'indirizzo email di un account sospeso e poi eliminato.";
+
     /// <summary>Lifts a suspension. What the person wrote becomes visible again: it was hidden, never deleted.</summary>
     public void Reinstate()
     {

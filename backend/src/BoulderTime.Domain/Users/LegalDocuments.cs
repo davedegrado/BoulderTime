@@ -7,5 +7,5 @@ namespace BoulderTime.Domain.Users;
 /// </summary>
 public static class LegalDocuments
 {
-    public const string CurrentVersion = "2026-10-05";
+    public const string CurrentVersion = "2026-10-08";
 }

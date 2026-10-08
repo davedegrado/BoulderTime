@@ -31,6 +31,10 @@ public sealed class UserService(IAppDbContext db, IClock clock)
 
         var user = User.Provision(identity.Subject, identity.Email, DeriveDisplayName(identity), identity.AvatarUrl);
         user.SetLanguage(Localization.Language.Normalize(language)); // the language the app was used in when signing up
+        // Deleting a suspended account doesn't wipe the slate: the same address comes back suspended (ADR-038).
+        var hash = SuspendedEmail.Hash(user.Email);
+        var carried = await db.SuspendedEmails.AsNoTracking().FirstOrDefaultAsync(x => x.EmailHash == hash, ct);
+        if (carried is not null && !carried.IsExpired(clock.UtcNow)) user.CarrySuspensionOver(clock.UtcNow);
         db.Users.Add(user);
         try
         {

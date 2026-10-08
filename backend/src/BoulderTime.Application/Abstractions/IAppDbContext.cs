@@ -48,6 +48,7 @@ public interface IAppDbContext
     DbSet<PushSubscription> PushSubscriptions { get; }
     DbSet<UserBlock> UserBlocks { get; }
     DbSet<UserReport> UserReports { get; }
+    DbSet<SuspendedEmail> SuspendedEmails { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

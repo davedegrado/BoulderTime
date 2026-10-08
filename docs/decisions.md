@@ -685,3 +685,30 @@ directly from *Admin › Users*. Suspending settles every open report about the 
 Nothing is deleted, so lifting the suspension gives everything back. Administrators can't suspend themselves or
 another administrator: one admin locking the others out is not moderation, and revoking the role is a deliberate step
 on the command line. The terms of use already say an account that breaks them can be suspended.
+
+## ADR-038 · A deleted suspended account doesn't come back clean
+Deleting the account is open to a suspended person (ADR-037), and must stay open. But erasure anonymises the address
+and deletes the Supabase sign-in, so the same address — or the same Google account — could then sign up again as a
+stranger, unsuspended.
+
+**What is kept is a fingerprint, not the address.** When `AccountEraser` erases an account that is suspended at that
+moment, it records `SHA-256("bouldertime/suspended-email/" + normalised address)` in `suspended_emails`, with the
+date. Nothing else: no name, no reason, no link to the old account. An account that was never suspended, or whose
+suspension was lifted, leaves nothing behind.
+
+**A new account with that address starts suspended.** `UserService.EnsureProvisionedAsync` checks the hash when it
+creates a user; on a match the account is born suspended with no author and a fixed note ("Nuovo account con
+l'indirizzo email di un account sospeso e poi eliminato."), so it shows up in *Admin › Users* like any other
+suspension. Lifting it is an administrator's call, as always, and also deletes the fingerprint: the decision has been
+taken.
+
+**For two years, not for ever.** `SuspendedEmail.RetentionPeriod` is two years: an expired fingerprint no longer
+matches, and the daily erasure run deletes it. The privacy notice says so, which is why the legal version moved to
+2026-10-08 and everyone accepts again.
+
+Not covered, on purpose: a different address. That is the limit of any email-based service without identity checks,
+and reports still work against the new account.
+
+Erasure now also removes the person reports (`user_reports`) made by or about the person and the blocks they made or
+received, which ADR-037 and ADR-031 had left behind.
+

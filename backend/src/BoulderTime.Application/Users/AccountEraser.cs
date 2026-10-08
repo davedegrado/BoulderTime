@@ -1,4 +1,5 @@
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -8,7 +9,9 @@ namespace BoulderTime.Application.Users;
 /// Erases accounts whose week of grace has passed.
 ///
 /// Everything personal goes: name, email, photo, attempts, sends, ratings, grade suggestions, comments, likes,
-/// community videos (files included), follows, notifications, registered devices, and the Supabase sign-in itself.
+/// community videos (files included), follows, notifications, registered devices, reports and blocks made by or about
+/// the person, and the Supabase sign-in itself. A suspended account leaves one thing behind: the hash of its address
+/// (ADR-038), so that it can't sign up again unsuspended.
 /// What stays belongs to the gym rather than to the person — the boulders they set, the official beta they filmed —
 /// so the row survives as a nameless placeholder instead of taking the gym's own content down with it.
 /// </summary>
@@ -19,7 +22,18 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         var cutoff = clock.UtcNow - AccountDeletionService.GracePeriod;
         var due = await db.Users.Where(u => u.DeletionRequestedAt != null && u.DeletionRequestedAt <= cutoff).ToListAsync(ct);
         foreach (var user in due) await EraseAsync(user.Id, ct);
+        await ForgetExpiredSuspendedEmailsAsync(ct);
         return due.Count;
+    }
+
+    /// <summary>The fingerprints of suspended addresses are kept for a set time, not for ever (ADR-038).</summary>
+    public async Task ForgetExpiredSuspendedEmailsAsync(CancellationToken ct = default)
+    {
+        var expiredBefore = clock.UtcNow - SuspendedEmail.RetentionPeriod;
+        var expired = await db.SuspendedEmails.Where(x => x.RecordedAt <= expiredBefore).ToListAsync(ct);
+        if (expired.Count == 0) return;
+        db.SuspendedEmails.RemoveRange(expired);
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task TryDeleteAsync(string bucket, string path, CancellationToken ct)
@@ -57,6 +71,17 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         db.GymStaff.RemoveRange(await db.GymStaff.Where(x => x.UserId == userId).ToListAsync(ct));
         db.Reports.RemoveRange(await db.Reports.Where(x => x.ReportedByUserId == userId).ToListAsync(ct));
         db.LeaderboardReports.RemoveRange(await db.LeaderboardReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));
+        db.UserReports.RemoveRange(await db.UserReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));
+        db.UserBlocks.RemoveRange(await db.UserBlocks.Where(x => x.BlockerUserId == userId || x.BlockedUserId == userId).ToListAsync(ct));
+
+        // A suspended account leaving keeps only the fingerprint of its address, so it can't come back clean (ADR-038).
+        if (user.IsSuspended)
+        {
+            var hash = SuspendedEmail.Hash(user.Email);
+            var known = await db.SuspendedEmails.FirstOrDefaultAsync(x => x.EmailHash == hash, ct);
+            if (known is null) db.SuspendedEmails.Add(SuspendedEmail.Record(user.Email, clock.UtcNow));
+            else known.Renew(clock.UtcNow);
+        }
 
         user.Anonymise(clock.UtcNow);
         await db.SaveChangesAsync(ct);

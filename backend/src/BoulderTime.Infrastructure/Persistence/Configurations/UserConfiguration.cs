@@ -66,3 +66,14 @@ internal sealed class UserReportConfiguration : IEntityTypeConfiguration<UserRep
         b.HasIndex(x => x.ReportedUserId);
     }
 }
+
+internal sealed class SuspendedEmailConfiguration : IEntityTypeConfiguration<SuspendedEmail>
+{
+    public void Configure(EntityTypeBuilder<SuspendedEmail> b)
+    {
+        b.ToTable("suspended_emails");
+        b.HasKey(x => x.EmailHash);
+        b.Property(x => x.EmailHash).HasMaxLength(64);
+        b.HasIndex(x => x.RecordedAt);
+    }
+}

@@ -7,6 +7,8 @@ using BoulderTime.Application.Users;
 using BoulderTime.Domain.Users;
 using BoulderTime.Tests.Climbing;
 using BoulderTime.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BoulderTime.Tests.Users;
 
@@ -183,5 +185,70 @@ public sealed class AccountSuspensionTests(PostgresFixture postgres) : IAsyncLif
         (await Board()).Entries.Should().Contain(e => e.Climber.UserId == climber.Id);
         await admin.Client.PutAsJsonAsync($"/api/admin/users/{climber.Id}/suspension", new { });
         (await Board()).Entries.Should().NotContain(e => e.Climber.UserId == climber.Id);
+    }
+
+    private async Task EraseAsync(Guid userId)
+    {
+        await using var scope = _f.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<AccountEraser>().EraseAsync(userId);
+    }
+
+    [Fact]
+    public async Task Deleting_a_suspended_account_does_not_open_the_way_to_a_clean_one()
+    {
+        var person = await _f.UserAsync(email: "Furbo@Example.com");
+        var other = await _f.UserAsync();
+        var admin = await _f.UserAsync(platformAdmin: true);
+        await Report(person, other.Id);
+        await Report(other, person.Id);
+        (await admin.Client.PutAsJsonAsync($"/api/admin/users/{person.Id}/suspension", new { reason = "Spam" }))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        await EraseAsync(person.Id);
+
+        // The reports by and about the person go with them; what stays is the fingerprint of the address, not the address.
+        (await _f.Db(db => db.UserReports.CountAsync())).Should().Be(0);
+        var kept = await _f.Db(db => db.SuspendedEmails.Select(x => x.EmailHash).ToListAsync());
+        kept.Should().ContainSingle();
+        kept[0].Should().HaveLength(64);
+        kept[0].Should().NotContainEquivalentOf("furbo");
+
+        // Same address, new sign-in (a fresh id, as Supabase gives after the old one was deleted): suspended at once.
+        var newId = Guid.NewGuid();
+        var again = _f.ClientFor(newId, "FURBO@example.com");
+        var me = (await (await again.GetAsync("/api/users/me")).ReadAsync<CurrentUserDto>())!;
+        me.IsSuspended.Should().BeTrue();
+        (await again.GetAsync("/api/notifications")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        // Someone else is not caught by it.
+        var stranger = await _f.UserAsync(email: "onesto@example.com");
+        (await stranger.Client.GetAsync("/api/notifications")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // BoulderTime can still lift it, and then the fingerprint is gone too: the decision has been taken.
+        (await admin.Client.DeleteAsync($"/api/admin/users/{newId}/suspension")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await again.GetAsync("/api/notifications")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _f.Db(db => db.SuspendedEmails.CountAsync())).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task An_account_that_was_never_suspended_leaves_no_trace_and_old_fingerprints_expire()
+    {
+        var person = await _f.UserAsync(email: "normale@example.com");
+        await EraseAsync(person.Id);
+        (await _f.Db(db => db.SuspendedEmails.CountAsync())).Should().Be(0);
+
+        // A fingerprint older than its retention period no longer counts, and the daily run forgets it.
+        await _f.Db(async db =>
+        {
+            db.SuspendedEmails.Add(SuspendedEmail.Record("vecchio@example.com",
+                DateTimeOffset.UtcNow - SuspendedEmail.RetentionPeriod - TimeSpan.FromDays(1)));
+            return await db.SaveChangesAsync();
+        });
+        var returning = await _f.UserAsync(email: "vecchio@example.com");
+        (await returning.Client.GetAsync("/api/notifications")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        await using (var scope = _f.Services.CreateAsyncScope())
+            await scope.ServiceProvider.GetRequiredService<AccountEraser>().EraseDueAsync();
+        (await _f.Db(db => db.SuspendedEmails.CountAsync())).Should().Be(0);
     }
 }

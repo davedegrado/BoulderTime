@@ -1,12 +1,12 @@
 /**
  * Terms of use. Short on purpose: rules nobody reads protect nobody. A draft to be reviewed by a professional.
  */
-export const TERMS_UPDATED = "2026-10-05";
+export const TERMS_UPDATED = "2026-10-08";
 
 export const TERMS_IT = `
 # Termini d'uso
 
-Ultimo aggiornamento: 5 ottobre 2026
+Ultimo aggiornamento: 8 ottobre 2026
 
 ## Cos'è BoulderTime
 
@@ -65,6 +65,7 @@ termini esclude le responsabilità che la legge non permette di escludere.
 Puoi cancellarlo quando vuoi da **Profilo → Cancellazione dell'account**: hai 7 giorni per ripensarci.
 
 Possiamo sospendere o chiudere un account che viola questi termini, dopo averti avvisato quando è possibile farlo.
+Cancellare un account sospeso non annulla la sospensione: un nuovo account con lo stesso indirizzo email parte sospeso.
 
 ## Legge applicabile
 

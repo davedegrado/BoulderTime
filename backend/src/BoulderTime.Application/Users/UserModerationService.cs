@@ -102,13 +102,19 @@ public sealed class UserModerationService(IAppDbContext db, GymAccess access, IC
         await db.SaveChangesAsync(ct);
     }
 
-    /// <summary>Lifts a suspension. Reports already handled stay as they were: they record what was decided then.</summary>
+    /// <summary>
+    /// Lifts a suspension, including one carried over to a new account (ADR-038). Reports already handled stay as they
+    /// were: they record what was decided then.
+    /// </summary>
     public async Task ReinstateAsync(Guid userId, CancellationToken ct = default)
     {
         await access.RequirePlatformAdminAsync(ct);
         var person = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct) ?? throw new NotFoundException("User", userId);
         if (!person.IsSuspended) return;
         person.Reinstate();
+        // Lifting it here also forgets the address of an earlier, deleted suspended account: the decision is now made.
+        var hash = SuspendedEmail.Hash(person.Email);
+        db.SuspendedEmails.RemoveRange(await db.SuspendedEmails.Where(x => x.EmailHash == hash).ToListAsync(ct));
         await db.SaveChangesAsync(ct);
     }
 
