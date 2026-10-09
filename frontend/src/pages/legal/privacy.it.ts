@@ -4,13 +4,12 @@
  *
  * A draft to be reviewed by a professional before opening to the public.
  */
-export const PRIVACY_UPDATED = "2026-10-08";
-// Changed twice on 8 October 2026: see LEGAL_VERSION.
+export const PRIVACY_UPDATED = "2026-10-10";
 
 export const PRIVACY_IT = `
 # Informativa sulla privacy
 
-Ultimo aggiornamento: 8 ottobre 2026
+Ultimo aggiornamento: 10 ottobre 2026
 
 ## Chi tratta i tuoi dati
 
@@ -56,7 +55,9 @@ scrivi a support@bouldertime.com o usa la segnalazione nell'app: lo rimuoviamo i
 ## Minori
 
 BoulderTime non è destinato a chi ha meno di 14 anni, che è l'età minima prevista in Italia per iscriversi da soli a
-un servizio online. Se veniamo a sapere che un account appartiene a un minore di 14 anni, lo cancelliamo.
+un servizio online. Quando crei l'account, o accetti i termini aggiornati, ti chiediamo di dichiarare di avere almeno
+14 anni: conserviamo solo il fatto che l'hai dichiarato e quando, non la tua data di nascita. Se veniamo a sapere che un
+account appartiene a un minore di 14 anni, lo cancelliamo.
 
 ## Chi altro tratta i dati per noi
 

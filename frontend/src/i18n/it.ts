@@ -138,7 +138,6 @@ export const it: Record<string, string> = {
   "Undo": "Annulla",
   "Your rating": "La tua valutazione",
   "Log an attempt to rate this boulder.": "Registra un tentativo per valutare questo blocco.",
-  "Community:": "Community:",
   "No ratings yet": "Ancora nessuna valutazione",
   "Sign in to log attempts, mark sends and rate boulders.": "Accedi per registrare tentativi, segnare i completati e valutare i blocchi.",
   "Report a problem with this boulder": "Segnala un problema con questo blocco",
@@ -777,15 +776,10 @@ export const it: Record<string, string> = {
   "Privacy notice": "Informativa sulla privacy",
   "Read the terms of use": "Leggi i termini d'uso",
   "Read the privacy notice": "Leggi l'informativa sulla privacy",
-  "Creating an account means you accept the": "Creando l'account accetti i",
-  "terms of use": "termini d'uso",
-  "and the": "e l'",
-  "privacy notice": "informativa sulla privacy",
   "Before you start": "Prima di cominciare",
   "We've updated our terms": "Abbiamo aggiornato i termini",
   "Read the terms of use and the privacy notice. They explain what we do with your data, and what you promise when you upload a video of other people.": "Leggi i termini d'uso e l'informativa sulla privacy. Spiegano cosa facciamo con i tuoi dati e cosa ti impegni a rispettare quando carichi un video con altre persone.",
   "The terms of use and the privacy notice have changed. Please read them and accept to continue.": "I termini d'uso e l'informativa sulla privacy sono cambiati. Leggili e accettali per continuare.",
-  "I have read and accept the terms of use and the privacy notice.": "Ho letto e accetto i termini d'uso e l'informativa sulla privacy.",
   "Continue": "Continua",
   "Reload the app and read the current terms.": "Ricarica l'app e leggi i termini aggiornati.",
   // ---- Per-gym video allowance ----
@@ -921,4 +915,25 @@ export const it: Record<string, string> = {
 
   // ---- Account deletion page ----
   "Go to your profile": "Vai al tuo profilo",
+
+  // ---- Sign-up (ADR-041) ----
+  "Join the BoulderTime community to log your sends, comment on boulders and climb the leaderboard.": "Unisciti alla community di BoulderTime per tracciare le tue salite, commentare i blocchi e scalare la classifica.",
+  "E.g. MatteoClimbs": "Es. MatteoClimbs",
+  "E.g. name@email.com": "Es. nome@email.com",
+  "Shown on leaderboards and comments. A nickname is fine.": "Sarà visibile su classifiche e commenti. Va bene anche un soprannome.",
+  "I'm at least 14 years old.": "Ho almeno 14 anni.",
+  "Confirm that you're at least 14.": "Conferma di avere almeno 14 anni.",
+  "Accept the terms of use to create an account.": "Accetta i termini d'uso per creare l'account.",
+  "I accept the {terms} and I have read the {privacy}.": "Accetto i {terms} e ho letto l'{privacy}.",
+  "I accept the terms of use and I have read the privacy notice.": "Accetto i termini d'uso e ho letto l'informativa sulla privacy.",
+  "Show password": "Mostra la password",
+  "Hide password": "Nascondi la password",
+
+  // ---- Boulder page ----
+  "Enlarge the photo": "Ingrandisci la foto",
+  "Zoom in": "Ingrandisci",
+  "Zoom out": "Rimpicciolisci",
+  "Follow this boulder": "Segui questo blocco",
+  "Stop following this boulder": "Smetti di seguire questo blocco",
+  "About this boulder": "Informazioni sul blocco",
 };

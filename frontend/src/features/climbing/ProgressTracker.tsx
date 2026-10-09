@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Check, Minus, Plus, RotateCcw } from "lucide-react";
 import type { BoulderDetail } from "@/features/boulders/api";
 import { useSetAttempt, useSetRating } from "@/features/climbing/api";
-import { RatingSummaryText, StarInput } from "@/features/climbing/ClimbingBits";
+import { StarInput } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
@@ -114,7 +114,6 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
           onChange={(v) => setRating.mutate(v, { onError: (e) => toast.error(errorMessage(e)) })} />
         {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
       </div>
-      <p className="tracker__community">{t("Community:")} <RatingSummaryText rating={boulder.rating} /></p>
     </section>
   );
 }

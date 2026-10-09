@@ -11,10 +11,13 @@ interface AuthContextValue {
   /** True until the persisted session has been read on startup. */
   initializing: boolean;
   signInWithPassword(email: string, password: string): Promise<void>;
-  signUpWithPassword(email: string, password: string, displayName: string): Promise<{ needsConfirmation: boolean }>;
+  /** `agreed` carries the sign-up form's two boxes; the server records them when it first sees the account (ADR-041). */
+  signUpWithPassword(email: string, password: string, displayName: string, agreed?: SignUpAgreement): Promise<{ needsConfirmation: boolean }>;
   signInWithGoogle(redirectTo?: string): Promise<void>;
   signOut(): Promise<void>;
 }
+
+export interface SignUpAgreement { legalVersion: string; minimumAgeConfirmed: boolean }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -46,12 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(friendlyAuthError(error.message));
   }, []);
 
-  const signUpWithPassword = useCallback(async (email: string, password: string, displayName: string) => {
+  const signUpWithPassword = useCallback(async (email: string, password: string, displayName: string, agreed?: SignUpAgreement) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: displayName },
+        data: {
+          display_name: displayName,
+          ...(agreed ? { legal_version: agreed.legalVersion, minimum_age_confirmed: agreed.minimumAgeConfirmed } : {}),
+        },
         emailRedirectTo: `${publicOrigin()}/auth/callback`,
       },
     });

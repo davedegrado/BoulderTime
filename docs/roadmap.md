@@ -28,6 +28,7 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | The official beta can be a link to Instagram/YouTube instead of an upload (ADR-032) | **Done** | address-validation, allowance and swap tests |
 | — | Taken-down boulders stay visible to climbers; gyms can erase one for good (ADR-035) | **Done** | visibility, history-survival and permission tests |
 | — | Public account-deletion page, `/delete-account`, Italian and English (Google Play requirement) | **Done** | deletion page tests |
+| — | Sign-up asks for age (at least 14) and terms on the form itself; boulder page with a smaller photo that opens full screen (ADR-041) | **Done** | sign-up, legal-acceptance and gate tests |
 
 ## Store apps (in progress)
 

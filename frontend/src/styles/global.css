@@ -832,3 +832,72 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .sheet__option svg { width: 22px; height: 22px; }
 .sheet__cancel { min-height: 48px; margin-top: var(--bt-2); border: 0; border-radius: var(--bt-radius-md); background: var(--bt-surface-2);
   color: var(--bt-ink); font: inherit; font-weight: 700; cursor: pointer; }
+
+/* ---------- Sign-up and password fields (ADR-041) ---------- */
+.auth__head { display: flex; flex-direction: column; gap: var(--bt-2); }
+.auth__subtitle { color: var(--bt-ink-2); line-height: 1.45; }
+.field__control { position: relative; display: flex; align-items: center; }
+.field__input--trailing { padding-right: 52px; }
+.field__reveal { position: absolute; right: 4px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: var(--bt-radius-sm); background: none; color: var(--bt-ink-2); cursor: pointer; }
+.field__reveal:hover { color: var(--bt-ink); }
+.field__reveal svg { width: 22px; height: 22px; }
+.field__input::placeholder { color: var(--bt-ink-3); opacity: 0.8; }
+.agree { display: flex; flex-direction: column; gap: var(--bt-2); padding-top: var(--bt-1); }
+.check--plain { padding: var(--bt-1) 0; border: 0; border-radius: 0; line-height: 1.45; }
+.check--plain > span { display: block; }
+.check--plain input { width: 24px; height: 24px; margin-top: 0; }
+.check--invalid input { outline: 2px solid var(--bt-danger); outline-offset: 1px; border-radius: 4px; }
+.agree .field__error { margin: -4px 0 var(--bt-1) 36px; }
+.link-btn { display: inline; padding: 0; border: 0; background: none; font: inherit; color: var(--bt-orange-ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.legal-sheet { max-height: 88dvh; gap: 0; padding: 0 0 var(--bt-safe-bottom); }
+.legal-sheet__top { display: flex; justify-content: flex-end; padding: var(--bt-2); border-bottom: 1px solid var(--bt-line); }
+.legal-sheet__body { overflow-y: auto; padding: var(--bt-4) var(--bt-5) var(--bt-8); overscroll-behavior: contain; }
+@media (min-width: 720px) {
+  .sheet-backdrop:has(.legal-sheet) { align-items: center; justify-content: center; }
+  .legal-sheet { max-width: 46rem; border-radius: var(--bt-radius-lg); }
+}
+
+/* ---------- Rhythm and type, one scale for every screen ---------- */
+/* Phones get a tighter rhythm than desktops: the same 32px between sections that breathes on a wide screen leaves
+   a phone showing one section at a time. Titles step down with the screen so long names don't wrap three times. */
+.page__title { font-size: clamp(1.75rem, 1.2rem + 2.4vw, var(--bt-text-2xl)); }
+.section { gap: var(--bt-3); }
+.section__row { align-items: center; gap: var(--bt-3); }
+.list__row { min-height: 56px; }
+.list__icon { width: 20px; height: 20px; }
+@media (max-width: 719px) {
+  .page { gap: var(--bt-6); }
+  .card { padding: var(--bt-4); }
+  .announcement__image { width: calc(100% + 2 * var(--bt-4)); margin: calc(-1 * var(--bt-4)) calc(-1 * var(--bt-4)) var(--bt-2); }
+  .section__title { font-size: 1.1875rem; }
+  .tabs { gap: var(--bt-5); }
+}
+
+/* ---------- Boulder page: photo kept in proportion, identity in one block ---------- */
+/* The whole photo stays visible (contain), about a third of a phone screen tall; a tap opens it full size. */
+.boulder-page__photo { display: grid; place-items: center; }
+.boulder-page__photo-btn { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.boulder-page__photo img { width: 100%; height: min(34vh, 320px); max-height: none; object-fit: contain; }
+@media (min-width: 960px) { .boulder-page__photo img { height: min(46vh, 440px); } }
+.boulder-page__back, .boulder-page__enlarge { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.35); }
+.boulder-page__enlarge { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; cursor: pointer; }
+.boulder-page__enlarge svg { width: 20px; height: 20px; }
+.boulder-page__head { display: flex; flex-direction: column; align-items: stretch; gap: var(--bt-2); }
+.boulder-page__title-row { display: flex; justify-content: space-between; align-items: center; gap: var(--bt-3); }
+.boulder-page__grades { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--bt-3); }
+.boulder-page__other-grade { display: inline-flex; align-items: center; gap: 6px; }
+.boulder-page__system { font-size: var(--bt-text-sm); color: var(--bt-ink-3); font-weight: 600; }
+.boulder-page__rating { margin-top: 0; }
+.boulder-page__actions { flex-wrap: nowrap; }
+.icon-btn--outlined { width: 48px; height: 48px; border: 1.5px solid var(--bt-line); border-radius: 50%; background: var(--bt-surface); color: var(--bt-ink); }
+.icon-btn--outlined.is-following { border-color: var(--bt-orange); background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+.facts { list-style: none; margin: var(--bt-1) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--bt-2); }
+.fact { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 var(--bt-3); border-radius: var(--bt-radius-pill); background: var(--bt-surface); border: 1px solid var(--bt-line); font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink); }
+.fact > svg { width: 16px; height: 16px; color: var(--bt-ink-3); }
+
+.photo-viewer { position: fixed; inset: 0; z-index: 110; display: flex; flex-direction: column; background: #0d0d0d; padding: var(--bt-safe-top) 0 var(--bt-safe-bottom); }
+.photo-viewer .viewer__top { justify-content: flex-end; gap: var(--bt-2); }
+.photo-viewer__stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.photo-viewer__stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
+.photo-viewer__stage.is-zoomed { display: block; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+.photo-viewer__stage.is-zoomed img { max-width: none; max-height: none; cursor: zoom-out; }

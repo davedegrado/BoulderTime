@@ -756,3 +756,26 @@ can release test builds of this one app and nothing else.
 
 Without the `PLAY_SERVICE_ACCOUNT_JSON` secret the step is skipped and the workflow behaves as before.
 
+## ADR-041 · Age and terms on the sign-up form
+The terms always said "at least 14", the age Italian law sets for signing up to an online service alone, but nothing
+asked. And accepting the terms was a second screen after the email confirmation, asking again what the sign-up form
+had just implied.
+
+**Two boxes on the sign-up form, both unticked, both required:** "I'm at least 14" and "I accept the terms of use and
+I have read the privacy notice". The privacy notice is read, not agreed to: there is nothing optional to consent to,
+and when there is (a newsletter, say) it will be a third, optional box with its own record.
+
+**Recorded by the server when it first sees the account.** The answers travel in the Supabase sign-up metadata
+(`legal_version`, `minimum_age_confirmed`); `UserService.EnsureProvisionedAsync` stores `User.MinimumAgeConfirmedAt`
+and, if the version is the current one, the acceptance. Like everything a person posts, they are their own answers;
+the metadata is only read when the account is created.
+
+**Only the declaration is kept, never a date of birth.** A year alone could not even tell 13 from 14. Collecting
+birth dates would only make sense with a real under-14 path (parental consent), which is deliberately not built.
+
+**The terms screen stays**, for new versions of the documents and for anyone who hasn't declared the age —
+`LegalAcceptanceNeeded` is now "different version *or* no age declaration", and that screen shows the age box only to
+whoever still needs it. The privacy notice says what is kept; legal version 2026-10-10, so everyone passes by once.
+
+The links in the form open the documents over it (`LegalSheet`), so reading them doesn't lose what was typed.
+

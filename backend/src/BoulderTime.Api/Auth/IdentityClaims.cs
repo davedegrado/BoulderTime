@@ -16,7 +16,8 @@ public static class IdentityClaims
         if (!Guid.TryParse(principal.FindFirst("sub")?.Value, out var subject)) return null;
 
         var email = principal.FindFirst("email")?.Value;
-        string? displayName = null, avatarUrl = null;
+        string? displayName = null, avatarUrl = null, legalVersion = null;
+        var minimumAge = false;
 
         var metadata = principal.FindFirst("user_metadata")?.Value;
         if (!string.IsNullOrWhiteSpace(metadata))
@@ -28,6 +29,10 @@ public static class IdentityClaims
                 // "display_name" is set by our sign-up form; "full_name"/"name"/"picture" come from Google.
                 displayName = FirstString(root, "display_name", "full_name", "name");
                 avatarUrl = FirstString(root, "avatar_url", "picture");
+                // Ticked on our sign-up form (ADR-041). The person's own answers, like everything they post.
+                legalVersion = FirstString(root, "legal_version");
+                minimumAge = root.ValueKind == JsonValueKind.Object
+                    && root.TryGetProperty("minimum_age_confirmed", out var age) && age.ValueKind == JsonValueKind.True;
             }
             catch (JsonException)
             {
@@ -35,7 +40,7 @@ public static class IdentityClaims
             }
         }
 
-        return new VerifiedIdentity(subject, email, displayName, avatarUrl);
+        return new VerifiedIdentity(subject, email, displayName, avatarUrl, legalVersion, minimumAge);
     }
 
     private static string? FirstString(JsonElement root, params string[] names)

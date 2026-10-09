@@ -4,7 +4,10 @@ using BoulderTime.Domain.Users;
 namespace BoulderTime.Application.Users;
 
 /// <summary>Claims extracted from a verified Supabase access token.</summary>
-public sealed record VerifiedIdentity(Guid Subject, string? Email, string? DisplayName, string? AvatarUrl);
+/// <param name="AcceptedLegalVersion">The terms version ticked on the sign-up form, if the account was made there.</param>
+/// <param name="ConfirmedMinimumAge">The "I'm at least 14" box on the sign-up form.</param>
+public sealed record VerifiedIdentity(Guid Subject, string? Email, string? DisplayName, string? AvatarUrl,
+    string? AcceptedLegalVersion = null, bool ConfirmedMinimumAge = false);
 
 public sealed record CurrentUserDto(
     Guid Id,
@@ -28,12 +31,14 @@ public sealed record CurrentUserDto(
     /// <summary>True when the documents changed (or were never accepted) and the app must ask before going on.</summary>
     bool LegalAcceptanceNeeded = false,
     /// <summary>BoulderTime suspended this account: the app shows why and offers nothing else (ADR-037).</summary>
-    bool IsSuspended = false)
+    bool IsSuspended = false,
+    /// <summary>The person declared being at least 14 (ADR-041).</summary>
+    bool MinimumAgeConfirmed = false)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
         new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language,
             u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null,
-            u.AcceptedLegalVersion, u.AcceptedLegalVersion != LegalDocuments.CurrentVersion, u.IsSuspended);
+            u.AcceptedLegalVersion, LegalAcceptanceService.IsNeeded(u), u.IsSuspended, u.MinimumAgeConfirmed);
 }
 
 public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);

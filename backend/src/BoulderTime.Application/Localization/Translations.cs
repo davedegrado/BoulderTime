@@ -170,6 +170,8 @@ public static partial class Translations
 
         // ---- Reporting people & suspensions ----
         ("This account has been suspended.", "Questo account è stato sospeso."),
+        ("Confirm that you're at least 14.", "Conferma di avere almeno 14 anni."),
+        ("Reload the app and read the current terms.", "Ricarica l'app e leggi i termini aggiornati."),
         ("You can't report yourself.", "Non puoi segnalare te stesso."),
         ("Say whether to suspend the account.", "Indica se sospendere l'account."),
         ("You can't suspend yourself.", "Non puoi sospendere te stesso."),

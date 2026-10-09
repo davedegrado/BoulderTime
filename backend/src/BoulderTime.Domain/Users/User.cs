@@ -46,6 +46,14 @@ public class User : IAuditable
     public string? AcceptedLegalVersion { get; private set; }
     public DateTimeOffset? AcceptedLegalAt { get; private set; }
 
+    /// <summary>
+    /// When the person declared being at least 14, the age Italian law sets for signing up to an online service on
+    /// one's own. Only the moment of the declaration is kept, never a date of birth.
+    /// </summary>
+    public DateTimeOffset? MinimumAgeConfirmedAt { get; private set; }
+
+    public bool MinimumAgeConfirmed => MinimumAgeConfirmedAt is not null;
+
     public bool IsPendingDeletion => DeletionRequestedAt is not null;
 
     /// <summary>
@@ -114,6 +122,9 @@ public class User : IAuditable
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;
 
     public void SetLeaderboardOptOut(bool optOut) => LeaderboardOptOut = optOut;
+
+    /// <summary>Records the declaration once; declaring again changes nothing.</summary>
+    public void ConfirmMinimumAge(DateTimeOffset now) => MinimumAgeConfirmedAt ??= now;
 
     public void AcceptLegal(string version, DateTimeOffset now)
     {

@@ -31,6 +31,11 @@ public sealed class UserService(IAppDbContext db, IClock clock)
 
         var user = User.Provision(identity.Subject, identity.Email, DeriveDisplayName(identity), identity.AvatarUrl);
         user.SetLanguage(Localization.Language.Normalize(language)); // the language the app was used in when signing up
+        // The sign-up form asks both questions, so its answers count as given here, instead of asking again on the next
+        // screen (ADR-041). An answer for some other version of the terms is ignored: the app then asks as usual.
+        if (identity.ConfirmedMinimumAge) user.ConfirmMinimumAge(clock.UtcNow);
+        if (identity.ConfirmedMinimumAge && identity.AcceptedLegalVersion == LegalDocuments.CurrentVersion)
+            user.AcceptLegal(LegalDocuments.CurrentVersion, clock.UtcNow);
         // Deleting a suspended account doesn't wipe the slate: the same address comes back suspended (ADR-038).
         var hash = SuspendedEmail.Hash(user.Email);
         var carried = await db.SuspendedEmails.AsNoTracking().FirstOrDefaultAsync(x => x.EmailHash == hash, ct);

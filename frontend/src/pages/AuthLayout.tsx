@@ -4,12 +4,15 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { t } from "@/i18n/i18n";
 
-export function AuthLayout({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
+export function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="auth">
       <Link to="/" className="auth__brand" aria-label={t("BoulderTime home")}><Logo variant="horizontal" height={64} /></Link>
       <div className="auth__card">
-        <h1 className="auth__title">{title}</h1>
+        <div className="auth__head">
+          <h1 className="auth__title">{title}</h1>
+          {subtitle && <p className="auth__subtitle">{subtitle}</p>}
+        </div>
         {children}
       </div>
       {footer && <p className="auth__footer">{footer}</p>}

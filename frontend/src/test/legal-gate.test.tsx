@@ -10,9 +10,17 @@ import { LEGAL_VERSION } from "@/pages/legal/version";
 vi.mock("@/auth/AuthProvider", () => ({ useAuth: () => ({ session: { access_token: "t" }, signOut: async () => {} }) }));
 
 const posted: { path: string; body: unknown }[] = [];
+let me: Record<string, unknown> = {};
 vi.mock("@/lib/api", () => ({
-  api: { post: async (path: string, body: unknown) => { posted.push({ path, body }); return {}; } },
+  api: {
+    post: async (path: string, body: unknown) => { posted.push({ path, body }); return {}; },
+    get: async (path: string) => path === "/api/users/me" ? me : { pendingDeletion: false, requestedAt: null, erasedAfter: null },
+  },
 }));
+const person = (minimumAgeConfirmed: boolean) => ({
+  id: "u1", email: "a@b.it", displayName: "A", avatarUrl: null, isPlatformAdmin: false, createdAt: "2026-01-01T00:00:00Z",
+  staffGyms: [], pendingInvitations: 0, language: "it", legalAcceptanceNeeded: true, minimumAgeConfirmed,
+});
 
 const show = (returning: boolean) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -25,20 +33,36 @@ const show = (returning: boolean) => {
   );
 };
 
-beforeEach(() => { posted.length = 0; });
+beforeEach(() => { posted.length = 0; me = person(false); });
 
 describe("Accepting the terms", () => {
-  it("won't let anyone through without ticking the box", async () => {
+  it("won't let anyone through without the age and the terms, and records both", async () => {
     show(false);
 
     expect(screen.getByRole("button", { name: "Continua" })).toBeDisabled();
     expect(screen.getByRole("link", { name: "Termini d'uso" })).toHaveAttribute("href", "/termini");
     expect(screen.getByRole("link", { name: "Informativa sulla privacy" })).toHaveAttribute("href", "/privacy");
 
-    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Accetto i termini d'uso e ho letto l'informativa sulla privacy." }));
+    expect(screen.getByRole("button", { name: "Continua" })).toBeDisabled(); // the age is still missing
+    await userEvent.click(screen.getByRole("checkbox", { name: "Ho almeno 14 anni." }));
     await userEvent.click(screen.getByRole("button", { name: "Continua" }));
 
     // The version is part of the record: knowing someone agreed is useless without knowing to what.
+    await waitFor(() => expect(posted).toEqual([
+      { path: "/api/users/me/legal-acceptance", body: { version: LEGAL_VERSION, confirmsMinimumAge: true } },
+    ]));
+  });
+
+  it("doesn't ask the age again of someone who already declared it", async () => {
+    me = person(true);
+    show(true);
+
+    const accept = await screen.findByRole("checkbox", { name: "Accetto i termini d'uso e ho letto l'informativa sulla privacy." });
+    await waitFor(() => expect(screen.queryByRole("checkbox", { name: "Ho almeno 14 anni." })).not.toBeInTheDocument());
+    await userEvent.click(accept);
+    await userEvent.click(screen.getByRole("button", { name: "Continua" }));
+
     await waitFor(() => expect(posted).toEqual([{ path: "/api/users/me/legal-acceptance", body: { version: LEGAL_VERSION } }]));
   });
 

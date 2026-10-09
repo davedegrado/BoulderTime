@@ -33,6 +33,8 @@ export interface CurrentUser {
   legalAcceptanceNeeded: boolean;
   /** BoulderTime suspended this account: the app shows why and nothing else (ADR-037). */
   isSuspended?: boolean;
+  /** Declared being at least 14 (ADR-041); the terms screen asks whoever hasn't. */
+  minimumAgeConfirmed?: boolean;
 }
 
 export interface UpdateProfileInput {

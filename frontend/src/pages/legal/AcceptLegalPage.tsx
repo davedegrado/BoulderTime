@@ -20,13 +20,16 @@ import { t } from "@/i18n/i18n";
  */
 export function AcceptLegalPage({ returning }: { returning: boolean }) {
   const [checked, setChecked] = useState(false);
+  const [ageChecked, setAgeChecked] = useState(false);
   const qc = useQueryClient();
   const toast = useToast();
   const { signOut } = useAuth();
   const me = useCurrentUser();
+  // Asked once, of whoever hasn't declared it yet: everyone who signed up before the sign-up form asked (ADR-041).
+  const needsAge = !(me.data?.minimumAgeConfirmed ?? false);
 
   const accept = useMutation({
-    mutationFn: () => api.post("/api/users/me/legal-acceptance", { version: LEGAL_VERSION }),
+    mutationFn: () => api.post("/api/users/me/legal-acceptance", needsAge ? { version: LEGAL_VERSION, confirmsMinimumAge: true } : { version: LEGAL_VERSION }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
     onError: (e) => toast.error(errorMessage(e)),
   });
@@ -47,12 +50,18 @@ export function AcceptLegalPage({ returning }: { returning: boolean }) {
           <li className="list__row"><Link className="list__main list__link" to="/privacy">{t("Privacy notice")}</Link></li>
         </ul>
 
+        {needsAge && (
+          <label className="check">
+            <input type="checkbox" checked={ageChecked} onChange={(e) => setAgeChecked(e.target.checked)} />
+            <span>{t("I'm at least 14 years old.")}</span>
+          </label>
+        )}
         <label className="check">
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
-          <span>{t("I have read and accept the terms of use and the privacy notice.")}</span>
+          <span>{t("I accept the terms of use and I have read the privacy notice.")}</span>
         </label>
 
-        <Button disabled={!checked} loading={accept.isPending} onClick={() => accept.mutate()} block>
+        <Button disabled={!checked || (needsAge && !ageChecked)} loading={accept.isPending} onClick={() => accept.mutate()} block>
           {t("Continue")}
         </Button>
         <Button variant="ghost" onClick={() => void signOut()} block>{t("Sign out")}</Button>

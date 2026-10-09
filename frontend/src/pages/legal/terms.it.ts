@@ -1,12 +1,12 @@
 /**
  * Terms of use. Short on purpose: rules nobody reads protect nobody. A draft to be reviewed by a professional.
  */
-export const TERMS_UPDATED = "2026-10-08";
+export const TERMS_UPDATED = "2026-10-10";
 
 export const TERMS_IT = `
 # Termini d'uso
 
-Ultimo aggiornamento: 8 ottobre 2026
+Ultimo aggiornamento: 10 ottobre 2026
 
 ## Cos'è BoulderTime
 
@@ -17,7 +17,8 @@ Usare l'app significa accettare questi termini.
 
 ## Chi può iscriversi
 
-Devi avere almeno **14 anni**. Se scopriamo che un account appartiene a una persona più giovane, lo cancelliamo.
+Devi avere almeno **14 anni** e lo dichiari quando crei l'account. Se scopriamo che un account appartiene a una
+persona più giovane, lo cancelliamo.
 
 Un account è personale: sei responsabile di quello che viene fatto con il tuo accesso. Se pensi che qualcun altro lo
 stia usando, cambia la password e scrivici.

@@ -69,6 +69,22 @@ describe("Boulder page", () => {
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
   });
 
+  it("keeps the photo small and opens it full screen on request", async () => {
+    reply("GET", "/api/boulders/b1", { ...boulder("b1"), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false });
+    renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
+
+    // Both the photo itself and the corner button open it.
+    const enlarge = await screen.findAllByRole("button", { name: "Enlarge the photo" });
+    expect(enlarge).toHaveLength(2);
+    await userEvent.click(enlarge[1]!);
+    const viewer = screen.getByRole("dialog");
+    expect(within(viewer).getByRole("img")).toHaveAttribute("src", "/img/b1.jpg");
+    await userEvent.click(within(viewer).getByRole("button", { name: "Zoom in" }));
+    expect(within(viewer).getByRole("button", { name: "Zoom out" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(within(viewer).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("has no climber-video section at all where the gym hasn't switched them on", async () => {
     reply("GET", "/api/boulders/b1", { ...boulder("b1"), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false, communityVideosEnabled: false });
     renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
