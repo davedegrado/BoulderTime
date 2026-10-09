@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, LogOut, Plus, ShieldCheck } from "lucide-react";
+import { Activity, ChevronDown, ChevronRight, LogOut, Plus, ShieldCheck, UserRound } from "lucide-react";
 import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate, roleLabel } from "@/lib/format";
 import { useAuth } from "@/auth/AuthProvider";
@@ -74,67 +74,17 @@ export function ProfilePage() {
     <div className="page page--narrow">
       <header className="profile-head">
         <Avatar name={user.displayName} url={user.avatarUrl} size={72} />
-        <div>
+        <div className="profile-head__text">
           <h1 className="page__title">{user.displayName}</h1>
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(user.createdAt, { month: "long", year: "numeric" }) })}</p>
           <StaffDistinctions distinctions={profile.data?.staffDistinctions ?? []} />
           {user.isPlatformAdmin && <p className="badge"><ShieldCheck aria-hidden /> {t("BoulderTime admin")}</p>}
         </div>
       </header>
-
-      <section className="section card" aria-labelledby="edit-profile">
-        <h2 id="edit-profile" className="section__title">{t("Edit profile")}</h2>
-        <ImagePicker label={t("Profile photo")} hint={t("Square crop, shown on comments and leaderboards.")} hasImage={!!user.avatarUrl} busy={setAvatar.isPending}
-          preview={<Avatar name={user.displayName} url={user.avatarUrl} size={72} />}
-          onPick={(f) => setAvatar.mutate(f, { onSuccess: () => toast.success(t("Photo updated")), onError: (e) => toast.error(errorMessage(e)) })}
-          onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success(t("Photo removed")), onError: (e) => toast.error(errorMessage(e)) })} />
-        <form className="form" onSubmit={onSubmit} noValidate>
-          <TextField label={t("Display name")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={fieldError} maxLength={40} />
-          <TextField label={t("Email")} value={user.email} readOnly disabled hint={t("Your sign-in email can't be changed here.")} />
-          <SelectField label={t("Language")} value={language}
-            options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-            onChange={(e) => {
-              const next = e.target.value as Language;
-              setLanguage(next); // immediate on this device
-              update.mutate({ displayName: user.displayName, language: next }, { onError: (err) => toast.error(errorMessage(err)) });
-            }} />
-          <p className="field__hint">{t("Also used for the notifications you receive.")}</p>
-          <Button type="submit" loading={update.isPending} disabled={!dirty}>{t("Save changes")}</Button>
-        </form>
-      </section>
-
-      <BlockedList />
-
-      <PasswordSection hasPassword={hasPassword} />
-
-      <section className="section" aria-labelledby="legal-title">
-        <h2 id="legal-title" className="section__title">{t("Terms and privacy")}</h2>
-        <ul className="list card">
-          <li className="list__row"><Link className="list__main list__link" to="/termini">{t("Terms of use")}</Link></li>
-          <li className="list__row"><Link className="list__main list__link" to="/privacy">{t("Privacy notice")}</Link></li>
-          <li className="list__row"><a className="list__main list__link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
-        </ul>
-      </section>
-
-      <DeleteAccountSection email={user.email} />
-
-      <section className="section" aria-labelledby="board-title">
-        <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
-        <Toggle
-          label={t("Don't show me in leaderboards")}
-          description={t("Your sends and history stay yours: you simply don't appear in any gym's ranking.")}
-          checked={user.leaderboardOptOut}
-          disabled={visibility.isPending}
-          onChange={(hidden) => visibility.mutate(hidden, {
-            onSuccess: () => toast.success(hidden ? t("You no longer appear in leaderboards") : t("You appear in leaderboards again")),
-            onError: (e) => toast.error(errorMessage(e)),
-          })} />
-        {user.leaderboardExcluded && (
-          <p className="notice">
-            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: SUPPORT_EMAIL })}
-          </p>
-        )}
-      </section>
+      <div className="profile-links">
+        <Link to={`/users/${user.id}`} className="btn btn--secondary"><UserRound aria-hidden /><span>{t("View public profile")}</span></Link>
+        <Link to="/activity" className="btn btn--secondary"><Activity aria-hidden /><span>{t("Your activity")}</span></Link>
+      </div>
 
       {(user.staffGyms.length > 0 || user.isPlatformAdmin) && (
         <section className="section" aria-labelledby="manage-title">
@@ -165,12 +115,85 @@ export function ProfilePage() {
         </section>
       )}
 
-      <div className="form__actions">
-        <Link to={`/users/${user.id}`} className="btn btn--secondary"><span>{t("View public profile")}</span></Link>
-        <Link to="/activity" className="btn btn--secondary"><span>{t("Your activity")}</span></Link>
-      </div>
+      {/* Account details open on request: they are changed rarely, and kept open they filled half the page. */}
+      <section className="section" aria-labelledby="account-title">
+        <h2 id="account-title" className="section__title">{t("Account")}</h2>
+        <div className="disclosures">
+          <details className="disclosure">
+            <summary className="disclosure__summary">
+              <span className="disclosure__text"><span className="list__title">{t("Edit profile")}</span><span className="list__sub">{t("Name, photo and language")}</span></span>
+              <ChevronDown className="disclosure__chevron" aria-hidden />
+            </summary>
+            <div className="disclosure__body stack">
+              <ImagePicker label={t("Profile photo")} hint={t("Square crop, shown on comments and leaderboards.")} hasImage={!!user.avatarUrl} busy={setAvatar.isPending}
+                preview={<Avatar name={user.displayName} url={user.avatarUrl} size={72} />}
+                onPick={(f) => setAvatar.mutate(f, { onSuccess: () => toast.success(t("Photo updated")), onError: (e) => toast.error(errorMessage(e)) })}
+                onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success(t("Photo removed")), onError: (e) => toast.error(errorMessage(e)) })} />
+              <form className="form" onSubmit={onSubmit} noValidate>
+                <TextField label={t("Display name")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={fieldError} maxLength={40} />
+                <TextField label={t("Email")} value={user.email} readOnly disabled hint={t("Your sign-in email can't be changed here.")} />
+                <SelectField label={t("Language")} value={language}
+                  options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+                  onChange={(e) => {
+                    const next = e.target.value as Language;
+                    setLanguage(next); // immediate on this device
+                    update.mutate({ displayName: user.displayName, language: next }, { onError: (err) => toast.error(errorMessage(err)) });
+                  }} />
+                <p className="field__hint">{t("Also used for the notifications you receive.")}</p>
+                <Button type="submit" loading={update.isPending} disabled={!dirty}>{t("Save changes")}</Button>
+              </form>
+            </div>
+          </details>
+          <details className="disclosure">
+            <summary className="disclosure__summary">
+              <span className="disclosure__text"><span className="list__title">{hasPassword ? t("Change password") : t("Set a password")}</span></span>
+              <ChevronDown className="disclosure__chevron" aria-hidden />
+            </summary>
+            <div className="disclosure__body"><PasswordSection hasPassword={hasPassword} embedded /></div>
+          </details>
+          <Link to="/notifications/settings" className="disclosure__summary disclosure__link">
+            <span className="disclosure__text"><span className="list__title">{t("Notifications")}</span><span className="list__sub">{t("What reaches you, and on which device")}</span></span>
+            <ChevronRight className="disclosure__chevron" aria-hidden />
+          </Link>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="board-title">
+        <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
+        <div className="card">
+          <Toggle
+            label={t("Don't show me in leaderboards")}
+            description={t("Your sends and history stay yours: you simply don't appear in any gym's ranking.")}
+            checked={user.leaderboardOptOut}
+            disabled={visibility.isPending}
+            onChange={(hidden) => visibility.mutate(hidden, {
+              onSuccess: () => toast.success(hidden ? t("You no longer appear in leaderboards") : t("You appear in leaderboards again")),
+              onError: (e) => toast.error(errorMessage(e)),
+            })} />
+        </div>
+        {user.leaderboardExcluded && (
+          <p className="notice">
+            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: SUPPORT_EMAIL })}
+          </p>
+        )}
+      </section>
+
+      <BlockedList />
+
+      <section className="section" aria-labelledby="legal-title">
+        <h2 id="legal-title" className="section__title">{t("Terms and privacy")}</h2>
+        <ul className="list">
+          <li className="list__row"><Link className="list__main list__link" to="/termini">{t("Terms of use")}</Link></li>
+          <li className="list__row"><Link className="list__main list__link" to="/privacy">{t("Privacy notice")}</Link></li>
+          <li className="list__row"><a className="list__main list__link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
+        </ul>
+      </section>
+
       <Link to="/gyms/suggest" className="btn btn--ghost"><Plus aria-hidden /><span>{t("Suggest a gym")}</span></Link>
       <Button variant="ghost" icon={<LogOut aria-hidden />} onClick={onSignOut}>{t("Sign out")}</Button>
+
+      {/* Last, and apart from the rest: it is easy to find and hard to reach by accident. */}
+      <DeleteAccountSection email={user.email} />
     </div>
   );
 }

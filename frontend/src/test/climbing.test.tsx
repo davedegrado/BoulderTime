@@ -79,12 +79,29 @@ describe("Home", () => {
     renderAt("/", "/", <HomePage />);
 
     expect(await screen.findByText("2 sent this month. Keep it going.")).toBeInTheDocument();
-    expect(screen.getByText("42 boulders · 6 new this week")).toBeInTheDocument();
+    expect(screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/gyms/crimp")).toHaveTextContent("42 boulders · 6 new this week");
     expect(screen.getByRole("heading", { name: "Keep trying" })).toBeInTheDocument();
     expect(screen.getByText("7 tries")).toBeInTheDocument();
     const recent = screen.getByRole("heading", { name: "Recent sends" }).closest("section")!;
     expect(within(recent).getByText(/3 attempts/)).toBeInTheDocument();
     expect(within(recent).getByText("Boulder removed")).toBeInTheDocument();
+  });
+});
+
+describe("Home gyms", () => {
+  it("puts every favourite gym first, and the others after them", async () => {
+    const homeGym = (id: string, name: string, isFavorite: boolean) =>
+      ({ gym: { id, slug: id, name, city: "Milano", logoUrl: null, coverImageUrl: null, status: "ACTIVE" }, isFavorite, activeBoulders: 10, newThisWeek: 0 });
+    reply("GET", "/api/users/me", { id: "u1", email: "me@x.com", displayName: "Dave", avatarUrl: null, isPlatformAdmin: false, createdAt: "2026-01-01T00:00:00Z", staffGyms: [], pendingInvitations: 0 });
+    reply("GET", "/api/users/me/home", {
+      stats, projects: [], freshToTry: [], recentCompletions: [], updates: [],
+      gyms: [homeGym("a", "Alpha", false), homeGym("b", "Beta Boulder", true), homeGym("c", "Gamma", true)],
+    });
+    renderAt("/", "/", <HomePage />);
+
+    await screen.findByText("You also follow");
+    const names = screen.getAllByRole("link").map((l) => l.textContent ?? "").filter((n) => /Alpha|Beta Boulder|Gamma/.test(n));
+    expect(names.map((n) => n.match(/Alpha|Beta Boulder|Gamma/)![0])).toEqual(["Beta Boulder", "Gamma", "Alpha"]);
   });
 });
 
@@ -103,7 +120,7 @@ describe("Activity", () => {
     reply("GET", "/api/users/u1/history", { items: [{ boulder: summary("h1", { status: "REMOVED" }), attempts: 3, completed: true, completedAt: "2026-09-12T00:00:00Z", updatedAt: "2026-09-12T00:00:00Z", rating: null }], page: 1, pageSize: 20, total: 1, hasMore: false });
     renderAt("/activity", "/activity", <ActivityPage />);
 
-    expect(await screen.findByText("Completed", { selector: ".stat__label" })).toBeInTheDocument();
+    expect(await screen.findByText("Sends", { selector: ".stat__label" })).toBeInTheDocument();
     expect(screen.getByText("7A")).toBeInTheDocument();
     expect(screen.getByText("Black")).toBeInTheDocument();
     expect(screen.getByText("Colour · Crimp Factory")).toBeInTheDocument();

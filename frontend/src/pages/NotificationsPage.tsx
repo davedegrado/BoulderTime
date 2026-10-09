@@ -26,13 +26,13 @@ export function NotificationsPage() {
 
   return (
     <div className="page page--narrow">
-      <header className="page__header section__row">
+      <header className="page__header page__header--row">
         <h1 className="page__title">{t("Notifications")}</h1>
         <Link to="/notifications/settings" className="icon-link" aria-label={t("Notification settings")}><Settings aria-hidden /></Link>
       </header>
 
       {unread > 0 && (
-        <Button variant="secondary" icon={<CheckCheck aria-hidden />} onClick={() => markRead.mutate("all")} loading={markRead.isPending && markRead.variables === "all"}>
+        <Button variant="ghost" className="mark-all" icon={<CheckCheck aria-hidden />} onClick={() => markRead.mutate("all")} loading={markRead.isPending && markRead.variables === "all"}>
           {t("Mark all as read")}
         </Button>
       )}

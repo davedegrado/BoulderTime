@@ -30,6 +30,7 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Public account-deletion page, `/delete-account`, Italian and English (Google Play requirement) | **Done** | deletion page tests |
 | — | Sign-up asks for age (at least 14) and terms on the form itself; boulder page with a smaller photo that opens full screen (ADR-041) | **Done** | sign-up, legal-acceptance and gate tests |
 | — | Beta card owned by the gym, community grade presented plainly, compact gym page (ADR-042) | **Done** | beta, community-grade and gym-page tests |
+| — | Home with favourite gyms first, profile with account details on request, password fields that can be shown, assorted labels | **Done** | home, password and activity tests |
 
 ## Store apps (in progress)
 

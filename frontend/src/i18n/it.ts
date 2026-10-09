@@ -118,7 +118,7 @@ export const it: Record<string, string> = {
   "Older updates": "Novità precedenti",
   "Open in maps": "Apri nelle mappe",
   "Follow": "Segui",
-  "Following": "Segui già",
+  "Following": "Stai seguendo",
   "Favourite": "Preferita",
 
   // ---- Boulder ----
@@ -953,4 +953,13 @@ export const it: Record<string, string> = {
   "Week": "Settimana",
   "Month": "Mese",
   "Year": "Anno",
+
+  // ---- Profile ----
+  "Account": "Account",
+  "Name, photo and language": "Nome, foto e lingua",
+  "What reaches you, and on which device": "Cosa ti arriva, e su quale dispositivo",
+
+  // ---- Home ----
+  "You also follow": "Segui anche",
+  "Tap the heart on a gym's page to keep it at the top.": "Tocca il cuore nella pagina di una palestra per tenerla in cima.",
 };

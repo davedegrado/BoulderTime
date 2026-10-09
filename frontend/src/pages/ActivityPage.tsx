@@ -31,7 +31,7 @@ export function ClimbingActivity({ userId, title, header }: { userId: string; ti
       {header ?? <header className="page__header"><h1 className="page__title">{title}</h1></header>}
 
       <div className="stats">
-        <div className="stat"><span className="stat__value">{p.stats.completed}</span><span className="stat__label">{t("Completed")}</span></div>
+        <div className="stat"><span className="stat__value">{p.stats.completed}</span><span className="stat__label">{t("Sends")}</span></div>
         <div className="stat"><span className="stat__value">{p.stats.projects}</span><span className="stat__label">{t("Projects")}</span></div>
         <div className="stat"><span className="stat__value">{p.stats.completedThisMonth}</span><span className="stat__label">{t("Sent this month")}</span></div>
         <div className="stat"><span className="stat__value">{p.stats.totalAttempts}</span><span className="stat__label">{t("Attempts")}</span></div>

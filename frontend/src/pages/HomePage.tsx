@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
-import { useHome } from "@/features/climbing/api";
+import { useHome, type HomeGym } from "@/features/climbing/api";
 import { InvitationsCard } from "@/features/staff/InvitationsCard";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { HistoryRow } from "@/features/climbing/ClimbingBits";
@@ -36,6 +36,28 @@ function GuestHome() {
   );
 }
 
+function GymRow({ g, compact = false }: { g: HomeGym; compact?: boolean }) {
+  return (
+    <Link to={`/gyms/${g.gym.slug}`} className={`list__row list__row--link ${compact ? "home-gym--compact" : "home-gym"}`}>
+      <GymAvatar name={g.gym.name} logoUrl={g.gym.logoUrl} size={compact ? 36 : 52} />
+      <div className="list__main">
+        <p className="list__title">{g.gym.name} {g.isFavorite && <Heart className="inline-fav" aria-label={t("Favourite")} />}</p>
+        {!compact && <GymBadges isFoundingGym={g.gym.isFoundingGym} isEarlyPartner={g.gym.isEarlyPartner} size="compact" />}
+        <p className="list__sub">
+          {plural(g.activeBoulders, "{count} boulder", "{count} boulders")}
+          {g.newThisWeek > 0 && <> · <strong className="home-gym__new">{t("{count} new this week", { count: g.newThisWeek })}</strong></>}
+        </p>
+      </div>
+      <ChevronRight className="list__chevron" aria-hidden />
+    </Link>
+  );
+}
+
+/**
+ * A climber's home: their gyms first — the favourites in front, as many as they marked — then what changed there
+ * (the gym's news, the new boulders), then their own climbing: projects to keep trying and the last few sends.
+ * Nothing here is new data; it is the same home feed, ordered by what a climber opens the app to check.
+ */
 function SignedInHome() {
   const me = useCurrentUser();
   const home = useHome();
@@ -47,6 +69,11 @@ function SignedInHome() {
   const user = me.data;
   const h = home.data;
   const firstName = user.displayName.split(" ")[0];
+  const favourites = h.gyms.filter((g) => g.isFavorite);
+  const others = h.gyms.filter((g) => !g.isFavorite);
+  const favouriteIds = new Set(favourites.map((g) => g.gym.id));
+  // News from favourite gyms first; within each group the feed's own order (newest first) is kept.
+  const updates = [...h.updates].sort((a, b) => Number(favouriteIds.has(b.gymId)) - Number(favouriteIds.has(a.gymId))).slice(0, 2);
 
   return (
     <div className="page">
@@ -66,35 +93,25 @@ function SignedInHome() {
             body={t("Follow the gyms you climb at to see new boulders and your projects here.")}
             action={<Link to="/explore" className="btn btn--primary"><Compass aria-hidden /><span>{t("Find a gym")}</span></Link>} />
         ) : (
-          <ul className="list">
-            {h.gyms.map((g) => (
-              <li key={g.gym.id}>
-                <Link to={`/gyms/${g.gym.slug}`} className="list__row list__row--link">
-                  <GymAvatar name={g.gym.name} logoUrl={g.gym.logoUrl} size={44} />
-                  <div className="list__main">
-                    <p className="list__title">{g.gym.name} {g.isFavorite && <Heart className="inline-fav" aria-label={t("Favourite")} />}</p>
-                    <GymBadges isFoundingGym={g.gym.isFoundingGym} isEarlyPartner={g.gym.isEarlyPartner} size="compact" />
-                    <p className="list__sub">{plural(g.activeBoulders, "{count} boulder", "{count} boulders")}{g.newThisWeek > 0 && ` · ${t("{count} new this week", { count: g.newThisWeek })}`}</p>
-                  </div>
-                  <ChevronRight className="list__chevron" aria-hidden />
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <>
+            {favourites.length > 0 && (
+              <ul className="list">{favourites.map((g) => <li key={g.gym.id}><GymRow g={g} /></li>)}</ul>
+            )}
+            {others.length > 0 && (
+              <>
+                {favourites.length > 0 && <p className="section__meta">{t("You also follow")}</p>}
+                <ul className="list">{others.map((g) => <li key={g.gym.id}><GymRow g={g} compact={favourites.length > 0} /></li>)}</ul>
+              </>
+            )}
+            {favourites.length === 0 && <p className="field__hint">{t("Tap the heart on a gym's page to keep it at the top.")}</p>}
+          </>
         )}
       </section>
 
-      {h.updates.length > 0 && (
+      {updates.length > 0 && (
         <section aria-labelledby="updates-title" className="section">
           <h2 id="updates-title" className="section__title">{t("Gym updates")}</h2>
-          <div className="stack">{h.updates.slice(0, 3).map((a) => <AnnouncementCard key={a.id} a={a} showGym />)}</div>
-        </section>
-      )}
-
-      {h.projects.length > 0 && (
-        <section aria-labelledby="projects-title" className="section">
-          <h2 id="projects-title" className="section__title">{t("Keep trying")}</h2>
-          <div className="rail">{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+          <div className="stack">{updates.map((a) => <AnnouncementCard key={a.id} a={a} showGym />)}</div>
         </section>
       )}
 
@@ -105,13 +122,20 @@ function SignedInHome() {
         </section>
       )}
 
+      {h.projects.length > 0 && (
+        <section aria-labelledby="projects-title" className="section">
+          <h2 id="projects-title" className="section__title">{t("Keep trying")}</h2>
+          <div className="rail">{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+        </section>
+      )}
+
       {h.recentCompletions.length > 0 && (
         <section aria-labelledby="recent-title" className="section">
           <div className="section__row">
             <h2 id="recent-title" className="section__title">{t("Recent sends")}</h2>
             <Link to="/activity" className="section__link">{t("All activity")}</Link>
           </div>
-          <ul className="history">{h.recentCompletions.map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>
+          <ul className="history">{h.recentCompletions.slice(0, 3).map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>
         </section>
       )}
 
@@ -122,7 +146,7 @@ function SignedInHome() {
             {user.staffGyms.map((g) => (
               <li key={g.gymId}>
                 <Link to={`/manage/${g.slug}`} className="list__row list__row--link">
-                  <GymAvatar name={g.name} logoUrl={g.logoUrl} size={40} />
+                  <GymAvatar name={g.name} logoUrl={g.logoUrl} size={36} />
                   <div className="list__main">
                     <p className="list__title">{g.name}</p>
                     <p className="list__sub">{roleLabel[g.role]} · {g.city}</p>

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthLayout } from "@/pages/AuthLayout";
-import { TextField } from "@/components/TextField";
+import { PasswordField } from "@/components/PasswordField";
 import { Button } from "@/components/Button";
 import { LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
@@ -66,9 +66,9 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout title={t("Choose a new password")}>
       <form className="form" onSubmit={onSubmit} noValidate>
-        <TextField label={t("New password")} type="password" autoComplete="new-password" value={password}
+        <PasswordField label={t("New password")} autoComplete="new-password" value={password}
           onChange={(e) => setPassword(e.target.value)} hint={t("At least 8 characters.")} />
-        <TextField label={t("Repeat the password")} type="password" autoComplete="new-password" value={confirm}
+        <PasswordField label={t("Repeat the password")} autoComplete="new-password" value={confirm}
           onChange={(e) => setConfirm(e.target.value)} error={error ?? undefined} />
         <Button type="submit" loading={busy} block>{t("Save the new password")}</Button>
       </form>

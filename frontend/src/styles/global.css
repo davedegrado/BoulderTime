@@ -917,7 +917,9 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .consensus__fact dd { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 800; }
 .consensus__share { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
 .consensus__swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.15); flex-shrink: 0; }
-.consensus__row { grid-template-columns: minmax(64px, auto) 1fr auto; row-gap: 2px; }
+/* A fixed label column, so every bar starts at the same place whatever the grade is called. */
+.consensus__row { grid-template-columns: 6.5rem 1fr auto; row-gap: 2px; }
+.consensus__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .consensus__label { display: inline-flex; align-items: center; gap: 6px; }
 .consensus__count { min-width: 64px; }
 .consensus__count small { font-weight: 600; color: var(--bt-ink-3); margin-left: 2px; }
@@ -959,3 +961,26 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); }
 .segmented__option { min-height: 36px; padding: 0 var(--bt-2); border: 0; border-radius: var(--bt-radius-pill); background: none; color: var(--bt-ink-2); font: inherit; font-size: var(--bt-text-sm); font-weight: 600; cursor: pointer; white-space: nowrap; }
 .segmented__option[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: 0 1px 2px rgb(26 26 26 / 0.12); }
+
+/* ---------- Profile and notifications ---------- */
+.page__header--row { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--bt-3); }
+.page__header--row .icon-link { width: 48px; height: 48px; border: 1.5px solid var(--bt-line); border-radius: 50%; background: var(--bt-surface); }
+.mark-all { align-self: flex-end; margin: calc(-1 * var(--bt-3)) 0; }
+.profile-head__text { min-width: 0; }
+.profile-links { display: flex; flex-wrap: wrap; gap: var(--bt-2); margin-top: calc(-1 * var(--bt-2)); }
+.profile-links .btn { flex: 1 1 160px; }
+.disclosures { display: flex; flex-direction: column; background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-lg); overflow: hidden; }
+.disclosures > * + * { border-top: 1px solid var(--bt-line); }
+.disclosure__summary { display: flex; align-items: center; gap: var(--bt-3); min-height: 60px; padding: var(--bt-3) var(--bt-4); cursor: pointer; list-style: none; color: inherit; text-decoration: none; }
+.disclosure__summary::-webkit-details-marker { display: none; }
+.disclosure__summary:hover { background: var(--bt-surface-2); }
+.disclosure__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.disclosure__chevron { width: 20px; height: 20px; color: var(--bt-ink-3); transition: transform 150ms; }
+.disclosure[open] > .disclosure__summary .disclosure__chevron { transform: rotate(180deg); }
+.disclosure__body { padding: 0 var(--bt-4) var(--bt-4); }
+
+/* ---------- Home: favourite gyms first ---------- */
+.home-gym { min-height: 72px; }
+.home-gym--compact { min-height: 52px; padding-top: var(--bt-2); padding-bottom: var(--bt-2); }
+.home-gym--compact .list__title { font-weight: 600; }
+.home-gym__new { color: var(--bt-orange-ink); font-weight: 700; }

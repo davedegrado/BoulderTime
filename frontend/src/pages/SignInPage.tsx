@@ -5,6 +5,7 @@ import { safeNext } from "@/auth/RequireAuth";
 import { AuthLayout } from "@/pages/AuthLayout";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
+import { PasswordField } from "@/components/PasswordField";
 import { t } from "@/i18n/i18n";
 
 export function SignInPage() {
@@ -39,7 +40,7 @@ export function SignInPage() {
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <p className="form__error" role="alert">{error}</p>}
         <TextField label={t("Email")} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <TextField label={t("Password")} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordField label={t("Password")} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         <Link to="/forgot-password" className="auth-forgot">{t("Forgot your password?")}</Link>
         <Button type="submit" block loading={busy === "password"} disabled={busy !== null || !email || !password}>{t("Sign in")}</Button>
       </form>
