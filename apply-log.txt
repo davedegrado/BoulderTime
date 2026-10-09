@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: One account-deletion page, /delete-account, in Italian and English
-applicata: One account-deletion page, /delete-account, in Italian and
+Applying: Links open the app installed from Google Play too
+applicata: Links open the app installed from Google Play too
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -12,13 +12,13 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:09.96
+Time Elapsed 00:00:08.56
 OK
 == 5. TEST BACKEND ==
 Total tests: 220
 test backend: ok
 == 6. FRONTEND ==
-      Tests  151 passed (151)
+      Tests  155 passed (155)
 vite v5.4.21 building for production...
 transforming...
 ✓ 2178 modules transformed.
@@ -74,7 +74,7 @@ dist/assets/router-wf97scb-.js                    522.72 kB │ gzip: 145.62 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.19s
+✓ built in 5.22s
 
 PWA v0.21.2
 mode      generateSW
