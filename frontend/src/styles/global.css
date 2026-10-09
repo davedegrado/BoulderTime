@@ -901,3 +901,61 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .photo-viewer__stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
 .photo-viewer__stage.is-zoomed { display: block; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
 .photo-viewer__stage.is-zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+
+/* ---------- Official beta card ---------- */
+.beta-card { display: flex; flex-direction: column; gap: var(--bt-2); }
+.beta-card__caption { font-size: var(--bt-text-lg); font-weight: 700; letter-spacing: var(--bt-tracking-tight); overflow-wrap: anywhere; }
+.beta-card__owner { display: flex; align-items: center; gap: 6px; font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
+.beta-card__owner svg { width: 16px; height: 16px; color: var(--bt-orange-ink); }
+.beta-card__watch { margin-top: var(--bt-2); }
+.beta-card__publisher { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
+
+/* ---------- Community grade, presented plainly ---------- */
+.consensus__summary { display: grid; grid-template-columns: 1fr 1fr; gap: var(--bt-2); margin: 0; }
+.consensus__fact { display: flex; flex-direction: column; gap: 2px; padding: var(--bt-2) var(--bt-3); border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
+.consensus__fact dt { font-size: var(--bt-text-xs); font-weight: 700; color: var(--bt-ink-3); }
+.consensus__fact dd { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 800; }
+.consensus__share { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
+.consensus__swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.15); flex-shrink: 0; }
+.consensus__row { grid-template-columns: minmax(64px, auto) 1fr auto; row-gap: 2px; }
+.consensus__label { display: inline-flex; align-items: center; gap: 6px; }
+.consensus__count { min-width: 64px; }
+.consensus__count small { font-weight: 600; color: var(--bt-ink-3); margin-left: 2px; }
+.consensus__tags { grid-column: 2 / -1; display: flex; gap: 6px; }
+.consensus__tags:empty { display: none; }
+
+/* ---------- Gym page: compact header, sticky tabs, filters on demand ---------- */
+.gym-hero__cover { height: 110px; }
+.gym-hero__body > .gym-avatar { display: grid; } /* initials stay centred (the block display used to override the grid) */
+/* Only the logo overlaps the cover; the name starts just below it, never on top of the photo. */
+.gym-hero__identity { display: flex; align-items: flex-start; gap: var(--bt-3); }
+.gym-hero__identity .gym-avatar { margin-top: -36px; box-shadow: 0 0 0 4px var(--bt-light); position: relative; z-index: 1; }
+.gym-hero__identity .gym-hero__text { flex: 1; min-width: 0; gap: 0; padding-top: var(--bt-2); }
+.gym-hero__name { font-size: clamp(1.5rem, 1.1rem + 2vw, var(--bt-text-2xl)); overflow-wrap: anywhere; }
+.gym-hero__row { align-items: center; margin-top: var(--bt-3); }
+.gym-hero__row .gym-badges:empty { display: none; }
+.gym-hero__row .gym-hero__actions { margin-left: auto; }
+@media (min-width: 960px) {
+  .gym-hero__cover { height: 200px; }
+  .gym-hero__identity .gym-avatar { margin-top: -44px; }
+}
+/* The tabs stay in reach while scrolling a long list of boulders. */
+.tabs { position: sticky; top: calc(56px + var(--bt-safe-top)); z-index: 15; background: var(--bt-light); margin-top: var(--bt-3); }
+@media (max-width: 559px) { .tabs { gap: 0; justify-content: space-between; } .tabs__tab { font-size: 0.9375rem; } }
+@media (min-width: 960px) { .tabs { top: 0; } }
+
+.boulders-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-2); }
+.boulders-toolbar .chips { flex: 0 1 auto; }
+.filter-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.filter-toggle svg { width: 16px; height: 16px; }
+.filter-toggle.is-active { border-color: var(--bt-charcoal); color: var(--bt-ink); }
+.filter-toggle__count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--bt-orange); color: var(--bt-charcoal); font-size: 12px; font-weight: 800; }
+.filter-panel { padding: var(--bt-3); background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); }
+.active-filters { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--bt-2); }
+.active-filter { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 var(--bt-2) 0 var(--bt-3); border: 0; border-radius: var(--bt-radius-pill); background: var(--bt-charcoal); color: #fff; font: inherit; font-size: var(--bt-text-sm); font-weight: 600; cursor: pointer; }
+.active-filter svg { width: 16px; height: 16px; }
+
+/* Leaderboard period: four options that always fit side by side. */
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); }
+.segmented__option { min-height: 36px; padding: 0 var(--bt-2); border: 0; border-radius: var(--bt-radius-pill); background: none; color: var(--bt-ink-2); font: inherit; font-size: var(--bt-text-sm); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.segmented__option[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: 0 1px 2px rgb(26 26 26 / 0.12); }

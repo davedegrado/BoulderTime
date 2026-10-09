@@ -64,6 +64,23 @@ describe("Comments", () => {
 });
 
 describe("Community grade", () => {
+  it("still shows the official grade on the scale when nobody voted for it", async () => {
+    reply("GET", "/api/boulders/b1/grade-consensus", {
+      viewerCanSuggest: true,
+      systems: [{
+        gradeSystemId: "font", systemName: "Fontainebleau", systemType: "FONTAINEBLEAU", totalVotes: 2,
+        consensusValueId: "v6b", officialValueId: "v6a", viewerValueId: "v6b",
+        buckets: [{ gradeValueId: "v6b", label: "6B", rank: 7, colorHex: null, votes: 2 }],
+        scale: [{ gradeValueId: "v6a", label: "6A", rank: 5, colorHex: null, votes: 0 }, { gradeValueId: "v6b", label: "6B", rank: 7, colorHex: null, votes: 2 }],
+      }],
+    });
+    renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
+
+    const rows = await screen.findAllByRole("listitem");
+    expect(rows.map((r) => r.getAttribute("aria-label"))).toEqual(["6A: 0 of 2", "6B: 2 of 2"]);
+    expect(within(rows[1]!).getByText("Your vote")).toBeInTheDocument();
+  });
+
   const consensus = (viewerCanSuggest: boolean) => ({
     viewerCanSuggest,
     systems: [{
@@ -85,9 +102,14 @@ describe("Community grade", () => {
     reply("GET", "/api/boulders/b1/grade-consensus", consensus(false));
     renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
 
-    expect(await screen.findByText("5 votes · consensus 6A+")).toBeInTheDocument();
-    const officialRow = screen.getByText("Official").closest("li")!;
-    expect(within(officialRow).getByText("6A")).toBeInTheDocument();
+    expect(await screen.findByText("5 votes")).toBeInTheDocument();
+    // The two answers side by side: the gym's grade, and the most voted with how many votes out of how many.
+    const summary = screen.getByText("Most voted").closest("dl")!;
+    expect(within(summary).getByText("Official").nextElementSibling).toHaveTextContent("6A");
+    expect(within(summary).getByText("Most voted").nextElementSibling).toHaveTextContent("6A+ 3 of 5");
+    // Every voted grade with its count and share; the official one is marked in the distribution too.
+    expect(screen.getByRole("listitem", { name: "6A+: 3 of 5" })).toHaveTextContent("60%");
+    expect(within(screen.getByRole("listitem", { name: "6A: 1 of 5" })).getByText("Official")).toBeInTheDocument();
     expect(screen.getByText("Log an attempt to suggest a grade.")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });

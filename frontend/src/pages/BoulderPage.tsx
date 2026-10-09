@@ -101,7 +101,7 @@ export function BoulderPage() {
 
         <ProgressTracker key={b.id} boulder={b} />
 
-        <BetaSection boulderId={b.id} />
+        <BetaSection boulderId={b.id} gymName={b.gymName} />
         {b.communityVideosEnabled && <CommunityVideosSection boulderId={b.id} />}
         <CommunityGradeSection boulderId={b.id} />
         <CommentsSection boulderId={b.id} />

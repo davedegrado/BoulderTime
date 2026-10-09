@@ -1,4 +1,4 @@
-import { useConsensus, useSuggestGrade, type SystemConsensus } from "@/features/community/api";
+import { useConsensus, useSuggestGrade, type ConsensusBucket, type SystemConsensus } from "@/features/community/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { SelectField } from "@/components/Fields";
 import { ErrorState, LoadingState } from "@/components/States";
@@ -7,7 +7,11 @@ import { errorMessage } from "@/lib/apiError";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 
-/** Community grade: vote distribution per system, clearly separate from the official grade. */
+/**
+ * Community grade: what climbers think, side by side with the gym's grade and never mixed with it. The rule for the
+ * "most voted" grade is the server's and doesn't change here; this only shows it plainly — how many votes, out of
+ * how many, and the official grade on the same scale even when nobody voted for it.
+ */
 export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   const consensus = useConsensus(boulderId);
   const { session } = useAuth();
@@ -26,26 +30,63 @@ export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   );
 }
 
+/** The voted grades plus the official one, in the order of the scale. */
+function rowsOf(s: SystemConsensus): ConsensusBucket[] {
+  const rows = [...s.buckets];
+  if (s.officialValueId && !rows.some((b) => b.gradeValueId === s.officialValueId)) {
+    const official = s.scale.find((v) => v.gradeValueId === s.officialValueId);
+    if (official) rows.push({ ...official, votes: 0 });
+  }
+  return rows.sort((a, b) => a.rank - b.rank);
+}
+
+function Swatch({ bucket }: { bucket: ConsensusBucket }) {
+  return bucket.colorHex ? <span className="consensus__swatch" style={{ background: bucket.colorHex }} aria-hidden /> : null;
+}
+
 function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; system: SystemConsensus; canSuggest: boolean }) {
   const suggest = useSuggestGrade(boulderId);
   const toast = useToast();
-  const max = Math.max(1, ...s.buckets.map((b) => b.votes));
-  const consensus = s.buckets.find((b) => b.gradeValueId === s.consensusValueId);
+  const rows = rowsOf(s);
+  const max = Math.max(1, ...rows.map((b) => b.votes));
+  const official = rows.find((b) => b.gradeValueId === s.officialValueId);
+  const top = s.totalVotes > 0 ? rows.find((b) => b.gradeValueId === s.consensusValueId) : undefined;
+  const percent = (votes: number) => (s.totalVotes ? Math.round((votes / s.totalVotes) * 100) : 0);
 
   return (
     <div className="consensus">
       <div className="consensus__head">
         <p className="list__title">{dataLabel(s.systemName)}</p>
-        <p className="list__sub">{s.totalVotes === 0 ? t("No votes yet") : plural(s.totalVotes, "{count} vote", "{count} votes") + (consensus ? " · " + t("consensus {grade}", { grade: consensus.label }) : "")}</p>
+        <p className="list__sub">{s.totalVotes === 0 ? t("No votes yet") : plural(s.totalVotes, "{count} vote", "{count} votes")}</p>
       </div>
-      {s.buckets.length > 0 && (
+
+      <dl className="consensus__summary">
+        <div className="consensus__fact">
+          <dt>{t("Official")}</dt>
+          <dd>{official ? <><Swatch bucket={official} />{dataLabel(official.label)}</> : "—"}</dd>
+        </div>
+        <div className="consensus__fact">
+          <dt>{t("Most voted")}</dt>
+          <dd>
+            {top
+              ? <><Swatch bucket={top} />{dataLabel(top.label)} <span className="consensus__share">{t("{votes} of {total}", { votes: top.votes, total: s.totalVotes })}</span></>
+              : <span className="consensus__share">{t("No votes yet")}</span>}
+          </dd>
+        </div>
+      </dl>
+
+      {rows.length > 0 && s.totalVotes > 0 && (
         <ul className="consensus__bars" aria-label={t("Votes for {system}", { system: dataLabel(s.systemName) })}>
-          {s.buckets.map((b) => (
-            <li key={b.gradeValueId} className={`consensus__row ${b.gradeValueId === s.consensusValueId ? "is-consensus" : ""}`}>
-              <span className="consensus__label">{dataLabel(b.label)}</span>
+          {rows.map((b) => (
+            <li key={b.gradeValueId} className={`consensus__row ${b.gradeValueId === s.consensusValueId ? "is-consensus" : ""}`}
+              aria-label={t("{grade}: {votes} of {total}", { grade: dataLabel(b.label), votes: b.votes, total: s.totalVotes })}>
+              <span className="consensus__label"><Swatch bucket={b} />{dataLabel(b.label)}</span>
               <span className="consensus__track"><span className="consensus__fill" style={{ width: `${(b.votes / max) * 100}%` }} /></span>
-              <span className="consensus__count">{b.votes}</span>
-              {b.gradeValueId === s.officialValueId && <span className="tag tag--dark">{t("Official")}</span>}
+              <span className="consensus__count">{b.votes} <small>{percent(b.votes)}%</small></span>
+              <span className="consensus__tags">
+                {b.gradeValueId === s.officialValueId && <span className="tag tag--dark">{t("Official")}</span>}
+                {b.gradeValueId === s.viewerValueId && <span className="tag tag--orange">{t("Your vote")}</span>}
+              </span>
             </li>
           ))}
         </ul>

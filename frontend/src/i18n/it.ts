@@ -311,7 +311,6 @@ export const it: Record<string, string> = {
   "Week of {date}: {count}": "Settimana del {date}: {count}",
   "{count} vote": "{count} voto",
   "{count} votes": "{count} voti",
-  "consensus {grade}": "grado più votato {grade}",
   "Your {system} grade": "Il tuo grado {system}",
   "{colour} holds": "prese {colour}",
   "Red": "rosse",
@@ -327,7 +326,6 @@ export const it: Record<string, string> = {
   "Brown": "marroni",
   "Mixed": "miste",
   "Any holds": "Tutte",
-  "By {name}": "Di {name}",
   "Play video by {name}": "Riproduci il video di {name}",
   "Video by {name}": "Video di {name}",
   "Video {index} of {total}": "Video {index} di {total}",
@@ -793,7 +791,6 @@ export const it: Record<string, string> = {
   "{used} used": "{used} usate",
   "Video allowance saved": "Limiti video salvati",
   "This gym has used all its official beta videos. You can still link a video published elsewhere, or remove a beta from another boulder.": "Questa palestra ha usato tutte le beta ufficiali caricabili. Puoi comunque collegare un video già pubblicato altrove, oppure rimuovere una beta da un altro blocco.",
-  "Watch the beta on {site}": "Guarda la beta su {site}",
   "the video": "il video",
   "Address of the video": "Indirizzo del video",
   "A video already published on {sites}.": "Un video già pubblicato su {sites}.",
@@ -936,4 +933,24 @@ export const it: Record<string, string> = {
   "Follow this boulder": "Segui questo blocco",
   "Stop following this boulder": "Smetti di seguire questo blocco",
   "About this boulder": "Informazioni sul blocco",
+
+  // ---- Official beta ----
+  "Beta": "Beta",
+  "Official beta from {gym}": "Beta ufficiale di {gym}",
+  "Watch on {site}": "Guarda su {site}",
+  "Published by {name}": "Pubblicata da {name}",
+
+  // ---- Community grade ----
+  "Most voted": "Più votato",
+  "{votes} of {total}": "{votes} su {total}",
+  "{grade}: {votes} of {total}": "{grade}: {votes} su {total}",
+  "Your vote": "Il tuo voto",
+
+  // ---- Gym page ----
+  "Filters": "Filtri",
+  "Filters in use": "Filtri attivi",
+  "Remove filter {name}": "Togli il filtro {name}",
+  "Week": "Settimana",
+  "Month": "Mese",
+  "Year": "Anno",
 };

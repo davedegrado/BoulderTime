@@ -53,8 +53,27 @@ describe("Boulder list (climber)", () => {
     expect(within(card).getByTitle("Colour grade: Yellow")).toHaveTextContent("Yellow");
     expect(within(card).getByText("Blue holds")).toBeInTheDocument();
     expect(within(card).getByText("Cave")).toBeInTheDocument();
+    // The filters wait behind one button, so the boulders are on the first screen.
+    expect(screen.queryByRole("combobox", { name: "Grade" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
     expect(screen.getByRole("combobox", { name: "Grade" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Hold colour" })).toBeInTheDocument();
+  });
+
+  it("shows the filters in use as chips that remove them", async () => {
+    reply("GET", "/api/gyms/crimp", gym);
+    reply("GET", "/api/gyms/g1/sectors", sectors);
+    reply("GET", "/api/gyms/g1/grade-systems", systems);
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1")]));
+    renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
+    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
+    expect(calls.some((c) => c.path.includes("sectorId=s1"))).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove filter Cave" }));
+    expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
   });
 });
 

@@ -33,8 +33,10 @@ describe("Italian", () => {
 
     expect(await screen.findByRole("heading", { name: "Grado della community" })).toBeInTheDocument();
     expect(screen.getByText(/Cosa ne pensano gli arrampicatori/)).toBeInTheDocument();
-    expect(screen.getByText("1 voto · grado più votato 6A")).toBeInTheDocument();
-    expect(screen.getByText("Ufficiale")).toBeInTheDocument();
+    expect(screen.getByText("1 voto")).toBeInTheDocument();
+    expect(screen.getByText("Più votato")).toBeInTheDocument();
+    expect(screen.getByText("1 su 1")).toBeInTheDocument();
+    expect(screen.getAllByText("Ufficiale").length).toBeGreaterThan(0);
     expect(screen.getByRole("combobox", { name: "Il tuo grado Fontainebleau" })).toBeInTheDocument();
   });
 

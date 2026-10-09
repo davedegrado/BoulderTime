@@ -26,6 +26,11 @@ export const periodLabel: Record<LeaderboardPeriod, string> = new Proxy({} as Re
   get: (_, key: string) => t({ WEEK: "This week", MONTH: "This month", YEAR: "This year", ALL: "All time" }[key as LeaderboardPeriod] ?? key),
 });
 
+/** The same periods in a word, for the selector, where the four have to fit side by side on a phone. */
+export const periodShortLabel: Record<LeaderboardPeriod, string> = new Proxy({} as Record<LeaderboardPeriod, string>, {
+  get: (_, key: string) => t({ WEEK: "Week", MONTH: "Month", YEAR: "Year", ALL: "All time" }[key as LeaderboardPeriod] ?? key),
+});
+
 export function useLeaderboard(gymId: string, metric: LeaderboardMetric, period: LeaderboardPeriod) {
   return useQuery({
     queryKey: ["leaderboard", gymId, metric, period],

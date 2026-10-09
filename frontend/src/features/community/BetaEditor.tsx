@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ExternalLink, Link2, Lock, Trash2, Upload } from "lucide-react";
+import { ExternalLink, Link2, Lock, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { InstagramIcon } from "@/components/BrandIcons";
 import { useBeta, useSaveBeta, type Beta } from "@/features/community/api";
 import { BetaLinkForm } from "@/features/community/BetaLinkForm";
 import { Player, VideoUploader } from "@/features/community/VideoUploader";
@@ -21,22 +22,28 @@ export function siteName(url: string): string {
   return known[host] ?? Object.entries(known).find(([h]) => host.endsWith(`.${h}`))?.[1] ?? host;
 }
 
-/** The beta as anyone sees it — player or link, caption, who published it. Used on the boulder page and here. */
-export function BetaView({ beta }: { beta: Beta }) {
+/**
+ * The beta as anyone sees it: its description ("Beta di Matteo" — free text, not necessarily who is in the video),
+ * whose beta it is — the gym's — and the way to watch it. Who on the staff published it only reaches the staff
+ * (the server leaves it out for everyone else), and is shown to them in small print.
+ */
+export function BetaView({ beta, gymName }: { beta: Beta; gymName?: string }) {
+  const site = beta.externalUrl ? siteName(beta.externalUrl) : null;
   return (
-    <>
+    <div className="beta-card">
+      {beta.caption && <p className="beta-card__caption">{beta.caption}</p>}
+      {gymName && <p className="beta-card__owner"><ShieldCheck aria-hidden /> {t("Official beta from {gym}", { gym: gymName })}</p>}
       {/* A linked video stays on its own site: embedding it would need their player, their cookies and their consent. */}
       {beta.externalUrl ? (
-        <a className="beta-link" href={beta.externalUrl} target="_blank" rel="noreferrer noopener">
-          <ExternalLink aria-hidden />
-          <span>{t("Watch the beta on {site}", { site: siteName(beta.externalUrl) })}</span>
+        <a className="btn btn--secondary btn--block beta-card__watch" href={beta.externalUrl} target="_blank" rel="noreferrer noopener">
+          {site === "Instagram" ? <InstagramIcon aria-hidden /> : <ExternalLink aria-hidden />}
+          <span>{t("Watch on {site}", { site: site ?? "" })}</span>
         </a>
       ) : (
         <Player src={beta.videoUrl} poster={beta.thumbnailUrl} label={t("Official beta video")} />
       )}
-      {beta.caption && <p className="prose">{beta.caption}</p>}
-      <p className="list__sub">{t("By {name}", { name: beta.uploadedBy.displayName })}</p>
-    </>
+      {beta.uploadedBy && <p className="beta-card__publisher">{t("Published by {name}", { name: beta.uploadedBy.displayName })}</p>}
+    </div>
   );
 }
 

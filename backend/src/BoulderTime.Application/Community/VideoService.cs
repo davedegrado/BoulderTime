@@ -15,8 +15,10 @@ public sealed record VideoUploadRequest(VideoKind? Kind, string? ContentType, lo
 /// <summary>
 /// The official beta. <see cref="VideoUrl"/> is a short-lived address of our own file and is empty for a linked
 /// beta; <see cref="ExternalUrl"/> is the public page the video lives on and is null for an uploaded one.
+/// <see cref="UploadedBy"/> is the staff member who published it, shown to the gym's own staff only: to climbers the
+/// beta is the gym's, and a colleague's name is not theirs to see.
 /// </summary>
-public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? ThumbnailUrl, string? Caption, PersonDto UploadedBy, DateTimeOffset UpdatedAt, string? ExternalUrl = null);
+public sealed record BetaDto(Guid Id, Guid BoulderId, string VideoUrl, string? ThumbnailUrl, string? Caption, PersonDto? UploadedBy, DateTimeOffset UpdatedAt, string? ExternalUrl = null);
 
 /// <summary>Either <see cref="StoragePath"/> (an upload that finished) or <see cref="ExternalUrl"/> (a link).</summary>
 public sealed record SaveBetaRequest(string? StoragePath, string? Caption, string? ThumbnailPath = null, string? ExternalUrl = null);
@@ -124,9 +126,9 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
 
     public async Task<BetaDto?> GetBetaAsync(Guid boulderId, CancellationToken ct = default)
     {
-        await boulders.RequireVisibleAsync(boulderId, ct);
+        var scope = await boulders.RequireVisibleAsync(boulderId, ct);
         var beta = await db.BoulderBetas.AsNoTracking().FirstOrDefaultAsync(b => b.BoulderId == boulderId, ct);
-        return beta is null ? null : await ToBetaAsync(beta, ct);
+        return beta is null ? null : await ToBetaAsync(beta, ct, withPublisher: scope.ViewerRole is not null);
     }
 
     public async Task<BetaDto> SaveBetaAsync(Guid boulderId, SaveBetaRequest r, CancellationToken ct = default)
@@ -339,9 +341,12 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
         if (Input.Trimmed(caption).Length > max) throw new ValidationException("caption", $"Keep the caption to {max} characters or fewer.");
     }
 
-    private async Task<BetaDto> ToBetaAsync(BoulderBeta beta, CancellationToken ct)
+    /// <param name="withPublisher">Only the gym's staff see who published it; saving is staff-only, so it defaults to yes.</param>
+    private async Task<BetaDto> ToBetaAsync(BoulderBeta beta, CancellationToken ct, bool withPublisher = true)
     {
-        var person = await db.Users.AsNoTracking().Where(u => u.Id == beta.UploadedByUserId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstAsync(ct);
+        var person = withPublisher
+            ? await db.Users.AsNoTracking().Where(u => u.Id == beta.UploadedByUserId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstAsync(ct)
+            : null;
         // A linked beta has no file of ours, so there is no read URL to sign.
         if (beta.IsLink) return new BetaDto(beta.Id, beta.BoulderId, string.Empty, null, beta.Caption, person, beta.UpdatedAt, beta.ExternalUrl);
         var url = await storage.CreateReadUrlAsync(StorageBuckets.OfficialBeta, beta.StoragePath, ReadUrlLifetime, ct);

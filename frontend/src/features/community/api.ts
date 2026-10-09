@@ -25,7 +25,7 @@ export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemCons
 
 export type VideoStatus = "PENDING" | "APPROVED" | "REJECTED";
 /** `videoUrl` is empty and `externalUrl` set when the beta is a link to a video published elsewhere. */
-export interface Beta { id: string; boulderId: string; videoUrl: string; thumbnailUrl: string | null; caption: string | null; uploadedBy: Person; updatedAt: string; externalUrl: string | null }
+export interface Beta { id: string; boulderId: string; videoUrl: string; thumbnailUrl: string | null; caption: string | null; /** Only for the gym's own staff (null for everyone else). */ uploadedBy: Person | null; updatedAt: string; externalUrl: string | null }
 export interface Video { id: string; boulderId: string; author: Person; videoUrl: string; thumbnailUrl: string | null; caption: string | null; status: VideoStatus; rejectionReason: string | null; createdAt: string; isMine: boolean }
 export interface BoulderVideos { approved: PagedResult<Video>; mineInReview: Video[] }
 export interface ModerationVideo { video: Video; boulder: BoulderSummary }

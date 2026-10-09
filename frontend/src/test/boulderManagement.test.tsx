@@ -42,7 +42,7 @@ describe("The official beta", () => {
     reply("GET", "/api/boulders/b1/beta", beta());
     renderAt("/b", "/b", <BetaSection boulderId="b1" />);
 
-    expect(await screen.findByRole("heading", { name: "Official beta" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Beta" })).toBeInTheDocument();
     // Staff who open a boulder as a climber are reading, not working: the controls live in the editor.
     for (const name of [/publish/i, /replace/i, /delete/i, /link a video/i, /choose a video/i]) {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
@@ -51,12 +51,14 @@ describe("The official beta", () => {
 
   it("shows a linked beta as a link out, not as a player we cannot fill", async () => {
     reply("GET", "/api/boulders/b1/beta", beta({ videoUrl: "", externalUrl: "https://www.instagram.com/reel/ABC" }));
-    renderAt("/b", "/b", <BetaSection boulderId="b1" />);
+    renderAt("/b", "/b", <BetaSection boulderId="b1" gymName="Rock'n Fire" />);
 
-    const link = await screen.findByRole("link", { name: /Instagram/ });
+    const link = await screen.findByRole("link", { name: "Watch on Instagram" });
     expect(link).toHaveAttribute("href", "https://www.instagram.com/reel/ABC");
     expect(link).toHaveAttribute("target", "_blank");
     expect(document.querySelector("video")).toBeNull();
+    // It is the gym's beta: the gym is named, and the staff member who pasted the link is not (the server leaves them out).
+    expect(screen.getByText("Official beta from Rock'n Fire")).toBeInTheDocument();
   });
 
   it("is published from the editor, and a gym out of uploads is offered the link instead", async () => {

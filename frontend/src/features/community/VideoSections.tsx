@@ -15,7 +15,7 @@ import { Player, VideoUploader } from "@/features/community/VideoUploader";
  * What a climber sees: the gym's beta, and nothing to edit. Publishing it is a setting job and lives in the boulder
  * editor, next to the photo and the grade — a staff member reading the page as a climber is reading, not working.
  */
-export function BetaSection({ boulderId }: { boulderId: string }) {
+export function BetaSection({ boulderId, gymName }: { boulderId: string; gymName?: string }) {
   const beta = useBeta(boulderId);
   if (beta.isPending) return <LoadingState label={t("Loading beta")} />;
   if (beta.isError) return <ErrorState error={beta.error} onRetry={() => beta.refetch()} />;
@@ -23,8 +23,8 @@ export function BetaSection({ boulderId }: { boulderId: string }) {
 
   return (
     <section className="section card" aria-labelledby="beta-title">
-      <h2 id="beta-title" className="section__title"><Clapperboard aria-hidden className="title-icon" /> {t("Official beta")}</h2>
-      <BetaView beta={beta.data} />
+      <h2 id="beta-title" className="section__title"><Clapperboard aria-hidden className="title-icon" /> {t("Beta")}</h2>
+      <BetaView beta={beta.data} gymName={gymName} />
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Info, Trophy } from "lucide-react";
-import { useLeaderboard, metricLabel, periodLabel, type LeaderboardEntry, type LeaderboardMetric, type LeaderboardPeriod } from "@/features/leaderboards/api";
+import { useLeaderboard, metricLabel, periodLabel, periodShortLabel, type LeaderboardEntry, type LeaderboardMetric, type LeaderboardPeriod } from "@/features/leaderboards/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -87,8 +87,8 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
       <div className="chips" role="radiogroup" aria-label={t("Ranking by")}>
         {METRICS.map((m) => <button key={m} role="radio" aria-checked={metric === m} className="chip" onClick={() => setMetric(m)}>{metricLabel[m]}</button>)}
       </div>
-      <div className="chips chips--light" role="radiogroup" aria-label={t("Period")}>
-        {PERIODS.map((p) => <button key={p} role="radio" aria-checked={period === p} className="chip" onClick={() => setPeriod(p)}>{periodLabel[p]}</button>)}
+      <div className="segmented" role="radiogroup" aria-label={t("Period")}>
+        {PERIODS.map((p) => <button key={p} role="radio" aria-checked={period === p} className="segmented__option" onClick={() => setPeriod(p)}>{periodShortLabel[p]}</button>)}
       </div>
 
       {board.isPending ? <LoadingState label={t("Loading leaderboard")} />

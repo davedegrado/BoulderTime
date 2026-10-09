@@ -61,6 +61,13 @@ public sealed class BetaLinkTests(PostgresFixture postgres) : IAsyncLifetime
         var seenByVisitor = (await (await _f.CreateClient().GetAsync($"/api/boulders/{boulder.Id}/beta")).ReadAsync<BetaDto>())!;
         seenByVisitor.ExternalUrl.Should().Be("https://instagram.com/reel/ABC/");
         seenByVisitor.Caption.Should().Be("Dal nostro profilo");
+
+        // The beta is the gym's: who on the staff published it is for the staff to know, not for climbers.
+        seenByVisitor.UploadedBy.Should().BeNull();
+        var climber = await _f.UserAsync();
+        (await (await climber.Client.GetAsync($"/api/boulders/{boulder.Id}/beta")).ReadAsync<BetaDto>())!.UploadedBy.Should().BeNull();
+        var seenByStaff = (await (await world.Staff.Client.GetAsync($"/api/boulders/{boulder.Id}/beta")).ReadAsync<BetaDto>())!;
+        seenByStaff.UploadedBy!.UserId.Should().Be(world.Staff.Id);
     }
 
     [Fact]

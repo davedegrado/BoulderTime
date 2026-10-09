@@ -779,3 +779,18 @@ whoever still needs it. The privacy notice says what is kept; legal version 2026
 
 The links in the form open the documents over it (`LegalSheet`), so reading them doesn't lose what was typed.
 
+## ADR-042 · The beta is the gym's; the community grade shown plainly
+**Official beta.** Climbers see the description ("Beta di Matteo" — free text, not necessarily who is in the video),
+"Official beta from <gym>" and one button to watch it. The staff member who published it is no longer sent to
+climbers at all (`BetaDto.UploadedBy` is null unless the viewer is the gym's staff): it was a colleague's name on a
+public page, and the beta speaks for the gym. Staff still see "Published by" in small print.
+
+**Community grade.** The rule that picks the most voted grade is unchanged (`GradeConsensus.Pick`: most votes, ties broken toward the median). What changed
+is the presentation: the official grade and the most voted one side by side, the latter with "9 of 16"; every row
+with its count and share; the official grade always on the scale, even with no votes for it; the viewer's own vote
+marked. No minimum number of votes before naming the most voted: the "N of M" next to it says how much it weighs.
+
+**Gym page.** The logo overlaps the cover and the name sits beside it; the tabs stay at the top while scrolling;
+the filters wait behind one "Filters" button and the ones in use show as chips that remove them; the leaderboard
+period is a four-way switch that fits a phone.
+
