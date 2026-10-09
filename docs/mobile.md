@@ -99,8 +99,10 @@ turns it into the production environment by itself.
 `https://bouldertime.com/...` links open in the Android app (App Links). Android checks the claim against
 `frontend/public/.well-known/assetlinks.json`, which names the app and the SHA-256 fingerprint of its signing key; the
 CI build fails if the APK is signed with a key that file doesn't list, because otherwise links would quietly open in
-the browser instead. When the app is on Google Play, add Play's app-signing fingerprint (Play Console → App
-integrity) to the same list.
+the browser instead. The list has two fingerprints: the upload key (APKs built by CI, `74:E9:…`) and the key Google
+Play signs the store app with (`FE:B7:…`, Play Console → Protected with Play → Play App Signing). Without the second,
+links open in the browser for everyone who installed from the store. If Google ever rotates the signing key, add the new
+fingerprint here before the rotation reaches devices.
 
 Email links go to `/auth/confirm?token_hash=…&type=…` instead of Supabase's default code link: the token is checked
 by the server, so the link works in the app, in any browser and on any device. The templates are in
@@ -171,5 +173,4 @@ it again on iOS also means offering **Sign in with Apple** (App Store guideline 
 - **Account deletion without the app:** <https://bouldertime.com/delete-account>, the page Google Play asks for, in
   Italian and English (flags at the top, or `?lang=en`). Both texts must stay in step with `AccountEraser`.
 - **Privacy forms:** the answers for Play's Data safety and Apple's App Privacy are in `docs/store-privacy.md`.
-- **Google Play:** add Play's app-signing fingerprint to `assetlinks.json` (Links that open the app, above).
 - What is left is in `docs/roadmap.md`.

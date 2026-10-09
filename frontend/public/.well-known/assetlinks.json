@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "com.bouldertime.app",
       "sha256_cert_fingerprints": [
-        "74:E9:81:DE:46:73:60:F4:3E:F0:58:A1:21:95:39:2A:29:1D:E1:66:0C:DB:E7:45:E5:20:6E:13:57:C0:00:87"
+        "74:E9:81:DE:46:73:60:F4:3E:F0:58:A1:21:95:39:2A:29:1D:E1:66:0C:DB:E7:45:E5:20:6E:13:57:C0:00:87",
+        "FE:B7:60:8C:B4:AA:DE:B3:B0:B2:1E:A0:A7:67:4E:01:D3:F2:B2:B9:C5:4E:13:F5:B8:66:48:0B:E3:87:2D:20"
       ]
     }
   }

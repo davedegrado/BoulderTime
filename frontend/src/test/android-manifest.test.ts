@@ -35,3 +35,28 @@ describe("What the Android app must declare for the camera", () => {
     expect(filePaths).toContain('path="Pictures"');
   });
 });
+
+/**
+ * bouldertime.com vouches for the app in assetlinks.json. The store app is signed by Google, the CI builds by our upload
+ * key: drop either fingerprint and links open in the browser for those installs, with no error anywhere.
+ */
+describe("Links that open the Android app", () => {
+  const links = JSON.parse(readFileSync(resolve(__dirname, "../../public/.well-known/assetlinks.json"), "utf8")) as
+    { target: { package_name: string; sha256_cert_fingerprints: string[] } }[];
+  const target = links[0]!.target;
+
+  it("names the app", () => {
+    expect(target.package_name).toBe("com.bouldertime.app");
+  });
+
+  it.each([
+    ["the upload key, for the APKs built by CI", "74:E9:81:DE"],
+    ["Google Play's signing key, for the app from the store", "FE:B7:60:8C"],
+  ])("trusts %s", (_, start) => {
+    expect(target.sha256_cert_fingerprints.some((f) => f.startsWith(start))).toBe(true);
+  });
+
+  it("lists only well-formed SHA-256 fingerprints", () => {
+    for (const f of target.sha256_cert_fingerprints) expect(f).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
+  });
+});
