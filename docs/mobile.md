@@ -115,6 +115,30 @@ Release builds are signed with the upload key from four repository **secrets**: 
 the repository (`*.jks` is git-ignored). Losing it means the app can no longer be updated under the same name. Without
 the secrets the workflow falls back to a debug APK.
 
+## Google Play
+
+Every build of `main` goes to a Play **testing track** by itself (ADR-040): `apply.sh` is enough to put a new version
+in the testers' hands, and the Play Store updates their phones on its own. What changes only on the server or the
+website (API, `assetlinks.json`, legal pages) needs no new app at all. Releasing to everyone is never automatic: in
+Play Console, **Test and release → the tested release → Promote to Production**.
+
+Setting it up, once:
+
+1. **Google Cloud console** (console.cloud.google.com), in the Firebase project or a new one → **APIs & Services →
+   Library → Google Play Android Developer API → Enable**.
+2. **IAM & Admin → Service accounts → Create service account** (for example `github-play-upload`); no roles are
+   needed here. Open it → **Keys → Add key → Create new key → JSON**: a file is downloaded.
+3. **Play Console → Users and permissions → Invite new users** → the service account's email
+   (`…@….iam.gserviceaccount.com`) → **App permissions → BoulderTime** → tick **Release apps to testing tracks** (and
+   nothing that touches production, payments or users) → invite. No password, no confirmation email: it's active.
+4. **GitHub → Settings → Secrets and variables → Actions → Secrets:** `PLAY_SERVICE_ACCOUNT_JSON` = the whole JSON
+   file. Delete the file afterwards; a new key can always be made.
+5. Optional **variables**: `PLAY_TRACK` = `internal` (default), `alpha` for the closed test, or the name of another
+   closed track; `PLAY_RELEASE_STATUS` = `draft` only while the app has never had a release out.
+
+Each upload needs a higher version code than the last, which the run number already is. A build Play refuses (the
+version code already used, a missing declaration in App content) fails the run with Google's message.
+
 ## iOS
 
 The Xcode project lives in `frontend/ios` (Swift Package Manager, no CocoaPods) and is built by GitHub Actions on a

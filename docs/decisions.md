@@ -741,3 +741,18 @@ legal version 2026-10-08.2. The iOS privacy manifest and `docs/store-privacy.md`
 Nothing reaches an iPhone until the Apple account exists: APNs needs a key uploaded to Firebase and a signed app whose
 App ID allows push. Everything up to that point is in the repository and built by CI.
 
+## ADR-040 · Builds go to Google Play's testing tracks by themselves
+The app's screens are bundled inside it, so a change to them reaches people only through a new version in the store.
+Downloading the bundle from GitHub and uploading it to Play Console by hand for every change is the kind of step that
+gets skipped, and then testers test something old.
+
+**CI uploads, a person releases.** Every build of `main` signed with the upload key is handed to a Play testing track
+(`PLAY_TRACK`, internal by default) through the Play Developer API, with a service account allowed to release to
+testing tracks only. Production is refused by the workflow and by the account's permissions: going public stays a
+deliberate "Promote" in Play Console, after looking at the test.
+
+**A maintained action.** `r0adkll/upload-google-play` (its `v1` line) does the API's edit-upload-commit dance; writing it ourselves would be another thing to keep working. It receives only the service account key, which
+can release test builds of this one app and nothing else.
+
+Without the `PLAY_SERVICE_ACCOUNT_JSON` secret the step is skipped and the workflow behaves as before.
+
