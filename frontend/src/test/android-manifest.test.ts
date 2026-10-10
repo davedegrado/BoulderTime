@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 const manifest = readFileSync(resolve(__dirname, "../../android/app/src/main/AndroidManifest.xml"), "utf8");
 const filePaths = readFileSync(resolve(__dirname, "../../android/app/src/main/res/xml/file_paths.xml"), "utf8");
+const res = (path: string) => resolve(__dirname, "../../android/app/src/main/res", path);
 
 /**
  * The Android project is generated, and regenerating it would quietly drop these. Both failures are silent: the
@@ -58,5 +59,33 @@ describe("Links that open the Android app", () => {
 
   it("lists only well-formed SHA-256 fingerprints", () => {
     for (const f of target.sha256_cert_fingerprints) expect(f).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
+  });
+});
+
+/** Android 12+ draws the launch screen itself from the launch theme: a colour, a centred icon, a name at the bottom. */
+describe("The Android launch screen", () => {
+  const styles = readFileSync(res("values/styles.xml"), "utf8");
+  const styles31 = readFileSync(res("values-v31/styles.xml"), "utf8");
+
+  it("is BoulderTime's dark background with the climber in the middle", () => {
+    expect(manifest).toContain('android:theme="@style/AppTheme.NoActionBarLaunch"');
+    for (const theme of [styles, styles31]) {
+      expect(theme).toContain('<item name="windowSplashScreenBackground">@color/bt_splash_background</item>');
+      expect(theme).toContain('<item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>');
+      expect(theme).toContain('<item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>');
+    }
+    expect(readFileSync(res("values/colors.xml"), "utf8")).toContain('<color name="bt_splash_background">#0C0D0F</color>');
+  });
+
+  it("adds the name at the bottom on Android 12+", () => {
+    expect(styles31).toContain('<item name="android:windowSplashScreenBrandingImage">@drawable/splash_branding</item>');
+  });
+
+  it("has every image in every density", () => {
+    for (const density of ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"]) {
+      for (const name of ["splash_icon", "splash_branding"]) {
+        expect(existsSync(res(`drawable-${density}/${name}.png`))).toBe(true);
+      }
+    }
   });
 });

@@ -2,4 +2,6 @@
 <resources>
     <!-- Tints the notification icon and the app's name in the shade. BoulderTime's orange. -->
     <color name="bt_notification">#E8641E</color>
+    <!-- Behind the launch screen, the same near-black as the iOS one. -->
+    <color name="bt_splash_background">#0C0D0F</color>
 </resources>

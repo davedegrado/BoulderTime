@@ -22,9 +22,15 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       // Hidden by the app once React has rendered, so nobody sees a blank page between splash and content.
+      // The launch screen itself is native (LaunchScreen.storyboard on iOS, the launch theme on Android); this colour
+      // matches it.
       launchAutoHide: false,
-      backgroundColor: "#F8F8F7",
+      backgroundColor: "#0C0D0F",
       showSpinner: false,
+    },
+    StatusBar: {
+      // Light text while the dark launch screen is up; the app switches to dark text once it shows its first screen.
+      style: "DARK",
     },
   },
 };

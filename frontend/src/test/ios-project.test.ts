@@ -52,9 +52,19 @@ describe("What the iOS app must declare", () => {
   it("shows BoulderTime's icon and splash, not Capacitor's", () => {
     const resources = resolve(__dirname, "../../resources");
     expect(sha(ios("App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"))).toBe(sha(`${resources}/icon.png`));
-    for (const name of ["splash-2732x2732", "splash-2732x2732-1", "splash-2732x2732-2"]) {
-      expect(sha(ios(`App/Assets.xcassets/Splash.imageset/${name}.png`))).toBe(sha(`${resources}/splash.png`));
+    for (const [set, file] of [["SplashLogo", "logo"], ["SplashCornerTop", "corner-top-left"], ["SplashCornerBottom", "corner-bottom-right"]]) {
+      expect(sha(ios(`App/Assets.xcassets/${set}.imageset/${file}.png`))).toBe(sha(`${resources}/splash/${file}.png`));
     }
+  });
+
+  it("draws the launch screen from those images, on BoulderTime's dark background", () => {
+    const storyboard = readFileSync(ios("App/Base.lproj/LaunchScreen.storyboard"), "utf8");
+    expect(plistString(infoPlist, "UILaunchStoryboardName")).toBe("LaunchScreen");
+    for (const image of ["SplashLogo", "SplashCornerTop", "SplashCornerBottom"]) {
+      expect(storyboard).toContain(`image="${image}"`);
+    }
+    // Light status bar text over the dark launch screen.
+    expect(plistString(infoPlist, "UIStatusBarStyle")).toBe("UIStatusBarStyleLightContent");
   });
 });
 

@@ -10,7 +10,7 @@ All in `frontend/src/lib/native.ts`:
 - **No service worker.** The files are already inside the app; a service worker would keep serving the previous
   version after an update. The website and the PWA still register it.
 - **Back button (Android)** goes back through the app, and exits only from the first screen.
-- **Status bar** dark text on the light header; **splash screen** stays until the first screen is drawn.
+- **Status bar** dark text on the light header; **splash screen** (dark wall and logo on iOS, logo on dark on Android: `frontend/resources/splash/README.md`) stays until the first screen is drawn.
 - **Links that end up in emails** (sign-up confirmation, password reset) point at `https://bouldertime.com`,
   because inside the app the page address is `https://localhost`, which a mail client cannot open.
 
@@ -160,7 +160,7 @@ What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`)
 - **The claim on `bouldertime.com` links** (Associated Domains). iOS checks it against a file on the website, which
   needs the Apple Team ID, so it is not there yet (see below). Until then links simply open in Safari.
 - **iPhone only.** An iPad build would need its own screenshots and review; it can be switched on later.
-- BoulderTime's icon and splash, from `frontend/resources/`.
+- BoulderTime's icon, from `frontend/resources/`, and its launch screen (`frontend/resources/splash/README.md`).
 - **Notifications:** the `aps-environment` entitlement, Firebase Messaging (Swift Package) and the Firebase settings
   file the workflow writes (see Notifications above).
 - **The privacy manifest** (`PrivacyInfo.xcprivacy`): no tracking, and the data the app collects, matching

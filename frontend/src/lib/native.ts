@@ -37,7 +37,8 @@ export function appPathFromUrl(url: string): string | null {
  * - bouldertime.com links opened on the phone go to the matching page in the app;
  * - tapping a notification opens the page it is about;
  * - the status bar uses dark text on the app's light header;
- * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between.
+ * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between;
+ *   the status bar keeps light text over it and switches to dark text with the first screen.
  * Plugins are imported here, on demand, so the web build never ships them.
  */
 export async function startNativeShell(): Promise<void> {
@@ -86,6 +87,18 @@ export async function startNativeShell(): Promise<void> {
   }
   void App.getLaunchUrl().then((launch) => follow(launch?.url)).catch(() => {});
 
+  // Give React a frame to paint the first screen before revealing it. The status bar turns to dark text on the light
+  // header only now: until here it sat on the dark launch screen.
+  requestAnimationFrame(() => {
+    void SplashScreen.hide({ fadeOutDuration: 300 });
+    void lightStatusBar(StatusBar, Style);
+  });
+}
+
+async function lightStatusBar(
+  StatusBar: typeof import("@capacitor/status-bar").StatusBar,
+  Style: typeof import("@capacitor/status-bar").Style,
+): Promise<void> {
   try {
     await StatusBar.setStyle({ style: Style.Light });
     if (Capacitor.getPlatform() === "android") {
@@ -95,7 +108,4 @@ export async function startNativeShell(): Promise<void> {
   } catch {
     // A status bar that keeps its default look is not worth failing the start for.
   }
-
-  // Give React a frame to paint the first screen before revealing it.
-  requestAnimationFrame(() => { void SplashScreen.hide({ fadeOutDuration: 200 }); });
 }

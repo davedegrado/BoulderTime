@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1039" viewBox="120 925 780 675"><defs>
+    <radialGradient id="vig" cx="50%" cy="46%" r="75%"><stop offset="0" stop-color="#16171a"/><stop offset="1" stop-color="#0C0D0F"/></radialGradient>
+    <linearGradient id="orangeShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb07a"/><stop offset=".5" stop-color="#F26A1B" stop-opacity="0"/><stop offset="1" stop-color="#7a2c05"/></linearGradient>
+    <linearGradient id="darkShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4b50"/><stop offset=".5" stop-color="#1d1e21" stop-opacity="0"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <filter id="holdShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".7"/></filter>
+    <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0"/></filter>
+    <pattern id="grain" width="300" height="300" patternUnits="userSpaceOnUse"><rect width="300" height="300" filter="url(#noise)" style="mix-blend-mode:overlay"/></pattern>
+    <clipPath id="tlClip"><path d="M0,0 H350 L258,178 L112,350 L0,415 Z"/></clipPath>
+    <clipPath id="brClip"><path d="M120,1600 L470,1205 L820,1040 L900,925 V1600 Z"/></clipPath>
+  </defs>
+  <path d="M120,1600 L470,1205 L560,1240 L440,1600 Z" fill="#17181a"/>
+  <path d="M440,1600 L470,1205 L820,1040 L900,925 V1600 Z" fill="#1f2023"/>
+  <path d="M470,1205 L820,1040 L770,1150 L565,1240 Z" fill="#2b2c30"/>
+  <path d="M120,1600 L470,1205 L820,1040 L900,925" fill="none" stroke="#3b3c41" stroke-width="2.5"/>
+  <path d="M430,1600 L640,1236 L900,1140 V1600 Z" fill="#E85F17"/>
+  <path d="M640,1236 L900,1140 V1176 L662,1268 Z" fill="#FF7A2E"/>
+  <path d="M430,1600 L640,1236 L662,1268 L470,1600 Z" fill="#C94F10"/>
+  <rect x="120" y="925" width="780" height="675" fill="url(#grain)" opacity=".45" clip-path="url(#brClip)"/>
+  <g filter="url(#holdShadow)"><path d="M648,1318 L758,1338 L690,1398 Z" fill="#1b1c1f" stroke="#1b1c1f" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M648,1318 L758,1338 L690,1398 Z" fill="url(#darkShade)" stroke="url(#darkShade)" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g>
+  <circle cx="698.6666666666666" cy="1351.3333333333333" r="5" fill="#0a0a0b"/>
+  <g filter="url(#holdShadow)"><path d="M812,1080 L858,1062 L862,1104 L826,1112 Z" fill="#1d1e21" stroke="#1d1e21" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M812,1080 L858,1062 L862,1104 L826,1112 Z" fill="url(#darkShade)" stroke="url(#darkShade)" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g>
+  <circle cx="839.5" cy="1089.5" r="5" fill="#0a0a0b"/>
+  <g filter="url(#holdShadow)"><path d="M455,1392 L505,1366 L512,1420 L470,1428 Z" fill="#1b1c1f" stroke="#1b1c1f" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M455,1392 L505,1366 L512,1420 L470,1428 Z" fill="url(#darkShade)" stroke="url(#darkShade)" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g>
+  <circle cx="485.5" cy="1401.5" r="5" fill="#0a0a0b"/>
+  <circle cx="788" cy="1268" r="4.2" fill="#08080a" opacity=".9"/><circle cx="842" cy="1380" r="4.2" fill="#08080a" opacity=".9"/><circle cx="612" cy="1468" r="4.2" fill="#08080a" opacity=".9"/><circle cx="700" cy="1505" r="4.2" fill="#08080a" opacity=".9"/><circle cx="800" cy="1560" r="4.2" fill="#08080a" opacity=".9"/><circle cx="860" cy="1250" r="4.2" fill="#08080a" opacity=".9"/>
+  <circle cx="560" cy="1330" r="4.2" fill="#08080a" opacity=".9"/><circle cx="330" cy="1520" r="4.2" fill="#08080a" opacity=".9"/><circle cx="400" cy="1450" r="4.2" fill="#08080a" opacity=".9"/><circle cx="700" cy="1120" r="4.2" fill="#08080a" opacity=".9"/></svg>
