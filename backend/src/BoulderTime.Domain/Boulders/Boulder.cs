@@ -54,6 +54,13 @@ public class Boulder : IAuditable
             if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
             ThumbnailPath = thumbnailPath;
         }
+        // Same photo, new thumbnail: staff picked another part of it for the cards. No thumbnail means keep the one
+        // there is.
+        else if (thumbnailPath is not null && thumbnailPath != ThumbnailPath)
+        {
+            if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
+            ThumbnailPath = thumbnailPath;
+        }
         SectorId = sectorId;
         PhotoPath = photoPath;
         HoldColor = holdColor;

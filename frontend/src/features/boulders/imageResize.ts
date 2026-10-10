@@ -47,3 +47,21 @@ export async function prepareImage(file: Blob, { maxSide = 1600, quality = 0.82,
 
 /** Kept for existing callers: full-size boulder photo. */
 export const prepareBoulderPhoto = (file: Blob) => prepareImage(file);
+
+export interface CropRect { x: number; y: number; width: number; height: number }
+
+/**
+ * Cuts a part of a photo out as a small JPEG of a fixed size: the card picture staff choose. The rectangle is in the
+ * photo's own pixels, as the picture is shown (EXIF orientation applied).
+ */
+export async function cropImage(source: Blob, rect: CropRect, { width = 600, height = 480, quality = 0.8 } = {}): Promise<Blob> {
+  const bitmap = await createImageBitmap(source, { imageOrientation: "from-image" });
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d")!.drawImage(bitmap, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
+  bitmap.close();
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t("Couldn't process the image.")))), "image/jpeg", quality),
+  );
+}

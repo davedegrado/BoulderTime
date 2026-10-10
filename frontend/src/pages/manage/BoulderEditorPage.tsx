@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, ImagePlus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Crop, ImagePlus, Save, Trash2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useStaff } from "@/features/staff/api";
-import { uploadBoulderPhoto, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
+import { uploadBoulderPhoto, uploadBoulderThumbnail, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
 import { Button } from "@/components/Button";
@@ -17,6 +17,8 @@ import { t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 import { BetaEditor } from "@/features/community/BetaEditor";
+import { ThumbnailCropper } from "@/features/boulders/ThumbnailCropper";
+import { cropImage, type CropRect } from "@/features/boulders/imageResize";
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
@@ -49,8 +51,12 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [setterUserId, setSetterUserId] = useState(initial?.setter?.userId ?? "");
   const [stage, setStage] = useState<Stage>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // The part of the photo the cards show, when staff chose one; otherwise the cards show the whole photo.
+  const [thumb, setThumb] = useState<{ blob: Blob; url: string } | null>(null);
+  const [cropping, setCropping] = useState(false);
 
   useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb.url); }, [thumb]);
 
   const activeSystems = useMemo(() => (systems.data ?? []).filter((s) => s.isActive), [systems.data]);
   const activeSectors = (sectors.data ?? []).filter((s) => s.isActive || s.id === initial?.sectorId);
@@ -59,7 +65,20 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     if (!f) return;
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setThumb(null); // a new photo starts again from the whole picture
     setErrors((e) => ({ ...e, photoPath: "" }));
+  }
+
+  async function applyCrop(rect: CropRect) {
+    setCropping(false);
+    try {
+      // The photo just picked, or the saved one, fetched again to cut the part out on this device.
+      const source = file ?? await (await fetch(initial!.photoUrl!)).blob();
+      const blob = await cropImage(source, rect);
+      setThumb({ blob, url: URL.createObjectURL(blob) });
+    } catch {
+      toast.error(t("Couldn't prepare the card picture. Try again."));
+    }
   }
 
   async function onSubmit(e: FormEvent) {
@@ -72,7 +91,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     if (Object.keys(local).length) return;
 
     try {
-      const uploaded = file ? await uploadBoulderPhoto(gym.id, file, setStage) : { path: initial!.photoPath, thumbnailPath: null };
+      const uploaded = file
+        ? await uploadBoulderPhoto(gym.id, file, setStage, thumb?.blob)
+        : { path: initial!.photoPath, thumbnailPath: thumb ? (setStage("uploading"), await uploadBoulderThumbnail(gym.id, thumb.blob)) : null };
       setStage("saving");
       const input: SaveBoulderInput = {
         sectorId, photoPath: uploaded.path, thumbnailPath: uploaded.thumbnailPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
@@ -122,6 +143,23 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={pickFile} />
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
+
+      {/* Card picture: which part of the photo the boulder's cards show */}
+      {preview && (
+        <section className="editor__section" aria-labelledby="thumb-label">
+          <p id="thumb-label" className="field__label">{t("Card picture")}</p>
+          <div className="thumb-choice">
+            <div className="thumb-choice__preview">
+              <img src={thumb?.url ?? (file ? preview : initial?.thumbnailUrl ?? preview)} alt={t("What the cards show")} />
+            </div>
+            <div className="thumb-choice__text">
+              <p className="field__hint">{thumb ? t("The part you chose. It is saved with the boulder.") : t("This is what the cards show. Choose another part of the photo if the boulder doesn't stand out.")}</p>
+              <Button type="button" variant="secondary" icon={<Crop aria-hidden />} onClick={() => setCropping(true)}>{t("Choose the part")}</Button>
+            </div>
+          </div>
+        </section>
+      )}
+      {cropping && preview && <ThumbnailCropper src={preview} onCancel={() => setCropping(false)} onDone={applyCrop} />}
 
       <SelectField label={t("Sector *")} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
         options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />

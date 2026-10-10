@@ -78,7 +78,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
             b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
-            await CanAddBetaAsync(gym, b.Id, ct));
+            await CanAddBetaAsync(gym, b.Id, ct),
+            b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath));
     }
 
     /// <summary>
@@ -118,7 +119,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     public async Task<BoulderDetailDto> CreateAsync(Guid gymId, SaveBoulderRequest r, CancellationToken ct = default)
     {
         var (gym, _) = await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
-        var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, ct);
+        var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, currentThumbnailPath: null, ct);
         var userId = currentUser.RequireUserId();
 
         var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath);
@@ -144,7 +145,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var boulder = await db.Boulders.FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
         if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
-        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, ct);
+        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, ct);
         var userId = currentUser.RequireUserId();
 
         var changes = new List<Localization.NotificationTexts.BoulderChange>();
@@ -324,7 +325,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
 
     private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId, HashSet<(Guid SystemId, Guid ValueId)> Grades);
 
-    private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, CancellationToken ct)
+    private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath, CancellationToken ct)
     {
         var v = new Validator();
         var photo = Input.Trimmed(r.PhotoPath);
@@ -336,21 +337,23 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (!await db.Sectors.AnyAsync(s => s.Id == r.SectorId && s.GymId == gymId && s.IsActive, ct))
             v.Check(false, "sectorId", "Choose an active sector of this gym.");
 
-        string? thumbnail = null;
         if (photo != currentPhotoPath)
         {
             var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
             if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
                 v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+        }
 
-            var thumb = Input.Trimmed(r.ThumbnailPath);
-            if (thumb.Length > 0)
-            {
-                var thumbOk = thumb.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && thumb.Contains(".thumb.") && !thumb.Contains("..")
-                              && await storage.ExistsAsync(StorageBuckets.BoulderImages, thumb, ct);
-                if (thumbOk) thumbnail = thumb;
-                else v.Check(false, "thumbnailPath", "The photo upload didn't complete. Upload it again.");
-            }
+        // The small picture for the cards: made on the device, from the whole photo or from the part staff chose.
+        // It can change on its own, without a new photo.
+        string? thumbnail = null;
+        var thumb = Input.Trimmed(r.ThumbnailPath);
+        if (thumb.Length > 0 && thumb != currentThumbnailPath)
+        {
+            var thumbOk = thumb.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && thumb.Contains(".thumb.") && !thumb.Contains("..")
+                          && await storage.ExistsAsync(StorageBuckets.BoulderImages, thumb, ct);
+            if (thumbOk) thumbnail = thumb;
+            else v.Check(false, "thumbnailPath", "The photo upload didn't complete. Upload it again.");
         }
 
         // A boulder can go on the wall before it has a grade: setters often decide the colour later. Climbers see it

@@ -41,7 +41,9 @@ public sealed record BoulderDetailDto(
     /// Whether the gym may still add an official beta to this boulder. False when its allowance is full and this
     /// boulder has none: the app hides the upload rather than letting someone film and fail at the last step.
     /// </summary>
-    bool CanAddOfficialBeta = true);
+    bool CanAddOfficialBeta = true,
+    /// <summary>The small picture the cards show (the whole photo, or the part staff chose); null when there is none.</summary>
+    string? ThumbnailUrl = null);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 

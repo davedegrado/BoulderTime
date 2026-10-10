@@ -966,6 +966,16 @@ export const it: Record<string, string> = {
 
   // ---- Fixes after review ----
   "See the votes": "Vedi i voti",
+  "Card picture": "Miniatura nelle card",
+  "Use this part": "Usa questa parte",
+  "Choose the part": "Scegli la parte",
+  "What the cards show": "Cosa mostrano le card",
+  "Drag to choose what the cards show": "Trascina per scegliere cosa mostrano le card",
+  "Drag to move, pinch or slide to zoom. This is what the boulder's cards show.": "Trascina per spostare, pizzica o usa la barra per ingrandire. È quello che mostrano le card del blocco.",
+  "The part you chose. It is saved with the boulder.": "La parte che hai scelto. Viene salvata con il blocco.",
+  "This is what the cards show. Choose another part of the photo if the boulder doesn't stand out.": "È quello che mostrano le card. Scegli un'altra parte della foto se il blocco non si vede bene.",
+  "Couldn't prepare the card picture. Try again.": "Non è stato possibile preparare la miniatura. Riprova.",
+  "Zoom": "Ingrandimento",
   "Grading systems": "Sistemi di grado",
   "Not used at this gym": "Non usato qui",
   "Follow this gym": "Segui questa palestra",

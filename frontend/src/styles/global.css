@@ -1078,3 +1078,22 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
   mask-image: linear-gradient(to right, var(--rail-fade-start) 0, #000 var(--bt-4), #000 calc(100% - 48px), var(--rail-fade-end) 100%); }
 .rail--fade-start { --rail-fade-start: transparent; }
 .rail--fade-end { --rail-fade-end: transparent; }
+
+/* Choosing the card picture: a still frame shaped like the cards, the photo moving under it. */
+.cropper { position: fixed; inset: 0; z-index: 130; display: flex; flex-direction: column; background: #0d0d0d; color: #fff; padding: var(--bt-safe-top) 0 var(--bt-safe-bottom); }
+.cropper__top { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-2); padding: var(--bt-2) var(--bt-3); }
+.cropper__title { margin: 0; font-size: var(--bt-text-md); font-weight: 700; }
+.cropper__done { background: var(--bt-orange); }
+.cropper__stage { flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: var(--bt-4); }
+.cropper__frame { position: relative; width: min(100%, 520px, calc((100dvh - 300px) * 1.25)); overflow: hidden; border-radius: var(--bt-radius-md); box-shadow: 0 0 0 2px #fff, 0 0 0 9999px rgb(0 0 0 / 0.55); touch-action: none; cursor: grab; background: #222; }
+.cropper__frame:active { cursor: grabbing; }
+.cropper__frame:focus-visible { outline: 3px solid var(--bt-orange); outline-offset: 3px; }
+.cropper__frame img { position: absolute; left: 0; top: 0; max-width: none; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.cropper__controls { display: flex; flex-direction: column; gap: var(--bt-3); padding: var(--bt-3) var(--bt-4) var(--bt-4); max-width: 560px; width: 100%; margin: 0 auto; }
+.cropper__hint { margin: 0; font-size: var(--bt-text-sm); color: rgb(255 255 255 / 0.75); text-align: center; }
+.cropper__zoom input { width: 100%; accent-color: var(--bt-orange); }
+.thumb-choice { display: flex; align-items: center; gap: var(--bt-3); }
+.thumb-choice__preview { flex: none; width: 128px; aspect-ratio: 5 / 4; border-radius: var(--bt-radius-sm); overflow: hidden; background: var(--bt-surface-2); box-shadow: inset 0 0 0 1px var(--bt-line); }
+.thumb-choice__preview img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-choice__text { display: flex; flex-direction: column; align-items: flex-start; gap: var(--bt-2); min-width: 0; }
+.thumb-choice__text .field__hint { margin: 0; }

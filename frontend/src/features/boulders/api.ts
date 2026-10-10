@@ -33,6 +33,8 @@ export interface BoulderDetail extends BoulderSummary {
   communityVideosEnabled: boolean;
   /** False when the gym's official-beta allowance is full and this boulder has none. */
   canAddOfficialBeta: boolean;
+  /** The small picture the cards show: the whole photo, or the part staff chose. Null for older boulders. */
+  thumbnailUrl?: string | null;
 }
 
 /** What deleting a boulder would take with it. `sends` is what it would NOT take. */
@@ -91,11 +93,19 @@ async function putToTicket(ticket: UploadTicket, blob: Blob) {
   if (!res.ok) throw new ApiError(res.status, null, t("The photo upload failed. Try again."));
 }
 
+/** Uploads a card picture already made on the device (the part of the photo staff chose). */
+export async function uploadBoulderThumbnail(gymId: string, thumb: Blob): Promise<string> {
+  const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: "image/jpeg", sizeBytes: thumb.size, thumbnail: true });
+  await putToTicket(ticket, thumb);
+  return ticket.path;
+}
+
 /**
- * Prepares the full photo (≤1600 px) and a list thumbnail (≤480 px) on the device and uploads both.
+ * Prepares the full photo (≤1600 px) and a list thumbnail (≤480 px) on the device and uploads both. With a
+ * thumbnail given (the part of the photo staff chose), that one is uploaded instead of a reduced whole photo.
  * The thumbnail is best-effort: if it fails, the boulder still saves with the full photo.
  */
-export async function uploadBoulderPhoto(gymId: string, file: File, onStage?: (stage: "processing" | "uploading") => void): Promise<{ path: string; thumbnailPath: string | null }> {
+export async function uploadBoulderPhoto(gymId: string, file: File, onStage?: (stage: "processing" | "uploading") => void, chosenThumbnail?: Blob | null): Promise<{ path: string; thumbnailPath: string | null }> {
   onStage?.("processing");
   const blob = await prepareImage(file);
   const contentType = blob.type || file.type;
@@ -106,7 +116,7 @@ export async function uploadBoulderPhoto(gymId: string, file: File, onStage?: (s
 
   let thumbnailPath: string | null = null;
   try {
-    const thumb = await prepareImage(file, { maxSide: 480, quality: 0.75, force: true });
+    const thumb = chosenThumbnail ?? await prepareImage(file, { maxSide: 480, quality: 0.75, force: true });
     if (thumb.type === "image/jpeg" && thumb.size <= 512 * 1024) {
       const thumbTicket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: "image/jpeg", sizeBytes: thumb.size, thumbnail: true });
       await putToTicket(thumbTicket, thumb);

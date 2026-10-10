@@ -115,4 +115,31 @@ public sealed class ImageTests(PostgresFixture postgres) : IAsyncLifetime
         (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", update)).EnsureSuccessStatusCode();
         File.Exists(Path.Combine(_f.StorageRoot, StorageBuckets.BoulderImages, thumb)).Should().BeFalse();
     }
+
+    [Fact]
+    public async Task Staff_can_pick_another_part_of_the_same_photo_for_the_cards()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var photo = await w.Staff.UploadPhotoAsync(_f, w.Gym);
+        var first = await UploadAsync(w.Staff.Client, $"/api/gyms/{w.Gym.Id}/boulder-photos", new { contentType = "image/jpeg", sizeBytes = Jpeg.Length, thumbnail = true });
+        var body = new
+        {
+            sectorId = w.Sector.Id, photoPath = photo, thumbnailPath = first, holdColor = "BLUE",
+            grades = new[] { new { gradeSystemId = w.Font.Id, gradeValueId = w.Font.Values[5].Id } },
+        };
+        var created = (await (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders", body)).ReadAsync<BoulderDetailDto>())!;
+        created.ThumbnailUrl.Should().Contain(Path.GetFileName(first));
+
+        // The same photo with a new crop: the cards change, the photo stays, the old crop is deleted.
+        var second = await UploadAsync(w.Staff.Client, $"/api/gyms/{w.Gym.Id}/boulder-photos", new { contentType = "image/jpeg", sizeBytes = Jpeg.Length, thumbnail = true });
+        var updated = (await (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", body with { thumbnailPath = second })).ReadAsync<BoulderDetailDto>())!;
+        updated.PhotoPath.Should().Be(photo);
+        updated.ThumbnailUrl.Should().Contain(Path.GetFileName(second));
+        File.Exists(Path.Combine(_f.StorageRoot, StorageBuckets.BoulderImages, first)).Should().BeFalse();
+        File.Exists(Path.Combine(_f.StorageRoot, StorageBuckets.BoulderImages, photo)).Should().BeTrue();
+
+        // Saving other changes without a thumbnail keeps the one there is.
+        var kept = (await (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", new { body.sectorId, body.photoPath, holdColor = "RED", body.grades })).ReadAsync<BoulderDetailDto>())!;
+        kept.ThumbnailUrl.Should().Contain(Path.GetFileName(second));
+    }
 }
