@@ -6,7 +6,7 @@ import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useStaff } from "@/features/staff/api";
 import { uploadBoulderPhoto, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
-import { HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
+import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -149,7 +149,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
             <label key={c.value} className={`hold-option ${holdColor === c.value ? "is-selected" : ""}`}>
               <input type="radio" name="holdColor" value={c.value} checked={holdColor === c.value} onChange={() => setHoldColor(c.value)} />
               <span className="holds__swatch" style={{ background: c.hex }} aria-hidden />
-              <span>{c.label}</span>
+              <span className="hold-option__name">{holdColorName(c.value)}</span>
             </label>
           ))}
         </div>

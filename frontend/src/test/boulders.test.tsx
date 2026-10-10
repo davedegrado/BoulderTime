@@ -159,6 +159,20 @@ describe("Staff boulder management", () => {
     expect(await screen.findByText(/2 boulders removed/)).toBeInTheDocument();
   });
 
+  it("keeps the filters behind one button, as on the gym's page", async () => {
+    setupManage();
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1")]));
+    renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
+    await userEvent.click(screen.getByRole("button", { name: /Filters\s*1/ }));
+    expect(screen.queryByRole("combobox", { name: "Sector" })).not.toBeInTheDocument();
+    // Closed, the filter in use still shows, and removes itself.
+    await userEvent.click(screen.getByRole("button", { name: "Remove filter Cave" }));
+    expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
+  });
+
   it("requires photo, sector and hold colour before saving, but not a grade", async () => {
     setupManage();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);

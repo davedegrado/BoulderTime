@@ -908,7 +908,6 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .beta-card__owner { display: flex; align-items: center; gap: 6px; font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
 .beta-card__owner svg { width: 16px; height: 16px; color: var(--bt-orange-ink); }
 .beta-card__watch { margin-top: var(--bt-2); }
-.beta-card__publisher { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
 
 /* ---------- Community grade, presented plainly ---------- */
 .consensus { gap: var(--bt-2); }
@@ -1052,3 +1051,6 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .grade-carousel::-webkit-scrollbar { display: none; }
 .grade-carousel__slide { scroll-snap-align: start; min-width: 0; }
 .community-grade .consensus { border-top: 0; padding-top: 0; }
+/* "rosse", "blu": the same words as in "prese rosse", started with a capital when they stand alone. */
+.hold-option__name { display: inline-block; }
+.hold-option__name::first-letter { text-transform: uppercase; }

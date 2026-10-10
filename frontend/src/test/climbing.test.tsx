@@ -79,7 +79,7 @@ describe("Home", () => {
     renderAt("/", "/", <HomePage />);
 
     expect(await screen.findByText("2 sent this month. Keep it going.")).toBeInTheDocument();
-    expect(screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/gyms/crimp")).toHaveTextContent("42 boulders · 6 new this week");
+    expect(screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/gyms/crimp")).toHaveTextContent("42 boulders · 6 new");
     expect(screen.getByRole("heading", { name: "Keep trying" })).toBeInTheDocument();
     expect(screen.getByText("7 tries")).toBeInTheDocument();
     const recent = screen.getByRole("heading", { name: "Recent sends" }).closest("section")!;

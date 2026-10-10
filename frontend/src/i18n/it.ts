@@ -81,7 +81,7 @@ export const it: Record<string, string> = {
   "All activity": "Tutta l'attività",
   "Gym updates": "Aggiornamenti delle palestre",
   "Gyms you manage": "Palestre che gestisci",
-  "Suggest a gym": "Segnala una palestra",
+  "Suggest a gym": "Suggerisci una palestra",
   "You've been invited": "Hai ricevuto un invito",
   "invited you to join": "ti ha invitato in",
 
@@ -284,7 +284,8 @@ export const it: Record<string, string> = {
   "Ready for a session?": "Pronto per una sessione?",
   "{count} boulder": "{count} blocco",
   "{count} boulders": "{count} blocchi",
-  "{count} new this week": "{count} nuovi questa settimana",
+  "1 new": "1 nuovo",
+  "{count} new": "{count} nuovi",
   "{count} gym": "{count} palestra",
   "{count} gyms": "{count} palestre",
   "for “{query}”": "per “{query}”",
@@ -938,7 +939,6 @@ export const it: Record<string, string> = {
   "Beta": "Beta",
   "Official beta from {gym}": "Beta ufficiale di {gym}",
   "Watch on {site}": "Guarda su {site}",
-  "Published by {name}": "Pubblicata da {name}",
 
   // ---- Community grade ----
   "Most voted": "Più votato",

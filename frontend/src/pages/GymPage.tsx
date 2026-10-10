@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2, SlidersHorizontal, X } from "lucide-react";
+import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
 import { useGym, useSectors, type GymDetail } from "@/features/gyms/api";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Badge } from "@/components/Badge";
@@ -9,13 +9,9 @@ import { ApiError } from "@/lib/apiError";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { gymStatusLabel } from "@/lib/format";
 import { useBoulders, type BoulderFilters } from "@/features/boulders/api";
-import { holdLabel } from "@/features/boulders/holdColors";
-import { dataLabel } from "@/i18n/data";
-import type { Sector } from "@/features/gyms/api";
-import type { GradeSystem } from "@/features/grading/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
-import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
+import { activeFilters, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
@@ -112,22 +108,6 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
   );
 }
 
-type Narrowing = Exclude<keyof BoulderFilters, "status">;
-
-/** The filters in use, each with its own label, so they can be read and removed one by one. */
-function activeFilters(f: BoulderFilters, sectors: Sector[], systems: GradeSystem[]): { key: Narrowing; label: string }[] {
-  const out: { key: Narrowing; label: string }[] = [];
-  if (f.sectorId) out.push({ key: "sectorId", label: sectors.find((s) => s.id === f.sectorId)?.name ?? translate("Sector") });
-  if (f.gradeValueId) {
-    const value = systems.flatMap((s) => s.values).find((v) => v.id === f.gradeValueId);
-    out.push({ key: "gradeValueId", label: value ? dataLabel(value.label) : translate("Grade") });
-  }
-  if (f.holdColor) out.push({ key: "holdColor", label: holdLabel(f.holdColor) });
-  if (f.progress) out.push({ key: "progress", label: f.progress === "UNTRIED" ? translate("Not tried") : f.progress === "PROJECTS" ? translate("Projects") : translate("Completed") });
-  if (f.minRating) out.push({ key: "minRating", label: f.minRating === "4" ? translate("4+ stars") : translate("3+ stars") });
-  return out;
-}
-
 function BouldersTab({ gymId }: { gymId: string }) {
   const [filters, setFilters] = useState<BoulderFilters>({});
   const [showFilters, setShowFilters] = useState(false);
@@ -151,28 +131,9 @@ function BouldersTab({ gymId }: { gymId: string }) {
           <button role="radio" aria-checked={!showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: undefined })}>{translate("On the wall")}</button>
           <button role="radio" aria-checked={showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: "REMOVED" })}>{translate("Taken down")}</button>
         </div>
-        <button type="button" className={`chip filter-toggle ${active.length ? "is-active" : ""}`} aria-expanded={showFilters} aria-controls="boulder-filters"
-          onClick={() => setShowFilters((v) => !v)}>
-          <SlidersHorizontal aria-hidden /> {translate("Filters")}{active.length > 0 && <span className="filter-toggle__count">{active.length}</span>}
-        </button>
+        <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
       </div>
-      {showFilters && (
-        <div id="boulder-filters" className="filter-panel">
-          <BoulderFiltersBar filters={filters} onChange={(f) => setFilters({ ...f, status: filters.status })} sectors={sectors.data ?? []} systems={systems.data ?? []} />
-        </div>
-      )}
-      {active.length > 0 && (
-        <ul className="active-filters" aria-label={translate("Filters in use")}>
-          {active.map((a) => (
-            <li key={a.key}>
-              <button type="button" className="active-filter" onClick={() => setFilters({ ...filters, [a.key]: undefined })}
-                aria-label={translate("Remove filter {name}", { name: a.label })}>
-                {a.label} <X aria-hidden />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (

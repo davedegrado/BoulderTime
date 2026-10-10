@@ -42,7 +42,6 @@ export function BetaView({ beta, gymName }: { beta: Beta; gymName?: string }) {
       ) : (
         <Player src={beta.videoUrl} poster={beta.thumbnailUrl} label={t("Official beta video")} />
       )}
-      {beta.uploadedBy && <p className="beta-card__publisher">{t("Published by {name}", { name: beta.uploadedBy.displayName })}</p>}
     </div>
   );
 }

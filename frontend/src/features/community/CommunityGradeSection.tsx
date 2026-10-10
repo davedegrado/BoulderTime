@@ -111,7 +111,7 @@ function SystemBlock({ boulderId, system: s, canSuggest, showName }: { boulderId
           <dd>
             {top
               ? <><Swatch bucket={top} />{dataLabel(top.label)} <span className="consensus__share">{t("{votes} of {total}", { votes: top.votes, total: s.totalVotes })}</span></>
-              : <span className="consensus__share">{t("No votes yet")}</span>}
+              : <span className="consensus__share">—</span>}
           </dd>
         </div>
       </dl>

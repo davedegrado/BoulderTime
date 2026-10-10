@@ -45,7 +45,7 @@ function GymRow({ g, compact = false }: { g: HomeGym; compact?: boolean }) {
         {!compact && <GymBadges isFoundingGym={g.gym.isFoundingGym} isEarlyPartner={g.gym.isEarlyPartner} size="compact" />}
         <p className="list__sub">
           {plural(g.activeBoulders, "{count} boulder", "{count} boulders")}
-          {g.newThisWeek > 0 && <> · <strong className="home-gym__new">{t("{count} new this week", { count: g.newThisWeek })}</strong></>}
+          {g.newThisWeek > 0 && <> · <strong className="home-gym__new">{plural(g.newThisWeek, "1 new", "{count} new")}</strong></>}
         </p>
       </div>
       <ChevronRight className="list__chevron" aria-hidden />

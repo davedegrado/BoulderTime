@@ -7,7 +7,7 @@ import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
-import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
+import { activeFilters, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -23,6 +23,7 @@ export function ManageBoulders() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastRemoval, setLastRemoval] = useState<RemoveResult | null>(null);
   const [notifyFollowers, setNotifyFollowers] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const sectors = useSectors(gym.id);
   const systems = useGradeSystems(gym.id);
   const boulders = useBoulders(gym.id, filters);
@@ -57,7 +58,7 @@ export function ManageBoulders() {
       <div className="toolbar">
         <div className="chips" role="radiogroup" aria-label={t("Boulder status")}>
           <button role="radio" aria-checked={!removedView} className="chip" onClick={() => switchView("ACTIVE")}>{t("On the wall")}</button>
-          <button role="radio" aria-checked={removedView} className="chip" onClick={() => switchView("REMOVED")}>{t("Removed")}</button>
+          <button role="radio" aria-checked={removedView} className="chip" onClick={() => switchView("REMOVED")}>{t("Taken down")}</button>
         </div>
         {!removedView && !selecting && (
           <div className="toolbar__actions">
@@ -92,14 +93,20 @@ export function ManageBoulders() {
           </div>} />
       )}
 
-      <BoulderFiltersBar filters={filters} onChange={(f) => setFilters({ ...f, status: filters.status })} sectors={sectors.data ?? []} systems={systems.data ?? []} />
+      {/* As on the gym's page: the filters wait behind one button, and the ones in use show as chips. */}
+      <div className="boulders-toolbar">
+        <span className="section__meta">{!boulders.isPending && !boulders.isError && items.length > 0
+          ? (removedView ? plural(total, "{count} removed", "{count} removed") : plural(total, "{count} on the wall", "{count} on the wall"))
+          : null}</span>
+        <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
+      </div>
+      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? <EmptyState icon={<Mountain />} title={removedView ? t("No removed boulders") : t("No boulders on the wall")} />
         : (
           <>
-            <p className="section__meta">{removedView ? plural(total, "{count} removed", "{count} removed") : plural(total, "{count} on the wall", "{count} on the wall")}</p>
             <div className="boulder-grid">
               {items.map((b) => removedView ? (
                 <div key={b.id} className="boulder-grid__item">
