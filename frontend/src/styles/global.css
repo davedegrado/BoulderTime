@@ -1071,3 +1071,10 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .boulders-toolbar { flex-wrap: wrap; row-gap: var(--bt-2); }
 .boulders-toolbar__count { flex: 1 1 auto; min-width: 0; white-space: nowrap; margin: 0; }
 .boulders-toolbar__end { margin-left: auto; }
+
+/* Card rows (Home): cards stop in line with the page margin, and the side with more to see fades out. */
+.rail { scroll-padding-inline: var(--bt-4); --rail-fade-start: #000; --rail-fade-end: #000;
+  -webkit-mask-image: linear-gradient(to right, var(--rail-fade-start) 0, #000 var(--bt-4), #000 calc(100% - 48px), var(--rail-fade-end) 100%);
+  mask-image: linear-gradient(to right, var(--rail-fade-start) 0, #000 var(--bt-4), #000 calc(100% - 48px), var(--rail-fade-end) 100%); }
+.rail--fade-start { --rail-fade-start: transparent; }
+.rail--fade-end { --rail-fade-end: transparent; }

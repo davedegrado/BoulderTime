@@ -1,3 +1,4 @@
+import { Rail } from "@/components/Rail";
 import { Link } from "react-router-dom";
 import { ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
@@ -118,14 +119,14 @@ function SignedInHome() {
       {h.freshToTry.length > 0 && (
         <section aria-labelledby="fresh-title" className="section">
           <h2 id="fresh-title" className="section__title">{t("Fresh on the wall")}</h2>
-          <div className="rail">{h.freshToTry.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+          <Rail>{h.freshToTry.map((b) => <BoulderCard key={b.id} boulder={b} />)}</Rail>
         </section>
       )}
 
       {h.projects.length > 0 && (
         <section aria-labelledby="projects-title" className="section">
           <h2 id="projects-title" className="section__title">{t("Keep trying")}</h2>
-          <div className="rail">{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+          <Rail>{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</Rail>
         </section>
       )}
 
