@@ -1054,3 +1054,20 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 /* "rosse", "blu": the same words as in "prese rosse", started with a capital when they stand alone. */
 .hold-option__name { display: inline-block; }
 .hold-option__name::first-letter { text-transform: uppercase; }
+
+/* Staff boulder list: "select" is a small icon beside the filters; "new boulder" floats above the tab bar. */
+.boulders-toolbar__end { display: flex; align-items: center; gap: var(--bt-2); }
+.icon-btn--sm.icon-btn--outlined { width: 40px; height: 40px; }
+.icon-btn--sm svg { width: 18px; height: 18px; }
+.fab { position: fixed; right: var(--bt-4); bottom: calc(var(--bt-tabbar-h) + var(--bt-safe-bottom) + var(--bt-4)); z-index: 30; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--bt-orange); color: #fff; box-shadow: 0 6px 18px rgb(0 0 0 / 0.25); }
+.fab svg { width: 26px; height: 26px; stroke-width: 2.5; }
+@media (min-width: 960px) { .fab { right: var(--bt-10); bottom: var(--bt-10); } }
+
+/* "Montati ▾": the boulder status as a compact drop-down, the same pill as "Filters" beside it. */
+.chip-select { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+.chip-select select { appearance: none; -webkit-appearance: none; min-height: 40px; padding: 0 34px 0 var(--bt-4); border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); color: var(--bt-ink); font: inherit; font-weight: 600; font-size: var(--bt-text-sm); cursor: pointer; }
+.chip-select select:focus-visible { outline: 2px solid var(--bt-orange); outline-offset: 2px; }
+.chip-select svg { position: absolute; right: 12px; width: 16px; height: 16px; color: var(--bt-ink-2); pointer-events: none; }
+.boulders-toolbar { flex-wrap: wrap; row-gap: var(--bt-2); }
+.boulders-toolbar__count { flex: 1 1 auto; min-width: 0; white-space: nowrap; margin: 0; }
+.boulders-toolbar__end { margin-left: auto; }

@@ -3,9 +3,9 @@ import type { GradeSystem } from "@/features/grading/api";
 import type { BoulderFilters as Filters, ProgressFilter } from "@/features/boulders/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { SelectField } from "@/components/Fields";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 
 interface Props {
@@ -89,3 +89,24 @@ export function FiltersPanel({ open, filters, onChange, sectors, systems }: Prop
     </>
   );
 }
+
+/**
+ * On the wall or taken down: a compact drop-down beside the filters rather than two buttons of its own. It is a view,
+ * not a filter — an empty "taken down" list means nothing has come off the wall yet.
+ */
+export function BoulderStatusSelect({ removed, onChange }: { removed: boolean; onChange: (removed: boolean) => void }) {
+  return (
+    <label className="chip-select">
+      <span className="sr-only">{t("Boulder status")}</span>
+      <select value={removed ? "REMOVED" : "ACTIVE"} onChange={(e) => onChange(e.target.value === "REMOVED")}>
+        <option value="ACTIVE">{t("On the wall")}</option>
+        <option value="REMOVED">{t("Taken down")}</option>
+      </select>
+      <ChevronDown aria-hidden />
+    </label>
+  );
+}
+
+/** "18 on the wall", "1 taken down". */
+export const boulderCount = (total: number, removed: boolean) =>
+  removed ? plural(total, "1 taken down", "{count} taken down") : plural(total, "1 on the wall", "{count} on the wall");

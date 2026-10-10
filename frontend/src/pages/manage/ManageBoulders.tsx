@@ -7,7 +7,7 @@ import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
-import { activeFilters, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -55,19 +55,6 @@ export function ManageBoulders() {
 
   return (
     <div className="stack">
-      <div className="toolbar">
-        <div className="chips" role="radiogroup" aria-label={t("Boulder status")}>
-          <button role="radio" aria-checked={!removedView} className="chip" onClick={() => switchView("ACTIVE")}>{t("On the wall")}</button>
-          <button role="radio" aria-checked={removedView} className="chip" onClick={() => switchView("REMOVED")}>{t("Taken down")}</button>
-        </div>
-        {!removedView && !selecting && (
-          <div className="toolbar__actions">
-            {items.length > 0 && <Button variant="secondary" icon={<CheckSquare aria-hidden />} onClick={() => setSelecting(true)}>{t("Select")}</Button>}
-            {!noSetup && <Link to={`/manage/${gym.slug}/boulders/new`} className="btn btn--primary"><Plus aria-hidden /><span>{t("New boulder")}</span></Link>}
-          </div>
-        )}
-      </div>
-
       {lastRemoval && (
         <div className="notice notice--success" role="status">
           <History aria-hidden />
@@ -95,11 +82,21 @@ export function ManageBoulders() {
 
       {/* As on the gym's page: the filters wait behind one button, and the ones in use show as chips. */}
       <div className="boulders-toolbar">
-        <span className="section__meta">{!boulders.isPending && !boulders.isError && items.length > 0
-          ? (removedView ? plural(total, "{count} removed", "{count} removed") : plural(total, "{count} on the wall", "{count} on the wall"))
-          : null}</span>
-        <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
+        <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, removedView) : null}</span>
+        <div className="boulders-toolbar__end">
+          <BoulderStatusSelect removed={removedView} onChange={(removed) => switchView(removed ? "REMOVED" : "ACTIVE")} />
+          {!removedView && !selecting && items.length > 0 && (
+            <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setSelecting(true)} aria-label={t("Select")} title={t("Select")}>
+              <CheckSquare aria-hidden />
+            </button>
+          )}
+          <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
+        </div>
       </div>
+      {/* The one thing staff do most here, always under the thumb, however far down the list. */}
+      {!removedView && !selecting && !noSetup && (
+        <Link to={`/manage/${gym.slug}/boulders/new`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
+      )}
       <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />

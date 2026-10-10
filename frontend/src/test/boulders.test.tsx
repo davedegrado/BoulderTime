@@ -60,6 +60,18 @@ describe("Boulder list (climber)", () => {
     expect(screen.getByRole("combobox", { name: "Hold colour" })).toBeInTheDocument();
   });
 
+  it("switches between boulders on the wall and taken down from one compact drop-down", async () => {
+    reply("GET", "/api/gyms/crimp", gym);
+    reply("GET", "/api/gyms/g1/sectors", sectors);
+    reply("GET", "/api/gyms/g1/grade-systems", systems);
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1"), boulder("b2")]));
+    renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
+
+    expect(await screen.findByText("2 on the wall")).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Boulder status" }), "REMOVED");
+    await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
+  });
+
   it("shows the filters in use as chips that remove them", async () => {
     reply("GET", "/api/gyms/crimp", gym);
     reply("GET", "/api/gyms/g1/sectors", sectors);
@@ -163,6 +175,10 @@ describe("Staff boulder management", () => {
     setupManage();
     reply("GET", "/api/gyms/g1/boulders", page([boulder("b1")]));
     renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
+
+    // A new boulder is one floating button away; selecting is a small icon beside the filters.
+    expect(await screen.findByRole("link", { name: "New boulder" })).toHaveAttribute("href", "/manage/crimp/boulders/new");
+    expect(await screen.findByRole("button", { name: "Select" })).toBeInTheDocument();
 
     await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");

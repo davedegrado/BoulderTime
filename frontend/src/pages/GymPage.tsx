@@ -11,7 +11,7 @@ import { gymStatusLabel } from "@/lib/format";
 import { useBoulders, type BoulderFilters } from "@/features/boulders/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
-import { activeFilters, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
@@ -127,11 +127,11 @@ function BouldersTab({ gymId }: { gymId: string }) {
     <div className="stack">
       {/* A boulder you sent is part of your history long after it comes off the wall, so climbers can look back. */}
       <div className="boulders-toolbar">
-        <div className="chips" role="radiogroup" aria-label={translate("Boulder status")}>
-          <button role="radio" aria-checked={!showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: undefined })}>{translate("On the wall")}</button>
-          <button role="radio" aria-checked={showingRemoved} className="chip" onClick={() => setFilters({ ...filters, status: "REMOVED" })}>{translate("Taken down")}</button>
+        <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, showingRemoved) : null}</span>
+        <div className="boulders-toolbar__end">
+          <BoulderStatusSelect removed={showingRemoved} onChange={(removed) => setFilters({ ...filters, status: removed ? "REMOVED" : undefined })} />
+          <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
         </div>
-        <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
       </div>
       <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
@@ -143,7 +143,6 @@ function BouldersTab({ gymId }: { gymId: string }) {
             action={filtered ? <Button variant="secondary" onClick={() => setFilters({ status: filters.status })}>{translate("Clear filters")}</Button> : undefined} />
         ) : (
           <>
-            <p className="section__meta">{showingRemoved ? plural(total, "{count} taken down", "{count} taken down") : plural(total, "{count} boulder", "{count} boulders")}</p>
             <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{translate("Show more")}</Button>}
           </>
