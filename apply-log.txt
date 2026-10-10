@@ -1,52 +1,20 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: App notifications: remember this phone's token, so the switch stays on
-applicata: App notifications: remember this phone's token, so the switch
 == 2. STRUMENTI ==
-dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.425/dotnet-sdk-8.0.425-linux-x64.tar.gz
-dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.425/dotnet-sdk-8.0.425-linux-x64.tar.gz size is 216833108 bytes.
-dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.425/dotnet-sdk-8.0.425-linux-x64.tar.gz
-dotnet-install: Downloaded file size is 216833108 bytes.
-dotnet-install: The remote and local file sizes are equal.
-dotnet-install: Installed version is 8.0.425
-dotnet-install: Adding to current process PATH: `/home/codespace/.dotnet`. Note: This change will be visible only when sourcing script.
-dotnet-install: Note that the script does not resolve dependencies during installation.
-dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
-dotnet-install: Installation finished successfully.
-
-Welcome to .NET 10.0!
----------------------
-SDK Version: 10.0.401
-
-Telemetry
----------
-The .NET tools collect usage data in order to help us improve your experience. It is collected by Microsoft and shared with the community. You can opt-out of telemetry by setting the DOTNET_CLI_TELEMETRY_OPTOUT environment variable to '1' or 'true' using your favorite shell.
-
-Read more about .NET CLI Tools telemetry: https://aka.ms/dotnet-cli-telemetry
-
-----------------
-Installed an ASP.NET Core HTTPS development certificate.
-To trust the certificate, run 'dotnet dev-certs https --trust'
-Learn about HTTPS: https://aka.ms/dotnet-https
-
-----------------
-Write your first app: https://aka.ms/dotnet-hello-world
-Find out what's new: https://aka.ms/dotnet-whats-new
-Explore documentation: https://aka.ms/dotnet-docs
-Report issues and find source on GitHub: https://github.com/dotnet/core
-Use 'dotnet --help' to see available commands or visit: https://aka.ms/dotnet-cli
---------------------------------------------------------------------------------------
-You can invoke the tool using the following command: dotnet-ef
-Tool 'dotnet-ef' (version '10.0.12') was successfully installed.
+Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
 == 3. MIGRAZIONE ==
-NON VERIFICABILE:
-Report issues and find source on GitHub: https://github.com/dotnet/core
-Use 'dotnet --help' to see available commands or visit: https://aka.ms/dotnet-cli
---------------------------------------------------------------------------------------
-/usr/share/dotnet/sdk/8.0.425/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/workspaces/BoulderTime/backend/src/BoulderTime.Infrastructure/BoulderTime.Infrastructure.csproj]
-Unable to retrieve project metadata. Ensure it's an SDK-style project.
+nessuna modifica al modello
 == 4. BUILD BACKEND ==
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:08.29
+OK
 == 5. TEST BACKEND ==
+Total tests: 231
+test backend: ok
 == 6. FRONTEND ==
       Tests  187 passed (187)
 vite v5.4.21 building for production...
@@ -105,7 +73,7 @@ dist/assets/router-BMRSSGOf.js                    545.46 kB │ gzip: 151.95 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 6.24s
+✓ built in 5.83s
 
 PWA v0.21.2
 mode      generateSW
@@ -114,4 +82,4 @@ files generated
   dist/sw.js
   dist/workbox-4e9e9954.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
