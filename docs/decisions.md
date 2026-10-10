@@ -810,3 +810,20 @@ for them.
 **One card, swiped.** The community grade shows one system at a time, with the systems as tabs above: first the one the
 boulder is graded in, then the gym's other systems, then the reference scales the gym doesn't use. The server sends
 them in that order.
+
+## ADR-044 · The sector map: the gym's own floor plan, sectors drawn on it
+**What.** A gym uploads its floor plan (any picture of it: the architect's drawing, the fire-escape plan, a sketch) and
+staff draw each sector on it, corner by corner (Manage → Sectors → Sector map). Climbers get the plan at the top of the
+gym's Sectors tab: tapping a sector opens a sheet with its counts, "See the boulders" (the Boulders tab, already narrowed
+to that sector) and Follow. The list stays under the map, with the same bells: following works from either. The boulder
+page shows "Where it is", the plan with the boulder's sector picked out. Without a plan, nothing changes.
+
+**Why not a drawn map like single-gym apps.** Those are drawn by hand for one gym. A drawing tool is a lot of work and
+little use to gyms, which already have a plan; uploading it and tracing the sectors over it works for all of them.
+
+**How.** `Gym.FloorPlanUrl/Path/Width/Height` (the size gives the proportions). `Sector.MapZone` holds the outline as
+JSON: 3–64 points and the label's place, in fractions (0–1) of the plan's width and height, so one drawing fits the plan
+at any size and survives a new plan of the same room. The app draws the plan as an image with an SVG layer of the same
+proportions on top; each outline is a button named after its sector. `GET /api/gyms/{id}/sectors` also returns each
+sector's boulders on the wall and how many are new this week (green dot on the plan). Staff (not only admins) set the
+plan and the outlines: they belong with the sectors. `?sector=` on the gym's page opens its boulders filtered by it.

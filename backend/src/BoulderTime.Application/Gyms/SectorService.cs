@@ -1,12 +1,13 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUser currentUser)
+public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock)
 {
     /// <summary>Public: active sectors of an active gym. Staff also see inactive sectors (and non-public gyms).</summary>
     public async Task<IReadOnlyList<SectorDto>> ListAsync(Guid gymId, CancellationToken ct = default)
@@ -24,7 +25,44 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
             var ids = sectors.Select(s => s.Id).ToList();
             followed = (await db.SectorFollows.AsNoTracking().Where(f => f.UserId == uid && ids.Contains(f.SectorId)).Select(f => f.SectorId).ToListAsync(ct)).ToHashSet();
         }
-        return sectors.Select(s => SectorDto.From(s, followed.Contains(s.Id))).ToList();
+        // What the floor plan and the sector sheet say: boulders on the wall, and how many of them are new this week.
+        var weekAgo = clock.UtcNow.AddDays(-7);
+        var counts = await db.Boulders.AsNoTracking()
+            .Where(b => b.GymId == gymId && b.Status == BoulderStatus.Active)
+            .GroupBy(b => b.SectorId)
+            .Select(g => new { SectorId = g.Key, Active = g.Count(), New = g.Count(b => b.CreatedAt >= weekAgo) })
+            .ToDictionaryAsync(x => x.SectorId, ct);
+        return sectors.Select(s => SectorDto.From(s, followed.Contains(s.Id),
+            counts.TryGetValue(s.Id, out var c) ? c.Active : 0, c?.New ?? 0)).ToList();
+    }
+
+    /// <summary>Draws a sector on the gym's floor plan, or takes it off with no points.</summary>
+    public async Task<SectorDto> SetZoneAsync(Guid sectorId, SetSectorZoneRequest r, CancellationToken ct = default)
+    {
+        var sector = await db.Sectors.FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
+        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
+
+        var points = r.Points ?? [];
+        if (points.Count == 0)
+        {
+            sector.SetMapZone(null);
+        }
+        else
+        {
+            static bool Inside(MapPoint? p) => p is not null && double.IsFinite(p.X) && double.IsFinite(p.Y) && p.X is >= 0 and <= 1 && p.Y is >= 0 and <= 1;
+            new Validator()
+                .Check(points.Count is >= 3 and <= 64, "points", "Draw the sector with 3 to 64 points.")
+                .Check(points.All(Inside), "points", "Keep every point on the floor plan.")
+                .Check(r.Label is null || Inside(r.Label), "label", "Keep the label on the floor plan.")
+                .ThrowIfInvalid();
+            // Rounded: four decimals are a tenth of a millimetre on a 10 m wall, and keep the stored outline small.
+            static MapPoint Round(MapPoint p) => new(Math.Round(p.X, 4), Math.Round(p.Y, 4));
+            var outline = points.Select(Round).ToList();
+            var label = r.Label is { } l ? Round(l) : new MapPoint(Math.Round(outline.Average(p => p.X), 4), Math.Round(outline.Average(p => p.Y), 4));
+            sector.SetMapZone(new MapZoneDto(outline, label).ToJson());
+        }
+        await db.SaveChangesAsync(ct);
+        return SectorDto.From(sector);
     }
 
     public async Task<SectorDto> CreateAsync(Guid gymId, CreateSectorRequest r, CancellationToken ct = default)

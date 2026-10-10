@@ -26,6 +26,9 @@ public sealed class ImagesController(ImageService images) : ControllerBase
     [HttpPut("api/gyms/{gymId:guid}/logo")]
     public Task<GymDetailDto> SetLogo(Guid gymId, [FromBody] SetImageRequest request, CancellationToken ct) => images.SetGymImageAsync(gymId, GymImageKind.Logo, request, ct);
 
+    [HttpPut("api/gyms/{gymId:guid}/floor-plan")]
+    public Task<GymDetailDto> SetFloorPlan(Guid gymId, [FromBody] SetFloorPlanRequest request, CancellationToken ct) => images.SetFloorPlanAsync(gymId, request, ct);
+
     [HttpPut("api/gyms/{gymId:guid}/cover")]
     public Task<GymDetailDto> SetCover(Guid gymId, [FromBody] SetImageRequest request, CancellationToken ct) => images.SetGymImageAsync(gymId, GymImageKind.Cover, request, ct);
 }

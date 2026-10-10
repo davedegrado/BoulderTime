@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ExternalLink, Globe, Layers, Mail, MapPin, Phone, Settings2 } from "lucide-react";
-import { useGym, useSectors, type GymDetail } from "@/features/gyms/api";
+import { ExternalLink, Globe, Layers, Mail, MapPin, Maximize2, Phone, Settings2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { useGym, useSectors, type GymDetail, type Sector } from "@/features/gyms/api";
+import { floorPlanOf, SectorMap, type FloorPlan } from "@/features/gyms/SectorMap";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -35,6 +36,8 @@ export function GymPage() {
   const [params, setParams] = useSearchParams();
   const tab: Tab = TABS.includes(params.get("tab") as Tab) ? (params.get("tab") as Tab) : "boulders";
   const setTab = (t: Tab) => setParams(t === "boulders" ? {} : { tab: t }, { replace: true });
+  // "?sector=…" opens the boulders of one sector: from the map, the sector list, or a notification about it.
+  const sectorParam = params.get("sector");
 
   if (gym.isPending) return <LoadingState label={translate("Loading gym")} />;
   if (gym.isError) return gym.error instanceof ApiError && gym.error.isNotFound ? <NotFoundPage /> : <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
@@ -73,7 +76,7 @@ export function GymPage() {
       </div>
 
       <div className="page__pad">
-        {tab === "boulders" ? <BouldersTab gymId={g.id} /> : tab === "sectors" ? <SectorsTab gymId={g.id} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : tab === "ranking" ? <LeaderboardTab gymId={g.id} /> : <InfoTab gym={g} />}
+        {tab === "boulders" ? <BouldersTab key={sectorParam ?? "all"} gymId={g.id} initialSectorId={sectorParam} /> : tab === "sectors" ? <SectorsTab gym={g} onShowBoulders={(sectorId) => setParams({ sector: sectorId }, { replace: true })} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : tab === "ranking" ? <LeaderboardTab gymId={g.id} /> : <InfoTab gym={g} />}
       </div>
     </div>
   );
@@ -108,8 +111,8 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
   );
 }
 
-function BouldersTab({ gymId }: { gymId: string }) {
-  const [filters, setFilters] = useState<BoulderFilters>({});
+function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorId?: string | null }) {
+  const [filters, setFilters] = useState<BoulderFilters>(() => (initialSectorId ? { sectorId: initialSectorId } : {}));
   const [showFilters, setShowFilters] = useState(false);
   const showingRemoved = filters.status === "REMOVED";
   const sectors = useSectors(gymId);
@@ -165,34 +168,127 @@ function UpdatesTab({ gymId }: { gymId: string }) {
   );
 }
 
-function SectorsTab({ gymId }: { gymId: string }) {
-  const sectors = useSectors(gymId);
+function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (sectorId: string) => void }) {
+  const sectors = useSectors(gym.id);
   const { session } = useAuth();
-  const followSector = useFollowSector(gymId);
+  const followSector = useFollowSector(gym.id);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [fullScreen, setFullScreen] = useState(false);
   if (sectors.isPending) return <LoadingState label={translate("Loading sectors")} />;
   if (sectors.isError) return <ErrorState error={sectors.error} onRetry={() => sectors.refetch()} />;
   if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title={translate("No sectors yet")} body={translate("This gym hasn't set up its sectors on BoulderTime.")} />;
 
+  const plan = floorPlanOf(gym);
+  const open = sectors.data.find((s) => s.id === openId) ?? null;
+  const toggleFollow = (s: Sector) => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing });
+
   return (
-    <ul className="list">
-      {sectors.data.map((s) => (
-        <li key={s.id} className={`list__row ${s.isActive ? "" : "list__row--muted"}`}>
-          <span className="sector-mark" aria-hidden />
-          <div className="list__main">
-            <p className="list__title">{s.name}</p>
-            {s.description && <p className="list__sub">{s.description}</p>}
-          </div>
-          {!s.isActive && <Badge>{translate("Hidden")}</Badge>}
-          {session && s.isActive && (
-            <button type="button" className={`icon-btn ${s.isFollowing ? "is-following" : ""}`} aria-pressed={s.isFollowing}
-              aria-label={s.isFollowing ? translate("Unfollow {sector}", { sector: s.name }) : translate("Follow {sector}", { sector: s.name })}
-              onClick={() => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing })}>
-              {s.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+    <div className="stack">
+      {/* The plan comes first when the gym has one; the list stays, for following and for whoever reads it better. */}
+      {plan && sectors.data.some((s) => s.zone) && (
+        <section className="sector-map-card" aria-label={translate("Gym map")}>
+          <SectorMap plan={plan} sectors={sectors.data} onSelect={(s) => setOpenId(s.id)} />
+          <div className="sector-map-card__foot">
+            <p className="sector-map-card__hint">{translate("Tap a sector to see its boulders.")}</p>
+            <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setFullScreen(true)} aria-label={translate("Enlarge the map")} title={translate("Enlarge the map")}>
+              <Maximize2 aria-hidden />
             </button>
+          </div>
+        </section>
+      )}
+      <ul className="list">
+        {sectors.data.map((s) => (
+          <li key={s.id} className={`list__row ${s.isActive ? "" : "list__row--muted"}`}>
+            <button type="button" className="sector-row" onClick={() => setOpenId(s.id)}>
+              <span className="sector-mark" aria-hidden />
+              <span className="list__main">
+                <span className="list__title">{s.name}</span>
+                <span className="list__sub">{sectorCounts(s)}</span>
+              </span>
+            </button>
+            {!s.isActive && <Badge>{translate("Hidden")}</Badge>}
+            {session && s.isActive && (
+              <button type="button" className={`icon-btn ${s.isFollowing ? "is-following" : ""}`} aria-pressed={s.isFollowing}
+                aria-label={s.isFollowing ? translate("Unfollow {sector}", { sector: s.name }) : translate("Follow {sector}", { sector: s.name })}
+                onClick={() => toggleFollow(s)}>
+                {s.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {fullScreen && plan && <MapViewer plan={plan} sectors={sectors.data} onSelect={(s) => setOpenId(s.id)} onClose={() => setFullScreen(false)} />}
+      {open && (
+        <SectorSheet sector={open} signedIn={!!session} onClose={() => setOpenId(null)} onToggleFollow={() => toggleFollow(open)}
+          onShowBoulders={() => { setOpenId(null); setFullScreen(false); onShowBoulders(open.id); }} />
+      )}
+    </div>
+  );
+}
+
+/** "18 on the wall · 3 new", or that there is nothing up yet. */
+function sectorCounts(s: Sector): string {
+  const active = s.activeBoulders ?? 0;
+  if (active === 0) return translate("No boulders on the wall");
+  const base = boulderCount(active, false);
+  return (s.newThisWeek ?? 0) > 0 ? `${base} · ${plural(s.newThisWeek ?? 0, "1 new", "{count} new")}` : base;
+}
+
+/** One sector, from the plan or the list: what is on it, its boulders, and following it. */
+function SectorSheet({ sector, signedIn, onClose, onShowBoulders, onToggleFollow }: {
+  sector: Sector; signedIn: boolean; onClose: () => void; onShowBoulders: () => void; onToggleFollow: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet sector-sheet" role="dialog" aria-modal="true" aria-labelledby="sector-sheet-title" onClick={(e) => e.stopPropagation()}>
+        <div className="sector-sheet__head">
+          <h2 id="sector-sheet-title" className="section__title">{sector.name}</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={translate("Close")}><X aria-hidden /></button>
+        </div>
+        <p className="list__sub">{sectorCounts(sector)}</p>
+        {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
+        <div className="sector-sheet__actions">
+          <Button icon={<Mountain aria-hidden />} onClick={onShowBoulders}>{translate("See the boulders")}</Button>
+          {signedIn && (
+            <Button variant="secondary" icon={sector.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />} onClick={onToggleFollow} aria-pressed={sector.isFollowing}>
+              {sector.isFollowing ? translate("Following") : translate("Follow")}
+            </Button>
           )}
-        </li>
-      ))}
-    </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The plan full screen, larger and scrollable, for a gym with many small sectors. */
+function MapViewer({ plan, sectors, onSelect, onClose }: { plan: FloorPlan; sectors: Sector[]; onSelect: (s: Sector) => void; onClose: () => void }) {
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
+  }, [onClose]);
+  return (
+    <div className="photo-viewer map-viewer" role="dialog" aria-modal="true" aria-label={translate("Gym map")}>
+      <div className="viewer__top">
+        <button type="button" className="viewer__close" onClick={() => setZoom((z) => (z >= 3 ? 1 : z + 1))} aria-label={zoom >= 3 ? translate("Zoom out") : translate("Zoom in")}>
+          {zoom >= 3 ? <ZoomOut aria-hidden /> : <ZoomIn aria-hidden />}
+        </button>
+        <button type="button" className="viewer__close" onClick={onClose} aria-label={translate("Close")}><X aria-hidden /></button>
+      </div>
+      <div className="map-viewer__stage">
+        <div className="map-viewer__inner" style={{ width: `${zoom * 100}%` }}>
+          <SectorMap plan={plan} sectors={sectors} onSelect={onSelect} />
+        </div>
+      </div>
+    </div>
   );
 }
 

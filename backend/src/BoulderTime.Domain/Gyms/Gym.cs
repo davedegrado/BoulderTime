@@ -34,6 +34,11 @@ public class Gym : IAuditable
     public string? LogoPath { get; private set; }
     public string? CoverImageUrl { get; private set; }
     public string? CoverImagePath { get; private set; }
+    /// <summary>The gym's floor plan, on which staff draw the sectors. Width and height give its proportions.</summary>
+    public string? FloorPlanUrl { get; private set; }
+    public string? FloorPlanPath { get; private set; }
+    public int? FloorPlanWidth { get; private set; }
+    public int? FloorPlanHeight { get; private set; }
     /// <summary>WGS84 position for the map. Optional: gyms without coordinates don't appear as pins.</summary>
     public double? Latitude { get; private set; }
     public double? Longitude { get; private set; }
@@ -119,6 +124,17 @@ public class Gym : IAuditable
         var previous = CoverImagePath != path ? CoverImagePath : null;
         CoverImageUrl = Clean(url);
         CoverImagePath = Clean(path);
+        return previous;
+    }
+
+    /// <returns>The replaced storage path, if any, so the old file can be deleted.</returns>
+    public string? SetFloorPlan(string? url, string? path, int? width, int? height)
+    {
+        var previous = FloorPlanPath != path ? FloorPlanPath : null;
+        FloorPlanUrl = Clean(url);
+        FloorPlanPath = Clean(path);
+        FloorPlanWidth = FloorPlanPath is null ? null : width;
+        FloorPlanHeight = FloorPlanPath is null ? null : height;
         return previous;
     }
 

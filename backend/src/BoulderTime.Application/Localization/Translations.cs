@@ -166,6 +166,10 @@ public static partial class Translations
         ("Keep the title to {0} characters or fewer.", "Non superare {0} caratteri nel titolo."),
         ("Events and competitions need a date.", "Eventi e gare richiedono una data."),
         ("Choose logo or cover.", "Scegli logo o copertina."),
+        ("Draw the sector with 3 to 64 points.", "Disegna il settore con un numero di punti tra 3 e 64."),
+        ("Keep every point on the floor plan.", "Tieni tutti i punti dentro la piantina."),
+        ("Keep the label on the floor plan.", "Tieni l'etichetta dentro la piantina."),
+        ("The floor plan's size is missing. Upload it again.", "Manca la dimensione della piantina. Caricala di nuovo."),
         ("Settings changed on another device. Refresh and try again.", "Le impostazioni sono cambiate su un altro dispositivo. Ricarica e riprova."),
 
         // ---- Reporting people & suspensions ----

@@ -28,6 +28,8 @@ internal sealed class GymConfiguration : IEntityTypeConfiguration<Gym>
         b.Property(g => g.CoverImageUrl).HasMaxLength(Gym.UrlMaxLength);
         b.Property(g => g.LogoPath).HasMaxLength(512);
         b.Property(g => g.CoverImagePath).HasMaxLength(512);
+        b.Property(g => g.FloorPlanUrl).HasMaxLength(Gym.UrlMaxLength);
+        b.Property(g => g.FloorPlanPath).HasMaxLength(512);
         b.Property(g => g.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.HasIndex(g => new { g.Status, g.Name });
         b.HasIndex(g => new { g.Status, g.City });
@@ -50,6 +52,7 @@ internal sealed class SectorConfiguration : IEntityTypeConfiguration<Sector>
         b.Property(s => s.Name).HasMaxLength(Sector.NameMaxLength).IsRequired();
         b.Property(s => s.Description).HasMaxLength(Sector.DescriptionMaxLength);
         b.Property(s => s.ImageUrl).HasMaxLength(Gym.UrlMaxLength);
+        b.Property(s => s.MapZone).HasMaxLength(Sector.MapZoneMaxLength);
         b.HasOne<Gym>().WithMany().HasForeignKey(s => s.GymId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(s => new { s.GymId, s.Name }).IsUnique();
         b.HasIndex(s => new { s.GymId, s.SortOrder });

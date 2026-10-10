@@ -38,6 +38,10 @@ export interface GymDetail extends GymSummary {
   follow: { isFollowing: boolean; isFavorite: boolean; notificationsEnabled: boolean } | null;
   followerCount: number;
   earlyPartnerSince?: string | null;
+  /** The floor plan the sectors are drawn on, and its size in pixels (for its proportions). */
+  floorPlanUrl?: string | null;
+  floorPlanWidth?: number | null;
+  floorPlanHeight?: number | null;
 }
 
 export interface Sector {
@@ -49,7 +53,15 @@ export interface Sector {
   sortOrder: number;
   isActive: boolean;
   isFollowing: boolean;
+  /** The sector's outline on the floor plan, in fractions of its width and height; null when not drawn. */
+  zone?: MapZone | null;
+  /** Boulders on the wall, and how many of them were set in the last seven days. */
+  activeBoulders?: number;
+  newThisWeek?: number;
 }
+
+export interface MapPoint { x: number; y: number }
+export interface MapZone { points: MapPoint[]; label: MapPoint }
 
 export interface UpdateGymInput {
   name: string;
@@ -162,5 +174,15 @@ export function useReorderSectors(gymId: string) {
     },
     onError: (_e, _v, ctx) => ctx?.previous && qc.setQueryData(gymKeys.sectors(gymId), ctx.previous),
     onSettled: () => qc.invalidateQueries({ queryKey: gymKeys.sectors(gymId) }),
+  });
+}
+
+/** Draws a sector on the floor plan (or takes it off, with no points). */
+export function useSetSectorZone(gymId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sectorId, points, label }: { sectorId: string; points: MapPoint[]; label?: MapPoint | null }) =>
+      api.put<Sector>(`/api/sectors/${sectorId}/zone`, { points, label: label ?? null }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: gymKeys.sectors(gymId) }),
   });
 }

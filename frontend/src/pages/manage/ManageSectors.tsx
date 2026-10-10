@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Layers, Pencil, Plus, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowDown, ArrowUp, Check, ChevronRight, Eye, EyeOff, Layers, Map as MapIcon, Pencil, Plus, X } from "lucide-react";
+import { floorPlanOf } from "@/features/gyms/SectorMap";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useCreateSector, useReorderSectors, useSectors, useUpdateSector, type Sector } from "@/features/gyms/api";
 import { TextField } from "@/components/TextField";
@@ -37,8 +39,19 @@ export function ManageSectors() {
 
   const createError = create.error instanceof ApiError ? create.error.fieldError("name") : undefined;
 
+  const drawn = (sectors.data ?? []).filter((s) => s.isActive && s.zone).length;
+  const total = (sectors.data ?? []).filter((s) => s.isActive).length;
+
   return (
     <div className="stack">
+      <Link to={`/manage/${gym.slug}/sectors/map`} className="list__row list__row--link card map-entry">
+        <MapIcon className="list__icon" aria-hidden />
+        <span className="list__main">
+          <span className="list__title">{t("Sector map")}</span>
+          <span className="list__sub">{!floorPlanOf(gym) ? t("Upload the floor plan and draw the sectors on it.") : t("{drawn} of {total} sectors drawn", { drawn, total })}</span>
+        </span>
+        <ChevronRight className="list__chevron" aria-hidden />
+      </Link>
       <form className="inline-form" onSubmit={onCreate} noValidate>
         <TextField label={t("New sector")} placeholder={t("e.g. Cave, Slab, Room 2")} value={name} onChange={(e) => setName(e.target.value)} error={createError} maxLength={60} />
         <Button type="submit" icon={<Plus aria-hidden />} loading={create.isPending} disabled={!name.trim()}>{t("Add")}</Button>

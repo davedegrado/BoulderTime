@@ -56,7 +56,10 @@ describe("Gym page", () => {
 
     expect(await screen.findByRole("heading", { name: "Crimp Factory" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Sectors" }));
+    // A sector opens in a sheet with what it is about.
+    await userEvent.click(await screen.findByRole("button", { name: /^Slab/ }));
     expect(await screen.findByText("Technical")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("link", { name: /manage/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Info" }));

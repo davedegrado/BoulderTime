@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bell, BellRing, History, Maximize2, Pencil } from "lucide-react";
 import { useBoulder } from "@/features/boulders/api";
+import { useGym, useSectors } from "@/features/gyms/api";
+import { floorPlanOf, SectorMap } from "@/features/gyms/SectorMap";
 import { ProgressTracker } from "@/features/climbing/ProgressTracker";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
 import { useFollowBoulder } from "@/features/climbing/api";
@@ -96,6 +98,7 @@ export function BoulderPage() {
         </header>
 
         <ProgressTracker key={b.id} boulder={b} />
+        <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} sectorName={b.sectorName} />
 
         <BetaSection boulderId={b.id} gymName={b.gymName} />
         {b.communityVideosEnabled && <CommunityVideosSection boulderId={b.id} />}
@@ -120,5 +123,27 @@ function Grades({ grades, className = "" }: { grades: BoulderGrade[]; className?
       <GradeBadge grade={primary} size="lg" />
       {others.map((g) => <GradeBadge key={g.gradeSystemId} grade={g} size="md" />)}
     </div>
+  );
+}
+
+/** "Where is it": the gym's floor plan with this boulder's sector picked out, when the gym has drawn it. */
+function BoulderWhere({ gymSlug, gymId, sectorId, sectorName }: { gymSlug: string; gymId: string; sectorId: string; sectorName: string }) {
+  const gym = useGym(gymSlug);
+  const sectors = useSectors(gymId);
+  const plan = gym.data ? floorPlanOf(gym.data) : null;
+  if (!plan || !sectors.data?.some((s) => s.id === sectorId && s.zone)) return null;
+  // A tall plan would fill the screen: it keeps to about 240 px high, as wide as that allows.
+  const maxWidth = `min(100%, ${Math.round(240 * plan.width / plan.height)}px)`;
+  return (
+    <section className="section card boulder-where" aria-labelledby="where-title">
+      <div className="boulder-where__head">
+        <h2 id="where-title" className="section__title">{t("Where it is")}</h2>
+        <Link to={`/gyms/${gymSlug}?tab=sectors`} className="section__link">{t("Gym map")}</Link>
+      </div>
+      <p className="list__sub">{t("In {sector}", { sector: sectorName })}</p>
+      <div style={{ maxWidth, width: "100%", margin: "0 auto" }}>
+        <SectorMap plan={plan} sectors={sectors.data} highlightId={sectorId} />
+      </div>
+    </section>
   );
 }

@@ -159,4 +159,32 @@ public sealed class ImageTests(PostgresFixture postgres) : IAsyncLifetime
         (await climber.Client.GetAsync($"/api/boulders/{b.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await _f.CreateClient().GetAsync($"/api/boulders/{b.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task Staff_upload_the_floor_plan_with_its_size_and_climbers_see_it()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var staff = await _f.UserAsync();
+        await _f.StaffAsync(w.Gym, staff, GymRole.Staff);
+
+        // Unlike the logo, the plan is the sectors' business, so plain staff may set it.
+        var plan = await UploadAsync(staff.Client, $"/api/gyms/{w.Gym.Id}/image-uploads", new { kind = "FLOOR_PLAN", contentType = "image/jpeg", sizeBytes = Jpeg.Length });
+        plan.Should().Contain("/floorplan/");
+        (await staff.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/floor-plan", new { path = plan })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var set = (await (await staff.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/floor-plan", new { path = plan, width = 1200, height = 1600 })).ReadAsync<GymDetailDto>())!;
+        set.FloorPlanUrl.Should().Contain(Path.GetFileName(plan));
+
+        var seen = (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Slug}")).ReadAsync<GymDetailDto>())!;
+        seen.FloorPlanUrl.Should().Be(set.FloorPlanUrl);
+        seen.FloorPlanWidth.Should().Be(1200);
+        seen.FloorPlanHeight.Should().Be(1600);
+
+        var climber = await _f.UserAsync();
+        (await climber.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/floor-plan", new { path = (string?)null })).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        var removed = (await (await staff.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/floor-plan", new { path = (string?)null })).ReadAsync<GymDetailDto>())!;
+        removed.FloorPlanUrl.Should().BeNull();
+        removed.FloorPlanWidth.Should().BeNull();
+        File.Exists(Path.Combine(_f.StorageRoot, StorageBuckets.GymImages, plan)).Should().BeFalse();
+    }
 }

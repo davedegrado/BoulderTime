@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Images;
 
-public enum GymImageKind { Logo = 0, Cover = 1 }
+public enum GymImageKind { Logo = 0, Cover = 1, FloorPlan = 2 }
 
 public sealed record ImageUploadRequest(string? ContentType, long? SizeBytes);
 public sealed record GymImageUploadRequest(GymImageKind? Kind, string? ContentType, long? SizeBytes);
@@ -25,7 +25,10 @@ public sealed class ImageService(IAppDbContext db, GymAccess access, IObjectStor
     private static readonly Dictionary<string, string> Types = new(StringComparer.OrdinalIgnoreCase) { ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp" };
 
     public static string AvatarPrefix(Guid userId) => $"users/{userId}/avatar/";
-    public static string GymImagePrefix(Guid gymId, GymImageKind kind) => $"gyms/{gymId}/{(kind == GymImageKind.Logo ? "logo" : "cover")}/";
+    public static string GymImagePrefix(Guid gymId, GymImageKind kind) => $"gyms/{gymId}/{kind switch
+    {
+        GymImageKind.Logo => "logo", GymImageKind.FloorPlan => "floorplan", _ => "cover",
+    }}/";
 
     public async Task<UploadTicket> CreateAvatarUploadAsync(ImageUploadRequest r, CancellationToken ct = default)
     {
@@ -48,8 +51,9 @@ public sealed class ImageService(IAppDbContext db, GymAccess access, IObjectStor
 
     public async Task<UploadTicket> CreateGymImageUploadAsync(Guid gymId, GymImageUploadRequest r, CancellationToken ct = default)
     {
-        await access.RequireRoleAsync(gymId, GymRole.Admin, ct);
         if (r.Kind is not { } kind || !Enum.IsDefined(kind)) throw new ValidationException("kind", "Choose logo or cover.");
+        // The floor plan goes with the sectors, which staff manage; the logo and cover are the gym's face, for admins.
+        await access.RequireRoleAsync(gymId, kind == GymImageKind.FloorPlan ? GymRole.Staff : GymRole.Admin, ct);
         Validate(r.ContentType, r.SizeBytes, MaxGymImageBytes);
         var path = $"{GymImagePrefix(gymId, kind)}{Guid.NewGuid():N}.{Types[r.ContentType!]}";
         return await storage.CreateUploadTicketAsync(StorageBuckets.GymImages, path, r.ContentType!.ToLowerInvariant(), MaxGymImageBytes, ct) with { Resumable = null };
@@ -62,6 +66,22 @@ public sealed class ImageService(IAppDbContext db, GymAccess access, IObjectStor
         var path = await RequireOwnedAsync(StorageBuckets.GymImages, GymImagePrefix(gymId, kind), r.Path, current, ct);
         var url = path is null ? null : storage.PublicUrl(StorageBuckets.GymImages, path);
         var previous = kind == GymImageKind.Logo ? gym.SetLogo(url, path) : gym.SetCover(url, path);
+        await db.SaveChangesAsync(ct);
+        if (previous is not null) await storage.DeleteAsync(StorageBuckets.GymImages, previous, ct);
+        return GymDetailDto.From(gym, role);
+    }
+
+    /// <summary>Sets or removes the floor plan. The sectors drawn on it stay, so a new plan of the same room fits them.</summary>
+    public async Task<GymDetailDto> SetFloorPlanAsync(Guid gymId, SetFloorPlanRequest r, CancellationToken ct = default)
+    {
+        var (gym, role) = await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
+        var path = await RequireOwnedAsync(StorageBuckets.GymImages, GymImagePrefix(gymId, GymImageKind.FloorPlan), r.Path, gym.FloorPlanPath, ct);
+        if (path is not null)
+            new Validator()
+                .Check(r.Width is >= 1 and <= 10_000 && r.Height is >= 1 and <= 10_000, "width", "The floor plan's size is missing. Upload it again.")
+                .ThrowIfInvalid();
+        var url = path is null ? null : storage.PublicUrl(StorageBuckets.GymImages, path);
+        var previous = gym.SetFloorPlan(url, path, r.Width, r.Height);
         await db.SaveChangesAsync(ct);
         if (previous is not null) await storage.DeleteAsync(StorageBuckets.GymImages, previous, ct);
         return GymDetailDto.From(gym, role);

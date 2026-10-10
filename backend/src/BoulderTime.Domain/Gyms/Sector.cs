@@ -7,12 +7,18 @@ public class Sector : IAuditable
 {
     public const int NameMaxLength = 60;
     public const int DescriptionMaxLength = 500;
+    public const int MapZoneMaxLength = 4000;
 
     public Guid Id { get; private set; }
     public Guid GymId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? ImageUrl { get; private set; }
+    /// <summary>
+    /// The sector's area on the gym's floor plan, as JSON: its outline and where its label sits, in fractions of the
+    /// plan's width and height (0–1), so it fits the plan at any size. Null when it isn't drawn.
+    /// </summary>
+    public string? MapZone { get; private set; }
     public int SortOrder { get; private set; }
     public bool IsActive { get; private set; } = true;
     public DateTimeOffset CreatedAt { get; set; }
@@ -36,5 +42,6 @@ public class Sector : IAuditable
     }
 
     public void SetActive(bool active) => IsActive = active;
+    public void SetMapZone(string? json) => MapZone = json;
     public void MoveTo(int sortOrder) => SortOrder = sortOrder;
 }

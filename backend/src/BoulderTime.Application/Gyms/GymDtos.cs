@@ -33,12 +33,17 @@ public sealed record GymDetailDto(
     bool IsEarlyPartner = false,
     /// <summary>Climbers of this gym can upload their own beta.</summary>
     bool CommunityVideosEnabled = false,
-    DateTimeOffset? EarlyPartnerSince = null)
+    DateTimeOffset? EarlyPartnerSince = null,
+    /// <summary>The floor plan the sectors are drawn on, with its size in pixels (for its proportions).</summary>
+    string? FloorPlanUrl = null,
+    int? FloorPlanWidth = null,
+    int? FloorPlanHeight = null)
 {
     public static GymDetailDto From(Gym g, GymRole? viewerRole) => new(
         g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone, g.InstagramUrl, g.FacebookUrl,
         g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude,
-        IsFoundingGym: g.IsFoundingGym, CommunityVideosEnabled: g.CommunityVideosEnabled);
+        IsFoundingGym: g.IsFoundingGym, CommunityVideosEnabled: g.CommunityVideosEnabled,
+        FloorPlanUrl: g.FloorPlanUrl, FloorPlanWidth: g.FloorPlanWidth, FloorPlanHeight: g.FloorPlanHeight);
 }
 
 /// <param name="Latitude">Set both coordinates, or send ClearLocation to remove them; omit both to keep the current ones.</param>
@@ -46,10 +51,36 @@ public sealed record UpdateGymRequest(string? Name, string? Description, string?
     string? InstagramUrl, string? FacebookUrl,
     double? Latitude = null, double? Longitude = null, bool? ClearLocation = null);
 
-public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Description, string? ImageUrl, int SortOrder, bool IsActive, bool IsFollowing = false)
+/// <summary>A point on the floor plan, in fractions of its width (X) and height (Y), 0–1.</summary>
+public sealed record MapPoint(double X, double Y);
+
+/// <summary>A sector's area on the floor plan: its outline (3–64 points) and where its label sits.</summary>
+public sealed record MapZoneDto(IReadOnlyList<MapPoint> Points, MapPoint Label)
 {
-    public static SectorDto From(Sector s, bool isFollowing = false) => new(s.Id, s.GymId, s.Name, s.Description, s.ImageUrl, s.SortOrder, s.IsActive, isFollowing);
+    private static readonly System.Text.Json.JsonSerializerOptions Json = new(System.Text.Json.JsonSerializerDefaults.Web);
+    public string ToJson() => System.Text.Json.JsonSerializer.Serialize(this, Json);
+    public static MapZoneDto? FromJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try { return System.Text.Json.JsonSerializer.Deserialize<MapZoneDto>(json, Json); }
+        catch (System.Text.Json.JsonException) { return null; }
+    }
 }
+
+/// <param name="ActiveBoulders">Boulders on the wall in this sector.</param>
+/// <param name="NewThisWeek">Of those, the ones set in the last seven days.</param>
+public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Description, string? ImageUrl, int SortOrder, bool IsActive, bool IsFollowing = false,
+    MapZoneDto? Zone = null, int ActiveBoulders = 0, int NewThisWeek = 0)
+{
+    public static SectorDto From(Sector s, bool isFollowing = false, int activeBoulders = 0, int newThisWeek = 0) =>
+        new(s.Id, s.GymId, s.Name, s.Description, s.ImageUrl, s.SortOrder, s.IsActive, isFollowing, MapZoneDto.FromJson(s.MapZone), activeBoulders, newThisWeek);
+}
+
+/// <summary>The outline to draw, or no points to take the sector off the plan. Without a label, it goes in the middle.</summary>
+public sealed record SetSectorZoneRequest(IReadOnlyList<MapPoint>? Points, MapPoint? Label);
+
+/// <summary>An uploaded floor plan and its size in pixels, or no path to remove it.</summary>
+public sealed record SetFloorPlanRequest(string? Path, int? Width, int? Height);
 
 public sealed record CreateSectorRequest(string? Name, string? Description);
 public sealed record UpdateSectorRequest(string? Name, string? Description, bool? IsActive);
