@@ -47,6 +47,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("hold_color");
 
+                    b.Property<string>("Intensity")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("intensity");
+
                     b.Property<string>("PhotoPath")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -155,6 +160,61 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasFilter("source = 'Staff'");
 
                     b.ToTable("boulder_grades", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.BoulderTag", b =>
+                {
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tag_id");
+
+                    b.HasKey("BoulderId", "TagId")
+                        .HasName("pk_boulder_tags");
+
+                    b.HasIndex("TagId")
+                        .HasDatabaseName("ix_boulder_tags_tag_id");
+
+                    b.ToTable("boulder_tags", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.GymTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)")
+                        .HasColumnName("normalized_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gym_tags");
+
+                    b.HasIndex("GymId", "NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ix_gym_tags_gym_id_normalized_name");
+
+                    b.ToTable("gym_tags", "bouldertime");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>
@@ -271,12 +331,12 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_boulder_attempts");
 
-                    b.HasIndex("BoulderId")
-                        .HasDatabaseName("ix_boulder_attempts_boulder_id");
-
                     b.HasIndex("UserId", "BoulderId")
                         .IsUnique()
                         .HasDatabaseName("ix_boulder_attempts_user_id_boulder_id");
+
+                    b.HasIndex("BoulderId", "Completed", "CompletedAt")
+                        .HasDatabaseName("ix_boulder_attempts_boulder_id_completed_completed_at");
 
                     b.HasIndex("UserId", "Completed", "CompletedAt")
                         .HasDatabaseName("ix_boulder_attempts_user_id_completed_completed_at");
@@ -2196,6 +2256,33 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_boulder_grades_grade_values_grade_value_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.BoulderTag", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_tags_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Boulders.GymTag", null)
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_tags_gym_tags_tag_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.GymTag", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_gym_tags_gyms_gym_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>
