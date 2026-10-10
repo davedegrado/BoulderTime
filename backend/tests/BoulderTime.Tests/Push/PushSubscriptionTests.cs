@@ -110,4 +110,23 @@ public sealed class PushSubscriptionTests(PostgresFixture postgres) : IAsyncLife
             .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         (await _f.Db(db => db.PushSubscriptions.CountAsync())).Should().Be(0);
     }
+
+    [Fact]
+    public async Task A_test_notification_goes_only_to_your_own_device_and_says_how_it_went()
+    {
+        var climber = await _f.UserAsync();
+        var other = await _f.UserAsync();
+        await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-token-test" });
+
+        // Someone else's phone, or none at all: there is nothing of yours to test.
+        (await other.Client.PostAsync("/api/users/me/push/test?address=fcm-token-test", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await climber.Client.PostAsync("/api/users/me/push/test", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        // The tests run without Firebase: the answer says the server can't send, rather than pretending it did.
+        var result = (await (await climber.Client.PostAsync("/api/users/me/push/test?address=fcm-token-test", null))
+            .ReadAsync<BoulderTime.Application.Notifications.PushTestDto>())!;
+        result.Outcome.Should().Be("skipped");
+        result.Detail.Should().Be("NOT_CONFIGURED");
+        (await _f.Db(db => db.PushSubscriptions.CountAsync(s => s.UserId == climber.Id))).Should().Be(1);
+    }
 }

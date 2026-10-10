@@ -31,16 +31,19 @@ public sealed class FcmPushSender(HttpClient http, IConfiguration configuration,
 
     public bool IsConfigured => _account is not null;
 
-    public async Task<PushResult> SendAsync(PushTarget target, PushMessage message, CancellationToken ct = default)
+    public async Task<PushResult> SendAsync(PushTarget target, PushMessage message, CancellationToken ct = default) =>
+        (await SendWithDetailAsync(target, message, ct)).Result;
+
+    public async Task<PushAttempt> SendWithDetailAsync(PushTarget target, PushMessage message, CancellationToken ct = default)
     {
-        if (_account is null) return PushResult.Skipped;
+        if (_account is null) return new(PushResult.Skipped, "NOT_CONFIGURED");
 
         string accessToken;
         try { accessToken = await AccessTokenAsync(ct); }
         catch (Exception e) when (e is not OperationCanceledException)
         {
             logger.LogWarning(e, "Could not get a Firebase access token");
-            return PushResult.Failed;
+            return new(PushResult.Failed, "GOOGLE_AUTH_FAILED");
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"https://fcm.googleapis.com/v1/projects/{_account.ProjectId}/messages:send")
@@ -52,23 +55,46 @@ public sealed class FcmPushSender(HttpClient http, IConfiguration configuration,
         try
         {
             using var response = await http.SendAsync(request, ct);
-            if (response.IsSuccessStatusCode) return PushResult.Delivered;
+            if (response.IsSuccessStatusCode) return new(PushResult.Delivered);
+
+            var body = await response.Content.ReadAsStringAsync(ct);
+            var code = ErrorCode(body);
+            var detail = $"{(int)response.StatusCode} {code ?? response.StatusCode.ToString()}";
 
             // The app was uninstalled or the token was replaced: stop sending to it.
-            if (response.StatusCode is HttpStatusCode.NotFound) return PushResult.Gone;
-            var body = await response.Content.ReadAsStringAsync(ct);
+            if (response.StatusCode is HttpStatusCode.NotFound || code == "UNREGISTERED") return new(PushResult.Gone, detail);
             if (response.StatusCode == HttpStatusCode.BadRequest && body.Contains("INVALID_ARGUMENT", StringComparison.Ordinal)
                 && body.Contains("token", StringComparison.OrdinalIgnoreCase))
-                return PushResult.Gone;
+                return new(PushResult.Gone, detail);
 
-            logger.LogWarning("Firebase rejected a notification with {Status}", (int)response.StatusCode);
-            return PushResult.Failed;
+            // The code says why: THIRD_PARTY_AUTH_ERROR is Firebase unable to reach Apple (no APNs key uploaded),
+            // SENDER_ID_MISMATCH a token from another Firebase project.
+            logger.LogWarning("Firebase rejected a notification with {Status} {Code}", (int)response.StatusCode, code);
+            return new(PushResult.Failed, detail);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
             logger.LogWarning(e, "Firebase delivery failed");
-            return PushResult.Failed;
+            return new(PushResult.Failed, "NETWORK_ERROR");
         }
+    }
+
+    /// <summary>
+    /// Firebase's own error code (UNREGISTERED, THIRD_PARTY_AUTH_ERROR, SENDER_ID_MISMATCH…), found in the error's
+    /// details; failing that, its general status (INVALID_ARGUMENT, UNAUTHENTICATED…). Null when the body says neither.
+    /// </summary>
+    internal static string? ErrorCode(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (!document.RootElement.TryGetProperty("error", out var error)) return null;
+            if (error.TryGetProperty("details", out var details) && details.ValueKind == JsonValueKind.Array)
+                foreach (var d in details.EnumerateArray())
+                    if (d.TryGetProperty("errorCode", out var c) && c.GetString() is { Length: > 0 } code) return code;
+            return error.TryGetProperty("status", out var status) ? status.GetString() : null;
+        }
+        catch (JsonException) { return null; }
     }
 
     /// <summary>A Google access token, kept until shortly before it expires rather than fetched per message.</summary>

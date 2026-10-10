@@ -8,7 +8,7 @@ import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { disablePush, enablePush, nativePushInThisBuild, needsInstallFirst, pushStatus, pushSupportedHere } from "@/features/notifications/push";
+import { disablePush, enablePush, nativePushInThisBuild, needsInstallFirst, pushStatus, pushSupportedHere, sendTestPush, type PushTestResult } from "@/features/notifications/push";
 import { isNativeApp } from "@/lib/native";
 
 const CATEGORIES: { key: keyof NotificationSettings; label: string; description: string }[] = [
@@ -26,6 +26,7 @@ function PhoneNotifications() {
   const status = useQuery({ queryKey: ["push", "status"], queryFn: pushStatus, enabled: pushSupportedHere() });
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const [test, setTest] = useState<PushTestResult | null>(null);
 
   if (isNativeApp() && !nativePushInThisBuild()) {
     return (
@@ -50,7 +51,21 @@ function PhoneNotifications() {
         else if (outcome === "misconfigured") toast.error(t("Phone notifications aren't set up correctly on the server."));
         else toast.success(t("Phone notifications on"));
       }
+      setTest(null);
       await status.refetch();
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendTest() {
+    setBusy(true);
+    try {
+      const result = await sendTestPush();
+      setTest(result);
+      if (result.outcome === "gone") await status.refetch();
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
@@ -71,8 +86,31 @@ function PhoneNotifications() {
           disabled={busy || status.isPending}
           onChange={toggle} />
       )}
+      {status.data?.subscribedOnThisDevice && (
+        <div className="stack">
+          <button type="button" className="btn btn--secondary" onClick={() => void sendTest()} disabled={busy}>{t("Send a test notification")}</button>
+          {test && (
+            <p className={`notice notice--inline ${test.outcome === "delivered" ? "notice--success" : ""}`} role="status">
+              <span>
+                {testExplanation(test)}
+                {test.detail && ` (${test.detail})`}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
+}
+
+/** What a test notification's outcome means, in words that point at what to fix. */
+function testExplanation({ outcome, detail }: PushTestResult): string {
+  if (outcome === "delivered") return t("Sent. It should appear within a few seconds, even with the app open. If it doesn't, the phone isn't letting it through: check BoulderTime's notifications in the phone's settings and any Focus mode.");
+  if (outcome === "skipped") return t("The server can't send notifications to this kind of device: it isn't set up for it.");
+  if (outcome === "gone") return t("This device is no longer registered. Turn notifications on again.");
+  if (detail?.includes("THIRD_PARTY_AUTH_ERROR")) return t("Firebase can't reach Apple: the APNs key in the Firebase project (Cloud Messaging, Apple app) is missing or wrong.");
+  if (detail?.includes("SENDER_ID_MISMATCH")) return t("The app and the server use two different Firebase projects.");
+  return t("Delivery failed.");
 }
 
 export function NotificationSettingsPage() {

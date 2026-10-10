@@ -27,6 +27,10 @@ public sealed class PushController(PushSubscriptionService service) : Controller
         return NoContent();
     }
 
+    /// <summary>Sends a test notification to one of your own devices now, and says how the push service answered.</summary>
+    [HttpPost("test")]
+    public Task<PushTestDto> Test([FromQuery] string? address, CancellationToken ct) => service.TestAsync(address, ct);
+
     /// <summary>Stops notifications on one device, or on all of them when no address is given.</summary>
     [HttpDelete]
     public async Task<IActionResult> Unsubscribe([FromQuery] string? address, CancellationToken ct)

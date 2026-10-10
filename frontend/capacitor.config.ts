@@ -28,6 +28,11 @@ const config: CapacitorConfig = {
       backgroundColor: "#0C0D0F",
       showSpinner: false,
     },
+    PushNotifications: {
+      // Shown even while the app is open: without this, iOS keeps a notification that arrives in the foreground to
+      // itself, and the app looks as if nothing came.
+      presentationOptions: ["badge", "sound", "alert"],
+    },
     StatusBar: {
       // Light text while the dark launch screen is up; the app switches to dark text once it shows its first screen.
       style: "DARK",

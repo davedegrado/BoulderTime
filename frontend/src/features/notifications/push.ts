@@ -156,6 +156,15 @@ export async function enablePush(publicKey: string): Promise<"enabled" | "denied
   return "enabled";
 }
 
+export interface PushTestResult { outcome: "delivered" | "failed" | "gone" | "skipped"; detail: string | null }
+
+/** Has the server send a notification to this device now, and returns what the push service answered. */
+export async function sendTestPush(): Promise<PushTestResult> {
+  const address = isNativeApp() ? (nativeToken ?? storedNativeToken()) : await currentEndpoint();
+  if (!address) return { outcome: "gone", detail: null };
+  return api.post<PushTestResult>(`/api/users/me/push/test?address=${encodeURIComponent(address)}`);
+}
+
 export async function disablePush(): Promise<void> {
   if (isNativeApp()) return disableNativePush();
 

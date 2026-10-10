@@ -71,6 +71,16 @@ describe("Notifications inside the store app", () => {
     expect(calls.filter((c) => c.method === "POST")).toHaveLength(0);
   });
 
+  it("a test notification goes to this phone, even after the app was closed and opened again", async () => {
+    native.mockReturnValue(true);
+    localStorage.setItem("bt.nativePushToken", "fcm-token-123");
+    const { sendTestPush } = await import("@/features/notifications/push");
+
+    await sendTestPush();
+
+    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push/test?address=fcm-token-123", body: undefined });
+  });
+
   it("turning them off tells the server which device stopped", async () => {
     native.mockReturnValue(true);
     const { enablePush, disablePush } = await import("@/features/notifications/push");

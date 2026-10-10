@@ -1,5 +1,6 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Localization;
 using BoulderTime.Domain.Notifications;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,13 @@ public sealed record PushKeysDto(string? P256dh, string? Auth);
 public sealed record SubscribeToPushRequest(string? Endpoint, PushKeysDto? Keys, string? Token, PushPlatform? Platform);
 
 public sealed record PushStatusDto(bool Available, string? PublicKey, bool SubscribedOnThisDevice);
+
+/// <summary>
+/// How a test notification went: delivered (handed to Firebase or the browser's push service), failed, gone (the
+/// device is no longer registered with the push service) or skipped (the server can't send to this kind of device).
+/// `Detail` is the push service's own reason.
+/// </summary>
+public sealed record PushTestDto(string Outcome, string? Detail);
 
 /// <summary>
 /// The devices a person agreed to be notified on. Each device registers itself; nobody can register another
@@ -89,5 +97,35 @@ public sealed class PushSubscriptionService(IAppDbContext db, ICurrentUser curre
         if (rows.Count == 0) return;
         db.PushSubscriptions.RemoveRange(rows);
         await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Sends a notification to one of the person's own devices, right now and outside the queue, and says how it
+    /// went. It is how someone finds out whether their phone can be reached without waiting for a new boulder.
+    /// </summary>
+    public async Task<PushTestDto> TestAsync(string? address, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var trimmed = Input.Trimmed(address);
+        var device = trimmed.Length == 0 ? null
+            : await db.PushSubscriptions.FirstOrDefaultAsync(s => s.UserId == userId && s.Address == trimmed, ct);
+        if (device is null) throw new NotFoundException("Device", trimmed);
+
+        var sender = senders.FirstOrDefault(s => s.Handles(device.Platform) && s.IsConfigured);
+        if (sender is null) return new PushTestDto("skipped", "NOT_CONFIGURED");
+
+        var language = Language.Normalize(await db.Users.Where(u => u.Id == userId).Select(u => u.Language).FirstOrDefaultAsync(ct));
+        var message = language == Language.English
+            ? new PushMessage("BoulderTime", "Test notification: this phone receives notifications.", "/notifications/settings", "push-test")
+            : new PushMessage("BoulderTime", "Notifica di prova: questo telefono riceve le notifiche.", "/notifications/settings", "push-test");
+
+        var attempt = await sender.SendWithDetailAsync(new PushTarget(device.Platform, device.Address, device.P256dh, device.Auth), message, ct);
+        switch (attempt.Result)
+        {
+            case PushResult.Delivered: device.Succeeded(clock.UtcNow); break;
+            case PushResult.Gone: db.PushSubscriptions.Remove(device); break;
+        }
+        await db.SaveChangesAsync(ct);
+        return new PushTestDto(attempt.Result.ToString().ToLowerInvariant(), attempt.Detail);
     }
 }

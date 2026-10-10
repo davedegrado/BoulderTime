@@ -119,6 +119,17 @@ public sealed class FirebaseSenderTests
         FcmPushSender.ServiceAccount.Read("""{"project_id":"x"}""", logger).Should().BeNull();
     }
 
+    [Theory]
+    [InlineData("""{"error":{"code":401,"status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.firebase.fcm.v1.FcmError","errorCode":"THIRD_PARTY_AUTH_ERROR"}]}}""", "THIRD_PARTY_AUTH_ERROR")]
+    [InlineData("""{"error":{"code":404,"status":"NOT_FOUND","details":[{"@type":"type.googleapis.com/google.firebase.fcm.v1.FcmError","errorCode":"UNREGISTERED"}]}}""", "UNREGISTERED")]
+    [InlineData("""{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.BadRequest"}]}}""", "INVALID_ARGUMENT")]
+    [InlineData("<html>Bad gateway</html>", null)]
+    public void Firebase_errors_are_read_down_to_their_reason(string body, string? expected)
+    {
+        // THIRD_PARTY_AUTH_ERROR, for instance, means Firebase has no key to talk to Apple: worth showing as such.
+        FcmPushSender.ErrorCode(body).Should().Be(expected);
+    }
+
     private static byte[] FromBase64Url(string value)
     {
         var padded = value.Replace('-', '+').Replace('_', '/');
