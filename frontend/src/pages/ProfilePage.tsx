@@ -82,7 +82,7 @@ export function ProfilePage() {
         </div>
       </header>
       <div className="profile-links">
-        <Link to={`/users/${user.id}`} className="btn btn--secondary"><UserRound aria-hidden /><span>{t("View public profile")}</span></Link>
+        <Link to={`/users/${user.id}`} className="btn btn--secondary"><UserRound aria-hidden /><span>{t("Public profile")}</span></Link>
         <Link to="/activity" className="btn btn--secondary"><Activity aria-hidden /><span>{t("Your activity")}</span></Link>
       </div>
 

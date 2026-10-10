@@ -944,7 +944,6 @@ export const it: Record<string, string> = {
   "Most voted": "Più votato",
   "{votes} of {total}": "{votes} su {total}",
   "{grade}: {votes} of {total}": "{grade}: {votes} su {total}",
-  "Your vote": "Il tuo voto",
 
   // ---- Gym page ----
   "Filters": "Filtri",
@@ -962,4 +961,10 @@ export const it: Record<string, string> = {
   // ---- Home ----
   "You also follow": "Segui anche",
   "Tap the heart on a gym's page to keep it at the top.": "Tocca il cuore nella pagina di una palestra per tenerla in cima.",
+
+  // ---- Fixes after review ----
+  "See the votes": "Vedi i voti",
+  "Follow this gym": "Segui questa palestra",
+  "Stop following this gym": "Smetti di seguire questa palestra",
+  "Public profile": "Profilo pubblico",
 };

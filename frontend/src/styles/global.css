@@ -911,38 +911,46 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .beta-card__publisher { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
 
 /* ---------- Community grade, presented plainly ---------- */
+.consensus { gap: var(--bt-2); }
 .consensus__summary { display: grid; grid-template-columns: 1fr 1fr; gap: var(--bt-2); margin: 0; }
-.consensus__fact { display: flex; flex-direction: column; gap: 2px; padding: var(--bt-2) var(--bt-3); border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
+.consensus__fact { display: flex; flex-direction: column; gap: 0; padding: 6px var(--bt-3); border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
 .consensus__fact dt { font-size: var(--bt-text-xs); font-weight: 700; color: var(--bt-ink-3); }
 .consensus__fact dd { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 800; }
 .consensus__share { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
 .consensus__swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgb(0 0 0 / 0.15); flex-shrink: 0; }
+.consensus__details { display: flex; flex-direction: column; }
+.consensus__toggle { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; min-height: 36px; list-style: none; cursor: pointer; font-size: var(--bt-text-sm); font-weight: 700; color: var(--bt-ink-2); }
+.consensus__toggle::-webkit-details-marker { display: none; }
+.consensus__toggle svg { width: 16px; height: 16px; transition: transform 150ms; }
+.consensus__details[open] .consensus__toggle svg { transform: rotate(180deg); }
+.consensus__details .consensus__bars { margin-bottom: var(--bt-2); }
 /* A fixed label column, so every bar starts at the same place whatever the grade is called. */
-.consensus__row { grid-template-columns: 6.5rem 1fr auto; row-gap: 2px; }
-.consensus__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.consensus__label { display: inline-flex; align-items: center; gap: 6px; }
+.consensus__row { grid-template-columns: 5.5rem 1fr auto; }
+.consensus__label { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .consensus__count { min-width: 64px; }
 .consensus__count small { font-weight: 600; color: var(--bt-ink-3); margin-left: 2px; }
-.consensus__tags { grid-column: 2 / -1; display: flex; gap: 6px; }
-.consensus__tags:empty { display: none; }
+.consensus .field__label { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
 
 /* ---------- Gym page: compact header, sticky tabs, filters on demand ---------- */
 .gym-hero__cover { height: 110px; }
-.gym-hero__body > .gym-avatar { display: grid; } /* initials stay centred (the block display used to override the grid) */
-/* Only the logo overlaps the cover; the name starts just below it, never on top of the photo. */
-.gym-hero__identity { display: flex; align-items: flex-start; gap: var(--bt-3); }
-.gym-hero__identity .gym-avatar { margin-top: -36px; box-shadow: 0 0 0 4px var(--bt-light); position: relative; z-index: 1; }
-.gym-hero__identity .gym-hero__text { flex: 1; min-width: 0; gap: 0; padding-top: var(--bt-2); }
-.gym-hero__name { font-size: clamp(1.5rem, 1.1rem + 2vw, var(--bt-text-2xl)); overflow-wrap: anywhere; }
-.gym-hero__row { align-items: center; margin-top: var(--bt-3); }
-.gym-hero__row .gym-badges:empty { display: none; }
-.gym-hero__row .gym-hero__actions { margin-left: auto; }
+.gym-hero__top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--bt-3); }
+.gym-hero__top .gym-avatar { display: grid; margin-top: -36px; position: relative; z-index: 1; box-shadow: 0 0 0 4px var(--bt-light); }
+.gym-hero__top .gym-hero__actions { flex-wrap: nowrap; gap: var(--bt-2); margin-top: var(--bt-2); }
+.gym-hero__actions .icon-btn--outlined { width: 44px; height: 44px; }
+.gym-hero__actions .icon-btn--outlined svg { width: 20px; height: 20px; }
+.gym-hero__body > .gym-hero__text { margin-top: var(--bt-2); }
+.gym-hero__name { overflow-wrap: anywhere; }
 @media (min-width: 960px) {
   .gym-hero__cover { height: 200px; }
-  .gym-hero__identity .gym-avatar { margin-top: -44px; }
+  .gym-hero__top .gym-avatar { margin-top: -44px; }
+  .gym-page > .tabs { padding-left: var(--bt-10); padding-right: var(--bt-10); }
 }
 /* The tabs stay in reach while scrolling a long list of boulders. */
-.tabs { position: sticky; top: calc(56px + var(--bt-safe-top)); z-index: 15; background: var(--bt-light); margin-top: var(--bt-3); }
+.tabs { position: sticky; top: calc(56px + var(--bt-safe-top)); z-index: 15; background: var(--bt-light); margin-top: var(--bt-2); }
+.page.gym-page { gap: 0; }
+.gym-hero { padding-bottom: var(--bt-1); }
+.gym-hero + .tabs + .page__pad { padding-top: var(--bt-4); }
+.gym-hero + .tabs + .page__pad > .stack { gap: var(--bt-3); }
 @media (max-width: 559px) { .tabs { gap: 0; justify-content: space-between; } .tabs__tab { font-size: 0.9375rem; } }
 @media (min-width: 960px) { .tabs { top: 0; } }
 
@@ -984,3 +992,13 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .home-gym--compact { min-height: 52px; padding-top: var(--bt-2); padding-bottom: var(--bt-2); }
 .home-gym--compact .list__title { font-weight: 600; }
 .home-gym__new { color: var(--bt-orange-ink); font-weight: 700; }
+
+/* ---------- After review: smaller profile shortcuts, smaller boulder cards ---------- */
+.profile-links .btn { flex: 0 0 auto; min-height: 40px; padding: 0 var(--bt-4); font-size: var(--bt-text-sm); white-space: nowrap; }
+.profile-links .btn svg { width: 18px; height: 18px; }
+/* Square photos and a tighter caption: two cards fit a phone screen with room to spare, and the photo still shows
+   enough of the wall to recognise the problem (it opens whole on the boulder page). */
+.boulder-card__photo { padding-bottom: 80%; }
+.boulder-card__body { gap: 4px; padding: var(--bt-2) 10px 10px; }
+.boulder-card .grade--md { min-height: 26px; padding: 0 8px; font-size: var(--bt-text-sm); }
+.boulder-card .holds--compact { font-size: var(--bt-text-xs); }

@@ -76,9 +76,11 @@ describe("Community grade", () => {
     });
     renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
 
-    const rows = await screen.findAllByRole("listitem");
+    await userEvent.click(await screen.findByText("See the votes"));
+    const rows = screen.getAllByRole("listitem");
     expect(rows.map((r) => r.getAttribute("aria-label"))).toEqual(["6A: 0 of 2", "6B: 2 of 2"]);
-    expect(within(rows[1]!).getByText("Your vote")).toBeInTheDocument();
+    // The climber's own vote is in the selector, always in view.
+    expect(screen.getByRole("combobox", { name: "Your Fontainebleau grade" })).toHaveValue("v6b");
   });
 
   const consensus = (viewerCanSuggest: boolean) => ({
@@ -107,9 +109,10 @@ describe("Community grade", () => {
     const summary = screen.getByText("Most voted").closest("dl")!;
     expect(within(summary).getByText("Official").nextElementSibling).toHaveTextContent("6A");
     expect(within(summary).getByText("Most voted").nextElementSibling).toHaveTextContent("6A+ 3 of 5");
-    // Every voted grade with its count and share; the official one is marked in the distribution too.
+    // The distribution is folded away, and opens with every grade's count and share.
+    await userEvent.click(screen.getByText("See the votes"));
     expect(screen.getByRole("listitem", { name: "6A+: 3 of 5" })).toHaveTextContent("60%");
-    expect(within(screen.getByRole("listitem", { name: "6A: 1 of 5" })).getByText("Official")).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: "6A: 1 of 5" })).toHaveTextContent("20%");
     expect(screen.getByText("Log an attempt to suggest a grade.")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });

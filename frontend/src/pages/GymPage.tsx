@@ -22,7 +22,6 @@ import { useAnnouncements } from "@/features/notifications/api";
 import { AnnouncementCard } from "@/features/notifications/NotificationBits";
 import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
-import { FollowButton } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 import { t, plural, t as translate } from "@/i18n/i18n";
 import { GymBadges } from "@/features/gyms/GymBadges";
@@ -46,26 +45,27 @@ export function GymPage() {
 
   const g = gym.data;
   return (
-    <div className="page page--flush">
+    <div className="page page--flush gym-page">
       <header className="gym-hero">
         <div className="gym-hero__cover" style={g.coverImageUrl ? { backgroundImage: `url(${g.coverImageUrl})` } : undefined} />
         <div className="gym-hero__body">
-          <div className="gym-hero__identity">
+          {/* The logo overlaps the cover; the actions sit level with it, as icons, so the name gets the full width. */}
+          <div className="gym-hero__top">
             <GymAvatar name={g.name} logoUrl={g.logoUrl} size={72} />
-            <div className="gym-hero__text">
-              <h1 className="page__title gym-hero__name">{g.name}</h1>
-              <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
-            </div>
-          </div>
-          <div className="gym-hero__row">
-            <GymBadges isFoundingGym={g.isFoundingGym} isEarlyPartner={g.isEarlyPartner} />
-            {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · {t("only staff can see this")}</Badge>}
             <div className="gym-hero__actions">
               <GymFollowControls gym={g} />
               {g.viewerRole && (
-                <Link to={`/manage/${g.slug}`} className="btn btn--secondary"><Settings2 aria-hidden /><span>{translate("Manage")}</span></Link>
+                <Link to={`/manage/${g.slug}`} className="icon-btn icon-btn--outlined" aria-label={translate("Manage")} title={translate("Manage")}>
+                  <Settings2 aria-hidden />
+                </Link>
               )}
             </div>
+          </div>
+          <div className="gym-hero__text">
+            <h1 className="page__title gym-hero__name">{g.name}</h1>
+            <GymBadges isFoundingGym={g.isFoundingGym} isEarlyPartner={g.isEarlyPartner} />
+            <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
+            {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · {t("only staff can see this")}</Badge>}
           </div>
         </div>
       </header>
@@ -86,13 +86,23 @@ export function GymPage() {
 function GymFollowControls({ gym }: { gym: GymDetail }) {
   const { session } = useAuth();
   const follow = useFollowGym(gym);
-  if (!session) return <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="btn btn--primary"><Bell aria-hidden /><span>{translate("Follow")}</span></Link>;
+  if (!session) {
+    return (
+      <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="icon-btn icon-btn--outlined" aria-label={translate("Follow")} title={translate("Follow")}>
+        <Bell aria-hidden />
+      </Link>
+    );
+  }
   const state = gym.follow ?? { isFollowing: false, isFavorite: false };
+  const followLabel = state.isFollowing ? translate("Stop following this gym") : translate("Follow this gym");
   return (
     <>
-      <FollowButton following={state.isFollowing} onToggle={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })} />
+      <button type="button" className={`icon-btn icon-btn--outlined ${state.isFollowing ? "is-following" : ""}`} aria-pressed={state.isFollowing}
+        aria-label={followLabel} title={followLabel} onClick={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })}>
+        {state.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+      </button>
       {state.isFollowing && (
-        <button type="button" className={`icon-btn fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
+        <button type="button" className={`icon-btn icon-btn--outlined fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
           aria-label={state.isFavorite ? translate("Remove from favourites") : translate("Add to favourites")}
           onClick={() => follow.mutate({ isFollowing: true, isFavorite: !state.isFavorite })}>
           <Heart aria-hidden />

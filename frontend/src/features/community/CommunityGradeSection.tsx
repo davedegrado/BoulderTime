@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { useConsensus, useSuggestGrade, type ConsensusBucket, type SystemConsensus } from "@/features/community/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { SelectField } from "@/components/Fields";
@@ -9,8 +10,9 @@ import { dataLabel } from "@/i18n/data";
 
 /**
  * Community grade: what climbers think, side by side with the gym's grade and never mixed with it. The rule for the
- * "most voted" grade is the server's and doesn't change here; this only shows it plainly — how many votes, out of
- * how many, and the official grade on the same scale even when nobody voted for it.
+ * "most voted" grade is the server's and doesn't change here. Always in view: the official grade, the most voted one
+ * ("9 of 16") and the climber's own vote; the distribution, with the official grade on the scale even when nobody
+ * voted for it, opens on request.
  */
 export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   const consensus = useConsensus(boulderId);
@@ -75,21 +77,23 @@ function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; 
         </div>
       </dl>
 
+      {/* The detail is there for whoever wants it, folded away: the two answers above are what most people read. */}
       {rows.length > 0 && s.totalVotes > 0 && (
-        <ul className="consensus__bars" aria-label={t("Votes for {system}", { system: dataLabel(s.systemName) })}>
-          {rows.map((b) => (
-            <li key={b.gradeValueId} className={`consensus__row ${b.gradeValueId === s.consensusValueId ? "is-consensus" : ""}`}
-              aria-label={t("{grade}: {votes} of {total}", { grade: dataLabel(b.label), votes: b.votes, total: s.totalVotes })}>
-              <span className="consensus__label"><Swatch bucket={b} />{dataLabel(b.label)}</span>
-              <span className="consensus__track"><span className="consensus__fill" style={{ width: `${(b.votes / max) * 100}%` }} /></span>
-              <span className="consensus__count">{b.votes} <small>{percent(b.votes)}%</small></span>
-              <span className="consensus__tags">
-                {b.gradeValueId === s.officialValueId && <span className="tag tag--dark">{t("Official")}</span>}
-                {b.gradeValueId === s.viewerValueId && <span className="tag tag--orange">{t("Your vote")}</span>}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <details className="consensus__details">
+          <summary className="consensus__toggle">
+            {t("See the votes")} <ChevronDown aria-hidden />
+          </summary>
+          <ul className="consensus__bars" aria-label={t("Votes for {system}", { system: dataLabel(s.systemName) })}>
+            {rows.map((b) => (
+              <li key={b.gradeValueId} className={`consensus__row ${b.gradeValueId === s.consensusValueId ? "is-consensus" : ""}`}
+                aria-label={t("{grade}: {votes} of {total}", { grade: dataLabel(b.label), votes: b.votes, total: s.totalVotes })}>
+                <span className="consensus__label"><Swatch bucket={b} />{dataLabel(b.label)}</span>
+                <span className="consensus__track"><span className="consensus__fill" style={{ width: `${(b.votes / max) * 100}%` }} /></span>
+                <span className="consensus__count">{b.votes} <small>{percent(b.votes)}%</small></span>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
       {canSuggest && (
         <SelectField label={t("Your {system} grade", { system: dataLabel(s.systemName) })} value={s.viewerValueId ?? ""} disabled={suggest.isPending}
