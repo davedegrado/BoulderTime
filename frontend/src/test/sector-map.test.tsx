@@ -101,7 +101,29 @@ describe("Drawing the sectors, for staff", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save the sector" }));
 
     const put = calls.find((c) => c.method === "PUT" && c.path === "/api/sectors/s2/zone");
-    expect(put?.body).toEqual({ points: [{ x: 0.5, y: 0.1 }, { x: 0.9, y: 0.1 }, { x: 0.9, y: 0.5 }], label: null });
+    expect(put?.body).toEqual({ points: [{ x: 0.5, y: 0.1 }, { x: 0.9, y: 0.1 }, { x: 0.9, y: 0.5 }], label: null, hideLabel: false });
+  });
+
+  it("can leave a sector's name off the map, keeping its outline", async () => {
+    reply("GET", "/api/gyms/crimp", { ...gym, viewerRole: "STAFF" });
+    reply("GET", "/api/gyms/g1/sectors", sectors);
+    reply("PUT", "/api/sectors/s2/zone", (body: unknown) => ({ ...sectors[1], zone: { ...(body as object), label: { x: 0.5, y: 0.5 } } }));
+    renderAt("/manage/crimp/sectors/map", "/manage/:slug", <ManageLayout />, <Route path="sectors/map" element={<ManageSectorMap />} />);
+
+    await screen.findByRole("radio", { name: "Slab" });
+    const canvas = document.querySelector(".zone-editor__canvas") as HTMLElement;
+    fireEvent.click(canvas, { clientX: 500, clientY: 100 });
+    fireEvent.click(canvas, { clientX: 900, clientY: 100 });
+    fireEvent.click(canvas, { clientX: 900, clientY: 500 });
+    const first = screen.getByRole("button", { name: "First corner: tap to close" });
+    fireEvent.pointerDown(first, { pointerId: 1 });
+    fireEvent.pointerUp(first, { pointerId: 1 });
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /Show the name on the map/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Save the sector" }));
+
+    const put = calls.find((c) => c.method === "PUT" && c.path === "/api/sectors/s2/zone");
+    expect(put?.body).toMatchObject({ hideLabel: true });
   });
 
   it("asks for the floor plan first", async () => {

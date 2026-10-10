@@ -46,15 +46,23 @@ export function SectorMap({ plan, sectors, onSelect, highlightId, className = ""
             {...(onSelect ? { role: "button", tabIndex: 0, "aria-label": t("Sector {name}", { name: s.name }), onClick: () => onSelect(s), onKeyDown: (e: KeyboardEvent) => keyed(e, s) } : {})} />
         ))}
       </svg>
-      {drawn.map((s) => (
-        <span key={s.id} className={`sector-map__label ${s.id === highlightId ? "is-highlighted" : ""} ${edge(s.zone!.label.x)}`}
-          style={{ left: `${s.zone!.label.x * 100}%`, top: `${s.zone!.label.y * 100}%` }}
-          onClick={onSelect ? () => onSelect(s) : undefined} aria-hidden>
-          {(s.newThisWeek ?? 0) > 0 && <i className="sector-map__new" title={plural(s.newThisWeek ?? 0, "1 new", "{count} new")} />}
-          {s.name}
-          {s.isFollowing && <Bell className="sector-map__bell" />}
-        </span>
-      ))}
+      {drawn.map((s) => {
+        const highlighted = s.id === highlightId;
+        const isNew = (s.newThisWeek ?? 0) > 0;
+        // A sector drawn without its name keeps only its markers (new boulders, followed), unless it is the one
+        // being pointed at.
+        const named = !s.zone!.hideLabel || highlighted;
+        if (!named && !isNew && !s.isFollowing) return null;
+        return (
+          <span key={s.id} className={`sector-map__label ${highlighted ? "is-highlighted" : ""} ${named ? edge(s.zone!.label.x) : "is-bare"}`}
+            style={{ left: `${s.zone!.label.x * 100}%`, top: `${s.zone!.label.y * 100}%` }}
+            onClick={onSelect ? () => onSelect(s) : undefined} aria-hidden>
+            {isNew && <i className="sector-map__new" title={plural(s.newThisWeek ?? 0, "1 new", "{count} new")} />}
+            {named && s.name}
+            {s.isFollowing && <Bell className="sector-map__bell" />}
+          </span>
+        );
+      })}
     </div>
   );
 }

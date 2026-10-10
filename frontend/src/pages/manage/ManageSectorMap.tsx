@@ -13,10 +13,10 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 
-interface Draft { points: MapPoint[]; closed: boolean; label: MapPoint | null; dirty: boolean }
-const EMPTY: Draft = { points: [], closed: false, label: null, dirty: false };
+interface Draft { points: MapPoint[]; closed: boolean; label: MapPoint | null; showLabel: boolean; dirty: boolean }
+const EMPTY: Draft = { points: [], closed: false, label: null, showLabel: true, dirty: false };
 const draftOf = (s: Sector | undefined): Draft =>
-  s?.zone ? { points: s.zone.points, closed: true, label: s.zone.label, dirty: false } : EMPTY;
+  s?.zone ? { points: s.zone.points, closed: true, label: s.zone.label, showLabel: !s.zone.hideLabel, dirty: false } : EMPTY;
 
 /**
  * Staff put the gym's floor plan in and draw each sector on it: pick a sector, tap the corners of its area, tap the
@@ -126,7 +126,7 @@ function ZoneEditor({ plan, sectors, gymId }: { plan: FloorPlan; sectors: Sector
 
   function saveZone() {
     if (!selected || !draft.closed) return;
-    save.mutate({ sectorId: selected.id, points: draft.points, label: draft.label }, {
+    save.mutate({ sectorId: selected.id, points: draft.points, label: draft.label, hideLabel: !draft.showLabel }, {
       onSuccess: () => {
         toast.success(t("“{name}” is on the map", { name: selected.name }));
         setDraft((d) => ({ ...d, dirty: false }));
@@ -176,7 +176,7 @@ function ZoneEditor({ plan, sectors, gymId }: { plan: FloorPlan; sectors: Sector
                 : <polyline className="zone-editor__draft is-open" points={draft.points.map((p) => `${p.x * w},${p.y * h}`).join(" ")} />)}
             </svg>
             {others.map((s) => (
-              <span key={s.id} className="zone-editor__other-label" style={{ left: `${s.zone!.label.x * 100}%`, top: `${s.zone!.label.y * 100}%` }}>{s.name}</span>
+              <span key={s.id} className={`zone-editor__other-label ${s.zone!.hideLabel ? "is-hidden" : ""}`} style={{ left: `${s.zone!.label.x * 100}%`, top: `${s.zone!.label.y * 100}%` }}>{s.name}</span>
             ))}
             {draft.points.map((p, i) => (
               <button key={i} type="button" className={`zone-editor__corner ${i === 0 && !draft.closed && draft.points.length >= 3 ? "is-first" : ""}`}
@@ -185,7 +185,7 @@ function ZoneEditor({ plan, sectors, gymId }: { plan: FloorPlan; sectors: Sector
                 onPointerDown={(e) => startDrag(e, i)} onPointerMove={drag} onPointerUp={(e) => endDrag(e, i)} onClick={(e) => e.stopPropagation()} />
             ))}
             {selected && draft.closed && label && (
-              <span className="zone-editor__label" style={{ left: `${label.x * 100}%`, top: `${label.y * 100}%` }}
+              <span className={`zone-editor__label ${draft.showLabel ? "" : "is-hidden"}`} style={{ left: `${label.x * 100}%`, top: `${label.y * 100}%` }}
                 onPointerDown={(e) => startDrag(e, "label")} onPointerMove={drag} onPointerUp={(e) => endDrag(e, "label")} onClick={(e) => e.stopPropagation()}>
                 {selected.name}
               </span>
@@ -193,6 +193,16 @@ function ZoneEditor({ plan, sectors, gymId }: { plan: FloorPlan; sectors: Sector
           </div>
         </div>
       </div>
+
+      {selected && draft.closed && (
+        <label className="check check--plain">
+          <input type="checkbox" checked={draft.showLabel} onChange={(e) => { const showLabel = e.target.checked; setDraft((d) => ({ ...d, showLabel, dirty: true })); }} />
+          <span>
+            <strong>{t("Show the name on the map")}</strong>
+            <span className="field__hint">{t("Turn it off when names overlap: climbers still see it by tapping the sector.")}</span>
+          </span>
+        </label>
+      )}
 
       <label className="zone-editor__zoom">
         <span>{t("Zoom")}</span>

@@ -16,6 +16,9 @@ h1, h2, h3 { margin: 0; line-height: 1.15; letter-spacing: var(--bt-tracking-tig
 p { margin: 0; }
 svg { flex-shrink: 0; }
 :focus-visible { outline: none; box-shadow: var(--bt-focus); border-radius: var(--bt-radius-sm); }
+/* Containers focused by the app (the page after navigating, so screen readers start there) are not controls: Safari
+   draws its focus ring on them after a tap, which showed as an orange outline around the whole page on iPhone. */
+[tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline: none; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
 .skip-link { position: absolute; left: -9999px; top: var(--bt-2); z-index: 100; background: var(--bt-orange); color: var(--bt-charcoal); padding: var(--bt-2) var(--bt-4); border-radius: var(--bt-radius-sm); font-weight: 700; }
@@ -1110,6 +1113,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .sector-map__label { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 4px; max-width: 34%; padding: 3px 8px; border-radius: var(--bt-radius-pill); background: var(--bt-charcoal); color: #fff; font-size: 0.6875rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 4px rgb(0 0 0 / 0.3); cursor: pointer; }
 .sector-map__label.is-start { transform: translate(-12px, -50%); }
 .sector-map__label.is-end { transform: translate(calc(-100% + 12px), -50%); }
+.sector-map__label.is-bare { padding: 4px; gap: 2px; }
 .sector-map.has-highlight .sector-map__label { display: none; }
 .sector-map.has-highlight .sector-map__label.is-highlighted { display: inline-flex; max-width: 80%; }
 .sector-map.has-highlight .sector-map__label.is-highlighted { opacity: 1; background: var(--bt-orange); }
@@ -1150,6 +1154,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .zone-editor__other-label { position: absolute; transform: translate(-50%, -50%); padding: 2px 6px; border-radius: var(--bt-radius-pill); background: rgb(255 255 255 / 0.85); color: var(--bt-ink-2); font-size: 0.6875rem; font-weight: 700; white-space: nowrap; pointer-events: none; }
 .zone-editor__corner { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; padding: 0; border: 3px solid var(--bt-orange); border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35); cursor: grab; touch-action: none; }
 .zone-editor__corner.is-first { width: 28px; height: 28px; margin: -14px 0 0 -14px; background: var(--bt-orange); box-shadow: 0 0 0 4px rgb(255 122 46 / 0.35); }
+.zone-editor__other-label.is-hidden, .zone-editor__label.is-hidden { opacity: 0.45; text-decoration: line-through; }
 .zone-editor__label { position: absolute; transform: translate(-50%, -50%); padding: 4px 10px; border-radius: var(--bt-radius-pill); background: var(--bt-charcoal); color: #fff; font-size: var(--bt-text-xs); font-weight: 700; white-space: nowrap; cursor: grab; touch-action: none; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35); }
 .zone-editor__zoom { display: flex; align-items: center; gap: var(--bt-3); font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
 .zone-editor__zoom input { flex: 1; accent-color: var(--bt-orange); }

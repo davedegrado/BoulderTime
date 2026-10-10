@@ -32,6 +32,12 @@ public sealed class SectorMapTests(PostgresFixture postgres) : IAsyncLifetime
         var listed = (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/sectors")).ReadAsync<List<SectorDto>>())!;
         listed.Single().Zone!.Points[2].Should().Be(new MapPoint(0.5, 0.6));
 
+        // A name that would cover its neighbours can stay off the plan; the outline is still there to tap.
+        var unnamed = (await (await w.Staff.Client.PutAsJsonAsync($"/api/sectors/{w.Sector.Id}/zone",
+            new { points = new[] { new { x = 0.1, y = 0.2 }, new { x = 0.5, y = 0.2 }, new { x = 0.5, y = 0.6 } }, hideLabel = true })).ReadAsync<SectorDto>())!;
+        unnamed.Zone!.HideLabel.Should().BeTrue();
+        drawn.Zone.HideLabel.Should().BeFalse();
+
         // Taking it off the plan: no points.
         var cleared = (await (await w.Staff.Client.PutAsJsonAsync($"/api/sectors/{w.Sector.Id}/zone", new { points = Array.Empty<object>() })).ReadAsync<SectorDto>())!;
         cleared.Zone.Should().BeNull();

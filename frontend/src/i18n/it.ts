@@ -751,6 +751,8 @@ export const it: Record<string, string> = {
   "Firebase can't reach Apple: the APNs key in the Firebase project (Cloud Messaging, Apple app) is missing or wrong.": "Firebase non riesce a parlare con Apple: la chiave APNs nel progetto Firebase (Cloud Messaging, app Apple) manca o è sbagliata.",
   "The app and the server use two different Firebase projects.": "L'app e il server usano due progetti Firebase diversi.",
   "Delivery failed.": "Invio non riuscito.",
+  "Show the name on the map": "Mostra il nome sulla mappa",
+  "Turn it off when names overlap: climbers still see it by tapping the sector.": "Disattivalo se i nomi si accavallano: chi arrampica lo vede comunque toccando il settore.",
   "New boulders, retraces and gym updates reach you even with the app closed. What you receive follows the settings below.": "Blocchi nuovi, ritracciature e novità della palestra ti arrivano anche ad app chiusa. Cosa ricevi dipende dalle impostazioni qui sotto.",
   "Phone notifications on": "Notifiche sul telefono attive",
   "Phone notifications off": "Notifiche sul telefono disattivate",

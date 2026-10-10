@@ -59,7 +59,7 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
             static MapPoint Round(MapPoint p) => new(Math.Round(p.X, 4), Math.Round(p.Y, 4));
             var outline = points.Select(Round).ToList();
             var label = r.Label is { } l ? Round(l) : new MapPoint(Math.Round(outline.Average(p => p.X), 4), Math.Round(outline.Average(p => p.Y), 4));
-            sector.SetMapZone(new MapZoneDto(outline, label).ToJson());
+            sector.SetMapZone(new MapZoneDto(outline, label, r.HideLabel ?? false).ToJson());
         }
         await db.SaveChangesAsync(ct);
         return SectorDto.From(sector);

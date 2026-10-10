@@ -61,7 +61,8 @@ export interface Sector {
 }
 
 export interface MapPoint { x: number; y: number }
-export interface MapZone { points: MapPoint[]; label: MapPoint }
+/** `hideLabel`: the name stays off the plan (names that would overlap); the area can still be tapped. */
+export interface MapZone { points: MapPoint[]; label: MapPoint; hideLabel?: boolean }
 
 export interface UpdateGymInput {
   name: string;
@@ -181,8 +182,8 @@ export function useReorderSectors(gymId: string) {
 export function useSetSectorZone(gymId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ sectorId, points, label }: { sectorId: string; points: MapPoint[]; label?: MapPoint | null }) =>
-      api.put<Sector>(`/api/sectors/${sectorId}/zone`, { points, label: label ?? null }),
+    mutationFn: ({ sectorId, points, label, hideLabel }: { sectorId: string; points: MapPoint[]; label?: MapPoint | null; hideLabel?: boolean }) =>
+      api.put<Sector>(`/api/sectors/${sectorId}/zone`, { points, label: label ?? null, hideLabel: hideLabel ?? false }),
     onSuccess: () => qc.invalidateQueries({ queryKey: gymKeys.sectors(gymId) }),
   });
 }

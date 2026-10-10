@@ -54,8 +54,11 @@ public sealed record UpdateGymRequest(string? Name, string? Description, string?
 /// <summary>A point on the floor plan, in fractions of its width (X) and height (Y), 0–1.</summary>
 public sealed record MapPoint(double X, double Y);
 
-/// <summary>A sector's area on the floor plan: its outline (3–64 points) and where its label sits.</summary>
-public sealed record MapZoneDto(IReadOnlyList<MapPoint> Points, MapPoint Label)
+/// <summary>
+/// A sector's area on the floor plan: its outline (3–64 points) and where its label sits. `HideLabel` leaves the name
+/// off the plan, for sectors whose names would cover each other; tapping the area still names it.
+/// </summary>
+public sealed record MapZoneDto(IReadOnlyList<MapPoint> Points, MapPoint Label, bool HideLabel = false)
 {
     private static readonly System.Text.Json.JsonSerializerOptions Json = new(System.Text.Json.JsonSerializerDefaults.Web);
     public string ToJson() => System.Text.Json.JsonSerializer.Serialize(this, Json);
@@ -77,7 +80,7 @@ public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Descrip
 }
 
 /// <summary>The outline to draw, or no points to take the sector off the plan. Without a label, it goes in the middle.</summary>
-public sealed record SetSectorZoneRequest(IReadOnlyList<MapPoint>? Points, MapPoint? Label);
+public sealed record SetSectorZoneRequest(IReadOnlyList<MapPoint>? Points, MapPoint? Label, bool? HideLabel = null);
 
 /// <summary>An uploaded floor plan and its size in pixels, or no path to remove it.</summary>
 public sealed record SetFloorPlanRequest(string? Path, int? Width, int? Height);
