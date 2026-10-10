@@ -827,3 +827,20 @@ at any size and survives a new plan of the same room. The app draws the plan as 
 proportions on top; each outline is a button named after its sector. `GET /api/gyms/{id}/sectors` also returns each
 sector's boulders on the wall and how many are new this week (green dot on the plan). Staff (not only admins) set the
 plan and the outlines: they belong with the sectors. `?sector=` on the gym's page opens its boulders filtered by it.
+
+## ADR-045 · iOS builds for TestFlight from GitHub Actions
+The iOS workflow keeps its unsigned simulator build (it proves the app compiles) and, once the secrets exist, also
+archives for iPhones, signs, exports an `.ipa` and uploads it to App Store Connect from `main`.
+
+**Manual signing, set on the App target only.** The Release configuration of the App target says Apple Distribution,
+manual style, team `AGXG273RG9` and `PROVISIONING_PROFILE_SPECIFIER = $(BT_PROFILE_NAME)`, which the workflow fills in
+with the name read from the profile. Passed on the `xcodebuild` command line instead, these would apply to the Swift
+packages (Capacitor, Firebase) too, and they refuse a provisioning profile. Automatic "cloud" signing would need an
+Admin API key able to create certificates; a certificate and a profile in secrets are less power in fewer hands.
+
+**Release has its own entitlements** (`App.Release.entitlements`): the same links claim, and `aps-environment`
+production, which the App Store profile carries; Debug keeps development.
+
+**No Mac needed.** The certificate's key and request are made with openssl (docs/mobile.md); the `.p12` is exported
+with `-legacy` so the Mac's keychain can read it. Secrets live only in the steps that use them, in a throwaway
+keychain with a random password, and are deleted at the end of every run.

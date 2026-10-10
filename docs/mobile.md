@@ -157,8 +157,8 @@ What the project already declares (`ios/App/App/Info.plist`, `App.entitlements`)
 - **Why it asks** for the camera, the microphone (sound of a recorded video), the photo library and the location.
   iOS closes an app that opens one of these without a reason, and App Review rejects it. The texts are in Italian.
 - **No export-compliance form** on every upload (`ITSAppUsesNonExemptEncryption = false`: only standard HTTPS).
-- **The claim on `bouldertime.com` links** (Associated Domains). iOS checks it against a file on the website, which
-  needs the Apple Team ID, so it is not there yet (see below). Until then links simply open in Safari.
+- **The claim on `bouldertime.com` links** (Associated Domains). iOS checks it against
+  `frontend/public/.well-known/apple-app-site-association`, which names `AGXG273RG9.com.bouldertime.app`.
 - **iPhone only.** An iPad build would need its own screenshots and review; it can be switched on later.
 - BoulderTime's icon, from `frontend/resources/`, and its launch screen (`frontend/resources/splash/README.md`).
 - **Notifications:** the `aps-environment` entitlement, Firebase Messaging (Swift Package) and the Firebase settings
@@ -176,15 +176,60 @@ anyway, like every map key in a store app), keep an eye on its usage, and save t
 repository variable `VITE_MAP_TILE_URL_IOS`. The iOS workflow uses it when it is set. The same safe-area
 CSS that keeps the installed PWA clear of the notch and the home indicator does it here.
 
-**When the Apple developer account exists** (in this order):
+### App Store and TestFlight (ADR-045)
 
-1. Note the **Team ID** (developer.apple.com → Membership details) and register the App ID `com.bouldertime.app`
-   with **Associated Domains** and **Push Notifications**; create the APNs key and upload it to Firebase
+Team ID `AGXG273RG9`, bundle id `com.bouldertime.app`. The iOS workflow always builds for the simulator; with the
+secrets below it also archives for iPhones, signs with Apple Distribution, exports an `.ipa` (kept 14 days under the
+run's Artifacts, with its dSYMs) and, from `main`, uploads it to App Store Connect. Version = `package.json`, build
+number = the run's number (a "Re-run" repeats it and Apple refuses a duplicate: push again or use "Run workflow").
+
+**Once, on Apple's sites:**
+
+1. developer.apple.com → Certificates, IDs & Profiles → Identifiers: the App ID `com.bouldertime.app` with
+   **Push Notifications** and **Associated Domains** on. Create the APNs key and upload it to Firebase
    (Notifications, step 3).
-2. Add `frontend/public/.well-known/apple-app-site-association` (no extension; served as JSON by `_headers`):
-   `{"applinks":{"details":[{"appIDs":["<TEAM_ID>.com.bouldertime.app"],"components":[{"/":"*"}]}]}}`.
-3. Add signing to the workflow (distribution certificate and an App Store Connect API key as repository secrets),
-   archive with `-sdk iphoneos`, and upload to TestFlight.
+2. The **Apple Distribution certificate**, without a Mac, from the Codespace:
+   ```bash
+   openssl genrsa -out dist.key 2048
+   openssl req -new -key dist.key -out dist.csr -subj "/CN=BoulderTime Distribution/C=IT"
+   ```
+   Certificates → + → **Apple Distribution** → upload `dist.csr` → download `distribution.cer`, then:
+   ```bash
+   openssl x509 -inform DER -in distribution.cer -out dist.pem
+   openssl pkcs12 -export -legacy -inkey dist.key -in dist.pem -out dist.p12   # asks for a password: keep it
+   base64 -w0 dist.p12 > dist.p12.b64
+   ```
+   `-legacy` matters: without it the Mac's keychain can't read the `.p12`. Delete `dist.key`, `dist.p12` and the
+   rest from the Codespace once the secrets are saved; never commit them.
+3. Profiles → + → **App Store Connect** → App ID `com.bouldertime.app` → the certificate above → a name such as
+   "BoulderTime App Store" → download it, then `base64 -w0 BoulderTime_App_Store.mobileprovision > profile.b64`.
+   Make it again whenever a capability changes or the certificate is renewed (every year).
+4. appstoreconnect.apple.com → Apps → + → New App: iOS, name BoulderTime, bundle id `com.bouldertime.app`, any SKU.
+5. Users and Access → Integrations → App Store Connect API → + : role **App Manager**. Note the Key ID and the Issuer
+   ID and download the `.p8` (only once).
+
+**Repository secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Secret | What |
+|---|---|
+| `IOS_DIST_CERT_P12_BASE64` | contents of `dist.p12.b64` |
+| `IOS_DIST_CERT_PASSWORD` | the `.p12` password |
+| `IOS_PROVISIONING_PROFILE_BASE64` | contents of `profile.b64` |
+| `APP_STORE_CONNECT_API_KEY_ID` | the key's Key ID |
+| `APP_STORE_CONNECT_API_ISSUER_ID` | the Issuer ID |
+| `APP_STORE_CONNECT_API_KEY_P8` | the whole `.p8` file, `-----BEGIN PRIVATE KEY-----` lines included |
+| `IOS_GOOGLE_SERVICE_INFO_PLIST` | the Firebase settings for iOS (Notifications) |
+
+Without the first two the run stays simulator-only; without the API key it builds and keeps the `.ipa` but doesn't
+upload. The workflow checks the profile before using it (team, bundle id, App Store type, production push,
+Associated Domains) and says exactly what is wrong. Each secret reaches only the step that needs it; the certificate
+goes into a keychain made for the run with a random password, and keychain, profile and key are deleted at the end
+even when a step fails. Runs from other people's pull requests never see secrets.
+
+**After the first upload:** App Store Connect → the app → TestFlight. The build appears after Apple's processing
+(10–30 minutes). Internal testers (people in your App Store Connect team) can install it at once from the TestFlight
+app; external testers need a short "Test Information" and Apple's beta review. The export-compliance question is
+already answered by `Info.plist`.
 
 ## Sign-in
 

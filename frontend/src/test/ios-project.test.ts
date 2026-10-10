@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const ios = (path: string) => resolve(__dirname, "../../ios/App", path);
 const infoPlist = readFileSync(ios("App/Info.plist"), "utf8");
 const entitlements = readFileSync(ios("App/App.entitlements"), "utf8");
+const releaseEntitlements = readFileSync(ios("App/App.Release.entitlements"), "utf8");
 const project = readFileSync(ios("App.xcodeproj/project.pbxproj"), "utf8");
 const appDelegate = readFileSync(ios("App/AppDelegate.swift"), "utf8");
 const privacyManifest = readFileSync(ios("App/PrivacyInfo.xcprivacy"), "utf8");
@@ -42,7 +43,9 @@ describe("What the iOS app must declare", () => {
 
   it("claims bouldertime.com links, and the build actually uses that claim", () => {
     expect(entitlements).toContain("applinks:bouldertime.com");
-    expect(project.match(/CODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;/g)).toHaveLength(2);
+    // Debug uses App.entitlements, the App Store build App.Release.entitlements (same claim, production push).
+    expect(project.match(/CODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;/g)).toHaveLength(1);
+    expect(project.match(/CODE_SIGN_ENTITLEMENTS = App\/App\.Release\.entitlements;/g)).toHaveLength(1);
   });
 
   it("uses the bundle id the Android app and Firebase already know", () => {
@@ -70,8 +73,11 @@ describe("What the iOS app must declare", () => {
 
 /** Notifications go through Firebase on iOS as on Android (ADR-039); each of these breaks them silently if lost. */
 describe("Notifications in the iOS app", () => {
-  it("may receive them, once the build is signed", () => {
+  it("may receive them: from Apple's test servers in Debug, from the real ones in the App Store build", () => {
     expect(entitlements).toMatch(/<key>aps-environment<\/key>\s*<string>development<\/string>/);
+    expect(releaseEntitlements).toMatch(/<key>aps-environment<\/key>\s*<string>production<\/string>/);
+    // The same links claim in both.
+    expect(releaseEntitlements).toContain("<string>applinks:bouldertime.com</string>");
   });
 
   it("links Firebase Messaging and bundles the Firebase settings the workflow writes", () => {
@@ -94,5 +100,32 @@ describe("The iOS privacy manifest", () => {
     expect(project).toMatch(/PrivacyInfo\.xcprivacy in Resources \*\/,/);
     expect(privacyManifest).toMatch(/<key>NSPrivacyTracking<\/key>\s*<false\/>/);
     expect(privacyManifest).not.toMatch(/<key>NSPrivacyCollectedDataTypeTracking<\/key>\s*<true\/>/);
+  });
+});
+
+/** The App Store build (ADR-045): signed by hand in Release, for this team and bundle id, never with Debug's entitlements. */
+describe("The App Store build", () => {
+  const release = project.slice(project.indexOf("504EC3181FED79650016851F /* Release */"), project.indexOf("/* End XCBuildConfiguration section */"));
+
+  it("signs the App target's Release with Apple Distribution and the profile the workflow names", () => {
+    expect(release).toContain("CODE_SIGN_STYLE = Manual;");
+    expect(release).toContain('"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";');
+    expect(release).toContain("DEVELOPMENT_TEAM = AGXG273RG9;");
+    expect(release).toContain('PROVISIONING_PROFILE_SPECIFIER = "$(BT_PROFILE_NAME)";');
+    expect(release).toContain("CODE_SIGN_ENTITLEMENTS = App/App.Release.entitlements;");
+    expect(release).toContain("PRODUCT_BUNDLE_IDENTIFIER = com.bouldertime.app;");
+  });
+
+  it("lets bouldertime.com vouch for the app, so links open in it", () => {
+    const aasa = JSON.parse(readFileSync(resolve(__dirname, "../../public/.well-known/apple-app-site-association"), "utf8"));
+    expect(aasa.applinks.details[0].appIDs).toEqual(["AGXG273RG9.com.bouldertime.app"]);
+  });
+
+  it("archives for iPhones and checks the profile against the same team and bundle id", () => {
+    const workflow = readFileSync(resolve(__dirname, "../../../.github/workflows/ios.yml"), "utf8");
+    expect(workflow).toContain("APPLE_TEAM_ID: AGXG273RG9");
+    expect(workflow).toContain("-sdk iphoneos");
+    expect(workflow).toContain("<key>method</key><string>app-store-connect</string>");
+    expect(workflow).toContain('"$APPLE_TEAM_ID.com.bouldertime.app"');
   });
 });

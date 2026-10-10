@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["AGXG273RG9.com.bouldertime.app"],
+        "components": [{ "/": "*" }]
+      }
+    ]
+  }
+}
