@@ -87,6 +87,12 @@ export async function startNativeShell(): Promise<void> {
   }
   void App.getLaunchUrl().then((launch) => follow(launch?.url)).catch(() => {});
 
+  // Notifications turned on earlier on this phone: refresh the token quietly, so they keep arriving (and the switch in
+  // the settings knows they are on).
+  if (import.meta.env.VITE_PUSH_NATIVE === "1") {
+    void import("@/features/notifications/push").then(({ syncNativePush }) => syncNativePush()).catch(() => {});
+  }
+
   // Give React a frame to paint the first screen before revealing it. The status bar turns to dark text on the light
   // header only now: until here it sat on the dark launch screen.
   requestAnimationFrame(() => {

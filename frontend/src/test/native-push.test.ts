@@ -16,10 +16,12 @@ type Listener = (payload: unknown) => void;
 const listeners = new Map<string, Listener>();
 const permission = vi.fn(async () => ({ receive: "granted" }));
 const registerCalled = vi.fn();
+let nextToken = "fcm-token-123";
 vi.mock("@capacitor/push-notifications", () => ({
   PushNotifications: {
     requestPermissions: () => permission(),
-    register: async () => { registerCalled(); listeners.get("registration")?.({ value: "fcm-token-123" }); },
+    checkPermissions: () => permission(),
+    register: async () => { registerCalled(); listeners.get("registration")?.({ value: nextToken }); },
     addListener: async (name: string, fn: Listener) => { listeners.set(name, fn); return { remove: async () => {} }; },
     removeAllDeliveredNotifications: async () => {},
   },
@@ -27,6 +29,8 @@ vi.mock("@capacitor/push-notifications", () => ({
 
 beforeEach(() => {
   calls.length = 0;
+  nextToken = "fcm-token-123";
+  localStorage.clear();
   listeners.clear();
   registerCalled.mockClear();
   permission.mockClear();
@@ -100,5 +104,49 @@ describe("Notifications inside the store app", () => {
     expect(registerCalled).not.toHaveBeenCalled();
     expect(permission).not.toHaveBeenCalled();
     expect(calls).toHaveLength(0);
+  });
+
+  it("still knows they are on after the app is closed and opened again", async () => {
+    native.mockReturnValue(true);
+    const first = await import("@/features/notifications/push");
+    await first.enablePush("");
+
+    // A new start of the app: nothing in memory, only what the phone kept.
+    vi.resetModules();
+    const again = await import("@/features/notifications/push");
+    calls.length = 0;
+    await again.pushStatus();
+    expect(calls[0]?.path).toBe("/api/users/me/push?address=fcm-token-123&platform=NATIVE");
+  });
+
+  it("registers a renewed token at start and drops the old one, without asking for permission", async () => {
+    native.mockReturnValue(true);
+    const { enablePush } = await import("@/features/notifications/push");
+    await enablePush("");
+    vi.resetModules();
+    const { syncNativePush } = await import("@/features/notifications/push");
+    nextToken = "fcm-token-456";
+    calls.length = 0;
+
+    await syncNativePush();
+
+    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-456" } });
+    expect(calls).toContainEqual({ method: "DELETE", path: "/api/users/me/push?address=fcm-token-123" });
+  });
+
+  it("does nothing at start on a phone where they were never turned on", async () => {
+    native.mockReturnValue(true);
+    const { syncNativePush } = await import("@/features/notifications/push");
+    await syncNativePush();
+    expect(registerCalled).not.toHaveBeenCalled();
+    expect(calls).toHaveLength(0);
+  });
+
+  it("never turns off every device of the account when it doesn't know this phone's token", async () => {
+    native.mockReturnValue(true);
+    vi.resetModules();
+    const { disablePush } = await import("@/features/notifications/push");
+    await disablePush();
+    expect(calls.filter((c) => c.method === "DELETE")).toHaveLength(0);
   });
 });

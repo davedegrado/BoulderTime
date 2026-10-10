@@ -32,7 +32,7 @@ async function currentEndpoint(): Promise<string | undefined> {
 }
 
 export async function pushStatus(): Promise<PushStatus> {
-  const address = isNativeApp() ? nativeToken : await currentEndpoint();
+  const address = isNativeApp() ? (nativeToken ?? storedNativeToken()) : await currentEndpoint();
   const query = new URLSearchParams();
   if (address) query.set("address", address);
   if (isNativeApp()) query.set("platform", "NATIVE");
@@ -50,10 +50,44 @@ export function nativePushInThisBuild(): boolean {
 }
 
 /**
- * The store app's own notification token, remembered for as long as the app runs. Firebase hands it over through a
- * listener rather than returning it, so registering means asking and then waiting for the answer.
+ * The store app's own notification token. Firebase hands it over through a listener rather than returning it, so
+ * registering means asking and then waiting for the answer. It is also kept on the phone: without it, after the app
+ * is closed and opened again, the app could no longer tell the server which device it is asking about, and the
+ * switch would show notifications as off while they are still on.
  */
 let nativeToken: string | undefined;
+const TOKEN_KEY = "bt.nativePushToken";
+
+function storedNativeToken(): string | undefined {
+  try { return localStorage.getItem(TOKEN_KEY) ?? undefined; } catch { return undefined; }
+}
+
+function rememberNativeToken(token: string | undefined) {
+  nativeToken = token;
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // Without storage the token lives for this run only; the next start asks Firebase again.
+  }
+}
+
+type PushPlugin = (typeof import("@capacitor/push-notifications"))["PushNotifications"];
+
+/** Asks Firebase for this phone's token and waits for it; null if it doesn't come. */
+async function fetchNativeToken(PushNotifications: PushPlugin): Promise<string | null> {
+  const handles: { remove: () => Promise<void> }[] = [];
+  const token = await new Promise<string | null>((resolve) => {
+    // If Firebase answers neither way, the person gets a clear failure instead of a spinner that never stops.
+    const giveUp = window.setTimeout(() => resolve(null), 15_000);
+    const settle = (value: string | null) => { window.clearTimeout(giveUp); resolve(value); };
+    void PushNotifications.addListener("registration", (t) => settle(t.value)).then((h) => handles.push(h));
+    void PushNotifications.addListener("registrationError", () => settle(null)).then((h) => handles.push(h));
+    void PushNotifications.register();
+  });
+  await Promise.all(handles.map((h) => h.remove().catch(() => {})));
+  return token;
+}
 
 async function enableNativePush(): Promise<"enabled" | "denied" | "unsupported"> {
   if (!nativePushInThisBuild()) return "unsupported";
@@ -62,29 +96,44 @@ async function enableNativePush(): Promise<"enabled" | "denied" | "unsupported">
   const asked = await PushNotifications.requestPermissions();
   if (asked.receive !== "granted") return "denied";
 
-  const token = await new Promise<string | null>((resolve) => {
-    // If Firebase answers neither way, the person gets a clear failure instead of a spinner that never stops.
-    const giveUp = window.setTimeout(() => resolve(null), 15_000);
-    const settle = (value: string | null) => { window.clearTimeout(giveUp); resolve(value); };
-    void PushNotifications.addListener("registration", (t) => settle(t.value));
-    void PushNotifications.addListener("registrationError", () => settle(null));
-    void PushNotifications.register();
-  });
+  const token = await fetchNativeToken(PushNotifications);
   if (!token) return "unsupported";
 
   await api.post("/api/users/me/push", { platform: "NATIVE", token });
-  nativeToken = token;
+  rememberNativeToken(token);
   return "enabled";
 }
 
 async function disableNativePush(): Promise<void> {
   if (!nativePushInThisBuild()) return;
   const { PushNotifications } = await import("@capacitor/push-notifications");
-  const token = nativeToken;
+  const token = nativeToken ?? storedNativeToken();
   // Removing the stored notifications too, so the tray doesn't keep showing what we stopped sending.
   await PushNotifications.removeAllDeliveredNotifications().catch(() => {});
-  await api.delete(`/api/users/me/push${token ? `?address=${encodeURIComponent(token)}` : ""}`);
-  nativeToken = undefined;
+  // Always this phone only: without an address the server would forget every device of the account.
+  if (token) await api.delete(`/api/users/me/push?address=${encodeURIComponent(token)}`);
+  rememberNativeToken(undefined);
+}
+
+/**
+ * At every start of the store app: if notifications were turned on here and the permission still stands, ask Firebase
+ * for the token again, quietly (no prompt). Firebase renews tokens now and then; a new one is registered and the old
+ * one dropped, so notifications keep arriving without the person doing anything.
+ */
+export async function syncNativePush(): Promise<void> {
+  if (!nativePushInThisBuild()) return;
+  const previous = storedNativeToken();
+  if (!previous) return; // never turned on on this phone
+  const { PushNotifications } = await import("@capacitor/push-notifications");
+  if ((await PushNotifications.checkPermissions()).receive !== "granted") return;
+  const token = await fetchNativeToken(PushNotifications);
+  if (!token) return;
+  nativeToken = token;
+  if (token !== previous) {
+    await api.post("/api/users/me/push", { platform: "NATIVE", token });
+    await api.delete(`/api/users/me/push?address=${encodeURIComponent(previous)}`).catch(() => {});
+    rememberNativeToken(token);
+  }
 }
 
 /**
