@@ -86,7 +86,27 @@ permette, sotto trovi anche i **Video della community**.`,
 settimana, mese, anno o da sempre. I punti dipendono dal grado: nella scala principale della palestra il più facile
 vale 10 e il più difficile 100. I tentativi non tolgono punti.
 
-Non vuoi comparire? In **Profilo → Classifiche** attiva **Non mostrarmi nelle classifiche**.`,
+Non vuoi comparire? In **Profilo → Classifiche** attiva **Non mostrarmi in classifiche ed elenchi**.`,
+        },
+        {
+          q: "Cosa sono i tag e l'intensità di un blocco?",
+          a: `Sono scelti dallo staff della palestra. I **tag** descrivono il blocco con le parole della palestra (per esempio
+Placca, Dinamico, Resistenza). L'**intensità** dice quanto è faticoso, con tre livelli: poco intenso, intensità media,
+molto intenso. È indipendente dal grado: un verde può essere tranquillo o sfiancante.
+
+Puoi filtrare i blocchi per entrambi da **Filtri** nella scheda Blocchi. Scegliendo più tag, vedi i blocchi che li
+hanno tutti.`,
+        },
+        {
+          q: "Come vedo chi ha completato un blocco?",
+          a: `Nella pagina del blocco c'è **Completato da N persone**: toccalo per vedere chi, dal più recente. Ogni persona
+conta una volta, anche se ci ha provato molte volte. Chi ha scelto **Non mostrarmi in classifiche ed elenchi** conta nel
+numero ma non compare per nome.`,
+        },
+        {
+          q: "Cos'è il settore preferito nel profilo?",
+          a: `È il settore dove hai completato più blocchi, ognuno contato una volta, anche quelli ormai smontati. Se la
+palestra ha disegnato la mappa, lo vedi evidenziato sulla piantina; toccandolo apri i blocchi di quel settore.`,
         },
       ],
     },
@@ -235,6 +255,13 @@ palestra. Chi segue il blocco o lo sta provando viene avvisato.`,
 settore. Subito dopo puoi scrivere un aggiornamento per raccontare la ritracciatura.
 
 Un blocco ritracciato va rimosso e creato di nuovo, non modificato: chi l'aveva salito tiene il suo completato.`,
+        },
+        {
+          q: "Come uso tag e intensità?",
+          a: `In **Gestisci → Tag** crei, rinomini ed elimini i tag della palestra. Nell'editor del blocco scegli fino a 6
+tag (o ne crei uno al volo) e l'intensità, che puoi lasciare **Non indicata**. Rinominare un tag lo rinomina su tutti i
+blocchi; eliminarlo lo toglie da tutti, dopo una seconda conferma che dice quanti blocchi lo usano. "Placca" e "placca"
+sono lo stesso tag.`,
         },
         {
           q: "Ho rimosso un blocco per sbaglio",

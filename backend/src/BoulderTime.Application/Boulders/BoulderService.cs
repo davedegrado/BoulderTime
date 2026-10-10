@@ -42,6 +42,17 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (q.SectorId is { } sectorId) query = query.Where(b => b.SectorId == sectorId);
         if (q.HoldColor is { } hold) query = query.Where(b => b.HoldColor == hold);
         if (q.GradeValueId is { } valueId) query = query.Where(b => db.BoulderGrades.Any(g => g.BoulderId == b.Id && g.GradeValueId == valueId));
+        // Every tag chosen narrows the list, as every other filter does. At most a boulder's worth of tags count.
+        foreach (var tagId in (q.TagIds ?? []).Distinct().Take(GymTag.MaxPerBoulder))
+            query = query.Where(b => db.BoulderTags.Any(t => t.BoulderId == b.Id && t.TagId == tagId));
+        if (q.Intensities is { Count: > 0 } intensities)
+        {
+            // Three fixed values, spelled out: a plain comparison translates the same on every provider, whatever
+            // the column's text conversion.
+            bool low = intensities.Contains(BoulderIntensity.Low), medium = intensities.Contains(BoulderIntensity.Medium), high = intensities.Contains(BoulderIntensity.High);
+            query = query.Where(b => (low && b.Intensity == BoulderIntensity.Low) || (medium && b.Intensity == BoulderIntensity.Medium)
+                                     || (high && b.Intensity == BoulderIntensity.High));
+        }
         if (q.MinRating is { } min and >= 1 and <= 5)
             query = query.Where(b => db.BoulderRatings.Where(r => r.BoulderId == b.Id).Average(r => (double?)r.Rating) >= min);
         if (currentUser.UserId is { } uid && q.Progress is { } progress && progress != ProgressFilter.All)
@@ -69,6 +80,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var sector = await db.Sectors.AsNoTracking().Where(s => s.Id == b.SectorId).Select(s => s.Name).FirstAsync(ct);
         var grades = (await reader.GradesAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
         var rating = (await reader.RatingsAsync([b.Id], ct)).GetValueOrDefault(b.Id, BoulderReader.NoRatings);
+        var tags = (await reader.TagsAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
+        var completions = (await reader.CompletionsAsync([b.Id], ct)).GetValueOrDefault(b.Id);
         var viewer = (await reader.ViewerAsync([b.Id], currentUser.UserId, ct)).GetValueOrDefault(b.Id);
         var following = currentUser.UserId is { } uid && await db.BoulderFollows.AnyAsync(f => f.BoulderId == b.Id && f.UserId == uid, ct);
         PersonDto? setter = null;
@@ -79,7 +92,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
             b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
             await CanAddBetaAsync(gym, b.Id, ct),
-            b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath));
+            b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath),
+            b.Intensity, tags, completions);
     }
 
     /// <summary>
@@ -122,8 +136,9 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, currentThumbnailPath: null, ct);
         var userId = currentUser.RequireUserId();
 
-        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath);
+        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity);
         db.Boulders.Add(boulder);
+        foreach (var tagId in valid.TagIds ?? []) db.BoulderTags.Add(BoulderTag.Create(boulder.Id, tagId));
         foreach (var (systemId, valueId) in valid.Grades)
             db.BoulderGrades.Add(BoulderGrade.Official(boulder.Id, systemId, valueId, userId, clock.UtcNow));
 
@@ -170,7 +185,15 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (boulder.SectorId != valid.SectorId) changes.Add(Localization.NotificationTexts.BoulderChange.Sector);
         if (boulder.HoldColor != valid.HoldColor) changes.Add(Localization.NotificationTexts.BoulderChange.HoldColor);
         if (boulder.PhotoPath != valid.PhotoPath) changes.Add(Localization.NotificationTexts.BoulderChange.Photo);
-        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId);
+        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity);
+        if (valid.TagIds is { } tagIds)
+        {
+            // Tags and intensity describe the boulder for climbers looking for one; changing them is not news for its
+            // followers, so they never notify.
+            var currentTags = await db.BoulderTags.Where(t => t.BoulderId == boulderId).ToListAsync(ct);
+            db.BoulderTags.RemoveRange(currentTags.Where(t => !tagIds.Contains(t.TagId)));
+            foreach (var tagId in tagIds.Where(id => currentTags.All(t => t.TagId != id))) db.BoulderTags.Add(BoulderTag.Create(boulderId, tagId));
+        }
         var current = await db.BoulderGrades.Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff).ToListAsync(ct);
         if (!current.Select(g => (g.GradeSystemId, g.GradeValueId)).ToHashSet().SetEquals(valid.Grades)) changes.Insert(0, Localization.NotificationTexts.BoulderChange.Grade);
         foreach (var g in current.Where(g => !valid.Grades.Contains((g.GradeSystemId, g.GradeValueId))))
@@ -341,7 +364,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
 
     // ---------- Helpers ----------
 
-    private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId, HashSet<(Guid SystemId, Guid ValueId)> Grades);
+    private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId,
+        HashSet<(Guid SystemId, Guid ValueId)> Grades, BoulderIntensity? Intensity, IReadOnlyList<Guid>? TagIds);
 
     private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath, CancellationToken ct)
     {
@@ -394,10 +418,22 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (r.SetterUserId is { } setterId && !await db.GymStaff.AnyAsync(s => s.GymId == gymId && s.UserId == setterId, ct))
             v.Check(false, "setterUserId", "The setter must be on this gym's staff.");
 
+        v.Check(r.Intensity is null || Enum.IsDefined(r.Intensity.Value), "intensity", "Choose a known intensity.");
+
+        // Only this gym's own tags: a tag id from another gym is refused, never silently attached.
+        List<Guid>? tagIds = null;
+        if (r.TagIds is { } requested)
+        {
+            tagIds = requested.Distinct().ToList();
+            if (tagIds.Count > GymTag.MaxPerBoulder) v.Check(false, "tagIds", $"Pick at most {GymTag.MaxPerBoulder} tags.");
+            else if (tagIds.Count > 0 && await db.GymTags.CountAsync(t => tagIds.Contains(t.Id) && t.GymId == gymId, ct) != tagIds.Count)
+                v.Check(false, "tagIds", "Use this gym's tags.");
+        }
+
         v.ThrowIfInvalid();
         // When the photo is unchanged, the domain keeps the existing thumbnail.
         return new ValidBoulder(r.SectorId!.Value, photo, thumbnail, r.HoldColor!.Value, r.SetterUserId,
-            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet());
+            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet(), r.Intensity, tagIds);
     }
 
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, Crop, ImagePlus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Check, Crop, ImagePlus, Plus, Save, Trash2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
@@ -19,6 +19,11 @@ import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 import { BetaEditor } from "@/features/community/BetaEditor";
 import { ThumbnailCropper } from "@/features/boulders/ThumbnailCropper";
 import { cropImage, type CropRect } from "@/features/boulders/imageResize";
+import { INTENSITIES, IntensityBars, intensityShort, type Intensity } from "@/features/boulders/intensity";
+import { useCreateTag, useGymTags } from "@/features/boulders/tags";
+
+/** A boulder carries at most this many tags; the server holds the same limit. */
+const MAX_TAGS = 6;
 
 export function BoulderEditorPage() {
   const { boulderId } = useParams();
@@ -49,6 +54,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [grades, setGrades] = useState<Record<string, string>>(() =>
     Object.fromEntries((initial?.grades ?? []).map((g) => [g.gradeSystemId, g.gradeValueId])));
   const [setterUserId, setSetterUserId] = useState(initial?.setter?.userId ?? "");
+  const [intensity, setIntensity] = useState<Intensity | null>(initial?.intensity ?? null);
+  const [tagIds, setTagIds] = useState<string[]>(() => (initial?.tags ?? []).map((x) => x.id));
   const [stage, setStage] = useState<Stage>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
   // The part of the photo the cards show, when staff chose one; otherwise the cards show the whole photo.
@@ -100,6 +107,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       const input: SaveBoulderInput = {
         sectorId, photoPath: uploaded.path, thumbnailPath: uploaded.thumbnailPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
         grades: Object.entries(grades).filter(([, v]) => v).map(([gradeSystemId, gradeValueId]) => ({ gradeSystemId, gradeValueId })),
+        intensity, tagIds,
       };
       if (initial) {
         await update.mutateAsync(input);
@@ -196,6 +204,23 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         {errors.holdColor && <p id="hold-error" className="field__error">{errors.holdColor}</p>}
       </fieldset>
 
+      {/* Intensity: how hard it works the body, apart from the grade. Optional, so older boulders need nothing. */}
+      <fieldset className="editor__section">
+        <legend className="field__label">{t("Intensity")}</legend>
+        <p className="field__hint">{t("How hard it is on the body, whatever the grade: a green can be gentle or punishing.")}</p>
+        <div className="intensity-picker" role="radiogroup" aria-label={t("Intensity")}>
+          <button type="button" role="radio" aria-checked={intensity === null} className="intensity-picker__option" onClick={() => setIntensity(null)}>{t("Not given")}</button>
+          {INTENSITIES.map((i) => (
+            <button key={i} type="button" role="radio" aria-checked={intensity === i} className="intensity-picker__option" onClick={() => setIntensity(i)}>
+              <IntensityBars intensity={i} /> {intensityShort(i)}
+            </button>
+          ))}
+        </div>
+        {errors.intensity && <p className="field__error">{errors.intensity}</p>}
+      </fieldset>
+
+      <TagPicker gymId={gym.id} gymSlug={gym.slug} selected={tagIds} onChange={setTagIds} error={errors.tagids} />
+
       <SelectField label={t("Setter")} value={setterUserId} onChange={(e) => setSetterUserId(e.target.value)} error={errors.setterUserId}
         options={[{ value: "", label: t("Not specified") }, ...(staff.data ?? []).map((m) => ({ value: m.userId, label: m.displayName }))]} />
 
@@ -227,5 +252,54 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         </section>
       )}
     </form>
+  );
+}
+
+/**
+ * The gym's tags as chips to switch on and off, and a quick way to add one that is missing: staff writing a boulder
+ * shouldn't have to leave the form to create "Placca".
+ */
+function TagPicker({ gymId, gymSlug, selected, onChange, error }: { gymId: string; gymSlug: string; selected: string[]; onChange: (ids: string[]) => void; error?: string }) {
+  const tags = useGymTags(gymId);
+  const create = useCreateTag(gymId);
+  const toast = useToast();
+  const [name, setName] = useState("");
+  const full = selected.length >= MAX_TAGS;
+
+  const toggle = (id: string) => onChange(selected.includes(id) ? selected.filter((x) => x !== id) : full ? selected : [...selected, id]);
+
+  function add() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    create.mutate(trimmed, {
+      onSuccess: (tag) => { setName(""); if (!full) onChange([...selected, tag.id]); },
+      onError: (e) => toast.error(e instanceof ApiError ? (e.fieldError("name") ?? errorMessage(e)) : errorMessage(e)),
+    });
+  }
+
+  return (
+    <fieldset className="editor__section">
+      <legend className="field__label">{t("Tags")}</legend>
+      <p className="field__hint">{t("Up to {count}. They help climbers find the boulders they like.", { count: MAX_TAGS })}{" "}
+        <Link to={`/manage/${gymSlug}/tags`}>{t("Manage tags")}</Link></p>
+      {(tags.data ?? []).length > 0 && (
+        <div className="chips chips--wrap" role="group" aria-label={t("Tags")}>
+          {(tags.data ?? []).map((tag) => {
+            const on = selected.includes(tag.id);
+            return (
+              <button key={tag.id} type="button" className="chip" aria-pressed={on} disabled={!on && full} onClick={() => toggle(tag.id)}>
+                {on && <Check aria-hidden className="chip__check" />}{tag.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className="tag-add">
+        <input className="field__input" value={name} maxLength={24} placeholder={t("New tag, e.g. Slab")} aria-label={t("New tag")}
+          onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} />
+        <Button type="button" variant="secondary" icon={<Plus aria-hidden />} loading={create.isPending} onClick={add} disabled={!name.trim()}>{t("Add")}</Button>
+      </div>
+      {error && <p className="field__error">{error}</p>}
+    </fieldset>
   );
 }

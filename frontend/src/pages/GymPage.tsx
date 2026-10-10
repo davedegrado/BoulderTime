@@ -11,6 +11,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { gymStatusLabel } from "@/lib/format";
 import { useBoulders, type BoulderFilters } from "@/features/boulders/api";
 import { useGradeSystems } from "@/features/grading/api";
+import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
@@ -117,6 +118,7 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
   const showingRemoved = filters.status === "REMOVED";
   const sectors = useSectors(gymId);
   const systems = useGradeSystems(gymId);
+  const tags = useGymTags(gymId);
   const boulders = useBoulders(gymId, filters);
   const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
   const total = boulders.data?.pages[0]?.total ?? 0;
@@ -124,7 +126,7 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
   // filters are too narrow, and "clear filters" must not throw the reader back to the other tab.
   const { status: _status, ...narrowing } = filters;
   const filtered = Object.values(narrowing).some(Boolean);
-  const active = activeFilters(filters, sectors.data ?? [], systems.data ?? []);
+  const active = activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []);
 
   return (
     <div className="stack">
@@ -136,7 +138,7 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
           <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
         </div>
       </div>
-      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
+      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (

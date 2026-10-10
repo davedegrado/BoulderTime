@@ -31,6 +31,11 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Sign-up asks for age (at least 14) and terms on the form itself; boulder page with a smaller photo that opens full screen (ADR-041) | **Done** | sign-up, legal-acceptance and gate tests |
 | — | Beta card owned by the gym, community grade presented plainly, compact gym page (ADR-042) | **Done** | beta, community-grade and gym-page tests |
 | — | Home with favourite gyms first, profile with account details on request, password fields that can be shown, assorted labels | **Done** | home, password and activity tests |
+| — | Reference grade scales every boulder can be voted in (ADR-043) | **Done** | consensus and ordering tests |
+| — | Sector map: the gym's floor plan with its sectors drawn on it, names optional (ADR-044) | **Done** | zone, permission and map tests |
+| — | Card picture chosen by cropping the photo; dark theme; in-app help and FAQ (`/aiuto`); test notification | **Done** | cropper, theme, help and push tests |
+| — | Gym tags and boulder intensity, with filters (ADR-046) | **Done** | tag uniqueness, ownership, filter and validation tests |
+| — | "Completed by N people" with the list of names, and the climber's most climbed sector (ADR-047) | **Done** | counting, undo, privacy and favourite-sector tests |
 
 ## Store apps (in progress)
 
@@ -43,18 +48,20 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M3 | Camera or gallery inside the app (ADR-029) | **Done** |
 | M4 | Native push through Firebase (ADR-030) | **Done** — needs a Firebase project |
 | M5 | Blocking a user (ADR-031) | **Done** |
-| M6 | iOS: Xcode project built in CI, universal links | **Done** for what needs no Apple account: project, permissions, link claim, unsigned simulator build in CI (ADR-036). Signing, `apple-app-site-association` and TestFlight wait for the account |
-| M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase (ADR-039) | **Done** in the app and CI; delivering needs the Apple account's APNs key and a signed build |
+| M6 | iOS: Xcode project built in CI, universal links, signed builds | **Done**: simulator build, signed archive and TestFlight upload from `main` (ADR-036, ADR-045) |
+| M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase (ADR-039) | **Done**: delivered on TestFlight builds; a test notification in the settings reports what Firebase answered |
 | M6b | Reporting a person and suspending an account, platform-wide (ADR-037); deleting a suspended account no longer escapes it (ADR-038) | **Done** — Apple 1.2's "block abusive users **from the service**" |
-| M7 | The stores themselves: Google Play, then App Store. Privacy answers ready (`docs/store-privacy.md`), deletion page live | **Google Play:** in internal testing; links verified for the store app; every build of `main` uploaded to a testing track (ADR-040). Next: closed test, then production. **App Store:** needs the account |
+| M7 | The stores themselves: Google Play, then App Store. Privacy answers ready (`docs/store-privacy.md`), deletion page live | **Google Play:** in internal testing; links verified for the store app; every build of `main` uploaded to a testing track (ADR-040). Next: closed test, then production. **App Store:** TestFlight builds from `main`; store listing and review next |
 
 ## Planned, deliberately not started
 
-- **Converting iPhone videos.** `.mov` (HEVC) uploads should become MP4 (H.264) so they play everywhere. After M7.
+- **Videos on iOS.** To be checked and fixed as a whole before the App Store release: picking a video, access to the
+  photo library, formats and conversions (`.mov`/HEVC to MP4/H.264 so it plays everywhere), the resumable upload to
+  storage, and playback on iPhone. Deliberately not investigated yet.
+- **Under-14 climbers.** A child profile created and used by a parent from their own account, with no login, public
+  profile, leaderboards, comments or videos of its own; proposed, waiting for a legal review and the choice of markets.
 - **Google sign-in (and then Sign in with Apple).** Built but switched off: see `docs/mobile.md` → Sign-in. Comes back
   with a paid Supabase plan and its custom auth domain.
-- **Interactive gym map by sector.** Tap a sector on a plan of the gym and get its boulders. The hard part is not the
-  tapping: it is where the plan comes from, and that each gym's is different. Needs a design pass before any code.
 
 ## Known limitations (deliberate, not forgotten)
 

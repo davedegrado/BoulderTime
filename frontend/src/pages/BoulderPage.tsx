@@ -13,6 +13,8 @@ import { CommunityGradeSection } from "@/features/community/CommunityGradeSectio
 import { BetaSection, CommunityVideosSection } from "@/features/community/VideoSections";
 import { ReportButton } from "@/features/community/ReportButton";
 import { GradeBadge, HoldBadge } from "@/features/boulders/BoulderBits";
+import { IntensityBadge } from "@/features/boulders/intensity";
+import { CompletionsLine } from "@/features/climbing/Completions";
 import { PhotoViewer } from "@/features/boulders/PhotoViewer";
 import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -73,6 +75,7 @@ export function BoulderPage() {
             <div className="boulder-meta__clip">
             <ul className="boulder-meta" aria-label={t("About this boulder")}>
               <li><HoldBadge color={b.holdColor} compact /></li>
+              {b.intensity && <li><IntensityBadge intensity={b.intensity} /></li>}
               <li><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
               <li><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
               {b.setter && <li><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
@@ -96,6 +99,13 @@ export function BoulderPage() {
             </div>
           </div>
         </header>
+
+        {(b.tags ?? []).length > 0 && (
+          <ul className="tag-list" aria-label={t("Tags")}>
+            {(b.tags ?? []).map((tag) => <li key={tag.id} className="tag-pill">{tag.name}</li>)}
+          </ul>
+        )}
+        <CompletionsLine boulderId={b.id} count={b.completions ?? 0} />
 
         <ProgressTracker key={b.id} boulder={b} />
         <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} sectorName={b.sectorName} />

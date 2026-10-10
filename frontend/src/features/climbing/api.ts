@@ -22,7 +22,20 @@ export interface Profile {
   staffDistinctions: StaffDistinction[];
   /** Whether you have blocked this person. Only you ever see it. */
   isBlocked: boolean;
+  /** Where they completed the most boulders; null before the first send. */
+  favoriteSector?: FavoriteSector | null;
 }
+
+/** The sector with the most completed boulders, with the gym's plan and its outline when the gym drew them. */
+export interface FavoriteSector {
+  sectorId: string; sectorName: string; gymId: string; gymName: string; gymSlug: string; completed: number;
+  floorPlanUrl: string | null; floorPlanWidth: number | null; floorPlanHeight: number | null;
+  zone: Sector["zone"];
+}
+
+export interface Completion { person: { userId: string; displayName: string; avatarUrl: string | null }; completedAt: string | null }
+/** `total`: everyone, as the card counts; `people`: those this viewer may see by name. */
+export interface BoulderCompletions { total: number; people: PagedResult<Completion> }
 
 export interface StaffDistinction {
   gymId: string; gymSlug: string; gymName: string; role: "STAFF" | "ADMIN" | "OWNER";
@@ -36,7 +49,19 @@ export const climbingKeys = {
   home: ["climbing", "home"] as const,
   profile: (userId: string) => ["climbing", "profile", userId] as const,
   history: (userId: string, filter: HistoryFilter) => ["climbing", "history", userId, filter] as const,
+  completions: (boulderId: string) => ["climbing", "completions", boulderId] as const,
 };
+
+/** Who completed a boulder, most recent first. Names need an account, so it only runs signed in. */
+export function useCompletions(boulderId: string, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: climbingKeys.completions(boulderId),
+    queryFn: ({ pageParam, signal }) => api.get<BoulderCompletions>(`/api/boulders/${boulderId}/completions?page=${pageParam}&pageSize=30`, { signal }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.people.hasMore ? last.people.page + 1 : undefined),
+    enabled,
+  });
+}
 
 export function useHome() {
   const { session } = useAuth();
@@ -67,6 +92,8 @@ function useProgressCache(boulderId: string) {
   const qc = useQueryClient();
   return (viewer: ViewerProgress | undefined) => {
     qc.setQueryData<BoulderDetail>(boulderKeys.detail(boulderId), (d) => (d ? { ...d, viewer: viewer ?? null } : d));
+    // Completing or undoing changes "completed by N": the count comes back with the boulder.
+    qc.invalidateQueries({ queryKey: boulderKeys.detail(boulderId) });
     qc.invalidateQueries({ queryKey: ["boulders"], refetchType: "none" });
     qc.invalidateQueries({ queryKey: ["climbing"] });
     // Trying the boulder is what earns the right to suggest a grade, and the answer to "may I?" is inside this

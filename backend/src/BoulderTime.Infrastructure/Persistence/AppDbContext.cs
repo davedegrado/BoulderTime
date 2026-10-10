@@ -36,6 +36,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<GradeValue> GradeValues => Set<GradeValue>();
     public DbSet<Boulder> Boulders => Set<Boulder>();
     public DbSet<BoulderGrade> BoulderGrades => Set<BoulderGrade>();
+    public DbSet<GymTag> GymTags => Set<GymTag>();
+    public DbSet<BoulderTag> BoulderTags => Set<BoulderTag>();
     public DbSet<BoulderAttempt> BoulderAttempts => Set<BoulderAttempt>();
     public DbSet<BoulderRating> BoulderRatings => Set<BoulderRating>();
     public DbSet<GymFollow> GymFollows => Set<GymFollow>();

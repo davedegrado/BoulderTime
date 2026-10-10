@@ -7,16 +7,26 @@ import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { SelectField } from "@/components/Fields";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
+import { INTENSITIES, IntensityBars, intensityLabel, intensityShort, type Intensity } from "@/features/boulders/intensity";
+import type { GymTag } from "@/features/boulders/tags";
 
 interface Props {
   filters: Filters;
   onChange: (f: Filters) => void;
   sectors: Sector[];
   systems: GradeSystem[];
+  /** The gym's tags; the tag filter only shows when there are some. */
+  tags?: GymTag[];
+}
+
+/** Adds or takes away one value of a multi-choice filter; an empty choice is no filter at all. */
+function toggled<T>(list: T[] | undefined, value: T): T[] | undefined {
+  const next = list?.includes(value) ? list.filter((x) => x !== value) : [...(list ?? []), value];
+  return next.length ? next : undefined;
 }
 
 /** Sector, grade and hold-colour filters. Grade and hold colour are separate controls with separate labels. */
-export function BoulderFiltersBar({ filters, onChange, sectors, systems }: Props) {
+export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = [] }: Props) {
   const { session } = useAuth();
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
   const gradeOptions = [{ value: "", label: t("Any grade") }, ...systems.flatMap((s) =>
@@ -35,23 +45,51 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems }: Props
       )}
       <SelectField label={t("Rating")} value={filters.minRating ?? ""} onChange={(e) => set({ minRating: e.target.value || undefined })}
         options={[{ value: "", label: t("Any rating") }, { value: "3", label: t("3+ stars") }, { value: "4", label: t("4+ stars") }]} />
+      <fieldset className="filter-group">
+        <legend className="field__label">{t("Intensity")}</legend>
+        <div className="chips chips--wrap">
+          {INTENSITIES.map((i) => (
+            <button key={i} type="button" className="chip" aria-pressed={!!filters.intensity?.includes(i)} onClick={() => set({ intensity: toggled(filters.intensity, i) })}>
+              <IntensityBars intensity={i} /> {intensityShort(i)}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      {tags.length > 0 && (
+        <fieldset className="filter-group">
+          <legend className="field__label">{t("Tags")}</legend>
+          <div className="chips chips--wrap">
+            {tags.map((tag) => (
+              <button key={tag.id} type="button" className="chip" aria-pressed={!!filters.tagIds?.includes(tag.id)} onClick={() => set({ tagIds: toggled(filters.tagIds, tag.id) })}>
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
     </div>
   );
 }
 
-type Narrowing = Exclude<keyof Filters, "status">;
+/** One filter in use: its label, and how to take just that one away (a tag among several goes alone). */
+export interface ActiveFilter { id: string; label: string; clear: (f: Filters) => Filters }
 
 /** The filters in use, each with its own label, so they can be read and removed one by one. */
-export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSystem[]): { key: Narrowing; label: string }[] {
-  const out: { key: Narrowing; label: string }[] = [];
-  if (f.sectorId) out.push({ key: "sectorId", label: sectors.find((s) => s.id === f.sectorId)?.name ?? t("Sector") });
+export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSystem[], tags: GymTag[] = []): ActiveFilter[] {
+  const out: ActiveFilter[] = [];
+  const drop = (key: keyof Filters) => (x: Filters) => ({ ...x, [key]: undefined });
+  if (f.sectorId) out.push({ id: "sectorId", label: sectors.find((s) => s.id === f.sectorId)?.name ?? t("Sector"), clear: drop("sectorId") });
   if (f.gradeValueId) {
     const value = systems.flatMap((s) => s.values).find((v) => v.id === f.gradeValueId);
-    out.push({ key: "gradeValueId", label: value ? dataLabel(value.label) : t("Grade") });
+    out.push({ id: "gradeValueId", label: value ? dataLabel(value.label) : t("Grade"), clear: drop("gradeValueId") });
   }
-  if (f.holdColor) out.push({ key: "holdColor", label: holdLabel(f.holdColor) });
-  if (f.progress) out.push({ key: "progress", label: f.progress === "UNTRIED" ? t("Not tried") : f.progress === "PROJECTS" ? t("Projects") : t("Completed") });
-  if (f.minRating) out.push({ key: "minRating", label: f.minRating === "4" ? t("4+ stars") : t("3+ stars") });
+  if (f.holdColor) out.push({ id: "holdColor", label: holdLabel(f.holdColor), clear: drop("holdColor") });
+  if (f.progress) out.push({ id: "progress", label: f.progress === "UNTRIED" ? t("Not tried") : f.progress === "PROJECTS" ? t("Projects") : t("Completed"), clear: drop("progress") });
+  if (f.minRating) out.push({ id: "minRating", label: f.minRating === "4" ? t("4+ stars") : t("3+ stars"), clear: drop("minRating") });
+  for (const i of f.intensity ?? [])
+    out.push({ id: `intensity-${i}`, label: intensityLabel(i as Intensity), clear: (x) => ({ ...x, intensity: toggled(x.intensity, i) }) });
+  for (const id of f.tagIds ?? [])
+    out.push({ id: `tag-${id}`, label: tags.find((tag) => tag.id === id)?.name ?? t("Tag"), clear: (x) => ({ ...x, tagIds: toggled(x.tagIds, id) }) });
   return out;
 }
 
@@ -65,20 +103,20 @@ export function FiltersToggle({ open, count, onToggle }: { open: boolean; count:
 }
 
 /** The filters when opened, then the ones in use as chips that remove them (shown open or closed). */
-export function FiltersPanel({ open, filters, onChange, sectors, systems }: Props & { open: boolean }) {
-  const active = activeFilters(filters, sectors, systems);
+export function FiltersPanel({ open, filters, onChange, sectors, systems, tags = [] }: Props & { open: boolean }) {
+  const active = activeFilters(filters, sectors, systems, tags);
   return (
     <>
       {open && (
         <div id="boulder-filters" className="filter-panel">
-          <BoulderFiltersBar filters={filters} onChange={(f) => onChange({ ...f, status: filters.status })} sectors={sectors} systems={systems} />
+          <BoulderFiltersBar filters={filters} onChange={(f) => onChange({ ...f, status: filters.status })} sectors={sectors} systems={systems} tags={tags} />
         </div>
       )}
       {active.length > 0 && (
         <ul className="active-filters" aria-label={t("Filters in use")}>
           {active.map((a) => (
-            <li key={a.key}>
-              <button type="button" className="active-filter" onClick={() => onChange({ ...filters, [a.key]: undefined })}
+            <li key={a.id}>
+              <button type="button" className="active-filter" onClick={() => onChange(a.clear(filters))}
                 aria-label={t("Remove filter {name}", { name: a.label })}>
                 {a.label} <X aria-hidden />
               </button>

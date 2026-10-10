@@ -169,8 +169,8 @@ export function ProfilePage() {
         <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
         <div className="card">
           <Toggle
-            label={t("Don't show me in leaderboards")}
-            description={t("Your sends and history stay yours: you simply don't appear in any gym's ranking.")}
+            label={t("Don't show me in leaderboards or lists")}
+            description={t("Your sends and history stay yours: you don't appear in gyms' rankings, nor by name among the people who completed a boulder.")}
             checked={user.leaderboardOptOut}
             disabled={visibility.isPending}
             onChange={(hidden) => visibility.mutate(hidden, {

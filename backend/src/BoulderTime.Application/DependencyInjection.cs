@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<FollowService>();
         services.AddScoped<ActivityService>();
+        services.AddScoped<CompletionService>();
+        services.AddScoped<TagService>();
         services.AddScoped<BoulderAccess>();
         services.AddScoped<CommentService>();
         services.AddScoped<GradeSuggestionService>();

@@ -29,6 +29,8 @@ public interface IAppDbContext
     DbSet<GradeValue> GradeValues { get; }
     DbSet<Boulder> Boulders { get; }
     DbSet<BoulderGrade> BoulderGrades { get; }
+    DbSet<GymTag> GymTags { get; }
+    DbSet<BoulderTag> BoulderTags { get; }
     DbSet<BoulderAttempt> BoulderAttempts { get; }
     DbSet<BoulderRating> BoulderRatings { get; }
     DbSet<GymFollow> GymFollows { get; }

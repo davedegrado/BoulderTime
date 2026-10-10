@@ -20,7 +20,8 @@ internal sealed class BoulderAttemptConfiguration : IEntityTypeConfiguration<Bou
         b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => new { x.UserId, x.BoulderId }).IsUnique();
         b.HasIndex(x => new { x.UserId, x.Completed, x.CompletedAt });
-        b.HasIndex(x => x.BoulderId);
+        // "Completed by N people" counts per boulder for a whole page of cards at once: boulder first, then the flag.
+        b.HasIndex(x => new { x.BoulderId, x.Completed, x.CompletedAt });
     }
 }
 

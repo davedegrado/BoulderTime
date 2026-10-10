@@ -10,8 +10,13 @@ namespace BoulderTime.Api.Controllers;
 /// <summary>Climbing progress, ratings, follows, history, profiles and Home.</summary>
 [ApiController]
 [Produces("application/json")]
-public sealed class ClimbingController(ProgressService progress, FollowService follows, ActivityService activity) : ControllerBase
+public sealed class ClimbingController(ProgressService progress, FollowService follows, ActivityService activity, CompletionService completions) : ControllerBase
 {
+    /// <summary>Who completed the boulder, most recent first. The count is on the boulder itself; the names need an account.</summary>
+    [HttpGet("api/boulders/{boulderId:guid}/completions"), Authorize]
+    public Task<BoulderCompletionsDto> Completions(Guid boulderId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
+        completions.ListAsync(boulderId, page, pageSize, ct);
+
     // ---- Attempts & ratings (always the caller's own) ----
 
     [HttpPut("api/boulders/{boulderId:guid}/attempt"), Authorize]

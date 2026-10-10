@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import { Check, MountainSnow } from "lucide-react";
+import { Check, MountainSnow, Users } from "lucide-react";
+import { IntensityBadge } from "@/features/boulders/intensity";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
@@ -61,10 +62,24 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
       </div>
       <div className="boulder-card__body">
         <GradeLine grades={boulder.grades} />
-        <HoldBadge color={boulder.holdColor} compact />
+        <div className="boulder-card__holds">
+          <HoldBadge color={boulder.holdColor} compact />
+          {boulder.intensity && <IntensityBadge intensity={boulder.intensity} compact />}
+        </div>
+        {(boulder.tags ?? []).length > 0 && (
+          <p className="boulder-card__tags">{(boulder.tags ?? []).slice(0, 2).map((x) => x.name).join(" · ")}{(boulder.tags ?? []).length > 2 ? ` +${(boulder.tags ?? []).length - 2}` : ""}</p>
+        )}
         <div className="boulder-card__foot">
           <p className="boulder-card__sector">{boulder.sectorName}</p>
-          <RatingSummaryText rating={boulder.rating} compact />
+          <span className="boulder-card__stats">
+            {(boulder.completions ?? 0) > 0 && (
+              <span className="boulder-card__sends" title={plural(boulder.completions ?? 0, "Completed by 1 person", "Completed by {count} people")}>
+                <Users aria-hidden />{boulder.completions}
+                <span className="sr-only">{plural(boulder.completions ?? 0, "Completed by 1 person", "Completed by {count} people")}</span>
+              </span>
+            )}
+            <RatingSummaryText rating={boulder.rating} compact />
+          </span>
         </div>
       </div>
     </>

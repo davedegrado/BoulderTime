@@ -81,7 +81,27 @@ videos** are below.`,
 time. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100. Attempts never cost
 points.
 
-Rather not appear? In **Profile → Leaderboards** turn on **Don't show me in leaderboards**.`,
+Rather not appear? In **Profile → Leaderboards** turn on **Don't show me in leaderboards or lists**.`,
+        },
+        {
+          q: "What are a boulder's tags and intensity?",
+          a: `The gym's staff choose them. **Tags** describe the boulder in the gym's own words (Slab, Dynamic, Endurance…).
+**Intensity** says how hard it is on the body, in three levels: low, medium, high. It is independent of the grade: a
+green can be gentle or punishing.
+
+You can filter by both under **Filters** in the Boulders tab. With several tags chosen, you see the boulders that have
+them all.`,
+        },
+        {
+          q: "How do I see who completed a boulder?",
+          a: `The boulder's page says **Completed by N people**: tap it to see who, most recent first. Each person counts once,
+however many times they tried. People who chose **Don't show me in leaderboards or lists** count in the number but
+don't appear by name.`,
+        },
+        {
+          q: "What is the favourite sector on my profile?",
+          a: `The sector where you completed the most boulders, each counted once, taken-down ones included. If the gym drew
+its map, you see it picked out on the floor plan; tapping it opens that sector's boulders.`,
         },
       ],
     },
@@ -226,6 +246,13 @@ projecting the boulder are told.`,
 you can write an update about the retrace.
 
 A retraced boulder is removed and created again, not edited: people who sent it keep their send.`,
+        },
+        {
+          q: "How do I use tags and intensity?",
+          a: `In **Manage → Tags** you create, rename and delete the gym's tags. In the boulder editor you pick up to 6 tags
+(or create one on the spot) and the intensity, which can stay **Not given**. Renaming a tag renames it on every
+boulder; deleting it takes it off all of them, after a second tap that says how many boulders use it. "Slab" and "slab"
+are the same tag.`,
         },
         {
           q: "I removed a boulder by mistake",

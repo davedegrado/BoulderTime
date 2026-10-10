@@ -7,6 +7,7 @@ import type { GradeSystemType } from "@/features/grading/api";
 import type { HoldColor } from "@/features/boulders/holdColors";
 import { prepareImage } from "@/features/boulders/imageResize";
 import { t } from "@/i18n/i18n";
+import type { Intensity } from "@/features/boulders/intensity";
 
 export type BoulderStatus = "ACTIVE" | "REMOVED" | "DELETED";
 /** The two a list can be asked for. A deleted boulder is in no list, so asking for it is an error, not a filter. */
@@ -15,6 +16,8 @@ export type BrowsableStatus = "ACTIVE" | "REMOVED";
 export interface BoulderGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gradeValueId: string; label: string; rank: number; colorHex: string | null }
 
 export interface RatingSummary { average: number | null; count: number }
+/** One of the gym's own tags, as a boulder carries it. */
+export interface BoulderTag { id: string; name: string }
 export interface ViewerProgress { attempts: number; completed: boolean; completedAt: string | null; rating: number | null }
 
 export interface BoulderSummary {
@@ -22,6 +25,11 @@ export interface BoulderSummary {
   id: string; gymId: string; gymName: string; sectorId: string; sectorName: string; photoUrl: string | null;
   holdColor: HoldColor; grades: BoulderGrade[]; status: BoulderStatus; createdAt: string; removedAt: string | null;
   rating: RatingSummary; viewer: ViewerProgress | null;
+  /** Staff's word on how intense it is, apart from the grade; null when not given. */
+  intensity?: Intensity | null;
+  tags?: BoulderTag[] | null;
+  /** How many people completed it, each once. */
+  completions?: number;
 }
 
 export interface BoulderDetail extends BoulderSummary {
@@ -41,12 +49,18 @@ export interface BoulderDetail extends BoulderSummary {
 export interface DeletionImpact { sends: number; comments: number; videos: number; hasBeta: boolean }
 
 export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";
-export interface BoulderFilters { status?: BrowsableStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string }
+/** `tagIds`: boulders with every one of these tags. `intensity`: boulders with any of these intensities. */
+export interface BoulderFilters {
+  status?: BrowsableStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string;
+  tagIds?: string[]; intensity?: Intensity[];
+}
 
 export interface SaveBoulderInput {
   sectorId: string; photoPath: string; thumbnailPath?: string | null; holdColor: HoldColor;
   grades: { gradeSystemId: string; gradeValueId: string }[];
   setterUserId: string | null;
+  intensity: Intensity | null;
+  tagIds: string[];
 }
 
 export interface RemoveResult { removed: number; sectors: { sectorId: string; sectorName: string; removed: number }[] }
@@ -65,7 +79,10 @@ export function useBoulders(gymId: string | undefined, filters: BoulderFilters) 
     queryKey: boulderKeys.list(gymId ?? "", filters),
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({ page: String(pageParam), pageSize: String(PAGE_SIZE) });
-      for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);
+      for (const [k, v] of Object.entries(filters)) {
+        if (Array.isArray(v)) for (const item of v) params.append(k === "tagIds" ? "tagId" : k, item);
+        else if (v) params.set(k, v);
+      }
       return api.get<PagedResult<BoulderSummary>>(`/api/gyms/${gymId}/boulders?${params}`, { signal });
     },
     initialPageParam: 1,

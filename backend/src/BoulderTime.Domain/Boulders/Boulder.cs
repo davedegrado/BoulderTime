@@ -27,6 +27,8 @@ public class Boulder : IAuditable
     /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
     public string? ThumbnailPath { get; private set; }
     public HoldColor HoldColor { get; private set; }
+    /// <summary>How intense it is to climb, independent of the grade. Null until staff say (boulders set before it existed).</summary>
+    public BoulderIntensity? Intensity { get; private set; }
     public Guid? SetterUserId { get; private set; }
     public BoulderStatus Status { get; private set; } = BoulderStatus.Active;
     /// <summary>Null for boulders loaded by the system (demo seed, imports).</summary>
@@ -38,15 +40,18 @@ public class Boulder : IAuditable
 
     private Boulder() { }
 
-    public static Boulder Create(Guid gymId, Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId, Guid? createdBy, string? thumbnailPath = null) => new()
+    public static Boulder Create(Guid gymId, Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId, Guid? createdBy, string? thumbnailPath = null,
+        BoulderIntensity? intensity = null) => new()
     {
         Id = Guid.NewGuid(), GymId = gymId, SectorId = sectorId, PhotoPath = photoPath, ThumbnailPath = thumbnailPath, HoldColor = holdColor,
-        SetterUserId = setterUserId, CreatedByUserId = createdBy, Status = BoulderStatus.Active,
+        Intensity = intensity, SetterUserId = setterUserId, CreatedByUserId = createdBy, Status = BoulderStatus.Active,
     };
 
     /// <returns>Storage paths that are no longer referenced after the update.</returns>
-    public IReadOnlyList<string> Update(Guid sectorId, string photoPath, string? thumbnailPath, HoldColor holdColor, Guid? setterUserId)
+    public IReadOnlyList<string> Update(Guid sectorId, string photoPath, string? thumbnailPath, HoldColor holdColor, Guid? setterUserId,
+        BoulderIntensity? intensity = null)
     {
+        Intensity = intensity;
         var obsolete = new List<string>();
         if (photoPath != PhotoPath)
         {

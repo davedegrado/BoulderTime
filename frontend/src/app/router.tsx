@@ -26,6 +26,7 @@ const ManageLayout = lazy(() => import("@/pages/manage/ManageLayout").then((m) =
 const ManageOverview = lazy(() => import("@/pages/manage/ManageOverview").then((m) => ({ default: m.ManageOverview })));
 const ManageSectors = lazy(() => import("@/pages/manage/ManageSectors").then((m) => ({ default: m.ManageSectors })));
 const ManageSectorMap = lazy(() => import("@/pages/manage/ManageSectorMap").then((m) => ({ default: m.ManageSectorMap })));
+const ManageTags = lazy(() => import("@/pages/manage/ManageTags").then((m) => ({ default: m.ManageTags })));
 const ManageStaff = lazy(() => import("@/pages/manage/ManageStaff").then((m) => ({ default: m.ManageStaff })));
 const ManageSettings = lazy(() => import("@/pages/manage/ManageSettings").then((m) => ({ default: m.ManageSettings })));
 const ManageBoulders = lazy(() => import("@/pages/manage/ManageBoulders").then((m) => ({ default: m.ManageBoulders })));
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
           { path: "boulders/:boulderId/edit", element: <BoulderEditorPage /> },
           { path: "sectors", element: <ManageSectors /> },
           { path: "sectors/map", element: <ManageSectorMap /> },
+          { path: "tags", element: <ManageTags /> },
           { path: "grading", element: <ManageGrading /> },
           { path: "moderation", element: <ManageModeration /> },
           { path: "announcements", element: <ManageAnnouncements /> },

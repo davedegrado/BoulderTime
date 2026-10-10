@@ -57,6 +57,7 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
         b.Property(x => x.PhotoPath).HasMaxLength(512).IsRequired();
         b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.HoldColor).HasConversion<string>().HasMaxLength(16).IsRequired();
+        b.Property(x => x.Intensity).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         // Restrict everywhere: boulders are never deleted, and nothing may cascade into climbing history.
         b.HasOne<Gym>().WithMany().HasForeignKey(x => x.GymId).OnDelete(DeleteBehavior.Restrict);
@@ -66,6 +67,34 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
         b.HasOne<User>().WithMany().HasForeignKey(x => x.RemovedByUserId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.GymId, x.Status, x.CreatedAt });
         b.HasIndex(x => new { x.SectorId, x.Status });
+    }
+}
+
+internal sealed class GymTagConfiguration : IEntityTypeConfiguration<GymTag>
+{
+    public void Configure(EntityTypeBuilder<GymTag> b)
+    {
+        b.ToTable("gym_tags");
+        b.HasKey(t => t.Id);
+        b.Property(t => t.Id).ValueGeneratedNever();
+        b.Property(t => t.Name).HasMaxLength(GymTag.NameMaxLength).IsRequired();
+        b.Property(t => t.NormalizedName).HasMaxLength(GymTag.NameMaxLength * 2).IsRequired();
+        b.HasOne<Gym>().WithMany().HasForeignKey(t => t.GymId).OnDelete(DeleteBehavior.Restrict);
+        // Case, accents and spacing don't make a new tag: the database refuses the duplicate even in a race.
+        b.HasIndex(t => new { t.GymId, t.NormalizedName }).IsUnique();
+    }
+}
+
+internal sealed class BoulderTagConfiguration : IEntityTypeConfiguration<BoulderTag>
+{
+    public void Configure(EntityTypeBuilder<BoulderTag> b)
+    {
+        b.ToTable("boulder_tags");
+        b.HasKey(t => new { t.BoulderId, t.TagId });
+        // Deleting a tag takes it off every boulder; boulders themselves are never deleted (rows stay), so Restrict.
+        b.HasOne<GymTag>().WithMany().HasForeignKey(t => t.TagId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<Boulder>().WithMany().HasForeignKey(t => t.BoulderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(t => t.TagId);
     }
 }
 

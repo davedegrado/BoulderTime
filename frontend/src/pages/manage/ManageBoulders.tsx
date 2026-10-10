@@ -5,6 +5,7 @@ import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useBoulders, useRemoveBoulders, useRestoreBoulder, type BoulderFilters, type RemoveResult } from "@/features/boulders/api";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
+import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
@@ -26,6 +27,7 @@ export function ManageBoulders() {
   const [showFilters, setShowFilters] = useState(false);
   const sectors = useSectors(gym.id);
   const systems = useGradeSystems(gym.id);
+  const tags = useGymTags(gym.id);
   const boulders = useBoulders(gym.id, filters);
   const remove = useRemoveBoulders(gym.id);
   const restore = useRestoreBoulder();
@@ -90,14 +92,14 @@ export function ManageBoulders() {
               <CheckSquare aria-hidden />
             </button>
           )}
-          <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
+          <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
         </div>
       </div>
       {/* The one thing staff do most here, always under the thumb, however far down the list. */}
       {!removedView && !selecting && !noSetup && (
         <Link to={`/manage/${gym.slug}/boulders/new`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
-      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} />
+      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />

@@ -34,7 +34,17 @@ public sealed record ProfileDto(
     IReadOnlyList<GymSummaryDto> FollowedGyms, IReadOnlyList<ClimbHistoryItemDto> RecentCompletions,
     IReadOnlyList<StaffDistinctionDto> StaffDistinctions,
     /// <summary>Whether the viewer has blocked this person. Only the viewer ever sees it.</summary>
-    bool IsBlocked = false);
+    bool IsBlocked = false,
+    /// <summary>Where they have completed the most boulders; null before the first send.</summary>
+    FavoriteSectorDto? FavoriteSector = null);
+
+/// <summary>
+/// The sector with the most boulders this person completed, each boulder once. With the gym's floor plan and the
+/// sector's outline when the gym drew it, so the profile can show where it is.
+/// </summary>
+public sealed record FavoriteSectorDto(
+    Guid SectorId, string SectorName, Guid GymId, string GymName, string GymSlug, int Completed,
+    string? FloorPlanUrl, int? FloorPlanWidth, int? FloorPlanHeight, MapZoneDto? Zone);
 
 public sealed record HomeGymDto(GymSummaryDto Gym, bool IsFavorite, int ActiveBoulders, int NewThisWeek);
 
@@ -80,7 +90,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            await blocked.ViewerBlockedAsync(userId, ct));
+            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)
@@ -227,6 +237,29 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .Select(r => new ClimbHistoryItemDto(summaries[r.BoulderId], r.Attempts, r.Completed, r.CompletedAt, r.UpdatedAt,
                 ratings.TryGetValue(r.BoulderId, out var rating) ? rating : (int?)null))
             .ToList();
+    }
+
+    /// <summary>
+    /// Counts completed boulders per sector. One progress row per person and boulder, so nothing counts twice, and an
+    /// undone send no longer counts. Boulders taken down still count (they are the person's history); a boulder that
+    /// staff moved counts in its current sector, since a move corrects a mistake. A tie goes to the sector of the most
+    /// recent send. Only active gyms: a profile never names a gym that isn't public.
+    /// </summary>
+    public async Task<FavoriteSectorDto?> FavoriteSectorAsync(Guid userId, CancellationToken ct = default)
+    {
+        var top = await db.BoulderAttempts.AsNoTracking()
+            .Where(a => a.UserId == userId && a.Completed)
+            .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { b.SectorId, b.GymId, a.CompletedAt })
+            .Join(db.Gyms.Where(g => g.Status == GymStatus.Active), x => x.GymId, g => g.Id, (x, g) => x)
+            .GroupBy(x => x.SectorId)
+            .Select(g => new { SectorId = g.Key, Count = g.Count(), Last = g.Max(x => x.CompletedAt) })
+            .OrderByDescending(x => x.Count).ThenByDescending(x => x.Last)
+            .FirstOrDefaultAsync(ct);
+        if (top is null) return null;
+        var sector = await db.Sectors.AsNoTracking().FirstAsync(x => x.Id == top.SectorId, ct);
+        var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == sector.GymId, ct);
+        return new FavoriteSectorDto(sector.Id, sector.Name, gym.Id, gym.Name, gym.Slug, top.Count,
+            gym.FloorPlanUrl, gym.FloorPlanWidth, gym.FloorPlanHeight, MapZoneDto.FromJson(sector.MapZone));
     }
 
     private async Task<User> RequireVisibleProfileAsync(Guid userId, CancellationToken ct)

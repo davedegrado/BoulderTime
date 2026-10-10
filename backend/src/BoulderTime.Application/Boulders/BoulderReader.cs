@@ -17,6 +17,8 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var grades = await GradesAsync(ids, ct);
         var ratings = await RatingsAsync(ids, ct);
         var viewer = await ViewerAsync(ids, currentUser.UserId, ct);
+        var tags = await TagsAsync(ids, ct);
+        var completions = await CompletionsAsync(ids, ct);
 
         var sectorIds = boulders.Select(b => b.SectorId).Distinct().ToList();
         var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
@@ -28,7 +30,8 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             // A deleted boulder has no photo left to point at, and a signed url for an empty path would 404.
             b.Status == BoulderStatus.Deleted ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath),
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
-            b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id)))
+            b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
+            b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id)))
             .ToList();
     }
 
@@ -59,6 +62,32 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             .Select(g => new { BoulderId = g.Key, Average = g.Average(r => (double)r.Rating), Count = g.Count() })
             .ToListAsync(ct);
         return rows.ToDictionary(r => r.BoulderId, r => new RatingSummaryDto(Math.Round(r.Average, 1), r.Count));
+    }
+
+    /// <summary>Each boulder's tags, alphabetical, for a whole page in one query.</summary>
+    public async Task<Dictionary<Guid, IReadOnlyList<BoulderTagDto>>> TagsAsync(List<Guid> boulderIds, CancellationToken ct)
+    {
+        if (boulderIds.Count == 0) return [];
+        var rows = await db.BoulderTags.AsNoTracking().Where(t => boulderIds.Contains(t.BoulderId))
+            .Join(db.GymTags, bt => bt.TagId, t => t.Id, (bt, t) => new { bt.BoulderId, t.Id, t.Name, t.NormalizedName })
+            .ToListAsync(ct);
+        return rows.GroupBy(r => r.BoulderId).ToDictionary(g => g.Key,
+            g => (IReadOnlyList<BoulderTagDto>)g.OrderBy(r => r.NormalizedName, StringComparer.Ordinal).Select(r => new BoulderTagDto(r.Id, r.Name)).ToList());
+    }
+
+    /// <summary>
+    /// How many people completed each boulder, for a whole page in one query. A person counts once — there is one
+    /// progress row per person and boulder — and only while it is marked completed, so undoing a send takes it off.
+    /// Suspended accounts don't count, as they count nowhere else.
+    /// </summary>
+    public async Task<Dictionary<Guid, int>> CompletionsAsync(List<Guid> boulderIds, CancellationToken ct)
+    {
+        if (boulderIds.Count == 0) return [];
+        return await db.BoulderAttempts.AsNoTracking()
+            .Where(a => boulderIds.Contains(a.BoulderId) && a.Completed)
+            .Join(db.Users.Where(u => u.SuspendedAt == null), a => a.UserId, u => u.Id, (a, u) => a.BoulderId)
+            .GroupBy(id => id).Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
     }
 
     public async Task<Dictionary<Guid, ViewerProgressDto>> ViewerAsync(List<Guid> boulderIds, Guid? userId, CancellationToken ct)

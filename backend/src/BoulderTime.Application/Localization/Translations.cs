@@ -110,6 +110,15 @@ public static partial class Translations
         // ---- Boulders ----
         ("Add a photo of the boulder.", "Aggiungi una foto del blocco."),
         ("Choose the hold colour.", "Scegli il colore delle prese."),
+        ("Choose a known intensity.", "Scegli un'intensità valida."),
+        ("Use this gym's tags.", "Usa i tag di questa palestra."),
+        ("Pick at most {0} tags.", "Scegli al massimo {0} tag."),
+
+        // ---- Tags ----
+        ("Give the tag a name.", "Dai un nome al tag."),
+        ("Keep tag names under {0} characters.", "Il nome del tag deve avere meno di {0} caratteri."),
+        ("A gym can have at most {0} tags.", "Una palestra può avere al massimo {0} tag."),
+        ("There is already a tag called “{0}”.", "Esiste già un tag chiamato “{0}”."),
         ("Give the boulder at least one official grade.", "Assegna al blocco almeno un grado ufficiale."),
         ("Select at least one boulder.", "Seleziona almeno un blocco."),
         ("Remove at most {0} boulders at once.", "Rimuovi al massimo {0} blocchi alla volta."),

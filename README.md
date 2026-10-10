@@ -5,15 +5,17 @@
 ## 1. What BoulderTime is
 
 A platform for indoor bouldering gyms and their climbers. Gyms publish and manage their boulders, grades, beta and
-announcements. Climbers discover gyms, follow gyms, sectors and individual boulders, log attempts and sends, rate
-problems, suggest grades, watch beta and keep a climbing history that survives retracing.
+announcements, draw their sectors on their own floor plan, and describe boulders with their own tags and an intensity
+apart from the grade. Climbers discover gyms, follow gyms, sectors and individual boulders, log attempts and sends, rate
+problems, suggest grades, watch beta, see who else completed a boulder and keep a climbing history (with their most
+climbed sector) that survives retracing.
 
 One account can be a climber, staff at several gyms and a platform administrator at the same time.
 
 > **Build status:** live in production at **[bouldertime.com](https://bouldertime.com)**. Phases 1–9 are complete and
 > verified, along with privacy and terms, account deletion, leaderboard visibility and per-gym video allowances.
-> The **Android app** is built from the same codebase and installs from CI; native push, blocking users and the
-> stores themselves are the milestones in progress. Status and the deliberate limitations:
+> The **Android and iOS apps** are built from the same codebase by CI (Android on Google Play's testing tracks, iOS
+> on TestFlight); publishing on the stores is the milestone in progress. Status and the deliberate limitations:
 > [`docs/roadmap.md`](docs/roadmap.md).
 
 ## 2. Architecture

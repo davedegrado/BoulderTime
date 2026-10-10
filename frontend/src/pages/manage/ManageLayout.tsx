@@ -38,6 +38,7 @@ export function ManageLayout() {
     { to: base, label: t("Overview"), end: true },
     { to: `${base}/boulders`, label: t("Boulders") },
     { to: `${base}/sectors`, label: t("Sectors") },
+    { to: `${base}/tags`, label: t("Tags") },
     { to: `${base}/grading`, label: t("Grading") },
     { to: `${base}/announcements`, label: t("Updates") },
     { to: `${base}/moderation`, label: t("Moderation") },

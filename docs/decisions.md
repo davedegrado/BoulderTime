@@ -844,3 +844,42 @@ production, which the App Store profile carries; Debug keeps development.
 **No Mac needed.** The certificate's key and request are made with openssl (docs/mobile.md); the `.p12` is exported
 with `-legacy` so the Mac's keychain can read it. Secrets live only in the steps that use them, in a throwaway
 keychain with a random password, and are deleted at the end of every run.
+
+## ADR-046 · Gym tags and boulder intensity
+**Tags belong to each gym.** There is no global list: every gym describes its walls in its own words ("Placca",
+"Dinamico", "Resistenza"). `gym_tags` (gym, name, normalised name) and `boulder_tags` (boulder, tag) instead of a list of
+strings on the boulder, so renaming a tag renames it on every boulder and deleting one leaves nothing behind (the links
+go with it, by cascade). Names are unique per gym ignoring case, accents and spacing: the normalised name carries a
+unique index, so "placca" and "Placcà" are refused even when two people add them at once, and the error names the tag
+that already exists. Limits: 50 tags a gym, 6 a boulder, 24 characters a name.
+
+**Who.** Staff create, rename and delete them (like sectors, not like grading scales: the people who set the boulders
+are the ones who describe them), only in their own gym; a boulder only takes its own gym's tags, checked by the server.
+Anyone can read them. An edit from an app that doesn't send tags (`tagIds` null) leaves them as they are; an empty list
+clears them.
+
+**Intensity is not a tag.** Three fixed, ordered levels (low, medium, high), a nullable column on the boulder: boulders
+set before it existed simply have none, and nobody has to classify the old ones. It is independent of every grade and
+of the grade votes, and shown as three rising bars in the text colour, never a grade or hold colour. Neither tags nor
+intensity notify a boulder's followers when they change.
+
+**Filters.** `tagId` (repeatable) keeps boulders carrying every tag chosen, as every other filter narrows;
+`intensity` (repeatable) keeps any of the levels chosen. Both work with every grading system, since neither touches
+grades.
+
+## ADR-047 · "Completed by N people" and the most climbed sector
+**Counted, not stored.** A boulder's sends are the `boulder_attempts` rows marked completed: one row per person and
+boulder, so a person counts once however many times they tried, and undoing a send takes them off. No counter on the
+boulder that could drift from undo, account erasure or suspension: lists count a whole page in one grouped query, with
+an index on (boulder, completed). Suspended accounts count nowhere.
+
+**The number is public, the names are not.** Cards and the boulder page show the number to everyone. The names
+(`GET /api/boulders/{id}/completions`, most recent first) need an account and leave out people blocked either way and
+people who chose not to appear: the leaderboard opt-out now reads "Don't show me in leaderboards or lists". They still
+count in the number, and the list says how many prefer not to appear. Everyone always sees themself.
+
+**Most climbed sector.** On the profile: the sector with the most boulders the person completed, each boulder once.
+Taken-down boulders count (they are history); a boulder moved by staff counts in its current sector (a move corrects a
+mistake); a tie goes to the most recent send; only active gyms, so a profile never names a gym that isn't public. With
+the gym's plan and the sector's outline when there is one, the card shows where it is.
+

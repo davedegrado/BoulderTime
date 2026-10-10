@@ -1179,3 +1179,48 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 :root[data-theme="dark"] .fav-btn.is-on { color: #ff5c8a; border-color: #6b2a3d; background: #3a1824; }
 :root[data-theme="dark"] .notification__icon--sector_updates { background: #1b2a45; color: #7aa7f5; }
 :root[data-theme="dark"] .notification.is-unread { background: #2a1d15; }
+
+/* ---------- Intensity, tags, completions, favourite sector ---------- */
+/* Intensity: three rising bars in the text colour, never a grade or hold colour. */
+.intensity-bars { width: 14px; height: 12px; flex-shrink: 0; }
+.intensity-bars rect { fill: currentColor; opacity: 0.22; }
+.intensity-bars rect.is-on { opacity: 1; }
+.intensity { display: inline-flex; align-items: center; gap: 6px; color: var(--bt-ink-2); font-weight: 600; }
+.boulder-card__holds { display: flex; align-items: center; gap: 8px; width: 100%; }
+.boulder-card__holds .intensity { color: var(--bt-ink-2); }
+.boulder-card__tags { font-size: 0.6875rem; font-weight: 600; color: var(--bt-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.boulder-card__stats { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.boulder-card__sends { display: inline-flex; align-items: center; gap: 3px; font-size: var(--bt-text-xs); font-weight: 700; color: var(--bt-ink-2); }
+.boulder-card__sends svg { width: 13px; height: 13px; }
+.boulder-card__foot .boulder-card__sector { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.intensity-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.intensity-picker__option { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 var(--bt-3); border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); color: var(--bt-ink-2); font: inherit; font-weight: 600; font-size: var(--bt-text-sm); cursor: pointer; }
+.intensity-picker__option[aria-checked="true"] { border-color: var(--bt-ink); color: var(--bt-ink); box-shadow: 0 0 0 1px var(--bt-ink); }
+.chips--wrap { flex-wrap: wrap; overflow: visible; }
+.chip[aria-pressed="true"] { background: var(--bt-strong); border-color: var(--bt-strong); color: var(--bt-on-strong); }
+.chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.chip .intensity-bars { margin-right: 2px; vertical-align: -1px; }
+.tag-add { display: flex; gap: var(--bt-2); align-items: center; }
+.tag-add .field__input { flex: 1; min-width: 0; }
+.filter-group { grid-column: 1 / -1; border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.tag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-pill { padding: 4px 12px; border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); color: var(--bt-ink-2); font-size: var(--bt-text-sm); font-weight: 600; }
+
+.completions { display: flex; align-items: center; gap: var(--bt-2); margin: 0; font-weight: 600; color: var(--bt-ink); font-size: var(--bt-text-sm); }
+.completions svg { width: 18px; height: 18px; color: var(--bt-ink-2); }
+.completions--none { color: var(--bt-ink-3); font-weight: 500; }
+.completions--button { width: 100%; min-height: 48px; padding: 0 var(--bt-4); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); background: var(--bt-surface); font: inherit; font-weight: 600; font-size: var(--bt-text-sm); color: var(--bt-ink); cursor: pointer; text-align: left; }
+.completions--button span { flex: 1; }
+.completions__chevron { margin-left: auto; color: var(--bt-ink-3); }
+.completions-sheet { max-height: 80dvh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--bt-3); }
+.completions-sheet__list .list__row { gap: var(--bt-3); }
+
+.favorite-sector { gap: var(--bt-3); }
+.favorite-sector__link { display: flex; align-items: center; gap: var(--bt-3); color: inherit; text-decoration: none; }
+.favorite-sector__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--bt-radius-md); background: var(--bt-orange-tint); color: var(--bt-orange-ink); flex-shrink: 0; }
+.favorite-sector__icon svg { width: 22px; height: 22px; }
+.favorite-sector__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.favorite-sector__name { font-size: var(--bt-text-lg); font-weight: 800; letter-spacing: var(--bt-tracking-tight); }
+.favorite-sector__map { margin: 0 auto; width: 100%; }

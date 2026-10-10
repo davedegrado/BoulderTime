@@ -4,6 +4,7 @@ import { Mountain } from "lucide-react";
 import { useCurrentUser } from "@/features/users/api";
 import { useHistory, useProfile, type HistoryFilter } from "@/features/climbing/api";
 import { HighestGrades, HistoryRow, WeeklyChart } from "@/features/climbing/ClimbingBits";
+import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { t } from "@/i18n/i18n";
@@ -36,6 +37,8 @@ export function ClimbingActivity({ userId, title, header }: { userId: string; ti
         <div className="stat"><span className="stat__value">{p.stats.completedThisMonth}</span><span className="stat__label">{t("Sent this month")}</span></div>
         <div className="stat"><span className="stat__value">{p.stats.totalAttempts}</span><span className="stat__label">{t("Attempts")}</span></div>
       </div>
+
+      {p.favoriteSector && <FavoriteSectorCard sector={p.favoriteSector} isMe={p.isMe} />}
 
       <section className="section card" aria-labelledby="weekly-title">
         <h2 id="weekly-title" className="section__title">{t("Last 12 weeks")}</h2>

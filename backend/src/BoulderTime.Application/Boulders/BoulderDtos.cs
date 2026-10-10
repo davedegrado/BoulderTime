@@ -9,6 +9,9 @@ public sealed record BoulderGradeDto(Guid GradeSystemId, string SystemName, Grad
 
 public sealed record RatingSummaryDto(double? Average, int Count);
 
+/// <summary>A gym's tag as a boulder shows it.</summary>
+public sealed record BoulderTagDto(Guid Id, string Name);
+
 /// <summary>The signed-in viewer's own tracking of a boulder; null when anonymous or never tracked.</summary>
 public sealed record ViewerProgressDto(int Attempts, bool Completed, DateTimeOffset? CompletedAt, int? Rating);
 
@@ -20,7 +23,10 @@ public sealed record BoulderSummaryDto(
     Guid Id, Guid GymId, string GymName, Guid SectorId, string SectorName, string? PhotoUrl,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades,
     BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt,
-    RatingSummaryDto Rating, ViewerProgressDto? Viewer);
+    RatingSummaryDto Rating, ViewerProgressDto? Viewer,
+    BoulderIntensity? Intensity = null, IReadOnlyList<BoulderTagDto>? Tags = null,
+    /// <summary>How many people have completed it (one each, however many times they tried). Suspended accounts don't count.</summary>
+    int Completions = 0);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
@@ -43,20 +49,27 @@ public sealed record BoulderDetailDto(
     /// </summary>
     bool CanAddOfficialBeta = true,
     /// <summary>The small picture the cards show (the whole photo, or the part staff chose); null when there is none.</summary>
-    string? ThumbnailUrl = null);
+    string? ThumbnailUrl = null,
+    BoulderIntensity? Intensity = null, IReadOnlyList<BoulderTagDto>? Tags = null, int Completions = 0);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
 /// <param name="ThumbnailPath">Optional small version of the photo for lists (generated on the device).</param>
+/// <param name="Intensity">Optional; none means "not said". Independent of the grades.</param>
+/// <param name="TagIds">The gym's tags for this boulder. Null leaves the tags as they are (older apps don't send them); empty clears them.</param>
 public sealed record SaveBoulderRequest(
-    Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null);
+    Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null,
+    BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null);
 
 /// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
 public enum ProgressFilter { All, Untried, Projects, Completed }
 
+/// <param name="TagIds">Boulders carrying ALL of these tags (each one narrows, like every other filter).</param>
+/// <param name="Intensities">Boulders with ANY of these intensities; boulders without one are left out.</param>
 public sealed record BoulderQuery(
     BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
-    ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize);
+    ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize,
+    IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null);
 
 /// <param name="NotifyFollowers">Send one "sector retraced" notification per affected sector to its followers.</param>
 public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool? NotifyFollowers = false);
