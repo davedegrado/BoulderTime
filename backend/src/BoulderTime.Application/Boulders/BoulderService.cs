@@ -139,6 +139,24 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         return await GetAsync(boulder.Id, ct);
     }
 
+    /// <summary>
+    /// The boulder's full photo, handed to its gym's staff through the API so the app can cut the card picture out of
+    /// it on the device. Read from the public address instead, the browser refuses to let the app read the pixels
+    /// whenever the storage's answer lacks the cross-origin header (or comes from a cache that dropped it).
+    /// </summary>
+    public async Task<(byte[] Content, string ContentType)> PhotoAsync(Guid boulderId, CancellationToken ct = default)
+    {
+        var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
+        await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
+        var bytes = await storage.ReadAsync(StorageBuckets.BoulderImages, boulder.PhotoPath, ct) ?? throw new NotFoundException("Boulder photo", boulderId);
+        var type = Path.GetExtension(boulder.PhotoPath).ToLowerInvariant() switch
+        {
+            ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg",
+        };
+        return (bytes, type);
+    }
+
     /// <summary>Corrects an existing boulder (wrong photo, grade or sector). Retracing is NOT an edit: remove and create instead.</summary>
     public async Task<BoulderDetailDto> UpdateAsync(Guid boulderId, SaveBoulderRequest r, CancellationToken ct = default)
     {

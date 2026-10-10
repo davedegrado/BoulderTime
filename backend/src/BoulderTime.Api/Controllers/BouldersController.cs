@@ -54,6 +54,13 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
     public async Task<ActionResult<BoulderDetailDto>> Create(Guid gymId, [FromBody] SaveBoulderRequest request, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await boulders.CreateAsync(gymId, request, ct));
 
+    [HttpGet("api/boulders/{boulderId:guid}/photo"), Authorize]
+    public async Task<IActionResult> Photo(Guid boulderId, CancellationToken ct)
+    {
+        var (content, contentType) = await boulders.PhotoAsync(boulderId, ct);
+        return File(content, contentType);
+    }
+
     [HttpPut("api/boulders/{boulderId:guid}"), Authorize]
     public Task<BoulderDetailDto> Update(Guid boulderId, [FromBody] SaveBoulderRequest request, CancellationToken ct) =>
         boulders.UpdateAsync(boulderId, request, ct);

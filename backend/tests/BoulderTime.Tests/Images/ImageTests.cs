@@ -142,4 +142,21 @@ public sealed class ImageTests(PostgresFixture postgres) : IAsyncLifetime
         var kept = (await (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", new { body.sectorId, body.photoPath, holdColor = "RED", body.grades })).ReadAsync<BoulderDetailDto>())!;
         kept.ThumbnailUrl.Should().Contain(Path.GetFileName(second));
     }
+
+    [Fact]
+    public async Task Staff_can_read_the_full_photo_through_the_api_to_cut_the_card_picture()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var b = await w.BoulderAsync();
+
+        var res = await w.Staff.Client.GetAsync($"/api/boulders/{b.Id}/photo");
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        res.Content.Headers.ContentType!.MediaType.Should().StartWith("image/");
+        (await res.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
+
+        // Everyone else loads the photo from its public address; this way in is for the gym's staff.
+        var climber = await _f.UserAsync();
+        (await climber.Client.GetAsync($"/api/boulders/{b.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await _f.CreateClient().GetAsync($"/api/boulders/{b.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

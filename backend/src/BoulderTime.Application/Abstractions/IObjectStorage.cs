@@ -53,6 +53,9 @@ public interface IObjectStorage
     /// <summary>Short-lived URL for an object in a PRIVATE bucket. Only issued to viewers who are allowed to see it.</summary>
     Task<string> CreateReadUrlAsync(string bucket, string path, TimeSpan lifetime, CancellationToken ct = default);
 
+    /// <summary>Server-side read of a whole object, or null if there is none. For small files (photos) only.</summary>
+    Task<byte[]?> ReadAsync(string bucket, string path, CancellationToken ct = default);
+
     /// <summary>Deletes an object if it exists.</summary>
     Task DeleteAsync(string bucket, string path, CancellationToken ct = default);
 }

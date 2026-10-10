@@ -105,6 +105,9 @@ public sealed class LocalObjectStorage : IObjectStorage
     public Task<bool> ExistsAsync(string bucket, string path, CancellationToken ct = default) =>
         Task.FromResult(Resolve(bucket, path) is { } file && File.Exists(file));
 
+    public async Task<byte[]?> ReadAsync(string bucket, string path, CancellationToken ct = default) =>
+        Resolve(bucket, path) is { } file && File.Exists(file) ? await File.ReadAllBytesAsync(file, ct) : null;
+
     public async Task PutAsync(string bucket, string path, Stream content, string contentType, CancellationToken ct = default)
     {
         var file = Resolve(bucket, path) ?? throw new ArgumentException("Invalid object path.", nameof(path));

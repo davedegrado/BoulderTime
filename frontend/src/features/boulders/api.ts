@@ -93,6 +93,12 @@ async function putToTicket(ticket: UploadTicket, blob: Blob) {
   if (!res.ok) throw new ApiError(res.status, null, t("The photo upload failed. Try again."));
 }
 
+/**
+ * A saved boulder's full photo, through the API rather than from its public address: the device must be allowed to
+ * read its pixels to cut the card picture out, and the storage's own answer doesn't always allow that.
+ */
+export const fetchBoulderPhoto = (boulderId: string): Promise<Blob> => api.blob(`/api/boulders/${boulderId}/photo`);
+
 /** Uploads a card picture already made on the device (the part of the photo staff chose). */
 export async function uploadBoulderThumbnail(gymId: string, thumb: Blob): Promise<string> {
   const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: "image/jpeg", sizeBytes: thumb.size, thumbnail: true });

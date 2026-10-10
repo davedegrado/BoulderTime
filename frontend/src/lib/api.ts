@@ -12,9 +12,9 @@ interface RequestOptions {
   anonymous?: boolean;
 }
 
-async function request<T>(method: Method, path: string, options: RequestOptions = {}): Promise<T> {
+async function send(method: Method, path: string, options: RequestOptions = {}, accept = "application/json"): Promise<Response> {
   // The server answers (and writes notifications) in the language the person is using.
-  const headers: Record<string, string> = { Accept: "application/json", "Accept-Language": activeLanguage() };
+  const headers: Record<string, string> = { Accept: accept, "Accept-Language": activeLanguage() };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   if (!options.anonymous) {
@@ -37,6 +37,11 @@ async function request<T>(method: Method, path: string, options: RequestOptions 
   }
 
   if (!response.ok) throw await toApiError(response);
+  return response;
+}
+
+async function request<T>(method: Method, path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await send(method, path, options);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
@@ -47,4 +52,6 @@ export const api = {
   put: <T>(path: string, body?: unknown, o?: RequestOptions) => request<T>("PUT", path, { ...o, body }),
   patch: <T>(path: string, body?: unknown, o?: RequestOptions) => request<T>("PATCH", path, { ...o, body }),
   delete: <T>(path: string, o?: RequestOptions) => request<T>("DELETE", path, o),
+  /** A file the API hands over itself (a boulder's photo for staff), signed in like every other call. */
+  blob: async (path: string, o?: RequestOptions) => (await send("GET", path, o, "*/*")).blob(),
 };

@@ -5,7 +5,7 @@ import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useStaff } from "@/features/staff/api";
-import { uploadBoulderPhoto, uploadBoulderThumbnail, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
+import { fetchBoulderPhoto, uploadBoulderPhoto, uploadBoulderThumbnail, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
 import { Button } from "@/components/Button";
@@ -73,11 +73,13 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     setCropping(false);
     try {
       // The photo just picked, or the saved one, fetched again to cut the part out on this device.
-      const source = file ?? await (await fetch(initial!.photoUrl!)).blob();
+      const source = file ?? await fetchBoulderPhoto(initial!.id);
       const blob = await cropImage(source, rect);
       setThumb({ blob, url: URL.createObjectURL(blob) });
-    } catch {
-      toast.error(t("Couldn't prepare the card picture. Try again."));
+    } catch (err) {
+      // The reason travels along: this is a staff tool, and "why" is what they'll be asked when they report it.
+      const reason = err instanceof Error && err.message ? ` (${err.message})` : "";
+      toast.error(t("Couldn't prepare the card picture. Try again.") + reason);
     }
   }
 

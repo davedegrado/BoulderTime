@@ -58,6 +58,14 @@ public sealed class SupabaseObjectStorage(HttpClient http, IConfiguration config
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task<byte[]?> ReadAsync(string bucket, string path, CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync($"{BaseUrl}/object/{bucket}/{Encode(path)}", ct);
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest) return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
     public string PublicUrl(string bucket, string path) => $"{BaseUrl}/object/public/{bucket}/{Encode(path)}";
 
     public async Task<string> CreateReadUrlAsync(string bucket, string path, TimeSpan lifetime, CancellationToken ct = default)

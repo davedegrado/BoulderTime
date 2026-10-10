@@ -55,13 +55,39 @@ export interface CropRect { x: number; y: number; width: number; height: number 
  * photo's own pixels, as the picture is shown (EXIF orientation applied).
  */
 export async function cropImage(source: Blob, rect: CropRect, { width = 600, height = 480, quality = 0.8 } = {}): Promise<Blob> {
-  const bitmap = await createImageBitmap(source, { imageOrientation: "from-image" });
+  const picture = await decode(source);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext("2d")!.drawImage(bitmap, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
-  bitmap.close();
+  canvas.getContext("2d")!.drawImage(picture.image, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
+  picture.release();
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(t("Couldn't process the image.")))), "image/jpeg", quality),
   );
+}
+
+/**
+ * Decodes a picture for drawing. createImageBitmap where the device has it; otherwise (older WebViews, or options it
+ * doesn't know) a plain image element from a local address, which the browser lets the app read just the same.
+ */
+async function decode(source: Blob): Promise<{ image: CanvasImageSource; release: () => void }> {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(source, { imageOrientation: "from-image" });
+      return { image: bitmap, release: () => bitmap.close() };
+    } catch {
+      // fall through to the image element
+    }
+  }
+  const url = URL.createObjectURL(source);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
+  try {
+    await img.decode();
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    throw e;
+  }
+  return { image: img, release: () => URL.revokeObjectURL(url) };
 }
