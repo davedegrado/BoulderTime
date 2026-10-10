@@ -155,6 +155,10 @@ export function ProfilePage() {
             <span className="disclosure__text"><span className="list__title">{t("Notifications")}</span><span className="list__sub">{t("What reaches you, and on which device")}</span></span>
             <ChevronRight className="disclosure__chevron" aria-hidden />
           </Link>
+          <Link to="/aiuto" className="disclosure__summary disclosure__link">
+            <span className="disclosure__text"><span className="list__title">{t("Help and FAQ")}</span><span className="list__sub">{t("How to do things, step by step")}</span></span>
+            <ChevronRight className="disclosure__chevron" aria-hidden />
+          </Link>
         </div>
       </section>
 

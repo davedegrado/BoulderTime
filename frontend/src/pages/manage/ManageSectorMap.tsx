@@ -197,7 +197,7 @@ function ZoneEditor({ plan, sectors, gymId }: { plan: FloorPlan; sectors: Sector
       {selected && draft.closed && (
         <label className="check check--plain">
           <input type="checkbox" checked={draft.showLabel} onChange={(e) => { const showLabel = e.target.checked; setDraft((d) => ({ ...d, showLabel, dirty: true })); }} />
-          <span>
+          <span className="check__text">
             <strong>{t("Show the name on the map")}</strong>
             <span className="field__hint">{t("Turn it off when names overlap: climbers still see it by tapping the sector.")}</span>
           </span>

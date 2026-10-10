@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { EyeOff, Flag, History, Layers, MailPlus, Mountain, Users, Video } from "lucide-react";
+import { ChevronRight, CircleHelp, EyeOff, Flag, History, Layers, MailPlus, Mountain, Users, Video } from "lucide-react";
 import { useModerationSummary } from "@/features/community/api";
 import { useBoulders } from "@/features/boulders/api";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
@@ -66,6 +66,14 @@ export function ManageOverview() {
           <span className="stat__label">{t("Open invitations")}</span>
         </Link>
       </div>
+      <Link to="/aiuto#staff" className="list__row list__row--link card map-entry">
+        <CircleHelp className="list__icon" aria-hidden />
+        <span className="list__main">
+          <span className="list__title">{t("Staff guide")}</span>
+          <span className="list__sub">{t("Boulders, retraces, the sector map, moderation: how it's done.")}</span>
+        </span>
+        <ChevronRight className="list__chevron" aria-hidden />
+      </Link>
     </div>
   );
 }

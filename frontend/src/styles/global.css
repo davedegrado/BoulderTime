@@ -848,6 +848,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .agree { display: flex; flex-direction: column; gap: var(--bt-2); padding-top: var(--bt-1); }
 .check--plain { padding: var(--bt-1) 0; border: 0; border-radius: 0; line-height: 1.45; }
 .check--plain > span { display: block; }
+.check--plain > span.check__text { display: flex; flex-direction: column; gap: 2px; }
 .check--plain input { width: 24px; height: 24px; margin-top: 0; }
 .check--invalid input { outline: 2px solid var(--bt-danger); outline-offset: 1px; border-radius: 4px; }
 .agree .field__error { margin: -4px 0 var(--bt-1) 36px; }
@@ -1159,3 +1160,12 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .zone-editor__zoom { display: flex; align-items: center; gap: var(--bt-3); font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
 .zone-editor__zoom input { flex: 1; accent-color: var(--bt-orange); }
 .zone-editor__actions { display: flex; flex-wrap: wrap; gap: var(--bt-2); }
+
+/* ---------- Help and FAQ ---------- */
+.help { gap: var(--bt-6); }
+.help__section { display: flex; flex-direction: column; gap: var(--bt-3); }
+.help__answer { display: flex; flex-direction: column; gap: var(--bt-3); }
+.help__answer .legal__p, .help__answer .legal__list { font-size: var(--bt-text-sm); }
+.help__empty { color: var(--bt-ink-2); text-align: center; padding: var(--bt-6) 0; }
+.help__contact { display: flex; align-items: center; gap: var(--bt-2); justify-content: center; color: var(--bt-ink-2); font-size: var(--bt-text-sm); flex-wrap: wrap; text-align: center; }
+.help__contact svg { width: 18px; height: 18px; }

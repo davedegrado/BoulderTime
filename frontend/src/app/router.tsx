@@ -41,6 +41,7 @@ const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers").then((m) => ({ 
 const AdminLeaderboards = lazy(() => import("@/pages/admin/AdminLeaderboards").then((m) => ({ default: m.AdminLeaderboards })));
 const AdminPartners = lazy(() => import("@/pages/admin/AdminPartners").then((m) => ({ default: m.AdminPartners })));
 const AdminReports = lazy(() => import("@/pages/admin/AdminReports").then((m) => ({ default: m.AdminReports })));
+const HelpPage = lazy(() => import("@/pages/HelpPage").then((m) => ({ default: m.HelpPage })));
 const NotificationSettingsPage = lazy(() => import("@/pages/NotificationSettingsPage").then((m) => ({ default: m.NotificationSettingsPage })));
 const SuggestGymPage = lazy(() => import("@/pages/SuggestGymPage").then((m) => ({ default: m.SuggestGymPage })));
 
@@ -63,6 +64,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "explore", element: <ExplorePage /> },
+      { path: "aiuto", element: <HelpPage /> },
+      { path: "help", element: <HelpPage /> },
       { path: "gyms/suggest", element: <RequireAuth><SuggestGymPage /></RequireAuth> },
       { path: "gyms/:slug", element: <GymPage /> },
       { path: "boulders/:id", element: <BoulderPage /> },
