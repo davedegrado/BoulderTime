@@ -38,7 +38,8 @@ export function appPathFromUrl(url: string): string | null {
  * - tapping a notification opens the page it is about;
  * - the status bar uses dark text on the app's light header;
  * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between;
- *   the status bar keeps light text over it and switches to dark text with the first screen.
+ *   it also stays at least two seconds (SPLASH_MIN_MS), so it is seen rather than flashed. The status bar keeps light
+ *   text over it and switches to dark text with the first screen.
  * Plugins are imported here, on demand, so the web build never ships them.
  */
 export async function startNativeShell(): Promise<void> {
@@ -93,13 +94,22 @@ export async function startNativeShell(): Promise<void> {
     void import("@/features/notifications/push").then(({ syncNativePush }) => syncNativePush()).catch(() => {});
   }
 
-  // Give React a frame to paint the first screen before revealing it. The status bar turns to dark text on the light
+  // Give React a frame to paint the first screen before revealing it, and keep the launch screen up for at least
+  // SPLASH_MIN_MS from the start, so it is seen rather than flashed. The status bar turns to dark text on the light
   // header only now: until here it sat on the dark launch screen.
   requestAnimationFrame(() => {
-    void SplashScreen.hide({ fadeOutDuration: 300 });
-    void lightStatusBar(StatusBar, Style);
+    window.setTimeout(() => {
+      void SplashScreen.hide({ fadeOutDuration: 400 });
+      void lightStatusBar(StatusBar, Style);
+    }, splashDelay(performance.now()));
   });
 }
+
+/** How long the launch screen stays at least, counted from the moment the app's page started loading. */
+export const SPLASH_MIN_MS = 2000;
+
+/** What is left of that time, given how long the app has been starting: never negative, never more than the minimum. */
+export const splashDelay = (elapsedMs: number) => Math.min(SPLASH_MIN_MS, Math.max(0, SPLASH_MIN_MS - elapsedMs));
 
 async function lightStatusBar(
   StatusBar: typeof import("@capacitor/status-bar").StatusBar,

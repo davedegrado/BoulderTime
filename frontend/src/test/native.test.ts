@@ -23,4 +23,13 @@ describe("Running as a website or as a store app", () => {
     const { startNativeShell } = await import("@/lib/native");
     await expect(startNativeShell()).resolves.toBeUndefined();
   });
+
+  it("keeps the launch screen up for about two seconds, however fast the app starts", async () => {
+    const { splashDelay, SPLASH_MIN_MS } = await import("@/lib/native");
+    expect(SPLASH_MIN_MS).toBe(2000);
+    expect(splashDelay(300)).toBe(1700);
+    // A slow start already showed it long enough: no extra wait on top.
+    expect(splashDelay(2600)).toBe(0);
+    expect(splashDelay(-5)).toBe(2000);
+  });
 });
