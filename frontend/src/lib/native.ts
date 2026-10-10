@@ -36,18 +36,17 @@ export function appPathFromUrl(url: string): string | null {
  *   (iOS has no back button: the event simply never fires there);
  * - bouldertime.com links opened on the phone go to the matching page in the app;
  * - tapping a notification opens the page it is about;
- * - the status bar uses dark text on the app's light header;
+ * - the status bar follows the theme (dark text on the light one, light text on the dark one);
  * - the splash screen stays until React has drawn the first screen, so there is no blank flash in between;
  *   it also stays at least two seconds (SPLASH_MIN_MS), so it is seen rather than flashed. The status bar keeps light
- *   text over it and switches to dark text with the first screen.
+ *   text over it and takes the theme's look with the first screen.
  * Plugins are imported here, on demand, so the web build never ships them.
  */
 export async function startNativeShell(): Promise<void> {
   if (!isNativeApp()) return;
 
-  const [{ App }, { StatusBar, Style }, { SplashScreen }] = await Promise.all([
+  const [{ App }, { SplashScreen }] = await Promise.all([
     import("@capacitor/app"),
-    import("@capacitor/status-bar"),
     import("@capacitor/splash-screen"),
   ]);
 
@@ -100,7 +99,7 @@ export async function startNativeShell(): Promise<void> {
   requestAnimationFrame(() => {
     window.setTimeout(() => {
       void SplashScreen.hide({ fadeOutDuration: 400 });
-      void lightStatusBar(StatusBar, Style);
+      void import("@/lib/theme").then(({ startStatusBar }) => startStatusBar());
     }, splashDelay(performance.now()));
   });
 }
@@ -111,17 +110,3 @@ export const SPLASH_MIN_MS = 2000;
 /** What is left of that time, given how long the app has been starting: never negative, never more than the minimum. */
 export const splashDelay = (elapsedMs: number) => Math.min(SPLASH_MIN_MS, Math.max(0, SPLASH_MIN_MS - elapsedMs));
 
-async function lightStatusBar(
-  StatusBar: typeof import("@capacitor/status-bar").StatusBar,
-  Style: typeof import("@capacitor/status-bar").Style,
-): Promise<void> {
-  try {
-    await StatusBar.setStyle({ style: Style.Light });
-    if (Capacitor.getPlatform() === "android") {
-      await StatusBar.setOverlaysWebView({ overlay: false });
-      await StatusBar.setBackgroundColor({ color: "#F8F8F7" });
-    }
-  } catch {
-    // A status bar that keeps its default look is not worth failing the start for.
-  }
-}

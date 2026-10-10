@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { setThemePreference, useTheme, type ThemePreference } from "@/lib/theme";
 import { Link } from "react-router-dom";
 import { Activity, ChevronDown, ChevronRight, LogOut, Plus, ShieldCheck, UserRound } from "lucide-react";
 import { GymAvatar } from "@/components/GymAvatar";
@@ -162,6 +163,8 @@ export function ProfilePage() {
         </div>
       </section>
 
+      <AppearanceSection />
+
       <section className="section" aria-labelledby="board-title">
         <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
         <div className="card">
@@ -199,5 +202,28 @@ export function ProfilePage() {
       {/* Last, and apart from the rest: it is easy to find and hard to reach by accident. */}
       <DeleteAccountSection email={user.email} />
     </div>
+  );
+}
+
+/** Light, dark, or whatever the phone uses. Kept on this device: a phone and a laptop can differ. */
+function AppearanceSection() {
+  const { preference } = useTheme();
+  const options: { value: ThemePreference; label: string }[] = [
+    { value: "system", label: t("Automatic") },
+    { value: "light", label: t("Light") },
+    { value: "dark", label: t("Dark") },
+  ];
+  return (
+    <section className="section" aria-labelledby="appearance-title">
+      <h2 id="appearance-title" className="section__title">{t("Appearance")}</h2>
+      <div className="card stack">
+        <div className="chips" role="radiogroup" aria-labelledby="appearance-title">
+          {options.map((o) => (
+            <button key={o.value} type="button" role="radio" aria-checked={preference === o.value} className="chip" onClick={() => setThemePreference(o.value)}>{o.label}</button>
+          ))}
+        </div>
+        <p className="field__hint">{t("Automatic follows your phone's light or dark mode.")}</p>
+      </div>
+    </section>
   );
 }

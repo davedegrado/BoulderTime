@@ -36,6 +36,16 @@
   --bt-success-tint: #e7f5ec;
   --bt-danger: #c62828;
   --bt-danger-tint: #fdecea;
+  --bt-danger-fill: #c62828;  /* behind white text (danger buttons), the same in both themes */
+
+  /* Roles that turn around in the dark theme. "strong" is a selected chip or tab: charcoal on light, near-white on
+     dark. "deep" is a dark block with light text (invitations, toasts, badges): charcoal on light, lifted grey on
+     dark so it still stands out from the page. "chrome" is the translucent top bar. */
+  --bt-strong: var(--bt-charcoal);
+  --bt-on-strong: #ffffff;
+  --bt-deep: var(--bt-charcoal);
+  --bt-chrome: rgb(248 248 248 / 0.92);
+  color-scheme: light;
 
   /* Type */
   --bt-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -68,4 +78,35 @@
 
   --bt-focus: 0 0 0 3px var(--bt-light), 0 0 0 5px var(--bt-orange);
   --bt-shadow-raised: 0 1px 2px rgb(26 26 26 / 0.06), 0 8px 24px -12px rgb(26 26 26 / 0.18);
+}
+
+/*
+ * Dark theme. Chosen in Profile (Automatico / Chiaro / Scuro); src/lib/theme.ts sets data-theme on <html>.
+ * Brand charcoal stays #1A1A1A for things that are always dark (tab bar, photo backgrounds, text on orange); what
+ * changes are the page, the surfaces, the text and the roles above. Orange text gets lighter to stay readable.
+ */
+:root[data-theme="dark"] {
+  --bt-light: #0f1012;
+  --bt-ink: #f2f2f0;
+  --bt-ink-2: #c4c4c2;       /* 10:1 on the cards */
+  --bt-ink-3: #9b9b98;       /* 6.3:1 on the cards */
+  --bt-line: #2d2e33;
+  --bt-surface: #18191c;
+  --bt-surface-2: #232428;
+
+  --bt-orange-ink: #ff9b5e;
+  --bt-orange-tint: #3a2416;
+
+  --bt-success: #3fae6a;
+  --bt-success-tint: #16301f;
+  --bt-danger: #ff7a72;
+  --bt-danger-tint: #3b1c1b;
+
+  --bt-strong: #f2f2f0;
+  --bt-on-strong: #141414;
+  --bt-deep: #2b2c31;
+  --bt-chrome: rgb(15 16 18 / 0.92);
+
+  --bt-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
 }

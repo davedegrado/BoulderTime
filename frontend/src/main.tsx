@@ -4,6 +4,10 @@ import "@/styles/tokens.css";
 import "@/styles/global.css";
 import { isNativeApp, startNativeShell } from "@/lib/native";
 import { t } from "@/i18n/i18n";
+import { startTheme } from "@/lib/theme";
+
+// Before anything renders, so the page never shows in the wrong theme first.
+startTheme();
 
 const root = createRoot(document.getElementById("root")!);
 
