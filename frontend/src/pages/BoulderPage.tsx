@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellRing, CalendarDays, History, Layers, Maximize2, Pencil, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, BellRing, History, Maximize2, Pencil } from "lucide-react";
 import { useBoulder } from "@/features/boulders/api";
 import { ProgressTracker } from "@/features/climbing/ProgressTracker";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
@@ -17,12 +17,13 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
-import { dataLabel } from "@/i18n/data";
+import type { BoulderGrade } from "@/features/boulders/api";
 
 /**
  * One boulder. The photo comes first, because it is how a climber finds the problem on the wall, but it no longer
- * fills the screen: a tap opens it full size. Under it, everything that identifies the boulder in one block — grade,
- * holds, sector, date — then what the climber does with it (progress), then what others say (beta, grade, comments).
+ * fills the screen: a tap opens it full size. The grade sits on the photo's corner; right under it, one quiet line
+ * with holds, sector, date, setter and rating, and the follow/edit buttons. Then what the climber does with it
+ * (progress), then what others say (beta, grade, comments).
  */
 export function BoulderPage() {
   const { id } = useParams();
@@ -36,7 +37,6 @@ export function BoulderPage() {
 
   const b = boulder.data;
   const removed = b.status === "REMOVED";
-  const [primary, ...others] = b.grades;
   const photoAlt = t("Boulder in {sector}", { sector: b.sectorName });
 
   return (
@@ -53,6 +53,7 @@ export function BoulderPage() {
             <Maximize2 aria-hidden />
           </button>
         )}
+        {b.photoUrl && <Grades grades={b.grades} className="boulder-page__grades--on-photo" />}
       </div>
       {viewing && b.photoUrl && <PhotoViewer src={b.photoUrl} alt={photoAlt} onClose={() => setViewing(false)} />}
 
@@ -65,14 +66,16 @@ export function BoulderPage() {
         )}
 
         <header className="boulder-page__head">
-          <div className="boulder-page__title-row">
-            <div className="boulder-page__grades">
-              {primary && <GradeBadge grade={primary} size="lg" />}
-              {others.map((g) => (
-                <span key={g.gradeSystemId} className="boulder-page__other-grade">
-                  <GradeBadge grade={g} size="md" /> <span className="boulder-page__system">{dataLabel(g.systemName)}</span>
-                </span>
-              ))}
+          {!b.photoUrl && <Grades grades={b.grades} />}
+          <div className="boulder-page__info">
+            <div className="boulder-meta__clip">
+            <ul className="boulder-meta" aria-label={t("About this boulder")}>
+              <li><HoldBadge color={b.holdColor} compact /></li>
+              <li><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
+              <li><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
+              {b.setter && <li><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
+              {b.rating.count > 0 && <li><RatingSummaryText rating={b.rating} compact /></li>}
+            </ul>
             </div>
             <div className="boulder-page__actions">
               {session && (
@@ -90,13 +93,6 @@ export function BoulderPage() {
               )}
             </div>
           </div>
-          <p className="boulder-page__rating"><RatingSummaryText rating={b.rating} /></p>
-          <ul className="facts" aria-label={t("About this boulder")}>
-            <li className="fact"><HoldBadge color={b.holdColor} compact /></li>
-            <li className="fact"><Layers aria-hidden /><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
-            <li className="fact"><CalendarDays aria-hidden /><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
-            {b.setter && <li className="fact"><UserRound aria-hidden /><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
-          </ul>
         </header>
 
         <ProgressTracker key={b.id} boulder={b} />
@@ -112,5 +108,17 @@ export function BoulderPage() {
         </div>
       </div>
     </article>
+  );
+}
+
+/** The official grades: the first one large, the gym's other systems after it. */
+function Grades({ grades, className = "" }: { grades: BoulderGrade[]; className?: string }) {
+  const [primary, ...others] = grades;
+  if (!primary) return null;
+  return (
+    <div className={`boulder-page__grades ${className}`}>
+      <GradeBadge grade={primary} size="lg" />
+      {others.map((g) => <GradeBadge key={g.gradeSystemId} grade={g} size="md" />)}
+    </div>
   );
 }

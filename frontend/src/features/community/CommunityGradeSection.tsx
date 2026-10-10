@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useConsensus, useSuggestGrade, type ConsensusBucket, type SystemConsensus } from "@/features/community/api";
 import { useAuth } from "@/auth/AuthProvider";
@@ -10,23 +11,55 @@ import { dataLabel } from "@/i18n/data";
 
 /**
  * Community grade: what climbers think, side by side with the gym's grade and never mixed with it. The rule for the
- * "most voted" grade is the server's and doesn't change here. Always in view: the official grade, the most voted one
- * ("9 of 16") and the climber's own vote; the distribution, with the official grade on the scale even when nobody
- * voted for it, opens on request.
+ * "most voted" grade is the server's and doesn't change here.
+ *
+ * One card, one grading system at a time, swiped sideways. The server sends them in order: the system the boulder is
+ * graded in first, then the gym's other systems, then the standard scales the gym doesn't use (anyone may still vote
+ * in those). Always in view for each: the official grade, the most voted one ("9 of 16") and the climber's own vote;
+ * the distribution opens on request.
  */
 export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   const consensus = useConsensus(boulderId);
   const { session } = useAuth();
+  const track = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
   if (consensus.isPending) return <LoadingState label={t("Loading community grade")} />;
   if (consensus.isError) return <ErrorState error={consensus.error} onRetry={() => consensus.refetch()} />;
   const data = consensus.data;
   if (data.systems.length === 0) return null;
+  const several = data.systems.length > 1;
+
+  function show(index: number) {
+    setActive(index);
+    const el = track.current;
+    if (el) el.scrollTo?.({ left: index * el.clientWidth, behavior: "smooth" });
+  }
+  function onScroll() {
+    const el = track.current;
+    if (el && el.clientWidth) setActive(Math.round(el.scrollLeft / el.clientWidth));
+  }
 
   return (
-    <section className="section card" aria-labelledby="community-grade-title">
+    <section className="section card community-grade" aria-labelledby="community-grade-title">
       <h2 id="community-grade-title" className="section__title">{t("Community grade")}</h2>
       <p className="field__hint">{t("What climbers think. The official grade is set by the gym and doesn't change.")}</p>
-      {data.systems.map((s) => <SystemBlock key={s.gradeSystemId} boulderId={boulderId} system={s} canSuggest={data.viewerCanSuggest} />)}
+      {several && (
+        <div className="grade-tabs" role="tablist" aria-label={t("Grading systems")}>
+          {data.systems.map((s, i) => (
+            <button key={s.gradeSystemId} type="button" role="tab" id={`grade-tab-${s.gradeSystemId}`} aria-controls={`grade-panel-${s.gradeSystemId}`}
+              aria-selected={i === active} className="grade-tabs__tab" onClick={() => show(i)}>
+              {dataLabel(s.systemName)}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className={several ? "grade-carousel" : undefined} ref={track} onScroll={several ? onScroll : undefined}>
+        {data.systems.map((s) => (
+          <div key={s.gradeSystemId} className="grade-carousel__slide" {...(several ? { role: "tabpanel", id: `grade-panel-${s.gradeSystemId}`, "aria-labelledby": `grade-tab-${s.gradeSystemId}` } : {})}>
+            <SystemBlock boulderId={boulderId} system={s} canSuggest={data.viewerCanSuggest} showName={!several} />
+          </div>
+        ))}
+      </div>
       {session && !data.viewerCanSuggest && <p className="field__hint">{t("Log an attempt to suggest a grade.")}</p>}
     </section>
   );
@@ -46,7 +79,7 @@ function Swatch({ bucket }: { bucket: ConsensusBucket }) {
   return bucket.colorHex ? <span className="consensus__swatch" style={{ background: bucket.colorHex }} aria-hidden /> : null;
 }
 
-function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; system: SystemConsensus; canSuggest: boolean }) {
+function SystemBlock({ boulderId, system: s, canSuggest, showName }: { boulderId: string; system: SystemConsensus; canSuggest: boolean; showName: boolean }) {
   const suggest = useSuggestGrade(boulderId);
   const toast = useToast();
   const rows = rowsOf(s);
@@ -54,18 +87,24 @@ function SystemBlock({ boulderId, system: s, canSuggest }: { boulderId: string; 
   const official = rows.find((b) => b.gradeValueId === s.officialValueId);
   const top = s.totalVotes > 0 ? rows.find((b) => b.gradeValueId === s.consensusValueId) : undefined;
   const percent = (votes: number) => (s.totalVotes ? Math.round((votes / s.totalVotes) * 100) : 0);
+  const usedByGym = s.usedByGym !== false;
 
   return (
     <div className="consensus">
-      <div className="consensus__head">
-        <p className="list__title">{dataLabel(s.systemName)}</p>
-        <p className="list__sub">{s.totalVotes === 0 ? t("No votes yet") : plural(s.totalVotes, "{count} vote", "{count} votes")}</p>
-      </div>
+      {/* With several systems the tab names this one, and "9 of 16" already says how many voted. */}
+      {showName && (
+        <div className="consensus__head">
+          <p className="list__title">{dataLabel(s.systemName)}</p>
+          <p className="list__sub">{s.totalVotes === 0 ? t("No votes yet") : plural(s.totalVotes, "{count} vote", "{count} votes")}</p>
+        </div>
+      )}
 
       <dl className="consensus__summary">
         <div className="consensus__fact">
           <dt>{t("Official")}</dt>
-          <dd>{official ? <><Swatch bucket={official} />{dataLabel(official.label)}</> : "—"}</dd>
+          <dd>{official
+            ? <><Swatch bucket={official} />{dataLabel(official.label)}</>
+            : <span className="consensus__share">{usedByGym ? "—" : t("Not used at this gym")}</span>}</dd>
         </div>
         <div className="consensus__fact">
           <dt>{t("Most voted")}</dt>

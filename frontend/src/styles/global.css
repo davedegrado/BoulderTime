@@ -1002,3 +1002,53 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .boulder-card__body { gap: 4px; padding: var(--bt-2) 10px 10px; }
 .boulder-card .grade--md { min-height: 26px; padding: 0 8px; font-size: var(--bt-text-sm); }
 .boulder-card .holds--compact { font-size: var(--bt-text-xs); }
+
+/* Boulder page, tighter: the grade on the photo's corner, one quiet line of facts under it, no gap between them. */
+.page.boulder-page { gap: 0; }
+.boulder-page > .page__pad { padding-top: var(--bt-3); }
+.boulder-page__grades--on-photo { position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.boulder-page__grades--on-photo .grade { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.35), 0 2px 8px rgb(0 0 0 / 0.35); }
+.boulder-page__grades--on-photo .grade--lg { min-height: 40px; padding: 0 12px; font-size: 1.375rem; }
+.boulder-page__grades--on-photo .grade--md { min-height: 30px; }
+.boulder-page__head { gap: var(--bt-2); }
+.boulder-page__info { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-3); }
+.boulder-page__actions .icon-btn--outlined { width: 40px; height: 40px; }
+.boulder-page__actions .icon-btn--outlined svg { width: 18px; height: 18px; }
+/* Every item carries its "·" in front; the list starts 16px to the left, under a clip, so whichever item opens a
+   line (the first, or one that wrapped) never shows a dot of its own. */
+.boulder-meta__clip { flex: 1; min-width: 0; overflow: hidden; }
+.boulder-meta { list-style: none; margin: 0 0 0 -16px; padding: 0; display: flex; flex-wrap: wrap; align-items: center; row-gap: 2px; font-size: var(--bt-text-sm); color: var(--bt-ink-2); font-weight: 600; }
+.boulder-meta > li { display: inline-flex; align-items: center; white-space: nowrap; }
+.boulder-meta > li::before { content: "·"; display: inline-block; width: 16px; text-align: center; color: var(--bt-ink-3); }
+.boulder-meta .holds { font-size: inherit; color: var(--bt-ink); }
+.boulder-meta .rating-summary { font-size: inherit; }
+
+/* Progress, compact: a one-line "completed" strip, then attempts and rating as two short rows. */
+.tracker { gap: var(--bt-3); }
+.tracker__sent { padding: 6px 6px 6px var(--bt-3); gap: var(--bt-2); }
+.tracker__sent-text { flex: 1; min-width: 0; margin: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.tracker__sent-text strong { color: var(--bt-ink); }
+.tracker__undo { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 var(--bt-3); border: 0; border-radius: var(--bt-radius-pill); background: none; font: inherit; font-size: var(--bt-text-sm); font-weight: 700; color: var(--bt-ink-2); cursor: pointer; }
+.tracker__undo:hover { background: rgb(0 0 0 / 0.05); color: var(--bt-ink); }
+.tracker__undo svg { width: 16px; height: 16px; }
+.tracker__rows { display: flex; flex-direction: column; }
+.tracker__rows > * + * { border-top: 1px solid var(--bt-line); }
+.tracker .stepper, .tracker .tracker__rating { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--bt-3); min-height: 52px; }
+.tracker .stepper__label { font-size: var(--bt-text-sm); }
+.tracker .stepper__btn { width: 40px; height: 40px; }
+.tracker .stepper__btn svg { width: 18px; height: 18px; }
+.tracker .stepper__value { min-width: 2.5ch; font-size: var(--bt-text-xl); }
+.tracker .stepper__label { white-space: nowrap; }
+.tracker .tracker__rating { flex-wrap: wrap; row-gap: 0; }
+.tracker .star-input__star { width: 34px; height: 40px; }
+.tracker .star-input__star svg { width: 24px; height: 24px; }
+
+/* Community grade: one grading system at a time, swiped sideways, with the systems named above as tabs. */
+.grade-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--bt-1)); padding: 0 var(--bt-1); }
+.grade-tabs::-webkit-scrollbar { display: none; }
+.grade-tabs__tab { flex: none; min-height: 34px; padding: 0 var(--bt-3); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); font: inherit; font-size: var(--bt-text-sm); font-weight: 700; color: var(--bt-ink-2); cursor: pointer; }
+.grade-tabs__tab[aria-selected="true"] { background: var(--bt-charcoal); border-color: var(--bt-charcoal); color: #fff; }
+.grade-carousel { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; gap: var(--bt-4); align-items: start; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.grade-carousel::-webkit-scrollbar { display: none; }
+.grade-carousel__slide { scroll-snap-align: start; min-width: 0; }
+.community-grade .consensus { border-top: 0; padding-top: 0; }

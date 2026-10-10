@@ -181,7 +181,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .Where(g => g.Source == GradeSource.Staff)
             .Join(db.GradeValues, g => g.GradeValueId, v => v.Id, (g, v) => v)
             .Join(db.GradeSystems, v => v.GradeSystemId, s => s.Id, (v, s) => new { v, s })
-            .Join(db.Gyms, x => x.s.GymId, gym => gym.Id, (x, gym) => new { x.v, x.s, GymName = gym.Name })
+            .Join(db.Gyms, x => x.s.GymId, gym => (Guid?)gym.Id, (x, gym) => new { x.v, x.s, GymName = gym.Name })
             .ToListAsync(ct);
 
         static int TypeOrder(GradeSystemType t) => t switch

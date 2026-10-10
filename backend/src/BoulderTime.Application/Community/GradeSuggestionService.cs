@@ -9,10 +9,12 @@ namespace BoulderTime.Application.Community;
 
 public sealed record ConsensusBucketDto(Guid GradeValueId, string Label, int Rank, string? ColorHex, int Votes);
 
+/// <param name="UsedByGym">False for a reference scale the gym doesn't use (ReferenceGrades): there is no official
+/// grade in it, only votes.</param>
 public sealed record SystemConsensusDto(
     Guid GradeSystemId, string SystemName, GradeSystemType SystemType, int TotalVotes,
     Guid? ConsensusValueId, Guid? OfficialValueId, Guid? ViewerValueId, IReadOnlyList<ConsensusBucketDto> Buckets,
-    IReadOnlyList<ConsensusBucketDto> Scale);
+    IReadOnlyList<ConsensusBucketDto> Scale, bool UsedByGym);
 
 public sealed record GradeConsensusDto(bool ViewerCanSuggest, IReadOnlyList<SystemConsensusDto> Systems);
 
@@ -43,8 +45,7 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
     public async Task<GradeConsensusDto> GetAsync(Guid boulderId, CancellationToken ct = default)
     {
         var scope = await boulders.RequireVisibleAsync(boulderId, ct);
-        var gymId = scope.Gym.Id;
-        var systems = await db.GradeSystems.AsNoTracking().Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
+        var systems = await VotableSystemsAsync(scope.Gym.Id, ct);
         var systemIds = systems.Select(s => s.Id).ToList();
         var values = await db.GradeValues.AsNoTracking().Where(v => systemIds.Contains(v.GradeSystemId)).OrderBy(v => v.Rank).ToListAsync(ct);
         var votes = await db.GradeSuggestions.AsNoTracking().Where(s => s.BoulderId == boulderId)
@@ -56,7 +57,11 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
             ? await db.GradeSuggestions.AsNoTracking().Where(s => s.BoulderId == boulderId && s.UserId == uid).ToDictionaryAsync(s => s.GradeSystemId, s => s.GradeValueId, ct)
             : [];
 
-        var result = systems.Select(s =>
+        // The boulder's own grading first (in the gym's order), then the gym's other systems, then the reference
+        // scales the gym doesn't use: the first one is the one climbers see without swiping.
+        var result = systems
+            .OrderBy(s => s.GymId is null ? 2 : official.ContainsKey(s.Id) ? 0 : 1)
+            .Select(s =>
         {
             var scale = values.Where(v => v.GradeSystemId == s.Id && v.IsActive)
                 .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes.GetValueOrDefault(v.Id))).ToList();
@@ -64,7 +69,8 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
             var buckets = values.Where(v => v.GradeSystemId == s.Id && votes.ContainsKey(v.Id))
                 .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes[v.Id])).ToList();
             return new SystemConsensusDto(s.Id, s.Name, s.Type, buckets.Sum(b => b.Votes), GradeConsensus.Pick(buckets),
-                official.TryGetValue(s.Id, out var o) ? o : null, mine.TryGetValue(s.Id, out var m) ? m : null, buckets, scale);
+                official.TryGetValue(s.Id, out var o) ? o : null, mine.TryGetValue(s.Id, out var m) ? m : null, buckets, scale,
+                s.GymId is not null);
         }).ToList();
 
         return new GradeConsensusDto(await CanSuggestAsync(boulderId, ct), result);
@@ -76,10 +82,9 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
         var scope = await boulders.RequireVisibleAsync(boulderId, ct);
         if (!await CanSuggestAsync(boulderId, ct)) throw new ForbiddenException("Try the boulder before suggesting a grade.", "attempt_required");
 
-        var ok = r.GradeSystemId is { } systemId && r.GradeValueId is { } valueId && await db.GradeValues.AsNoTracking()
-            .Where(v => v.Id == valueId && v.IsActive && v.GradeSystemId == systemId)
-            .Join(db.GradeSystems, v => v.GradeSystemId, s => s.Id, (v, s) => s)
-            .AnyAsync(s => s.GymId == scope.Gym.Id && s.IsActive, ct);
+        var votable = (await VotableSystemsAsync(scope.Gym.Id, ct)).Select(s => s.Id).ToList();
+        var ok = r.GradeSystemId is { } systemId && r.GradeValueId is { } valueId && votable.Contains(systemId) && await db.GradeValues.AsNoTracking()
+            .AnyAsync(v => v.Id == valueId && v.IsActive && v.GradeSystemId == systemId, ct);
         if (!ok) throw new ValidationException("gradeValueId", "Pick a grade from this gym's grading systems.");
 
         var existing = await db.GradeSuggestions.FirstOrDefaultAsync(s => s.BoulderId == boulderId && s.UserId == userId && s.GradeSystemId == r.GradeSystemId, ct);
@@ -100,6 +105,20 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
             await db.SaveChangesAsync(ct);
         }
         return await GetAsync(boulderId, ct);
+    }
+
+    /// <summary>
+    /// The gym's active systems, in its order, plus each reference scale whose type the gym doesn't run itself: a gym
+    /// with its own Font scale is voted in that one, never in a second Font beside it.
+    /// </summary>
+    private async Task<List<GradeSystem>> VotableSystemsAsync(Guid gymId, CancellationToken ct)
+    {
+        var all = await db.GradeSystems.AsNoTracking()
+            .Where(s => (s.GymId == gymId || s.GymId == null) && s.IsActive)
+            .OrderBy(s => s.GymId == null).ThenBy(s => s.SortOrder)
+            .ToListAsync(ct);
+        var gymTypes = all.Where(s => s.GymId is not null).Select(s => s.Type).ToHashSet();
+        return all.Where(s => s.GymId is not null || !gymTypes.Contains(s.Type)).ToList();
     }
 
     private async Task<bool> CanSuggestAsync(Guid boulderId, CancellationToken ct) =>

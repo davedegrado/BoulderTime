@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Community;
 using BoulderTime.Domain.Community;
+using BoulderTime.Domain.Grading;
 using BoulderTime.Domain.Staff;
 using BoulderTime.Tests.Climbing;
 using BoulderTime.Tests.Infrastructure;
@@ -106,6 +107,44 @@ public sealed class CommentAndGradeTests(PostgresFixture postgres) : IAsyncLifet
 
         (await me.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/grade-suggestions",
             new { gradeSystemId = other.Font.Id, gradeValueId = other.Font.Values[5].Id })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Every_boulder_can_be_voted_in_the_scales_its_gym_does_not_use_after_the_gyms_own()
+    {
+        // The gym runs Font and colours, the boulder is graded in Font only.
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var b = await w.BoulderAsync("6B");
+        var me = await _f.UserAsync();
+        await me.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/attempt", new { attempts = 1, completed = false });
+
+        var consensus = (await (await me.Client.GetAsync($"/api/boulders/{b.Id}/grade-consensus")).ReadAsync<GradeConsensusDto>())!;
+
+        // Its own grading first, then the gym's other system, then V-grades, which the gym doesn't use. No second Font.
+        consensus.Systems.Select(s => s.GradeSystemId).Should().Equal(w.Font.Id, w.Color.Id, ReferenceGrades.VScaleId);
+        var v = consensus.Systems[2];
+        v.UsedByGym.Should().BeFalse();
+        v.OfficialValueId.Should().BeNull();
+        v.Scale.Select(x => x.Label).Should().StartWith(new[] { "VB", "V0", "V1" });
+        consensus.Systems[0].UsedByGym.Should().BeTrue();
+
+        var v4 = v.Scale.Single(x => x.Label == "V4").GradeValueId;
+        var after = (await (await me.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/grade-suggestions",
+            new { gradeSystemId = ReferenceGrades.VScaleId, gradeValueId = v4 })).ReadAsync<GradeConsensusDto>())!;
+        after.Systems.Single(s => s.GradeSystemId == ReferenceGrades.VScaleId).ViewerValueId.Should().Be(v4);
+
+        // The gym has its own Font: the reference one is not offered, and not accepted either.
+        var referenceFont = ReferenceGrades.All.Single(r => r.Id == ReferenceGrades.FontainebleauId).Values[5].Id;
+        (await me.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/grade-suggestions",
+            new { gradeSystemId = ReferenceGrades.FontainebleauId, gradeValueId = referenceFont })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Reference_scales_never_show_up_among_a_gyms_own_systems()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var systems = (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/grade-systems")).ReadAsync<List<BoulderTime.Application.Grading.GradeSystemDto>>())!;
+        systems.Select(s => s.Id).Should().BeEquivalentTo(new[] { w.Font.Id, w.Color.Id });
     }
 
     [Theory]

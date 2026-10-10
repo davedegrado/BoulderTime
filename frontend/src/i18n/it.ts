@@ -964,6 +964,8 @@ export const it: Record<string, string> = {
 
   // ---- Fixes after review ----
   "See the votes": "Vedi i voti",
+  "Grading systems": "Sistemi di grado",
+  "Not used at this gym": "Non usato qui",
   "Follow this gym": "Segui questa palestra",
   "Stop following this gym": "Smetti di seguire questa palestra",
   "Public profile": "Profilo pubblico",

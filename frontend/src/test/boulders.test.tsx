@@ -78,6 +78,21 @@ describe("Boulder list (climber)", () => {
 });
 
 describe("Boulder page", () => {
+  it("puts the grade on the photo and the facts in one line under it", async () => {
+    reply("GET", "/api/boulders/b1", { ...boulder("b1", { rating: { average: 4.5, count: 3 } }), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false });
+    reply("GET", "/api/boulders/b1/beta", undefined);
+    reply("GET", "/api/boulders/b1/grade-consensus", { viewerCanSuggest: false, systems: [] });
+    reply("GET", "/api/boulders/b1/comments", { items: [], page: 1, pageSize: 20, total: 0, hasMore: false });
+    renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
+
+    const grade = await screen.findByTitle("Colour grade: Yellow");
+    expect(grade.closest(".boulder-page__photo")).not.toBeNull();
+    const facts = screen.getByRole("list", { name: "About this boulder" });
+    expect(within(facts).getByText("Blue holds")).toBeInTheDocument();
+    expect(within(facts).getByText("Cave")).toBeInTheDocument();
+    expect(within(facts).getByLabelText(/Rated 4.5 out of 5/)).toBeInTheDocument();
+  });
+
   it("keeps removed boulders readable with a history notice and no edit for climbers", async () => {
     reply("GET", "/api/boulders/b1", { ...boulder("b1", { status: "REMOVED", removedAt: "2026-09-12T10:00:00Z" }), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: { userId: "u9", displayName: "Marco", avatarUrl: null }, viewerRole: null, isFollowing: false });
     renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);

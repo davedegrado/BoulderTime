@@ -16,9 +16,15 @@ internal sealed class GradeSystemConfiguration : IEntityTypeConfiguration<GradeS
         b.Property(s => s.Id).ValueGeneratedNever();
         b.Property(s => s.Name).HasMaxLength(GradeSystem.NameMaxLength).IsRequired();
         b.Property(s => s.Type).HasConversion<string>().HasMaxLength(24).IsRequired();
-        b.HasOne<Gym>().WithMany().HasForeignKey(s => s.GymId).OnDelete(DeleteBehavior.Restrict);
+        // No gym: a reference scale (ReferenceGrades), created here so every database has the same ones.
+        b.HasOne<Gym>().WithMany().HasForeignKey(s => s.GymId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(s => new { s.GymId, s.Name }).IsUnique();
         b.HasIndex(s => new { s.GymId, s.SortOrder });
+        b.HasData(ReferenceGrades.All.Select(r => (object)new
+        {
+            r.Id, GymId = (Guid?)null, r.Name, r.Type, IsActive = true, r.SortOrder,
+            CreatedAt = ReferenceGrades.CreatedAt, UpdatedAt = ReferenceGrades.CreatedAt,
+        }).ToArray());
     }
 }
 
@@ -34,6 +40,10 @@ internal sealed class GradeValueConfiguration : IEntityTypeConfiguration<GradeVa
         b.HasOne<GradeSystem>().WithMany().HasForeignKey(v => v.GradeSystemId).OnDelete(DeleteBehavior.Restrict);
         // Label uniqueness among ACTIVE values is enforced by the service; retired values may repeat a label.
         b.HasIndex(v => new { v.GradeSystemId, v.Rank });
+        b.HasData(ReferenceGrades.All.SelectMany(r => r.Values.Select(v => (object)new
+        {
+            v.Id, GradeSystemId = r.Id, v.Label, v.Rank, ColorHex = (string?)null, IsActive = true,
+        })).ToArray());
     }
 }
 

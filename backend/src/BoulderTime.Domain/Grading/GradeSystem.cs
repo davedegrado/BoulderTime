@@ -13,14 +13,16 @@ public enum GradeSystemType
 
 /// <summary>
 /// A grading methodology used by one gym. A gym can run several systems at once (e.g. colour + Font);
-/// adding one never requires a schema change.
+/// adding one never requires a schema change. A system with no gym is one of BoulderTime's reference scales
+/// (<see cref="ReferenceGrades"/>): climbers may vote a boulder's grade in it even when the gym doesn't use it.
 /// </summary>
 public class GradeSystem : IAuditable
 {
     public const int NameMaxLength = 40;
 
     public Guid Id { get; private set; }
-    public Guid GymId { get; private set; }
+    /// <summary>Null for a reference scale, which belongs to no gym and only ever collects community votes.</summary>
+    public Guid? GymId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public GradeSystemType Type { get; private set; }
     public bool IsActive { get; private set; } = true;

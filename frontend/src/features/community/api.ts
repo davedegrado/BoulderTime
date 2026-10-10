@@ -20,6 +20,8 @@ export interface SystemConsensus {
   gradeSystemId: string; systemName: string; systemType: GradeSystemType; totalVotes: number;
   consensusValueId: string | null; officialValueId: string | null; viewerValueId: string | null;
   buckets: ConsensusBucket[]; scale: ConsensusBucket[];
+  /** False for a standard scale the gym doesn't use: anyone may vote in it, but it has no official grade. */
+  usedByGym: boolean;
 }
 export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemConsensus[] }
 

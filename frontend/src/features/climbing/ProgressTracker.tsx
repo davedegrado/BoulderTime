@@ -9,7 +9,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
-import { plural, t } from "@/i18n/i18n";
+import { t } from "@/i18n/i18n";
 
 const SAVE_DELAY_MS = 700;
 
@@ -85,35 +85,39 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
 
       {completed ? (
         <div className="tracker__sent">
-          <span className="sent-mark sent-mark--lg" aria-hidden><Check /></span>
-          <div>
-            <p className="list__title">{t("Completed")}</p>
-            <p className="list__sub">{boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : t("Just now")} · {plural(attempts, "{count} attempt", "{count} attempts")}</p>
-          </div>
-          <Button variant="ghost" icon={<RotateCcw aria-hidden />} onClick={() => change({ attempts, completed: false })}>{t("Undo")}</Button>
+          <span className="sent-mark" aria-hidden><Check /></span>
+          <p className="tracker__sent-text">
+            <strong>{t("Completed")}</strong>
+            <span> · {boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : t("Just now")}</span>
+          </p>
+          <button type="button" className="tracker__undo" onClick={() => change({ attempts, completed: false })}>
+            <RotateCcw aria-hidden />{t("Undo")}
+          </button>
         </div>
       ) : (
-        <Button block className="btn--lg" icon={<Check aria-hidden />} onClick={() => change({ attempts, completed: true })}>
+        <Button block icon={<Check aria-hidden />} onClick={() => change({ attempts, completed: true })}>
           {t("Mark as completed")}
         </Button>
       )}
 
-      <div className="stepper">
-        <span className="stepper__label" id="attempts-label">{t("Attempts")}</span>
-        <div className="stepper__controls" role="group" aria-labelledby="attempts-label">
-          <button type="button" className="stepper__btn" onClick={() => change({ attempts: attempts - 1, completed })}
-            disabled={attempts === 0 || (completed && attempts === 1)} aria-label={t("One attempt less")}><Minus aria-hidden /></button>
-          <output className="stepper__value" aria-live="polite">{attempts}</output>
-          <button type="button" className="stepper__btn" onClick={() => change({ attempts: attempts + 1, completed })} aria-label={t("One more attempt")}><Plus aria-hidden /></button>
+      <div className="tracker__rows">
+        <div className="stepper">
+          <span className="stepper__label" id="attempts-label">{t("Attempts")}</span>
+          <div className="stepper__controls" role="group" aria-labelledby="attempts-label">
+            <button type="button" className="stepper__btn" onClick={() => change({ attempts: attempts - 1, completed })}
+              disabled={attempts === 0 || (completed && attempts === 1)} aria-label={t("One attempt less")}><Minus aria-hidden /></button>
+            <output className="stepper__value" aria-live="polite">{attempts}</output>
+            <button type="button" className="stepper__btn" onClick={() => change({ attempts: attempts + 1, completed })} aria-label={t("One more attempt")}><Plus aria-hidden /></button>
+          </div>
+        </div>
+
+        <div className="tracker__rating">
+          <span className="stepper__label">{t("Your rating")}</span>
+          <StarInput value={myRating} disabled={!canRate || setRating.isPending}
+            onChange={(v) => setRating.mutate(v, { onError: (e) => toast.error(errorMessage(e)) })} />
         </div>
       </div>
-
-      <div className="tracker__rating">
-        <span className="stepper__label">{t("Your rating")}</span>
-        <StarInput value={myRating} disabled={!canRate || setRating.isPending}
-          onChange={(v) => setRating.mutate(v, { onError: (e) => toast.error(errorMessage(e)) })} />
-        {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
-      </div>
+      {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
     </section>
   );
 }

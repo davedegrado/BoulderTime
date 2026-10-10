@@ -794,3 +794,19 @@ marked. No minimum number of votes before naming the most voted: the "N of M" ne
 the filters wait behind one "Filters" button and the ones in use show as chips that remove them; the leaderboard
 period is a four-way switch that fits a phone.
 
+
+## ADR-043 · Every boulder can be voted in Font and V-grades
+**Reference scales.** Climbers think in different scales, and a gym that grades in Font says nothing to someone who
+climbs in V-grades. So besides the gym's own systems, every boulder can be voted in BoulderTime's reference scales:
+Fontainebleau and V-scale (`ReferenceGrades`). They are grade systems with no gym (`GradeSystem.GymId` null), created
+by the migration with fixed ids so every database has the same ones. A gym that runs its own system of a type is voted
+in that one, never in a second one beside it. Colours have no reference scale: a colour means something only in the
+gym that chose it.
+
+They only ever collect community votes: never an official grade, never a filter, never scored, never listed among the
+gym's systems (`GradingService` and the boulder editor only see the gym's own). `SystemConsensusDto.UsedByGym` is false
+for them.
+
+**One card, swiped.** The community grade shows one system at a time, with the systems as tabs above: first the one the
+boulder is graded in, then the gym's other systems, then the reference scales the gym doesn't use. The server sends
+them in that order.

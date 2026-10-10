@@ -53,8 +53,9 @@ public sealed partial class GradingService(IAppDbContext db, GymAccess access)
 
     public async Task<GradeSystemDto> UpdateAsync(Guid systemId, UpdateGradeSystemRequest r, CancellationToken ct = default)
     {
-        var system = await db.GradeSystems.FirstOrDefaultAsync(s => s.Id == systemId, ct) ?? throw new NotFoundException("Grading system", systemId);
-        await access.RequireRoleAsync(system.GymId, GymRole.Admin, ct);
+        var system = await db.GradeSystems.FirstOrDefaultAsync(s => s.Id == systemId && s.GymId != null, ct) ?? throw new NotFoundException("Grading system", systemId);
+        var gymId = system.GymId!.Value;
+        await access.RequireRoleAsync(gymId, GymRole.Admin, ct);
         if (r.Name is not null)
         {
             ValidateName(Input.Trimmed(r.Name));
@@ -62,7 +63,7 @@ public sealed partial class GradingService(IAppDbContext db, GymAccess access)
         }
         if (r.IsActive is { } active) system.SetActive(active);
         await SaveUniqueAsync(ct);
-        return (await LoadAsync(system.GymId, true, ct)).First(s => s.Id == system.Id);
+        return (await LoadAsync(gymId, true, ct)).First(s => s.Id == system.Id);
     }
 
     /// <summary>
@@ -71,8 +72,9 @@ public sealed partial class GradingService(IAppDbContext db, GymAccess access)
     /// </summary>
     public async Task<GradeSystemDto> SetValuesAsync(Guid systemId, SetGradeValuesRequest r, CancellationToken ct = default)
     {
-        var system = await db.GradeSystems.FirstOrDefaultAsync(s => s.Id == systemId, ct) ?? throw new NotFoundException("Grading system", systemId);
-        await access.RequireRoleAsync(system.GymId, GymRole.Admin, ct);
+        var system = await db.GradeSystems.FirstOrDefaultAsync(s => s.Id == systemId && s.GymId != null, ct) ?? throw new NotFoundException("Grading system", systemId);
+        var gymId = system.GymId!.Value;
+        await access.RequireRoleAsync(gymId, GymRole.Admin, ct);
 
         var input = r.Values ?? [];
         ValidateValues(system.Type, input.Select(v => (Input.Trimmed(v.Label), v.ColorHex)).ToList());
@@ -106,7 +108,7 @@ public sealed partial class GradingService(IAppDbContext db, GymAccess access)
         }
 
         await SaveUniqueAsync(ct);
-        return (await LoadAsync(system.GymId, true, ct)).First(s => s.Id == systemId);
+        return (await LoadAsync(gymId, true, ct)).First(s => s.Id == systemId);
     }
 
     public async Task<IReadOnlyList<GradeSystemDto>> ReorderAsync(Guid gymId, ReorderGradeSystemsRequest r, CancellationToken ct = default)
@@ -132,7 +134,7 @@ public sealed partial class GradingService(IAppDbContext db, GymAccess access)
             .Where(v => ids.Contains(v.GradeSystemId) && (includeInactive || v.IsActive))
             .OrderBy(v => v.Rank)
             .ToListAsync(ct);
-        return systems.Select(s => new GradeSystemDto(s.Id, s.GymId, s.Name, s.Type, s.IsActive, s.SortOrder,
+        return systems.Select(s => new GradeSystemDto(s.Id, s.GymId!.Value, s.Name, s.Type, s.IsActive, s.SortOrder,
             values.Where(v => v.GradeSystemId == s.Id).Select(v => new GradeValueDto(v.Id, v.Label, v.Rank, v.ColorHex, v.IsActive)).ToList()))
             .ToList();
     }

@@ -127,6 +127,34 @@ describe("Community grade", () => {
   });
 });
 
+describe("Community grade, several systems", () => {
+  const sys = (id: string, name: string, type: string, usedByGym: boolean, official: string | null) => ({
+    gradeSystemId: id, systemName: name, systemType: type, totalVotes: 1, consensusValueId: `${id}-1`, officialValueId: official, viewerValueId: null,
+    buckets: [{ gradeValueId: `${id}-1`, label: `${name} 1`, rank: 1, colorHex: null, votes: 1 }],
+    scale: [{ gradeValueId: `${id}-1`, label: `${name} 1`, rank: 1, colorHex: null, votes: 1 }], usedByGym,
+  });
+
+  it("shows one system at a time, in the server's order, the standard scales the gym doesn't use last", async () => {
+    reply("GET", "/api/boulders/b1/grade-consensus", {
+      viewerCanSuggest: true,
+      systems: [sys("font", "Fontainebleau", "FONTAINEBLEAU", true, "font-1"), sys("col", "Colour", "COLOR", true, null), sys("v", "V-scale", "V_SCALE", false, null)],
+    });
+    renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
+
+    const tabs = await screen.findAllByRole("tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Fontainebleau", "Colour", "V-scale"]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    // Every system can be voted, the ones the gym doesn't use too.
+    expect(screen.getByRole("combobox", { name: "Your V-scale grade" })).toBeInTheDocument();
+    const vPanel = screen.getByRole("tabpanel", { name: "V-scale" });
+    expect(within(vPanel).getByText("Not used at this gym")).toBeInTheDocument();
+
+    await userEvent.click(tabs[2]!);
+    expect(tabs[2]).toHaveAttribute("aria-selected", "true");
+    expect(tabs[0]).toHaveAttribute("aria-selected", "false");
+  });
+});
+
 describe("Community videos", () => {
   const vid = (id: string, over: object = {}) => ({ id, boulderId: "b1", author: person("u9", `Climber ${id}`), videoUrl: `/${id}.mp4`, thumbnailUrl: `/${id}.jpg`, caption: null, status: "APPROVED", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: false, ...over });
 
