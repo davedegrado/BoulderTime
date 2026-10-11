@@ -17,7 +17,8 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
         (double Latitude, double Longitude)? near = null)
     {
         var (p, size) = Paging.Normalize(page, pageSize);
-        var q = db.Gyms.AsNoTracking().Where(g => g.Status == GymStatus.Active);
+        // Unlisted gyms (the reviewers' demo gyms, ADR-051) are live but never offered.
+        var q = db.Gyms.AsNoTracking().Where(g => g.Status == GymStatus.Active && !g.IsUnlisted);
 
         var text = Input.Trimmed(query);
         if (text.Length > 0)
@@ -59,7 +60,7 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
             .Check(south is >= -90 and <= 90 && north is >= -90 and <= 90 && south <= north, "south", "Invalid map bounds.")
             .Check(west is >= -180 and <= 180 && east is >= -180 and <= 180, "west", "Invalid map bounds.")
             .ThrowIfInvalid();
-        var q = db.Gyms.AsNoTracking().Where(g => g.Status == GymStatus.Active && g.Latitude != null && g.Longitude != null
+        var q = db.Gyms.AsNoTracking().Where(g => g.Status == GymStatus.Active && !g.IsUnlisted && g.Latitude != null && g.Longitude != null
                                                   && g.Latitude >= south && g.Latitude <= north);
         // A view crossing the antimeridian has west > east.
         q = west <= east

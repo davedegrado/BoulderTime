@@ -28,7 +28,7 @@ public sealed class AdminService(IAppDbContext db, GymAccess access, StaffServic
         await access.RequirePlatformAdminAsync(ct);
         return new AdminDashboardDto(
             await db.Gyms.CountAsync(ct),
-            await db.Gyms.CountAsync(g => g.Status == GymStatus.Active, ct),
+            await db.Gyms.CountAsync(g => g.Status == GymStatus.Active && !g.IsUnlisted, ct),
             await db.GymCandidates.CountAsync(c => c.Status == GymCandidateStatus.Pending, ct),
             await db.Users.CountAsync(ct),
             await db.Reports.CountAsync(r => r.Status == Domain.Community.ReportStatus.Pending, ct),

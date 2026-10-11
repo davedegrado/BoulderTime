@@ -47,6 +47,11 @@ public class Gym : IAuditable
     /// at most one gym can hold it (guaranteed by a partial unique index) and only platform admins can move it.
     /// </summary>
     public bool IsFoundingGym { get; private set; }
+    /// <summary>
+    /// Live, but not listed: left out of search and the map, so only people who are sent there (or are its staff)
+    /// find it. For the demo gyms the stores' reviewers use (ADR-051); a real gym is never unlisted.
+    /// </summary>
+    public bool IsUnlisted { get; private set; }
 
     /// <summary>
     /// Whether climbers of this gym can upload their own beta. Off for a new gym: community video is the one thing
@@ -141,6 +146,8 @@ public class Gym : IAuditable
     public void SetStatus(GymStatus status) => Status = status;
 
     public void SetFoundingGym(bool isFounding) => IsFoundingGym = isFounding;
+
+    public void SetUnlisted(bool unlisted) => IsUnlisted = unlisted;
 
     /// <summary>Platform-level video allowances. Only BoulderTime administrators change these.</summary>
     public void SetVideoAllowance(bool communityVideosEnabled, int? officialBetaLimit)

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Follows;
 using BoulderTime.Application.Gyms;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
@@ -19,19 +20,18 @@ public sealed class ReviewDemoTests(PostgresFixture postgres) : IAsyncLifetime
     public async Task DisposeAsync() => await _f.DisposeAsync();
 
     [Fact]
-    public async Task An_admin_creates_three_hidden_gyms_with_the_reviewer_as_admin_and_pressing_again_changes_nothing()
+    public async Task An_admin_creates_three_unlisted_gyms_the_reviewer_runs_and_follows_and_pressing_again_changes_nothing()
     {
         var admin = await _f.UserAsync(platformAdmin: true);
         var reviewer = await _f.UserAsync(email: "review@example.com");
 
         var result = (await (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = "Review@Example.com" })).ReadAsync<ReviewDemoResult>())!;
         result.GymsCreated.Should().Be(DemoSeeder.ReviewGymCount);
-        result.AllHidden.Should().BeTrue();
         result.StaffEmail.Should().Be("review@example.com");
 
         var gyms = await _f.Db(db => db.Gyms.ToListAsync());
         gyms.Should().HaveCount(3);
-        gyms.Should().OnlyContain(g => g.Status == GymStatus.Draft && g.Name.EndsWith("(demo)"));
+        gyms.Should().OnlyContain(g => g.Status == GymStatus.Active && g.IsUnlisted && g.Name.EndsWith("(demo)"));
         var staff = await _f.Db(db => db.GymStaff.ToListAsync());
         staff.Where(s => s.UserId == admin.Id).Should().OnlyContain(s => s.Role == GymRole.Owner);
         staff.Where(s => s.UserId == reviewer.Id).Should().OnlyContain(s => s.Role == GymRole.Admin);
@@ -40,9 +40,13 @@ public sealed class ReviewDemoTests(PostgresFixture postgres) : IAsyncLifetime
         (await _f.Db(db => db.GymAnnouncements.CountAsync())).Should().BeGreaterThan(0);
         (await _f.Db(db => db.Reports.CountAsync())).Should().Be(1);
 
-        // Nobody else sees them: not in search, not on the map.
+        // Nobody else finds them: they are live, yet search offers nothing.
         var search = (await (await _f.CreateClient().GetAsync("/api/gyms?q=")).ReadAsync<PagedResult<GymSummaryDto>>())!;
         search.Total.Should().Be(0);
+
+        // For the reviewer they work like any gym: followed, so on Home.
+        var follows = (await (await reviewer.Client.GetAsync("/api/users/me/follows")).ReadAsync<MyFollowsDto>())!;
+        follows.Gyms.Should().HaveCount(3);
 
         var before = await Counts();
         (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = "review@example.com" })).EnsureSuccessStatusCode();

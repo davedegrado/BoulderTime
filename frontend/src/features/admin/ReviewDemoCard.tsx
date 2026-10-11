@@ -7,11 +7,11 @@ import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { t } from "@/i18n/i18n";
 
-interface ReviewDemoResult { gymsCreated: number; bouldersCreated: number; gyms: string[]; staffEmail: string | null; allHidden: boolean }
+interface ReviewDemoResult { gymsCreated: number; bouldersCreated: number; gyms: string[]; staffEmail: string | null }
 
 /**
- * Demo gyms for the stores' reviewers (ADR-051): hidden from everyone but their staff, with the reviewers' account
- * made admin of them. Pressing again adds what is missing and changes nothing else.
+ * Demo gyms for the stores' reviewers (ADR-051): live but unlisted, so they work like any gym for the reviewers'
+ * account (made admin, and following them) while nobody else finds them. Pressing again adds what is missing and changes nothing else.
  */
 export function ReviewDemoCard() {
   const qc = useQueryClient();
@@ -27,7 +27,7 @@ export function ReviewDemoCard() {
     <section className="card stack" aria-labelledby="review-demo-title">
       <h2 id="review-demo-title" className="section__title"><FlaskConical aria-hidden className="title-icon" /> {t("Demo gyms for store review")}</h2>
       <p className="field__hint">
-        {t("Creates three demo gyms with boulders, climbers and comments, visible only to their staff: they never show up in search or on the map. You become owner; the account below becomes admin, so reviewers can try the staff area. Sign up in the app with that email first.")}
+        {t("Creates three demo gyms with boulders, climbers and comments. They work like any gym, but they never show up in search or on the map, so real users don't find them. You become owner; the account below becomes admin and follows them, so reviewers can try both the climber and the staff side. Sign up in the app with that email first.")}
       </p>
       <TextField label={t("Reviewers' account email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
         error={fieldError} />
@@ -37,8 +37,7 @@ export function ReviewDemoCard() {
         <p className="notice" role="status">
           {t("Done: {gyms}.", { gyms: result.gyms.join(", ") })}{" "}
           {result.gymsCreated > 0 ? t("{count} new gyms, {boulders} boulders.", { count: result.gymsCreated, boulders: result.bouldersCreated }) : t("They already existed; nothing was duplicated.")}{" "}
-          {result.staffEmail && t("{email} is admin of them.", { email: result.staffEmail })}
-          {!result.allHidden && <> {t("One of them was already public and has been left as it was: hide it from Admin → Gyms.")}</>}
+          {result.staffEmail && t("{email} is admin of them and follows them.", { email: result.staffEmail })}
         </p>
       )}
     </section>

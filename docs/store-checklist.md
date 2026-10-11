@@ -20,12 +20,13 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 - [ ] Sign up in the app with `review@bouldertime.com` (Cloudflare → Email Routing → a rule forwarding it to you),
   confirm the email, accept the terms. In **Profile → Leaderboards** turn on "Don't show me in leaderboards or lists".
-- [ ] **Admin → Demo gyms for store review** → Create: three hidden demo gyms, the reviewers' account as their admin.
-- [ ] With the reviewers' account, follow a public gym with boulders and log a few attempts.
+- [ ] **Admin → Demo gyms for store review** → Create: three unlisted demo gyms, the reviewers' account as their
+  admin and following them.
+- [ ] With the reviewers' account, log a few attempts in a demo gym, so Home and Activity aren't empty.
 - [ ] App Store Connect (App Review Information) and Play Console (App access): these credentials, and in the notes:
-  *"Climber features: follow any gym from Explore. Staff features: Profile → Manage, on the demo gyms this account
-  administers (hidden from other users). Video uploads are currently disabled; official beta videos are added as
-  links."*
+  *"This account follows three demo gyms (unlisted, so regular users don't see them) and is an admin of them: climber
+  features are on Home and in each gym; staff features are under Profile → Manage. Video uploads are currently
+  disabled; official beta videos are added as links."*
 
 ## Tests on real devices (each on an iPhone and an Android phone, store builds)
 

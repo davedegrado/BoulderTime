@@ -963,12 +963,13 @@ approximate location only; Android 11 and earlier still get the fine permission,
 ## ADR-051 · Hidden demo gyms for the stores' reviewers
 Reviewers need a gym with content and the staff area to try; real gyms must not be touched by them, and real users
 must not meet invented gyms. **Admin → Demo gyms for store review** creates the first three demo gyms of
-`DemoSeeder` as **drafts** — visible only to their staff and platform admins, never in search or on the map — with
-boulders, demo climbers (profiles without a sign-in, `@demo.bouldertime.invalid`), comments, updates and one open
-report. The admin who presses it becomes owner; the reviewers' account (signed up beforehand in the app) becomes
-**admin**, not owner, because a sole owner cannot delete their account and reviewers try that. Pressing again adds
-what is missing and changes nothing else; a gym that already exists keeps its status.
+`DemoSeeder` as **live but unlisted** gyms (`gyms.is_unlisted`): they work like any gym — follow, Home, Activity,
+leaderboards — but search and the map never offer them, so only people sent there find them. A draft would not do:
+drafts can't be followed and are left out of Home and Activity. Each gets boulders, demo climbers (profiles without
+a sign-in, `@demo.bouldertime.invalid`), comments, updates and one open report. The admin who presses it becomes
+owner; the reviewers' account (signed up beforehand in the app) becomes **admin**, not owner, because a sole owner
+cannot delete their account and reviewers try that, and follows them. Pressing again adds what is missing and changes
+nothing else (drafts made by the first version become unlisted). "Live gyms" on the admin dashboard leaves them out.
 
 This is the one piece of seeding reachable over HTTP (`POST /api/admin/review-demo`, platform admins only); the full
-`seed` command stays CLI-only. Draft gyms don't appear in Home's followed gyms or in Activity, so the reviewers try
-the climber side on a public gym and the staff side on the demo ones; the review notes say so.
+`seed` command stays CLI-only.

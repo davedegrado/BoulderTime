@@ -19,9 +19,8 @@ namespace BoulderTime.Infrastructure.Seeding;
 /// Demo users can't be created here because accounts live in Supabase Auth; pass an existing
 /// user's email to make them OWNER of every demo gym.
 /// </summary>
-/// <summary>What <see cref="DemoSeeder.SeedReviewGymsAsync"/> did.
-/// <c>AllHidden</c> is false when one of the gyms already existed and had been made public: it is left as it was.</summary>
-public sealed record ReviewDemoResult(int GymsCreated, int BouldersCreated, IReadOnlyList<string> Gyms, string? StaffEmail, bool AllHidden);
+/// <summary>What <see cref="DemoSeeder.SeedReviewGymsAsync"/> did.</summary>
+public sealed record ReviewDemoResult(int GymsCreated, int BouldersCreated, IReadOnlyList<string> Gyms, string? StaffEmail);
 
 public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage storage)
 {
@@ -116,11 +115,11 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
 
     /// <summary>
     /// Demo gyms for the stores' reviewers, in production (ADR-051): the first <see cref="ReviewGymCount"/> demo gyms,
-    /// left as drafts so nobody but their staff and the platform admins ever sees them — not in search, not on the
-    /// map. The admin who asks becomes OWNER; <paramref name="staffEmail"/>, the reviewers' account, becomes ADMIN
-    /// (not owner: a sole owner can't delete the account, and reviewers try exactly that). Filled with boulders, demo
-    /// climbers, comments, updates and one report. Safe to run again: nothing is duplicated or reset, and a gym that
-    /// already exists keeps the status it has.
+    /// live but unlisted — they work like any gym (follow, Home, Activity, leaderboards) for whoever is in them, and
+    /// nobody else finds them: not in search, not on the map. The admin who asks becomes OWNER;
+    /// <paramref name="staffEmail"/>, the reviewers' account, becomes ADMIN (not owner: a sole owner can't delete the
+    /// account, and reviewers try exactly that) and follows them, so they are on its Home. Filled with boulders, demo
+    /// climbers, comments, updates and one report. Safe to run again: nothing is duplicated or reset.
     /// </summary>
     public async Task<ReviewDemoResult> SeedReviewGymsAsync(Guid ownerUserId, string? staffEmail, CancellationToken ct = default)
     {
@@ -146,12 +145,16 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 gym.UpdateProfile($"{d.Name} (demo)", $"Palestra dimostrativa, per provare BoulderTime: non esiste. {d.Description}",
                     null, d.City, null, null, null);
                 gym.SetVideoAllowance(communityVideosEnabled: true, officialBetaLimit: null);
-                db.Gyms.Add(gym); // a draft: visible only to its staff and the platform admins
+                db.Gyms.Add(gym);
                 for (var i = 0; i < d.Sectors.Length; i++)
                     db.Sectors.Add(Sector.Create(gym.Id, d.Sectors[i], null, i));
                 created++;
                 await db.SaveChangesAsync(ct);
             }
+            // Also turns the drafts an earlier version made into live, unlisted gyms.
+            gym.SetStatus(GymStatus.Active);
+            gym.SetUnlisted(true);
+            await db.SaveChangesAsync(ct);
             await SeedGradingAsync(gym.Id, d.Grading, ct);
             boulders += await SeedBouldersAsync(gym.Id, ct);
             gyms.Add(gym);
@@ -160,13 +163,14 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 db.GymStaff.Add(GymStaffMember.Create(gym.Id, ownerUserId, GymRole.Owner, null, now));
             if (staff is not null && !await db.GymStaff.AnyAsync(s => s.GymId == gym.Id && s.UserId == staff.Id, ct))
                 db.GymStaff.Add(GymStaffMember.Create(gym.Id, staff.Id, GymRole.Admin, ownerUserId, now));
+            if (staff is not null && !await db.GymFollows.AnyAsync(f => f.GymId == gym.Id && f.UserId == staff.Id, ct))
+                db.GymFollows.Add(GymFollow.Create(staff.Id, gym.Id, now));
             await db.SaveChangesAsync(ct);
         }
 
         var climbers = await SeedDemoClimbersAsync(ct);
         await SeedCommunityAsync(climbers, gyms, ownerUserId, ct);
-        return new ReviewDemoResult(created, boulders, gyms.Select(g => g.Name).ToList(), staff?.Email,
-            gyms.All(g => g.Status == GymStatus.Draft));
+        return new ReviewDemoResult(created, boulders, gyms.Select(g => g.Name).ToList(), staff?.Email);
     }
 
     /// <summary>
