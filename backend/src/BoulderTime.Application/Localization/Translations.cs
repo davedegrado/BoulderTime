@@ -154,6 +154,7 @@ public static partial class Translations
         ("You can only delete your own comments. Staff can hide comments instead.", "Puoi eliminare solo i tuoi commenti. Lo staff può invece nasconderli."),
         ("Upload an MP4, MOV or WebM video.", "Carica un video MP4, MOV o WebM."),
         ("Videos must be under {0} MB.", "I video devono pesare meno di {0} MB."),
+        ("No account uses this email yet. Sign up in the app with it first.", "Nessun account usa ancora questa email. Prima registrati nell'app con questo indirizzo."),
         ("Uploading videos isn't available yet. Link a video published online instead.", "Il caricamento dei video non è ancora disponibile. Collega invece un video pubblicato online."),
         ("Unknown upload kind.", "Tipo di caricamento sconosciuto."),
         ("Keep the caption to {0} characters or fewer.", "Non superare {0} caratteri nella didascalia."),

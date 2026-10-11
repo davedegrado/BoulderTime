@@ -16,6 +16,17 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 - [ ] **Railway:** the API deployed from the same commit as the apps (the word filter and the video switch live in the
   API).
 
+## Account for the stores' reviewers
+
+- [ ] Sign up in the app with `review@bouldertime.com` (Cloudflare → Email Routing → a rule forwarding it to you),
+  confirm the email, accept the terms. In **Profile → Leaderboards** turn on "Don't show me in leaderboards or lists".
+- [ ] **Admin → Demo gyms for store review** → Create: three hidden demo gyms, the reviewers' account as their admin.
+- [ ] With the reviewers' account, follow a public gym with boulders and log a few attempts.
+- [ ] App Store Connect (App Review Information) and Play Console (App access): these credentials, and in the notes:
+  *"Climber features: follow any gym from Explore. Staff features: Profile → Manage, on the demo gyms this account
+  administers (hidden from other users). Video uploads are currently disabled; official beta videos are added as
+  links."*
+
 ## Tests on real devices (each on an iPhone and an Android phone, store builds)
 
 - [ ] Explore → Map: location prompt appears with the new text (iPhone: English or Italian following the phone's

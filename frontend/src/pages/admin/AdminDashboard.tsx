@@ -3,6 +3,7 @@ import { Building2, Flag, Inbox, MapPinned, UserRound, Users } from "lucide-reac
 import { useAdminDashboard } from "@/features/admin/api";
 import { ErrorState, LoadingState } from "@/components/States";
 import { t } from "@/i18n/i18n";
+import { ReviewDemoCard } from "@/features/admin/ReviewDemoCard";
 
 export function AdminDashboard() {
   const dash = useAdminDashboard();
@@ -43,6 +44,7 @@ export function AdminDashboard() {
           <span className="stat__label">{t("Users")}</span>
         </Link>
       </div>
+      <ReviewDemoCard />
     </div>
   );
 }
