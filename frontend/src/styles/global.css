@@ -810,6 +810,10 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .legal__p, .legal__list { margin: 0; line-height: 1.6; color: var(--bt-ink-2); }
 .legal__list { padding-left: var(--bt-5); display: flex; flex-direction: column; gap: 6px; }
 .legal__switch { text-align: center; }
+.legal__back { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0;
+  border: 0; background: none; color: var(--bt-ink); font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.legal__back svg { width: 20px; height: 20px; }
+.link-row { width: 100%; border: 0; background: none; padding: 0; font: inherit; text-align: left; cursor: pointer; }
 .lang-switch { display: flex; justify-content: flex-end; gap: var(--bt-2); }
 .lang-switch__option {
   display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 var(--bt-3);

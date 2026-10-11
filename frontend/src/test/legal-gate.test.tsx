@@ -40,8 +40,14 @@ describe("Accepting the terms", () => {
     show(false);
 
     expect(screen.getByRole("button", { name: "Continua" })).toBeDisabled();
-    expect(screen.getByRole("link", { name: "Termini d'uso" })).toHaveAttribute("href", "/termini");
-    expect(screen.getByRole("link", { name: "Informativa sulla privacy" })).toHaveAttribute("href", "/privacy");
+    // The documents open over the page and close back to it, with the ticks still as they were.
+    await userEvent.click(screen.getByRole("button", { name: "Termini d'uso" }));
+    expect(await screen.findByRole("dialog", { name: "Termini d'uso" })).toHaveTextContent("Tolleranza zero");
+    await userEvent.click(screen.getByRole("button", { name: "Chiudi" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Informativa sulla privacy" }));
+    expect(await screen.findByRole("dialog", { name: "Informativa sulla privacy" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Chiudi" }));
 
     await userEvent.click(await screen.findByRole("checkbox", { name: "Accetto i termini d'uso e ho letto l'informativa sulla privacy." }));
     expect(screen.getByRole("button", { name: "Continua" })).toBeDisabled(); // the age is still missing

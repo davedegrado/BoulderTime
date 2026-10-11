@@ -12,6 +12,7 @@ export const it: Record<string, string> = {
   "Profile": "Profilo",
   "Notifications": "Notifiche",
   "BoulderTime home": "Home di BoulderTime",
+  "Back": "Indietro",
   "Skip to content": "Vai al contenuto",
   "Sign in": "Accedi",
   "Sign out": "Esci",

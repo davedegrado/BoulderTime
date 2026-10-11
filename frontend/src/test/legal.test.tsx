@@ -19,6 +19,11 @@ describe("Privacy notice and terms", () => {
     expect(PRIVACY_IT).toContain("support@bouldertime.com");
   });
 
+  it("always offer a way back, since the page sits outside the app's navigation", () => {
+    show("terms");
+    expect(screen.getByRole("link", { name: "Home di BoulderTime" })).toHaveAttribute("href", "/");
+  });
+
   it("state the promises the app actually keeps", () => {
     // Each of these is implemented: deletion with a grace period, an age limit, consent for other people in videos.
     expect(PRIVACY_IT).toContain("7 giorni");
@@ -26,6 +31,7 @@ describe("Privacy notice and terms", () => {
     expect(PRIVACY_IT).toContain("Profilo → Cancellazione dell'account");
     expect(TERMS_IT).toContain("consenso delle persone riconoscibili");
     expect(TERMS_IT).toContain("Profilo → Classifiche");
+    expect(TERMS_IT).toContain("Tolleranza zero");
   });
 
   it("list every service that handles the data", () => {

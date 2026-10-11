@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { PRIVACY_IT } from "@/pages/legal/privacy.it";
 import { TERMS_IT } from "@/pages/legal/terms.it";
 import { t } from "@/i18n/i18n";
@@ -10,12 +11,18 @@ import { t } from "@/i18n/i18n";
  * (DeletionPage), because it comes in two languages.
  */
 export function LegalPage({ document }: { document: "privacy" | "terms" }) {
-  const { pathname } = useLocation();
+  const { pathname, key } = useLocation();
+  const navigate = useNavigate();
   useEffect(() => window.scrollTo(0, 0), [pathname]);
+  // The page sits outside the app's navigation and the iPhone app has no back button: say how to get back.
+  const cameFromApp = key !== "default";
 
   const text = document === "privacy" ? PRIVACY_IT : TERMS_IT;
   return (
     <div className="page legal">
+      {cameFromApp
+        ? <button type="button" className="legal__back" onClick={() => navigate(-1)}><ArrowLeft aria-hidden /> {t("Back")}</button>
+        : <Link className="legal__back" to="/"><ArrowLeft aria-hidden /> {t("BoulderTime home")}</Link>}
       <article className="card legal__body">{renderLegal(text)}</article>
       <p className="legal__switch">
         {document === "privacy"

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
+import { LegalSheet, type LegalDocument } from "@/features/users/LegalSheet";
 import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
@@ -21,6 +21,8 @@ import { t } from "@/i18n/i18n";
 export function AcceptLegalPage({ returning }: { returning: boolean }) {
   const [checked, setChecked] = useState(false);
   const [ageChecked, setAgeChecked] = useState(false);
+  // Read over this page, not instead of it: closing them comes straight back here (no back button on iPhone).
+  const [reading, setReading] = useState<LegalDocument | null>(null);
   const qc = useQueryClient();
   const toast = useToast();
   const { signOut } = useAuth();
@@ -46,9 +48,10 @@ export function AcceptLegalPage({ returning }: { returning: boolean }) {
         </p>
 
         <ul className="list card">
-          <li className="list__row"><Link className="list__main list__link" to="/termini">{t("Terms of use")}</Link></li>
-          <li className="list__row"><Link className="list__main list__link" to="/privacy">{t("Privacy notice")}</Link></li>
+          <li className="list__row"><button type="button" className="list__main list__link link-row" onClick={() => setReading("terms")}>{t("Terms of use")}</button></li>
+          <li className="list__row"><button type="button" className="list__main list__link link-row" onClick={() => setReading("privacy")}>{t("Privacy notice")}</button></li>
         </ul>
+        {reading && <LegalSheet document={reading} onClose={() => setReading(null)} />}
 
         {needsAge && (
           <label className="check">
