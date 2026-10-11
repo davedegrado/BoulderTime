@@ -561,6 +561,7 @@ svg { flex-shrink: 0; }
 .comment__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-left: -6px; }
 .comment__actions .btn { min-height: 40px; padding: 0 var(--bt-3); font-size: var(--bt-text-sm); }
 .composer { display: flex; align-items: flex-end; gap: var(--bt-2); flex-wrap: wrap; }
+.composer__error { flex-basis: 100%; margin: 0; }
 .composer__input { flex: 1 1 220px; min-height: 48px; }
 
 /* Community grade */
@@ -835,6 +836,14 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .sheet__option svg { width: 22px; height: 22px; }
 .sheet__cancel { min-height: 48px; margin-top: var(--bt-2); border: 0; border-radius: var(--bt-radius-md); background: var(--bt-surface-2);
   color: var(--bt-ink); font: inherit; font-weight: 700; cursor: pointer; }
+
+.push-prompt { gap: var(--bt-3); padding-top: var(--bt-5); text-align: center; align-items: stretch; }
+.push-prompt__icon { width: 36px; height: 36px; align-self: center; color: var(--bt-orange); }
+.push-prompt__text { margin: 0; color: var(--bt-ink-2); line-height: 1.45; }
+@media (min-width: 768px) {
+  .sheet-backdrop:has(.push-prompt) { align-items: center; justify-content: center; }
+  .push-prompt { max-width: 26rem; border-radius: var(--bt-radius-lg); }
+}
 
 /* ---------- Sign-up and password fields (ADR-041) ---------- */
 .auth__head { display: flex; flex-direction: column; gap: var(--bt-2); }

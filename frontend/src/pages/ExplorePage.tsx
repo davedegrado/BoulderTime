@@ -4,6 +4,7 @@ import { Compass, List, LocateFixed, Map as MapIcon, Plus, SearchX } from "lucid
 import { useGymPins, useGymSearch, type Bounds } from "@/features/gyms/api";
 import { GymCard } from "@/features/gyms/GymCard";
 import { useUserLocation } from "@/features/map/useUserLocation";
+import { isNativeApp } from "@/lib/native";
 import { SearchField } from "@/components/SearchField";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -71,7 +72,9 @@ export function ExplorePage() {
             <LocateFixed aria-hidden />
           </button>
           {location.status === "locating" && <p className="map-card__note">{t("Finding your position…")}</p>}
-          {location.status === "denied" && <p className="map-card__note">{t("Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.")}</p>}
+          {location.status === "denied" && <p className="map-card__note">{isNativeApp()
+            ? t("Location is off, so the map shows Italy. Allow it for BoulderTime in the phone's settings to see gyms near you.")
+            : t("Location is off, so the map shows Italy. Allow location in your browser to see gyms near you.")}</p>}
         </section>
       ) : search.isPending ? (
         <LoadingState label={t("Finding gyms")} />

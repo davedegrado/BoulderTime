@@ -21,7 +21,7 @@ public sealed record UserReportDto(
 /// BoulderTime administrators see the reports and decide, because a person is not any one gym's member. A suspension
 /// hides what the person wrote and stops them doing anything, until an administrator lifts it.
 /// </summary>
-public sealed class UserModerationService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock)
+public sealed class UserModerationService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, IModerationAlerts alerts)
 {
     /// <summary>
     /// Files a report. Reporting the same person twice while the first report is open changes nothing, so the queue
@@ -43,6 +43,9 @@ public sealed class UserModerationService(IAppDbContext db, GymAccess access, IC
 
         db.UserReports.Add(UserReport.Create(reportedUserId, reporter, reason, description, clock.UtcNow));
         await db.SaveChangesAsync(ct);
+        var names = await db.Users.AsNoTracking().Where(u => u.Id == reportedUserId || u.Id == reporter)
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName, ct);
+        alerts.Send(ModerationAlerts.ForPerson(names.GetValueOrDefault(reportedUserId, "?"), names.GetValueOrDefault(reporter, "?"), reason, description));
     }
 
     public async Task<IReadOnlyList<UserReportDto>> ListReportsAsync(bool includeHandled, CancellationToken ct = default)

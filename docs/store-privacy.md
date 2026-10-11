@@ -32,8 +32,9 @@ Not collected: precise location, contacts, health, financial data, browsing hist
 snaps it to a 0.03° grid (about 3.3 × 2.4 km in Italy, ≈ 8 km²; two decimals at most) before the gym search sends it,
 and widens the map's visible box to the same grid, so the box's centre doesn't give the position away either. Google
 Play calls "approximate" anything of 3 km² or more; Apple calls "precise" three decimals or more. On iOS the app also
-asks for reduced accuracy by default (`NSLocationDefaultAccuracyReduced`). Android still declares
-`ACCESS_FINE_LOCATION` because Capacitor's WebView needs it to grant location on Android 11 and earlier; what is
+asks for reduced accuracy by default (`NSLocationDefaultAccuracyReduced`). In the store apps the position comes from
+the system (`@capacitor/geolocation`, low accuracy): Android 12+ is asked for approximate location only; Android 11
+and earlier, which have no "approximate" choice, get `ACCESS_FINE_LOCATION`, still declared for them. What is
 collected is decided by what is sent, and that is coarse.
 
 **Third parties the app talks to directly.** Supabase (sign-in, files), the API on Railway, the map tile provider

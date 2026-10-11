@@ -47,6 +47,14 @@ public static class DependencyInjection
         services.AddSingleton<IPushQueue>(sp => sp.GetRequiredService<PushDispatcher>());
         services.AddHostedService(sp => sp.GetRequiredService<PushDispatcher>());
 
+        // Emails to the BoulderTime team when someone reports a comment, a video or a person (ADR-050).
+        // One instance on purpose: the requests queue into it and its background loop sends.
+        services.AddHttpClient(nameof(Email.ResendModerationAlerts), c => c.Timeout = TimeSpan.FromSeconds(15));
+        services.AddSingleton(sp => ActivatorUtilities.CreateInstance<Email.ResendModerationAlerts>(sp,
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(Email.ResendModerationAlerts))));
+        services.AddSingleton<IModerationAlerts>(sp => sp.GetRequiredService<Email.ResendModerationAlerts>());
+        services.AddHostedService(sp => sp.GetRequiredService<Email.ResendModerationAlerts>());
+
         // Deleting an account: removing the sign-in, and the daily sweep that erases accounts past their week.
         services.AddHttpClient<IAuthAdmin, Supabase.SupabaseAuthAdmin>(c => c.Timeout = TimeSpan.FromSeconds(10));
         services.AddHostedService<Users.AccountErasureWorker>();

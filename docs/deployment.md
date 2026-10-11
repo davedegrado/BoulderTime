@@ -38,6 +38,9 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
 | `Push__ServiceAccountJson` | the Firebase service-account JSON, for the store apps (a **secret**) |
 | `Videos__UploadsEnabled` | leave unset (off) until the storage plan can carry videos; `true` turns uploads on (ADR-049) |
 | `Videos__MaxUploadMegabytes` | optional, 50 by default; never above what storage accepts per file |
+| `Email__ResendApiKey` | Resend API key for the moderation emails (a **secret**; Resend → API Keys, "Sending access") |
+| `Moderation__AlertEmail` | where report emails go: `support@bouldertime.com` |
+| `Email__From` | optional, `BoulderTime <noreply@bouldertime.com>` by default; the domain must be verified in Resend |
 
 4. **Settings → Networking → Custom domain**: `api.bouldertime.com`; add the CNAME it shows in Cloudflare DNS
    (proxy status **DNS only**, grey cloud, so Railway can issue the certificate).

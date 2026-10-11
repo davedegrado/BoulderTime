@@ -2,6 +2,7 @@ import { Route } from "react-router-dom";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
+import { ApiError } from "@/lib/apiError";
 
 vi.mock("@/auth/AuthProvider", () => ({ useAuth: () => ({ session: { access_token: "t" }, initializing: false }) }));
 
@@ -53,6 +54,22 @@ describe("Comments", () => {
     await userEvent.click(within(anna).getByRole("button", { name: /report/i }));
     await userEvent.selectOptions(within(anna).getByRole("combobox", { name: "What's wrong?" }), "OTHER");
     expect(within(anna).getByText("Required for “Other”.")).toBeInTheDocument();
+  });
+
+  it("says why a comment was refused, under the box, and clears it when the text changes", async () => {
+    reply("GET", "/api/boulders/b1/comments", page([]));
+    reply("POST", "/api/boulders/b1/comments", () => {
+      throw new ApiError(400, { title: "Invalid request", errors: { content: ["This contains words that aren't allowed here. Please rephrase it."] } }, "");
+    });
+    renderAt("/b", "/b", <CommentsSection boulderId="b1" />);
+
+    await userEvent.type(await screen.findByLabelText("Write a comment"), "sei uno stronzo");
+    await userEvent.click(screen.getByRole("button", { name: "Post comment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("This contains words that aren't allowed here. Please rephrase it.");
+    expect(screen.getByLabelText("Write a comment")).toHaveValue("sei uno stronzo");
+
+    await userEvent.type(screen.getByLabelText("Write a comment"), "!");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("offers Hide to staff and marks hidden comments", async () => {

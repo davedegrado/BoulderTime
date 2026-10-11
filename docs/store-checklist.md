@@ -7,6 +7,8 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 - [ ] **Railway:** leave `Videos__UploadsEnabled` unset (video uploads off, ADR-049). Check:
   `https://<api>/api/settings/videos` answers `"uploadsEnabled": false`.
+- [ ] **Railway:** `Email__ResendApiKey` (Resend → API Keys) and `Moderation__AlertEmail=support@bouldertime.com`, so
+  reports reach you by email (ADR-050). Check: report a comment from a test account; the email arrives.
 - [ ] **Supabase → SQL editor:** run `database/supabase/storage.sql` again. It lets the video buckets accept the
   posters (JPEG/WebP) and sets their limit to 50 MB, ready for when uploads are switched on.
 - [ ] **GitHub → Settings → Variables:** `VITE_MAP_TILE_URL` (and `VITE_MAP_TILE_URL_IOS` if the key is
@@ -18,9 +20,12 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 - [ ] Explore → Map: location prompt appears with the new text (iPhone: English or Italian following the phone's
   language), the map centres near you, the list is sorted by distance. On Android 12+, choosing "Approximate" works.
-- [ ] Notifications: off by default after a fresh install; turning them on works and the test notification arrives.
-  Sign out, then send something that would notify that account: nothing arrives. Sign back in: the switch is off.
-- [ ] A comment with an insult is refused with the message in the app's language; an ordinary one goes through; edit
+- [ ] Notifications: after signing in, the app asks once whether to turn them on; "Turn on" shows the system prompt and
+  the test notification arrives; closing and reopening the app doesn't ask again. Sign out: nothing arrives. Sign
+  back in: asked again.
+- [ ] Location on iPhone: only the system's prompt (no second "localhost" one), also after closing and reopening.
+- [ ] Everyone is asked to accept the updated terms once.
+- [ ] A comment with an insult is refused with the message under the box, in the app's language; an ordinary one goes through; edit
   a comment into an insult: refused.
 - [ ] With uploads off: no "Choose a video" anywhere; the boulder editor's official beta opens on the link form and a
   link publishes; the help pages don't mention uploading; a boulder without videos shows no "Community videos".

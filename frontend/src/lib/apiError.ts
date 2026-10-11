@@ -66,7 +66,8 @@ export function defaultMessage(status: number): string {
 }
 
 export function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.message;
+  // A refused field says what was wrong with it; the general "fields are invalid" says nothing useful.
+  if (error instanceof ApiError) return (error.isValidation ? Object.values(error.fieldErrors)[0]?.[0] : undefined) ?? error.message;
   if (error instanceof Error && error.message) return error.message;
   return t("Something went wrong.");
 }

@@ -938,3 +938,24 @@ on the link form, a gym's climbers' video section shows only videos already ther
 and the help pages leave out the questions about uploading (FAQ items marked `videoUploads`; `{maxVideoMb}` is
 filled in from the server). The admin's video allowance card says when the switch is off. Local development has it
 on (`appsettings.Development.json`); tests too, except the ones about it being off.
+
+## ADR-050 · Reports reach the team by email; terms say "zero tolerance"; asking for notifications at sign-in; native location
+**Reports by email.** Apple expects reports of objectionable content to be acted on quickly, and the queue is only
+seen when someone opens it. Every report of a comment, a video or a person now also sends an email to
+`Moderation__AlertEmail` (support@bouldertime.com) through Resend's API (`Email__ResendApiKey`, a secret; sender
+`Email__From`), with the reason, the reported text and a link to Admin → Reports. Problems with a boulder (a loose
+hold, a wrong grade) stay with the gym. Sending happens outside the request and never blocks or fails a report;
+without the settings nothing is sent and the log says so once.
+
+**Terms.** Zero tolerance for objectionable content and abusive users, what the filter, reporting and blocking do,
+and that offending content is removed and its author suspended — without promising a time we may not keep. The
+legal version moves to 2026-10-11, so everyone accepts the new terms once (Apple asks that users agree to them).
+
+**Notifications are offered after each sign-in.** Once per sign-in (the `session_id` in the token, so a refreshed token
+doesn't count as a new one), if this device doesn't receive notifications, an in-app sheet asks before the system's
+own prompt. "Not now" is remembered until the next sign-in. Signing out drops the device (ADR-048), so signing in again
+asks again.
+
+**Location in the store apps comes from the system, not the WebView** (`@capacitor/geolocation`). On iPhone the
+WebView asked a second time, as "localhost", at every start. With low accuracy the plugin asks Android 12+ for
+approximate location only; Android 11 and earlier still get the fine permission, which is why the manifest keeps it.

@@ -31,7 +31,7 @@ public sealed record ModerationSummaryDto(int PendingVideos, int PendingReports)
 /// Reports on comments, videos and boulders. Staff (STAFF+) moderate their own gym's reports; platform admins moderate all.
 /// A user has at most one open report per item, and can't report content they can't see.
 /// </summary>
-public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications)
+public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, ICurrentUser currentUser, IClock clock, Notifications.NotificationPublisher notifications, IModerationAlerts alerts)
 {
     public async Task<ReportDto> CreateAsync(CreateReportRequest r, CancellationToken ct = default)
     {
@@ -54,7 +54,11 @@ public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymA
         db.Reports.Add(report);
         try { await db.SaveChangesAsync(ct); }
         catch (UniqueConstraintViolationException) { throw new ConflictException("You've already reported this. The gym will review it.", "already_reported"); }
-        return (await ToDtosAsync([report], ct))[0];
+        var dto = (await ToDtosAsync([report], ct))[0];
+        // Comments and videos are what other people read and watch: the team hears about those at once. A problem with
+        // a boulder (a loose hold, a wrong grade) is the gym's business and stays in its queue.
+        if (type is ReportEntityType.Comment or ReportEntityType.Video) alerts.Send(ModerationAlerts.ForContent(dto));
+        return dto;
     }
 
     public async Task<PagedResult<ReportDto>> ListForGymAsync(Guid gymId, ReportStatus? status, int? page, CancellationToken ct = default)

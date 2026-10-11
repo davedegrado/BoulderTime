@@ -67,7 +67,8 @@ Sono fornitori che agiscono su nostra istruzione, scelti perché tengono i dati 
 - **Supabase** (Francoforte, Germania): database, autenticazione, archiviazione di foto e video.
 - **Railway** (Amsterdam, Paesi Bassi): il server che fa funzionare l'app.
 - **Cloudflare**: distribuzione del sito e protezione, dominio ed email di contatto.
-- **Resend** (Irlanda): invio delle email di servizio, come la conferma dell'account.
+- **Resend** (Irlanda): invio delle email di servizio, come la conferma dell'account e gli avvisi che riceviamo quando
+  qualcuno fa una segnalazione.
 - **MapTiler / OpenStreetMap**: le mappe della sezione Esplora. Quando apri la mappa, il tuo indirizzo IP è visibile
   al fornitore delle mappe.
 - **Google Firebase Cloud Messaging** e, su iPhone, **Apple Push Notification service**: recapitano le notifiche sul
@@ -81,7 +82,6 @@ Privacy Framework e clausole contrattuali standard). Se non attivi le notifiche,
 ## Per quanto tempo
 
 - **Finché hai l'account.** Quando lo cancelli, hai **7 giorni** per ripensarci; poi i dati personali sono eliminati.
-- **Video rifiutati** dalla moderazione: eliminati entro 30 giorni.
 - **Registri tecnici**: circa 90 giorni.
 - **Account sospesi.** Se un account sospeso per violazione delle regole viene cancellato, conserviamo per **2 anni**
   soltanto un'impronta crittografica (hash) del suo indirizzo email, da cui l'indirizzo non si può ricavare. Serve

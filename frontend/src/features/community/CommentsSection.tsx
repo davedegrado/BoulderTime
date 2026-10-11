@@ -26,9 +26,11 @@ export function CommentsSection({ boulderId }: { boulderId: string }) {
     e.preventDefault();
     m.create.mutate(draft, {
       onSuccess: () => setDraft(""),
-      onError: (err) => { if (!(err instanceof ApiError && err.isValidation)) toast.error(errorMessage(err)); },
+      // A refused comment (too long, or words the filter doesn't allow) says why under the box, where the text is.
+      onError: (err) => { if (!(err instanceof ApiError && err.fieldError("content"))) toast.error(errorMessage(err)); },
     });
   }
+  const draftError = m.create.error instanceof ApiError ? m.create.error.fieldError("content") : undefined;
 
   return (
     <section className="section" aria-labelledby="comments-title">
@@ -43,8 +45,11 @@ export function CommentsSection({ boulderId }: { boulderId: string }) {
         <form className="composer" onSubmit={onSubmit} noValidate>
           <label className="sr-only" htmlFor="comment-draft">{t("Write a comment")}</label>
           <textarea id="comment-draft" className="field__input field__textarea composer__input" rows={2} maxLength={1000}
-            placeholder={t("Add a comment…")} value={draft} onChange={(e) => setDraft(e.target.value)} />
+            placeholder={t("Add a comment…")} value={draft} aria-invalid={draftError ? true : undefined}
+            aria-describedby={draftError ? "comment-draft-error" : undefined}
+            onChange={(e) => { setDraft(e.target.value); if (m.create.isError) m.create.reset(); }} />
           <Button type="submit" icon={<Send aria-hidden />} loading={m.create.isPending} disabled={!draft.trim()} aria-label={t("Post comment")}>{t("Post")}</Button>
+          {draftError && <p id="comment-draft-error" className="field__error composer__error" role="alert">{draftError}</p>}
         </form>
       ) : (
         <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className="btn btn--secondary"><span>{t("Sign in to comment")}</span></Link>

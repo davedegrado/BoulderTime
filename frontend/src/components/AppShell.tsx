@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/States";
 import { plural, t } from "@/i18n/i18n";
 import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
 import { SuspendedPage } from "@/pages/SuspendedPage";
+import { PushPrompt } from "@/features/notifications/PushPrompt";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -93,6 +94,7 @@ export function AppShell() {
         {!session && <Link to="/sign-in" className="topbar__signin">{t("Sign in")}</Link>}
       </header>
 
+      {session && <PushPrompt />}
       <RouteAnnouncer />
       <OfflineBanner />
       <main id="main" className="main" tabIndex={-1}>

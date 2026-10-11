@@ -1,12 +1,12 @@
 /**
  * Terms of use. Short on purpose: rules nobody reads protect nobody. A draft to be reviewed by a professional.
  */
-export const TERMS_UPDATED = "2026-10-10";
+export const TERMS_UPDATED = "2026-10-11";
 
 export const TERMS_IT = `
 # Termini d'uso
 
-Ultimo aggiornamento: 10 ottobre 2026
+Ultimo aggiornamento: 11 ottobre 2026
 
 ## Cos'è BoulderTime
 
@@ -31,11 +31,14 @@ più: non lo usiamo altrove e non lo vendiamo.
 **Quando carichi un video dichiari di avere il consenso delle persone riconoscibili.** È la regola più importante di
 tutte, perché riguarda persone che non hanno scelto di stare nell'app.
 
-Non si pubblicano contenuti offensivi, discriminatori, pericolosi per chi arrampica, pubblicitari, né contenuti di
-altri spacciati per propri.
+**Tolleranza zero** per i contenuti offensivi, discriminatori, sessuali, violenti o molesti e per chi si comporta in
+modo abusivo con altre persone. Non si pubblicano nemmeno contenuti pericolosi per chi arrampica, pubblicitari, né
+contenuti di altri spacciati per propri.
 
-Chiunque può segnalare un contenuto. Lo staff della palestra approva o rifiuta i video della propria palestra; noi
-possiamo intervenire ovunque.
+L'app blocca in automatico i testi con parole offensive, ma un filtro non vede tutto: chiunque può segnalare un
+commento, un video o una persona, e bloccare chi non vuole più vedere. Esaminiamo le segnalazioni, insieme allo staff
+della palestra per i contenuti della propria palestra: rimuoviamo i contenuti che violano queste regole e sospendiamo o
+chiudiamo l'account di chi li ha pubblicati. I video sono visibili a tutti solo dopo l'approvazione dello staff.
 
 ## Gradi, classifiche e correttezza
 
