@@ -119,7 +119,8 @@ palestra ha disegnato la mappa, lo vedi evidenziato sulla piantina; toccandolo a
           a: `Nella pagina del blocco, in **Video della community**, tocca **Scegli un video**, aggiungi se vuoi una
 didascalia e tocca **Invia per la revisione**. Lo staff della palestra lo approva prima che sia visibile a tutti.
 
-- Formati MP4, MOV o WebM, sotto i 100 MB.
+- Formati MP4, MOV o WebM, sotto i 50 MB. Su iPhone, registrando in 1080p a 30 fps (Impostazioni → Fotocamera →
+Registrazione video) ci stanno circa 45 secondi; in 4K molto meno.
 - Al massimo 3 video per blocco.
 - Se non viene approvato, vedi il motivo sotto il video.
 

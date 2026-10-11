@@ -143,7 +143,7 @@ interchangeable.
 **Community videos** `boulder_videos(status PENDING|APPROVED|REJECTED, rejection_reason, reviewed_by, reviewed_at)`.
 Any change by the author resets to PENDING; the author can always delete. **Nobody reviews their own video** — enforced
 in the domain and the service, for staff and platform admins alike. Rejection requires a reason shown only to the author.
-Limits: MP4/MOV/WebM, 100 MB, 3 videos per user per boulder. No server-side transcoding yet (see limitations).
+Limits: MP4/MOV/WebM, 50 MB (Supabase Free caps every upload there; was 100 MB until 2026-10, see ADR-048), 3 videos per user per boulder. No server-side transcoding yet (see limitations).
 
 **Reports** `reports(entity_type, entity_id, gym_id, reason, status)` with a partial unique index on open reports per
 (reporter, entity). `gym_id` is stored at creation so staff moderate their gym's reports and platform admins all reports.
@@ -883,3 +883,40 @@ Taken-down boulders count (they are history); a boulder moved by staff counts in
 mistake); a tie goes to the most recent send; only active gyms, so a profile never names a gym that isn't public. With
 the gym's plan and the sector's outline when there is one, the card shows where it is.
 
+
+## ADR-048 · Store readiness: coarse location, word filter, video limit and posters, accounts on their way out
+**Location leaves the phone coarse.** The stores' answers say "approximate location", so the code makes it true:
+`coarse.ts` snaps the position to a 0.03° grid before the gym search sends it and widens the map's box to the same grid
+(a box centred on the user would give the position away). The exact position stays on the phone, for the dot on the
+map. iOS asks for reduced accuracy by default. Android keeps `ACCESS_FINE_LOCATION`: Capacitor's WebView asks for both
+permissions and, on Android 11 and earlier, refuses location without the fine one.
+
+**Nothing to third parties before it's needed.** Inter ships in the bundle (Latin subset) instead of loading from Google
+Fonts. Firebase Messaging starts with automatic token creation off on both platforms; turning notifications on enables
+it. Signing out drops this device's push subscription (only this device's) while the session can still do so.
+
+**A word filter before comments and captions are published** (App Store 1.2). `ContentFilter`: whole words after
+folding case, accents, look-alike digits, stretched letters and spelled-out letters; slurs, sexual terms and insults
+aimed at a person, not plain swearing about a boulder. Lists chosen to miss common innocent words ("niggle", "negroni",
+"zoccolo", "dyke"); each addition gets a test. Display names are not filtered: real surnames collide with the list.
+Reports, blocking and moderation remain the main tools.
+
+**Video limit = what storage accepts.** Supabase's Free plan refuses any upload over 50 MB whatever the bucket says,
+so the app's 100 MB let 50–100 MB videos upload for minutes and fail with "too large". The limit is now 50 MB in the
+app, the API and the buckets, with a message that gives the size, the limit and the way out (trim, or 1080p). Raising
+it means raising the plan, the buckets and `MaxVideoBytes` together. The per-boulder video count is checked before the
+file is sent, and a save that fails after the upload (a refused caption) reuses the stored file.
+
+**Video posters.** Posters are captured on the phone and stored next to the video, in the same private bucket; the
+buckets allowed only video types, so every poster was refused and the failure swallowed. The buckets now accept JPEG
+and WebP too (`storage.sql`, to be re-run on the project). Without a poster, the tile asks the video for a frame
+explicitly once its metadata is in, which Android's WebView needs (it ignores `#t=` with `preload="metadata"`).
+
+**Deleting an account takes it out of the app at once.** During the week of grace the profile answers 404 and the
+person's comments, videos and completions are hidden from everyone else (they still see their own, and everything comes
+back if they change their mind). Erasure also removes reports on their comments and videos, their notification
+settings and staff invitations sent to their address, and an erased account is no longer picked up again by every
+later run.
+
+**16 KB pages are checked, not assumed.** The Android workflow inspects every 64-bit `.so` in the APK and AAB (ELF LOAD
+alignment, and zip offset for stored libraries) and runs `zipalign -c -P 16`.

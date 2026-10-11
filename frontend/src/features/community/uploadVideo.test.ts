@@ -1,5 +1,5 @@
 const tusCalls: { file: Blob; options: Record<string, unknown> }[] = [];
-let outcome: "success" | "error" = "success";
+let outcome: "success" | "error" | "too-large" = "success";
 
 vi.mock("tus-js-client", () => ({
   Upload: class {
@@ -7,6 +7,7 @@ vi.mock("tus-js-client", () => ({
     start() {
       const o = this.options as unknown as { onProgress: (a: number, b: number) => void; onSuccess: () => void; onError: (e: unknown) => void };
       if (outcome === "success") { o.onProgress(50, 100); o.onSuccess(); }
+      else if (outcome === "too-large") o.onError({ originalResponse: { getStatus: () => 413 } });
       else o.onError({ originalResponse: null });
     }
   },
@@ -80,9 +81,15 @@ describe("video uploads", () => {
     await expect(uploadVideo("b", file, "BETA")).rejects.toThrow("The upload was interrupted. Check your connection and try again.");
   });
 
-  it("rejects videos over 100 MB before uploading anything", async () => {
-    const big = { size: 101 * 1024 * 1024, type: "video/mp4", name: "big.mp4" } as File;
-    await expect(uploadVideo("b", big, "COMMUNITY")).rejects.toThrow(/under 100 MB/);
+  it("rejects videos over 50 MB before uploading anything, saying how big it is and how to get under", async () => {
+    const big = { size: 80 * 1024 * 1024, type: "video/mp4", name: "big.mp4" } as File;
+    await expect(uploadVideo("b", big, "COMMUNITY")).rejects.toThrow("This video is 80 MB and the limit is 50 MB. Trim it, or record in 1080p, and try again.");
     expect(posts).toHaveLength(0);
+  });
+
+  it("explains storage refusing the file as a size problem, with the limit", async () => {
+    outcome = "too-large";
+    const file = new File([new Uint8Array(10)], "v.mp4", { type: "video/mp4" });
+    await expect(uploadVideo("b", file, "COMMUNITY")).rejects.toThrow(/limit is 50 MB/);
   });
 });

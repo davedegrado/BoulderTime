@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Video as VideoIcon, X, XCircle } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useBeta, useVideoMutations, useVideos, type Video } from "@/features/community/api";
+import { showFirstFrame } from "@/features/community/firstFrame";
 import { ReportButton } from "@/features/community/ReportButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -31,7 +32,8 @@ export function BetaSection({ boulderId, gymName }: { boulderId: string; gymName
 
 /**
  * For videos without a captured thumbnail: shows a frame of the video itself. Only metadata and the first frames are
- * fetched, and only once the tile scrolls near the viewport. "#t=0.5" makes iOS Safari paint that frame.
+ * fetched, and only once the tile scrolls near the viewport. "#t=0.5" makes iOS Safari paint that frame; Android's
+ * WebView needs the explicit seek in showFirstFrame.
  */
 function FramePreview({ src }: { src: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -46,7 +48,7 @@ function FramePreview({ src }: { src: string }) {
   return (
     <span ref={ref} className="video-thumb__live">
       {visible && !failed
-        ? <video src={`${src}#t=0.5`} muted playsInline preload="metadata" tabIndex={-1} aria-hidden onError={() => setFailed(true)} />
+        ? <video src={`${src}#t=0.5`} muted playsInline preload="metadata" tabIndex={-1} aria-hidden onLoadedMetadata={showFirstFrame} onError={() => setFailed(true)} />
         : <span className="video-thumb__placeholder" aria-hidden><VideoIcon /></span>}
     </span>
   );

@@ -1,0 +1,5 @@
+/* Richieste di permesso (italiano). Da tenere allineate a Info.plist e en.lproj. */
+"NSCameraUsageDescription" = "BoulderTime usa la fotocamera per fotografare i blocchi e registrare i video di beta che scegli di condividere.";
+"NSMicrophoneUsageDescription" = "BoulderTime usa il microfono per registrare l'audio dei video di beta che giri.";
+"NSPhotoLibraryUsageDescription" = "BoulderTime apre la tua libreria per scegliere le foto e i video dei blocchi da aggiungere all'app.";
+"NSLocationWhenInUseUsageDescription" = "BoulderTime usa la tua posizione approssimativa per mostrarti le palestre vicine sulla mappa e nella ricerca.";

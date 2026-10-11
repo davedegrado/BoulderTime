@@ -1,4 +1,5 @@
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Domain.Community;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,8 +10,9 @@ namespace BoulderTime.Application.Users;
 /// Erases accounts whose week of grace has passed.
 ///
 /// Everything personal goes: name, email, photo, attempts, sends, ratings, grade suggestions, comments, likes,
-/// community videos (files included), follows, notifications, registered devices, reports and blocks made by or about
-/// the person, and the Supabase sign-in itself. A suspended account leaves one thing behind: the hash of its address
+/// community videos (files included), follows, notifications and their settings, registered devices, reports and
+/// blocks made by or about the person (reports on their comments and videos included), staff invitations sent to
+/// their address, and the Supabase sign-in itself. A suspended account leaves one thing behind: the hash of its address
 /// (ADR-038), so that it can't sign up again unsuspended.
 /// What stays belongs to the gym rather than to the person — the boulders they set, the official beta they filmed —
 /// so the row survives as a nameless placeholder instead of taking the gym's own content down with it.
@@ -20,7 +22,10 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
     public async Task<int> EraseDueAsync(CancellationToken ct = default)
     {
         var cutoff = clock.UtcNow - AccountDeletionService.GracePeriod;
-        var due = await db.Users.Where(u => u.DeletionRequestedAt != null && u.DeletionRequestedAt <= cutoff).ToListAsync(ct);
+        // Already-erased rows keep a DeletionRequestedAt too; without the address check they would be erased again on
+        // every run, for ever.
+        var due = await db.Users.Where(u => u.DeletionRequestedAt != null && u.DeletionRequestedAt <= cutoff
+                                            && !u.Email.EndsWith(User.ErasedEmailDomain)).ToListAsync(ct);
         foreach (var user in due) await EraseAsync(user.Id, ct);
         await ForgetExpiredSuspendedEmailsAsync(ct);
         return due.Count;
@@ -46,7 +51,8 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
     public async Task EraseAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
-        if (user is null) return;
+        if (user is null || user.Email.EndsWith(User.ErasedEmailDomain, StringComparison.Ordinal)) return;
+        var email = user.Email.Trim().ToLowerInvariant();
 
         // Files first: a row removed without its file would leave the video reachable by its signed URL.
         var videos = await db.BoulderVideos.Where(v => v.UserId == userId).ToListAsync(ct);
@@ -56,6 +62,13 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
             if (video.ThumbnailPath is { Length: > 0 } thumbnail) await TryDeleteAsync(StorageBuckets.CommunityVideos, thumbnail, ct);
         }
         if (user.AvatarPath is { Length: > 0 } avatar) await TryDeleteAsync(StorageBuckets.Avatars, avatar, ct);
+
+        // Reports about their comments and videos describe the person: they go with the content.
+        var commentIds = await db.Comments.Where(x => x.UserId == userId).Select(x => x.Id).ToListAsync(ct);
+        var videoIds = videos.Select(v => v.Id).ToList();
+        db.Reports.RemoveRange(await db.Reports.Where(x =>
+            (x.EntityType == ReportEntityType.Comment && commentIds.Contains(x.EntityId)) ||
+            (x.EntityType == ReportEntityType.Video && videoIds.Contains(x.EntityId))).ToListAsync(ct));
 
         db.BoulderVideos.RemoveRange(videos);
         db.CommentLikes.RemoveRange(await db.CommentLikes.Where(x => x.UserId == userId).ToListAsync(ct));
@@ -67,7 +80,9 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         db.SectorFollows.RemoveRange(await db.SectorFollows.Where(x => x.UserId == userId).ToListAsync(ct));
         db.BoulderFollows.RemoveRange(await db.BoulderFollows.Where(x => x.UserId == userId).ToListAsync(ct));
         db.Notifications.RemoveRange(await db.Notifications.Where(x => x.UserId == userId).ToListAsync(ct));
+        db.NotificationSettings.RemoveRange(await db.NotificationSettings.Where(x => x.UserId == userId).ToListAsync(ct));
         db.PushSubscriptions.RemoveRange(await db.PushSubscriptions.Where(x => x.UserId == userId).ToListAsync(ct));
+        db.StaffInvitations.RemoveRange(await db.StaffInvitations.Where(x => x.Email == email).ToListAsync(ct));
         db.GymStaff.RemoveRange(await db.GymStaff.Where(x => x.UserId == userId).ToListAsync(ct));
         db.Reports.RemoveRange(await db.Reports.Where(x => x.ReportedByUserId == userId).ToListAsync(ct));
         db.LeaderboardReports.RemoveRange(await db.LeaderboardReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));

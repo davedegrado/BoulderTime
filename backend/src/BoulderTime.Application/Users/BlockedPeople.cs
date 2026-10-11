@@ -10,14 +10,20 @@ namespace BoulderTime.Application.Users;
 public sealed class BlockedPeople(IAppDbContext db, ICurrentUser currentUser)
 {
     /// <summary>
-    /// Everyone hidden from the viewer: people blocked in either direction, and suspended accounts, which are hidden
-    /// from everybody — signed out or not (ADR-037). A <see cref="List{T}"/> rather than a set, and declared as one:
-    /// these ids go into <c>Contains</c> inside database queries, and EF Core translates that for a list.
+    /// Everyone hidden from the viewer: people blocked in either direction, suspended accounts, which are hidden from
+    /// everybody — signed out or not (ADR-037), and accounts waiting to be erased, which leave the app as soon as the
+    /// person asks (they come back if the request is withdrawn; the person still sees their own). A
+    /// <see cref="List{T}"/> rather than a set, and declared as one: these ids go into <c>Contains</c> inside database
+    /// queries, and EF Core translates that for a list.
     /// </summary>
     public async Task<List<Guid>> ForViewerAsync(CancellationToken ct = default)
     {
-        var hidden = await db.Users.AsNoTracking().Where(u => u.SuspendedAt != null).Select(u => u.Id).ToListAsync(ct);
-        if (currentUser.UserId is not { } userId) return hidden;
+        var viewer = currentUser.UserId;
+        var hidden = await db.Users.AsNoTracking()
+            .Where(u => u.SuspendedAt != null
+                        || (u.DeletionRequestedAt != null && u.Id != viewer && !u.Email.EndsWith(Domain.Users.User.ErasedEmailDomain)))
+            .Select(u => u.Id).ToListAsync(ct);
+        if (viewer is not { } userId) return hidden;
         var rows = await db.UserBlocks.AsNoTracking()
             .Where(b => b.BlockerUserId == userId || b.BlockedUserId == userId)
             .Select(b => new { b.BlockerUserId, b.BlockedUserId })

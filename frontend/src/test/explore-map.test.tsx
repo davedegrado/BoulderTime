@@ -59,7 +59,7 @@ describe("Explore", () => {
 
     await userEvent.click(screen.getByRole("radio", { name: "Map" }));
     expect(await screen.findByTestId("map")).toBeInTheDocument();
-    await waitFor(() => expect(calls).toContain("/api/gyms/map?south=44&west=8&north=46&east=10"));
+    await waitFor(() => expect(calls).toContain("/api/gyms/map?south=43.98&west=7.98&north=46.02&east=10.02"));
   });
 
   it("centres on the user's position, loads pins for the viewport and lists nearest gyms first", async () => {
@@ -67,8 +67,10 @@ describe("Explore", () => {
     renderAt("/explore?view=map", "/explore", <ExplorePage />);
 
     expect(await screen.findByText("1 pins")).toBeInTheDocument();
-    await waitFor(() => expect(calls).toContain("/api/gyms/map?south=44&west=8&north=46&east=10"));
-    await waitFor(() => expect(calls.some((c) => c.startsWith("/api/gyms?q=&page=1&pageSize=20&lat=45.4642&lng=9.19"))).toBe(true));
+    await waitFor(() => expect(calls).toContain("/api/gyms/map?south=43.98&west=7.98&north=46.02&east=10.02"));
+    // Only a coarsened position leaves the phone (the same grid as the map's box, widened to it above).
+    await waitFor(() => expect(calls.some((c) => c.startsWith("/api/gyms?q=&page=1&pageSize=20&lat=45.45&lng=9.18"))).toBe(true));
+    expect(calls.some((c) => c.includes("45.4642") || c.includes("9.19"))).toBe(false);
     expect(mapProps.at(-1)!.userPosition).toEqual({ lat: 45.4642, lng: 9.19 });
 
     await userEvent.click(screen.getByRole("radio", { name: "List" }));

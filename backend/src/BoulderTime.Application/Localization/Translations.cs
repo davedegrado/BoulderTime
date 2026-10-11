@@ -38,6 +38,7 @@ public static partial class Translations
         ("Something went wrong on our side.", "C'è stato un problema da parte nostra."),
         ("This already exists.", "Esiste già."),
         ("One or more fields are invalid.", "Uno o più campi non sono validi."),
+        ("This contains words that aren't allowed here. Please rephrase it.", "Il testo contiene parole che qui non sono ammesse. Riformulalo."),
 
         // ---- Access ----
         ("Sign in to continue.", "Accedi per continuare."),

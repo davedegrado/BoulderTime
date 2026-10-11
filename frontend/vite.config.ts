@@ -15,7 +15,7 @@ export default defineConfig({
       workbox: {
         // Our own push handling is added to the generated service worker rather than replacing it.
         importScripts: ["/push-sw.js"],
-        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
         globIgnores: ["**/app-icon-1024.png", "**/app-icon-512.png"], // store/maskable sizes: not needed offline
         navigateFallback: "/index.html",
         // Pages the app doesn't own: the offline copy must not answer for them. /.well-known holds the files Android
@@ -27,11 +27,6 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.startsWith("/api/storage/files/") || url.pathname.includes("/storage/v1/object/public/"),
             handler: "CacheFirst",
             options: { cacheName: "bt-images", expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 }, cacheableResponse: { statuses: [0, 200] } },
-          },
-          {
-            urlPattern: ({ url }) => url.origin === "https://fonts.googleapis.com" || url.origin === "https://fonts.gstatic.com",
-            handler: "StaleWhileRevalidate",
-            options: { cacheName: "bt-fonts", expiration: { maxEntries: 20 } },
           },
           // API data (personal, per account) is deliberately NOT cached by the service worker.
         ],

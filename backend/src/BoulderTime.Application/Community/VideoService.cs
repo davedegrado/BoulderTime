@@ -43,7 +43,13 @@ public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulde
 /// </summary>
 public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Users.BlockedPeople blocked)
 {
-    public const long MaxVideoBytes = 100 * 1024 * 1024;
+    /// <summary>
+    /// The largest video accepted. It must not exceed what storage itself takes: Supabase's Free plan refuses any file
+    /// over 50 MB whatever the bucket says, so a higher number here let 50–100 MB videos upload for minutes and then
+    /// fail with a vague "too large". Raising it means raising the plan's upload limit and the buckets' file_size_limit
+    /// (database/supabase/storage.sql) to match, and the figure in the FAQ and in the app (MAX_VIDEO_BYTES).
+    /// </summary>
+    public const long MaxVideoBytes = 50 * 1024 * 1024;
     public const long MaxThumbnailBytes = 1024 * 1024;
     private static readonly Dictionary<string, string> ThumbnailTypes = new(StringComparer.OrdinalIgnoreCase) { ["image/jpeg"] = "jpg", ["image/webp"] = "webp" };
     public const int MaxVideosPerUserPerBoulder = 3;
@@ -84,6 +90,15 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
                 .ThrowIfInvalid();
             var thumbPath = $"{Prefix(scope.Gym.Id, boulderId, kind)}{Guid.NewGuid():N}.thumb.{ThumbnailTypes[r.ContentType!]}";
             return await storage.CreateUploadTicketAsync(Bucket(kind), thumbPath, r.ContentType!.ToLowerInvariant(), MaxThumbnailBytes, ct) with { Resumable = null };
+        }
+
+        // Said before the upload rather than after it: otherwise the whole file travels only to be refused, and stays
+        // in storage with nothing pointing to it.
+        if (!IsBeta(kind))
+        {
+            var uploaderId = currentUser.RequireUserId();
+            if (await db.BoulderVideos.CountAsync(v => v.BoulderId == boulderId && v.UserId == uploaderId, ct) >= MaxVideosPerUserPerBoulder)
+                throw new ConflictException($"You can post up to {MaxVideosPerUserPerBoulder} videos per boulder. Delete one to add another.", "too_many_videos");
         }
 
         new Validator()
@@ -339,6 +354,7 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
     private static void ValidateCaption(string? caption, int max)
     {
         if (Input.Trimmed(caption).Length > max) throw new ValidationException("caption", $"Keep the caption to {max} characters or fewer.");
+        if (ContentFilter.IsObjectionable(caption)) throw new ValidationException("caption", ContentFilter.Message);
     }
 
     /// <param name="withPublisher">Only the gym's staff see who published it; saving is staff-only, so it defaults to yes.</param>

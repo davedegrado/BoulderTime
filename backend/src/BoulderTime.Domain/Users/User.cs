@@ -56,6 +56,9 @@ public class User : IAuditable
 
     public bool IsPendingDeletion => DeletionRequestedAt is not null;
 
+    /// <summary>The domain of the placeholder address an erased account gets (<see cref="Anonymise"/>).</summary>
+    public const string ErasedEmailDomain = "@deleted.invalid";
+
     /// <summary>
     /// Set by a BoulderTime administrator when sends look implausible. Kept apart from <see cref="LeaderboardOptOut"/>
     /// so that clearing one never clears the other, and so the person can still be told why they are missing.
@@ -144,7 +147,7 @@ public class User : IAuditable
     public void Anonymise(DateTimeOffset now)
     {
         DisplayName = "Utente eliminato";
-        Email = $"deleted-{Id:N}@deleted.invalid";
+        Email = $"deleted-{Id:N}{ErasedEmailDomain}";
         AvatarUrl = null;
         AvatarPath = null;
         IsPlatformAdmin = false;

@@ -1,0 +1,5 @@
+/* Permission prompts (English). Keep in step with Info.plist and it.lproj. */
+"NSCameraUsageDescription" = "BoulderTime uses the camera to take photos of boulders and to record the beta videos you choose to share.";
+"NSMicrophoneUsageDescription" = "BoulderTime uses the microphone to record sound in the beta videos you film.";
+"NSPhotoLibraryUsageDescription" = "BoulderTime opens your library so you can pick photos and videos of boulders to add to the app.";
+"NSLocationWhenInUseUsageDescription" = "BoulderTime uses your approximate location to show the gyms near you on the map and in search.";

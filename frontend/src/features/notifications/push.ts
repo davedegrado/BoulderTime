@@ -175,6 +175,30 @@ export async function disablePush(): Promise<void> {
   await api.delete(`/api/users/me/push${endpoint ? `?address=${encodeURIComponent(endpoint)}` : ""}`);
 }
 
+/**
+ * On sign-out: this device stops receiving the account's notifications, so the next person using the phone or the
+ * browser doesn't see them. Only this device (never the whole account), best effort and quick: signing out must not
+ * wait on the network.
+ */
+export async function releasePushOnSignOut(timeoutMs = 4000): Promise<void> {
+  const work = (async () => {
+    if (isNativeApp()) {
+      if (!nativePushInThisBuild()) return;
+      const token = nativeToken ?? storedNativeToken();
+      if (!token) return;
+      try { await api.delete(`/api/users/me/push?address=${encodeURIComponent(token)}`); } finally { rememberNativeToken(undefined); }
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      await PushNotifications.removeAllDeliveredNotifications().catch(() => {});
+      return;
+    }
+    if (!pushSupportedHere()) return;
+    const subscription = await (await registration())?.pushManager.getSubscription();
+    if (!subscription) return;
+    try { await api.delete(`/api/users/me/push?address=${encodeURIComponent(subscription.endpoint)}`); } finally { await subscription.unsubscribe().catch(() => false); }
+  })().catch(() => {});
+  await Promise.race([work, new Promise<void>((resolve) => window.setTimeout(resolve, timeoutMs))]);
+}
+
 /** The server sends the key as base64url; the browser wants raw bytes. */
 function decodeKey(raw: string): ArrayBuffer {
   // A key pasted with quotes, spaces or a trailing newline is a configuration mistake, not a browser problem.

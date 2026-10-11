@@ -114,7 +114,8 @@ its map, you see it picked out on the floor plan; tapping it opens that sector's
           a: `On the boulder's page, in **Community videos**, tap **Choose a video**, add a caption if you like and tap
 **Send for review**. The gym's staff approve it before everyone can see it.
 
-- MP4, MOV or WebM, under 100 MB.
+- MP4, MOV or WebM, under 50 MB. On iPhone, recording in 1080p at 30 fps (Settings → Camera → Record Video) fits
+about 45 seconds; in 4K, much less.
 - Up to 3 videos per boulder.
 - If it isn't approved, the reason shows under the video.
 

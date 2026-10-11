@@ -45,6 +45,9 @@ jobs:
             if [ -z "${!name}" ]; then echo "::error::Missing repository variable $name (Settings → Secrets and variables → Actions → Variables)"; exit 1; fi
           done
           case "$VITE_API_BASE_URL" in https://*) ;; *) echo "::error::VITE_API_BASE_URL must be a full https:// address inside the app"; exit 1;; esac
+          # Without it the app falls back to openstreetmap.org's own tiles, which are not for apps in production and are
+          # not the provider the privacy notice names.
+          [ -n "$VITE_MAP_TILE_URL" ] || echo "::warning::VITE_MAP_TILE_URL is not set: the map would use openstreetmap.org's tiles (light use only). Set it to the MapTiler URL."
 
       - uses: actions/setup-node@v5
         with:
@@ -107,6 +110,18 @@ jobs:
             ./gradlew assembleDebug --no-daemon
             cp app/build/outputs/apk/debug/app-debug.apk "../../out/${name}-debug.apk"
           fi
+
+      - name: Check the app works with 16 KB memory pages
+        run: |
+          # Google Play requires it of apps targeting Android 15+: every 64-bit native library must be linked and
+          # packaged on 16 KB boundaries. Checked on what is actually shipped, not assumed from the toolchain.
+          shopt -s nullglob
+          python3 android/scripts/check_16kb.py ../out/*.apk ../out/*.aab
+          zipalign="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/zipalign"
+          for apk in ../out/*.apk; do
+            "$zipalign" -c -P 16 4 "$apk" || { echo "::error::$apk is not zip-aligned for 16 KB pages"; exit 1; }
+            echo "$apk: zip alignment ok"
+          done
 
       - name: Check the key matches the one bouldertime.com vouches for
         if: env.HAS_SIGNING_KEY == 'true'

@@ -1,5 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+// Inter ships with the app (Latin: English and Italian) instead of coming from Google Fonts: no request leaves for a
+// third party just to draw text, and it works offline.
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-700.css";
+import "@fontsource/inter/latin-800.css";
 import "@/styles/tokens.css";
 import "@/styles/global.css";
 import { isNativeApp, startNativeShell } from "@/lib/native";

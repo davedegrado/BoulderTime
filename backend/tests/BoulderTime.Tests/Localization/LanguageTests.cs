@@ -33,6 +33,7 @@ public sealed class LanguageTests(PostgresFixture postgres) : IAsyncLifetime
     [InlineData("Write something first.", "Scrivi prima qualcosa.")]
     [InlineData("Keep it to 300 characters or fewer.", "Non superare 300 caratteri.")]
     [InlineData("Videos must be under 100 MB.", "I video devono pesare meno di 100 MB.")]
+    [InlineData("This contains words that aren't allowed here. Please rephrase it.", "Il testo contiene parole che qui non sono ammesse. Riformulalo.")]
     [InlineData("This needs the ADMIN role at this gym.", "Serve il ruolo ADMIN in questa palestra.")]
     [InlineData("A message nobody translated yet.", "A message nobody translated yet.")]
     public void Messages_are_translated_with_their_runtime_values(string english, string italian)

@@ -159,4 +159,26 @@ describe("Notifications inside the store app", () => {
     await disablePush();
     expect(calls.filter((c) => c.method === "DELETE")).toHaveLength(0);
   });
+
+  it("signing out drops this phone's subscription, and only this phone's", async () => {
+    native.mockReturnValue(true);
+    vi.resetModules();
+    const { enablePush, releasePushOnSignOut } = await import("@/features/notifications/push");
+    await enablePush("");
+    calls.length = 0;
+
+    await releasePushOnSignOut();
+
+    expect(calls).toEqual([{ method: "DELETE", path: "/api/users/me/push?address=fcm-token-123" }]);
+    expect(localStorage.getItem("bt.nativePushToken")).toBeNull();
+  });
+
+  it("signing out on a phone where notifications were never on asks the server nothing", async () => {
+    native.mockReturnValue(true);
+    vi.resetModules();
+    const { releasePushOnSignOut } = await import("@/features/notifications/push");
+    await releasePushOnSignOut();
+    expect(calls).toHaveLength(0);
+  });
 });
+

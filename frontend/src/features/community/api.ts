@@ -56,7 +56,16 @@ export const reportReasonLabel: Record<ReportReason, string> = new Proxy({} as R
 interface ResumableUpload { endpoint: string; headers: Record<string, string>; metadata: Record<string, string>; chunkSize: number }
 interface UploadTicket { path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; resumable?: ResumableUpload | null }
 
-export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+/** Same as the server (VideoService.MaxVideoBytes): checked here too, so a video that is too big is never uploaded. */
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_VIDEO_MB = MAX_VIDEO_BYTES / 1024 / 1024;
+
+/** What to tell someone whose video is too big: how big it is, the limit, and how to get under it. */
+export function videoTooLargeMessage(sizeBytes?: number): string {
+  return sizeBytes
+    ? t("This video is {size} MB and the limit is {max} MB. Trim it, or record in 1080p, and try again.", { size: Math.ceil(sizeBytes / 1024 / 1024), max: MAX_VIDEO_MB })
+    : t("This video is over the {max} MB limit. Trim it, or record in 1080p, and try again.", { max: MAX_VIDEO_MB });
+}
 
 export const communityKeys = {
   comments: (boulderId: string) => ["community", "comments", boulderId] as const,
@@ -107,7 +116,7 @@ export async function uploadResumable(ticket: UploadTicket & { resumable: Resuma
         const status = (error as { originalResponse?: { getStatus(): number } }).originalResponse?.getStatus() ?? 0;
         reject(new ApiError(status, null, status === 0
           ? t("The upload was interrupted. Check your connection and try again.")
-          : status === 413 ? t("The video is too large.") : t("The upload failed. Try again.")));
+          : status === 413 ? videoTooLargeMessage(file.size) : t("The upload failed. Try again.")));
       },
     });
     upload.start();
@@ -121,7 +130,7 @@ export interface UploadedVideo { path: string; thumbnailPath: string | null }
  * uploaded never blocks the video itself.
  */
 export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<UploadedVideo> {
-  if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, t("Videos must be under 100 MB. Trim it and try again."));
+  if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, videoTooLargeMessage(file.size));
   const contentType = file.type || "video/mp4";
   const ticket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`, { kind, contentType, sizeBytes: file.size });
   if (ticket.resumable) await uploadResumable({ ...ticket, resumable: ticket.resumable }, file, onProgress);
@@ -136,7 +145,9 @@ export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNIT
       await putWithProgress(thumbTicket, thumb);
       thumbnailPath = thumbTicket.path;
     }
-  } catch {
+  } catch (error) {
+    // The video is fine without it (the app then draws a frame itself), but say so for whoever is debugging.
+    console.warn("The video's poster frame could not be saved", error);
     thumbnailPath = null;
   }
   return { path: ticket.path, thumbnailPath };

@@ -24,9 +24,22 @@ The general answers are the same on both stores:
 | Other user content | App functionality | No | Comments, grade suggestions, ratings, reports |
 | App interactions | App functionality | Yes | Attempts, sends, follows: the history and the leaderboards |
 | Device ID (push token) | App functionality | No | Only if notifications are switched on |
-| Approximate location | App functionality | No | Only for "gyms near me", rounded to about 1 km, not stored on the account |
+| Approximate location | App functionality | No | Only for "gyms near me" and the map: coarsened on the phone before sending (see below), not stored on the account |
 
 Not collected: precise location, contacts, health, financial data, browsing history, search history, diagnostics.
+
+**Why "approximate" is true.** The phone's position never leaves it as such: `frontend/src/features/map/coarse.ts`
+snaps it to a 0.03° grid (about 3.3 × 2.4 km in Italy, ≈ 8 km²; two decimals at most) before the gym search sends it,
+and widens the map's visible box to the same grid, so the box's centre doesn't give the position away either. Google
+Play calls "approximate" anything of 3 km² or more; Apple calls "precise" three decimals or more. On iOS the app also
+asks for reduced accuracy by default (`NSLocationDefaultAccuracyReduced`). Android still declares
+`ACCESS_FINE_LOCATION` because Capacitor's WebView needs it to grant location on Android 11 and earlier; what is
+collected is decided by what is sent, and that is coarse.
+
+**Third parties the app talks to directly.** Supabase (sign-in, files), the API on Railway, the map tile provider
+(`VITE_MAP_TILE_URL`, MapTiler in production: the builds warn when it is missing), and Firebase/APNs only once
+notifications are switched on (Firebase's automatic token creation is off until then). Fonts ship with the app; no
+Google Fonts request.
 
 ## Google Play: Data safety
 

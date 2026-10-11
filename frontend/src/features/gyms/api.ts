@@ -2,6 +2,7 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 import { api } from "@/lib/api";
 import type { PagedResult } from "@/lib/paging";
 import type { GymRole, GymStatus } from "@/lib/format";
+import { coarsen, coarsenBounds } from "@/features/map/coarse";
 
 export interface GymSummary {
   id: string;
@@ -89,20 +90,23 @@ export const gymKeys = {
 const PAGE_SIZE = 20;
 
 export function useGymSearch(query: string, near?: { lat: number; lng: number } | null) {
-  const nearKey = near ? `${near.lat.toFixed(2)},${near.lng.toFixed(2)}` : "";
+  // Only a coarsened position is sent (see coarse.ts).
+  const at = near ? { lat: coarsen(near.lat), lng: coarsen(near.lng) } : null;
+  const nearKey = at ? `${at.lat},${at.lng}` : "";
   return useInfiniteQuery({
     queryKey: [...gymKeys.search(query), nearKey],
     queryFn: ({ pageParam, signal }) =>
-      api.get<PagedResult<GymSummary>>(`/api/gyms?q=${encodeURIComponent(query)}&page=${pageParam}&pageSize=${PAGE_SIZE}${near ? `&lat=${near.lat}&lng=${near.lng}` : ""}`, { signal }),
+      api.get<PagedResult<GymSummary>>(`/api/gyms?q=${encodeURIComponent(query)}&page=${pageParam}&pageSize=${PAGE_SIZE}${at ? `&lat=${at.lat}&lng=${at.lng}` : ""}`, { signal }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
   });
 }
 
-export function useGymPins(bounds: Bounds | null) {
-  // Rounded so small pans reuse the cache.
-  const key = bounds ? [bounds.south, bounds.west, bounds.north, bounds.east].map((n) => n.toFixed(2)).join(",") : "";
+export function useGymPins(view: Bounds | null) {
+  // Widened to the coarse grid: small pans reuse the cache and the box's centre doesn't give away the user's position.
+  const bounds = view ? coarsenBounds(view) : null;
+  const key = bounds ? [bounds.south, bounds.west, bounds.north, bounds.east].join(",") : "";
   return useQuery({
     queryKey: ["gyms", "pins", key],
     queryFn: ({ signal }) => api.get<GymPin[]>(`/api/gyms/map?south=${bounds!.south}&west=${bounds!.west}&north=${bounds!.north}&east=${bounds!.east}`, { signal }),

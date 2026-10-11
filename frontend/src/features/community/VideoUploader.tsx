@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { uploadVideo, type UploadedVideo } from "@/features/community/api";
+import { showStartFrame } from "@/features/community/firstFrame";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { useToast } from "@/components/Toast";
@@ -22,6 +23,9 @@ export function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }
   const [caption, setCaption] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Kept when saving fails after the upload (a refused caption, say): trying again reuses the file already stored
+  // instead of sending it again and leaving the first copy behind with nothing pointing to it.
+  const [uploaded, setUploaded] = useState<{ file: File; video: UploadedVideo } | null>(null);
   const toast = useToast();
 
   // Preview the chosen file locally before it's sent.
@@ -36,8 +40,13 @@ export function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }
     if (!file) return;
     try {
       setProgress(0);
-      const uploaded = await uploadVideo(boulderId, file, kind, setProgress);
-      await onUploaded(uploaded, caption.trim());
+      let video = uploaded?.file === file ? uploaded.video : null;
+      if (!video) {
+        video = await uploadVideo(boulderId, file, kind, setProgress);
+        setUploaded({ file, video });
+      }
+      await onUploaded(video, caption.trim());
+      setUploaded(null);
       setFile(null);
       setCaption("");
     } catch (e) {
@@ -55,7 +64,7 @@ export function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }
       ) : (
         <>
           {previewUrl && (
-            <video className="player uploader__preview" src={previewUrl} controls playsInline muted preload="metadata" aria-label={t("Preview of the selected video")} />
+            <video className="player uploader__preview" src={previewUrl} controls playsInline muted preload="metadata" onLoadedMetadata={showStartFrame} aria-label={t("Preview of the selected video")} />
           )}
           <p className="list__sub">{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</p>
           <TextField label={t("Caption")} value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={300} hint={t("Optional")} />

@@ -5,7 +5,12 @@
   <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>it</string>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>it</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>BoulderTime</string>
 	<key>CFBundleExecutable</key>
@@ -28,14 +33,18 @@
 	<false/>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>BoulderTime usa la fotocamera per fotografare i blocchi e registrare i video di beta.</string>
+	<string>BoulderTime uses the camera to take photos of boulders and to record the beta videos you choose to share.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>BoulderTime usa il microfono per l'audio dei video di beta che registri.</string>
+	<string>BoulderTime uses the microphone to record sound in the beta videos you film.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BoulderTime apre la tua libreria per scegliere le foto e i video dei blocchi.</string>
+	<string>BoulderTime opens your library so you can pick photos and videos of boulders to add to the app.</string>
+	<key>NSLocationDefaultAccuracyReduced</key>
+	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>BoulderTime usa la tua posizione per mostrarti le palestre vicine sulla mappa.</string>
+	<string>BoulderTime uses your approximate location to show the gyms near you on the map and in search.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

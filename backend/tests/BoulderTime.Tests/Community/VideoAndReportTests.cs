@@ -160,4 +160,23 @@ public sealed class VideoAndReportTests(PostgresFixture postgres) : IAsyncLifeti
 
         (await snoop.Client.PostAsJsonAsync("/api/reports", new { entityType = "VIDEO", entityId = pending.Id, reason = "SPAM" })).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task The_per_boulder_limit_is_checked_before_the_file_is_sent_and_a_refused_caption_needs_no_new_upload()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var b = await w.BoulderAsync();
+        var author = await _f.UserAsync();
+
+        // A refused caption leaves the uploaded file usable: the same path goes through once the caption is fixed.
+        var path = await author.UploadVideoAsync(_f, b.Id);
+        (await author.Client.PostAsJsonAsync($"/api/boulders/{b.Id}/videos", new { storagePath = path, caption = "sei uno stronzo" }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await author.Client.PostAsJsonAsync($"/api/boulders/{b.Id}/videos", new { storagePath = path, caption = "Tallone a destra" }))
+            .EnsureSuccessStatusCode();
+
+        for (var i = 1; i < VideoService.MaxVideosPerUserPerBoulder; i++) await author.SubmitVideoAsync(_f, b.Id);
+        var refused = await author.Client.PostAsJsonAsync($"/api/boulders/{b.Id}/video-uploads", new { kind = "COMMUNITY", contentType = "video/mp4", sizeBytes = 2_000_000 });
+        refused.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
 }

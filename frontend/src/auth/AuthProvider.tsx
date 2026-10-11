@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { t } from "@/i18n/i18n";
 import { publicOrigin } from "@/lib/native";
+import { releasePushOnSignOut } from "@/features/notifications/push";
 
 interface AuthContextValue {
   session: Session | null;
@@ -75,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // While still signed in: the server only lets the account itself drop this device's subscription.
+    await releasePushOnSignOut();
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error(error.message);
   }, []);

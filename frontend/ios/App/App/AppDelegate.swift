@@ -32,6 +32,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
             return
         }
+        // Firebase starts with automatic token creation off (Info.plist): nothing goes to Firebase until the person
+        // turns notifications on, which is what brings the app here.
+        Messaging.messaging().isAutoInitEnabled = true
         Messaging.messaging().apnsToken = deviceToken
         Messaging.messaging().token { token, error in
             if let token = token {

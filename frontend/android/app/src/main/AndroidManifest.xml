@@ -44,6 +44,11 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/bt_notification" />
+        <!-- No Firebase token until the person turns notifications on: the push plugin's register() switches this on,
+             and unregister() off again. -->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
     </application>
 
     <!-- Android 11 and later hide other apps unless they are declared here. Without this, Capacitor's check for a

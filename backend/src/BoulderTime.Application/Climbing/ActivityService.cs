@@ -269,6 +269,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         if (user.ProfileVisibility != ProfileVisibility.Public && currentUser.UserId != userId) throw new NotFoundException("User", userId);
         // A suspended account has no public face (ADR-037).
         if (user.SuspendedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
+        // Nor does one waiting to be erased: deleting an account takes it out of the app at once.
+        if (user.DeletionRequestedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
         return user;
     }
 }

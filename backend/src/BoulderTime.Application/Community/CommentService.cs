@@ -104,6 +104,7 @@ public sealed class CommentService(IAppDbContext db, BoulderAccess boulders, ICu
         new Validator()
             .Check(text.Length >= 1, "content", "Write something first.")
             .Check(text.Length <= Comment.MaxLength, "content", $"Keep it to {Comment.MaxLength} characters or fewer.")
+            .Check(!ContentFilter.IsObjectionable(text), "content", ContentFilter.Message)
             .ThrowIfInvalid();
         return text;
     }

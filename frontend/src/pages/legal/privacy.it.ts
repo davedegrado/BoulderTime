@@ -4,12 +4,12 @@
  *
  * A draft to be reviewed by a professional before opening to the public.
  */
-export const PRIVACY_UPDATED = "2026-10-10";
+export const PRIVACY_UPDATED = "2026-10-11";
 
 export const PRIVACY_IT = `
 # Informativa sulla privacy
 
-Ultimo aggiornamento: 10 ottobre 2026
+Ultimo aggiornamento: 11 ottobre 2026
 
 ## Chi tratta i tuoi dati
 
@@ -32,7 +32,8 @@ l'approvazione dello staff della palestra.
 le notifiche, non l'identificativo del telefono), che serve solo a recapitarle. Puoi disattivarle quando vuoi.
 
 **Se cerchi le palestre vicine a te** l'app usa la posizione del telefono, solo dopo che lo hai permesso. Al server
-arriva una posizione approssimata (circa un chilometro), usata per la ricerca e non salvata nel tuo account.
+arriva soltanto una posizione approssimata (con una precisione di qualche chilometro), usata per la ricerca e non salvata
+nel tuo account.
 
 **Dati tecnici**: indirizzo IP e informazioni sulla richiesta finiscono nei registri dei nostri fornitori, per
 sicurezza e per capire i malfunzionamenti.
