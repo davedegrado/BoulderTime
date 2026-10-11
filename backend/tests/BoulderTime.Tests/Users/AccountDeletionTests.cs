@@ -146,7 +146,7 @@ public sealed class AccountDeletionTests(PostgresFixture postgres) : IAsyncLifet
         var climber = await _f.UserAsync();
         (await climber.Client.PostAsJsonAsync("/api/users/me/deletion", new { confirmEmail = climber.Email })).EnsureSuccessStatusCode();
         var longAgo = DateTimeOffset.UtcNow - AccountDeletionService.GracePeriod - TimeSpan.FromDays(1);
-        await _f.Db(db => db.Database.ExecuteSqlInterpolatedAsync($"update users set deletion_requested_at = {longAgo} where id = {climber.Id}"));
+        await _f.Db(db => db.Users.Where(u => u.Id == climber.Id).ExecuteUpdateAsync(x => x.SetProperty(u => u.DeletionRequestedAt, (DateTimeOffset?)longAgo)));
 
         async Task<int> RunAsync()
         {
@@ -156,7 +156,7 @@ public sealed class AccountDeletionTests(PostgresFixture postgres) : IAsyncLifet
 
         (await RunAsync()).Should().Be(1);
         // Anonymise stamps the erasure time; make that old too, as it will be a week later.
-        await _f.Db(db => db.Database.ExecuteSqlInterpolatedAsync($"update users set deletion_requested_at = {longAgo} where id = {climber.Id}"));
+        await _f.Db(db => db.Users.Where(u => u.Id == climber.Id).ExecuteUpdateAsync(x => x.SetProperty(u => u.DeletionRequestedAt, (DateTimeOffset?)longAgo)));
         (await RunAsync()).Should().Be(0);
     }
 }
