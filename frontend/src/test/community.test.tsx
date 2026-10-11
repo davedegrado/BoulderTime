@@ -235,6 +235,25 @@ describe("Moderation queue", () => {
   });
 });
 
+describe("Video uploads switched off on the server", () => {
+  it("shows the videos already there, offers no upload, and leaves out an empty section", async () => {
+    reply("GET", "/api/settings/videos", { uploadsEnabled: false, maxUploadMegabytes: 50 });
+    reply("GET", "/api/boulders/b1/videos", {
+      approved: { items: [{ id: "old", boulderId: "b1", author: person("u9", "Anna"), videoUrl: "/old.mov", thumbnailUrl: "/old.jpg", caption: null, status: "APPROVED", rejectionReason: null, createdAt: "2026-09-10T10:00:00Z", isMine: false }], page: 1, pageSize: 12, total: 1, hasMore: false },
+      mineInReview: [],
+    });
+    const { unmount } = renderAt("/b", "/b", <CommunityVideosSection boulderId="b1" />);
+    expect(await screen.findByRole("button", { name: /play video by anna/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Choose a video" })).not.toBeInTheDocument();
+    unmount();
+
+    reply("GET", "/api/boulders/b2/videos", { approved: { items: [], page: 1, pageSize: 12, total: 0, hasMore: false }, mineInReview: [] });
+    renderAt("/b", "/b", <CommunityVideosSection boulderId="b2" />);
+    await waitFor(() => expect(calls.some((c) => c.path.startsWith("/api/boulders/b2/videos"))).toBe(true));
+    await waitFor(() => expect(screen.queryByText("Community videos")).not.toBeInTheDocument());
+  });
+});
+
 describe("Video previews", () => {
   it("shows a frame of the video when there is no captured thumbnail", async () => {
     reply("GET", "/api/boulders/b1/videos", {
@@ -249,6 +268,7 @@ describe("Video previews", () => {
   });
 
   it("previews the chosen video before sending it", async () => {
+    reply("GET", "/api/settings/videos", { uploadsEnabled: true, maxUploadMegabytes: 50 });
     reply("GET", "/api/boulders/b1/videos", { approved: { items: [], page: 1, pageSize: 12, total: 0, hasMore: false }, mineInReview: [] });
     URL.createObjectURL = vi.fn(() => "blob:preview");
     URL.revokeObjectURL = vi.fn();

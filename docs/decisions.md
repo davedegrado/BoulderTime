@@ -143,7 +143,7 @@ interchangeable.
 **Community videos** `boulder_videos(status PENDING|APPROVED|REJECTED, rejection_reason, reviewed_by, reviewed_at)`.
 Any change by the author resets to PENDING; the author can always delete. **Nobody reviews their own video** — enforced
 in the domain and the service, for staff and platform admins alike. Rejection requires a reason shown only to the author.
-Limits: MP4/MOV/WebM, 50 MB (Supabase Free caps every upload there; was 100 MB until 2026-10, see ADR-048), 3 videos per user per boulder. No server-side transcoding yet (see limitations).
+Limits: MP4/MOV/WebM, 50 MB (a server setting, 50 MB by default because Supabase Free caps every upload there; see ADR-048 and ADR-049), 3 videos per user per boulder. No server-side transcoding yet (see limitations).
 
 **Reports** `reports(entity_type, entity_id, gym_id, reason, status)` with a partial unique index on open reports per
 (reporter, entity). `gym_id` is stored at creation so staff moderate their gym's reports and platform admins all reports.
@@ -902,9 +902,11 @@ aimed at a person, not plain swearing about a boulder. Lists chosen to miss comm
 Reports, blocking and moderation remain the main tools.
 
 **Video limit = what storage accepts.** Supabase's Free plan refuses any upload over 50 MB whatever the bucket says,
-so the app's 100 MB let 50–100 MB videos upload for minutes and fail with "too large". The limit is now 50 MB in the
-app, the API and the buckets, with a message that gives the size, the limit and the way out (trim, or 1080p). Raising
-it means raising the plan, the buckets and `MaxVideoBytes` together. The per-boulder video count is checked before the
+so the app's 100 MB let 50–100 MB videos upload for minutes and fail with "too large" (measured on an iPhone: a clip
+of 248 MB in Photos reaches the app as 87 MB, because iOS hands over a re-encoded "compatible" copy, and storage
+refused it; one of 87 MB in Photos arrived as 25 MB and went through. Android hands over the original file). The limit
+is now 50 MB, set on the server and read by the app (ADR-049), with a message that gives the size, the limit and the
+way out (trim, or 1080p). The per-boulder video count is checked before the
 file is sent, and a save that fails after the upload (a refused caption) reuses the stored file.
 
 **Video posters.** Posters are captured on the phone and stored next to the video, in the same private bucket; the
@@ -920,3 +922,19 @@ later run.
 
 **16 KB pages are checked, not assumed.** The Android workflow inspects every 64-bit `.so` in the APK and AAB (ELF LOAD
 alignment, and zip offset for stored libraries) and runs `zipalign -c -P 16`.
+
+## ADR-049 · Video uploads behind a server switch
+**Off until storage can carry them.** Video is what fills a storage plan, and the Free plan takes 50 MB per file at
+most: too little for a 4K clip of a whole attempt. Until there is a paid plan (expected with 10–15 paying gyms),
+`Videos__UploadsEnabled` is unset on the server, which means off: no upload ticket is issued for any kind of video or
+poster, climbers' or official beta. Linking an official beta (YouTube, Instagram…) keeps working, as do videos already
+stored. Turning it on is a change of settings, not a release: the variable, `Videos__MaxUploadMegabytes` (50 by
+default; never above what storage accepts), the buckets' `file_size_limit` in `storage.sql`, then the per-gym switch
+for climbers' videos as before (ADR-026).
+
+**The app follows the server.** `GET /api/settings/videos` (public) says whether uploads are on and the limit. Until
+it answers, the app treats uploads as off. With them off: no upload button anywhere, the official beta editor opens
+on the link form, a gym's climbers' video section shows only videos already there and disappears when there are none,
+and the help pages leave out the questions about uploading (FAQ items marked `videoUploads`; `{maxVideoMb}` is
+filled in from the server). The admin's video allowance card says when the switch is off. Local development has it
+on (`appsettings.Development.json`); tests too, except the ones about it being off.

@@ -110,12 +110,13 @@ its map, you see it picked out on the floor plan; tapping it opens that sector's
       title: "Comments, videos and reports",
       items: [
         {
+          videoUploads: true,
           q: "How do I upload a video?",
           a: `On the boulder's page, in **Community videos**, tap **Choose a video**, add a caption if you like and tap
 **Send for review**. The gym's staff approve it before everyone can see it.
 
-- MP4, MOV or WebM, under 50 MB. On iPhone, recording in 1080p at 30 fps (Settings → Camera → Record Video) fits
-about 45 seconds; in 4K, much less.
+- MP4, MOV or WebM, up to {maxVideoMb} MB. If it's heavier, trim it or record in 1080p rather than 4K (on iPhone:
+Settings → Camera → Record Video).
 - Up to 3 videos per boulder.
 - If it isn't approved, the reason shows under the video.
 
@@ -235,10 +236,17 @@ The gym first needs at least one active sector and one active grading scale.`,
 want, then **Use this part**. The whole photo stays on the boulder's page.`,
         },
         {
+          videoUploads: true,
           q: "How do I add the official beta?",
           a: `Once the boulder exists, open it to edit: in **Official beta** upload a video or **Link a video instead**
 (YouTube, Instagram, Vimeo, TikTok, Facebook). Links don't count towards the gym's video limit. People following or
 projecting the boulder are told.`,
+        },
+        {
+          videoUploads: false,
+          q: "How do I add the official beta?",
+          a: `Once the boulder exists, open it to edit: in **Official beta** paste the link of a video published on
+YouTube, Instagram, Vimeo, TikTok or Facebook. People following or projecting the boulder are told.`,
         },
         {
           q: "I retraced a sector: how do I take the old boulders off?",

@@ -13,6 +13,9 @@ public sealed class ApiFactory(PostgresFixture postgres) : WebApplicationFactory
     /// <summary>Per-factory folder for the local object storage used in tests.</summary>
     public string StorageRoot { get; } = Path.Combine(Path.GetTempPath(), "bouldertime-tests", Guid.NewGuid().ToString("N"));
 
+    /// <summary>Video uploads are on in tests unless a test is about them being off (ADR-049).</summary>
+    public bool VideoUploads { get; init; } = true;
+
     /// <summary>Replace services for a specific test (e.g. a fake geocoder).</summary>
     public Action<IServiceCollection>? OverrideServices { get; init; }
 
@@ -25,6 +28,7 @@ public sealed class ApiFactory(PostgresFixture postgres) : WebApplicationFactory
         builder.UseSetting("Storage:Provider", "Local");
         builder.UseSetting("Storage:Local:RootPath", StorageRoot);
         builder.UseSetting("Geocoding:Provider", "None"); // never call external services from tests
+        builder.UseSetting("Videos:UploadsEnabled", VideoUploads ? "true" : "false");
         builder.ConfigureTestServices(services => OverrideServices?.Invoke(services));
     }
 

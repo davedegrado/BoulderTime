@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, Mail } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
-import { faqGuide, searchFaq, type FaqAudience, type FaqSection } from "@/features/help/faq";
+import { faqGuide, forSettings, searchFaq, type FaqAudience, type FaqSection } from "@/features/help/faq";
+import { useVideoSettings } from "@/features/community/api";
 import { renderLegal } from "@/pages/legal/LegalPage";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { t } from "@/i18n/i18n";
@@ -15,7 +16,8 @@ import { t } from "@/i18n/i18n";
 export function HelpPage() {
   const { hash } = useLocation();
   const navigate = useNavigate();
-  const guide = faqGuide();
+  const videos = useVideoSettings();
+  const guide = forSettings(faqGuide(), videos);
   const [audience, setAudience] = useState<FaqAudience>(hash === "#staff" ? "staff" : "climbers");
   const [query, setQuery] = useState("");
 

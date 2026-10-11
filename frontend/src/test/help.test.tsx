@@ -4,7 +4,7 @@ import { renderAt } from "@/test/renderApp";
 import { HelpPage } from "@/pages/HelpPage";
 import { FAQ_EN } from "@/features/help/faq.en";
 import { FAQ_IT } from "@/features/help/faq.it";
-import { searchFaq } from "@/features/help/faq";
+import { forSettings, searchFaq } from "@/features/help/faq";
 
 describe("Help and FAQ", () => {
   it("opens on the climbers' guide, and the staff link opens the staff one", async () => {
@@ -38,4 +38,17 @@ describe("Help and FAQ", () => {
     const shape = (g: typeof FAQ_IT) => [...g.climbers, ...g.staff].map((s) => `${s.id}:${s.items.length}`);
     expect(shape(FAQ_EN)).toEqual(shape(FAQ_IT));
   });
+
+  it("describes video uploads only when the server has them on, with the server's limit", () => {
+    const questions = (g: typeof FAQ_EN) => [...g.climbers, ...g.staff].flatMap((sec) => sec.items);
+    const off = questions(forSettings(FAQ_EN, { uploadsEnabled: false, maxUploadMegabytes: 50 }));
+    expect(off.map((i) => i.q)).not.toContain("How do I upload a video?");
+    expect(off.filter((i) => i.q === "How do I add the official beta?")).toHaveLength(1);
+    expect(off.find((i) => i.q === "How do I add the official beta?")!.a).not.toMatch(/upload/i);
+
+    const on = questions(forSettings(FAQ_IT, { uploadsEnabled: true, maxUploadMegabytes: 200 }));
+    expect(on.find((i) => i.q === "Come carico un mio video?")!.a).toContain("fino a 200 MB");
+    expect(on.every((i) => !i.a.includes("{maxVideoMb}"))).toBe(true);
+  });
 });
+

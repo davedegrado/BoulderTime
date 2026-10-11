@@ -62,6 +62,7 @@ describe("The official beta", () => {
   });
 
   it("is published from the editor, and a gym out of uploads is offered the link instead", async () => {
+    reply("GET", "/api/settings/videos", { uploadsEnabled: true, maxUploadMegabytes: 50 });
     reply("GET", "/api/boulders/b1/beta", null);
     reply("PUT", "/api/boulders/b1/beta", (body?: unknown) => beta({ externalUrl: (body as { externalUrl: string }).externalUrl }));
     renderAt("/b", "/b", <BetaEditor boulderId="b1" canAdd={false} />);
@@ -180,5 +181,16 @@ describe("Boulders that are no longer on the wall", () => {
     // The trigger is replaced by the confirmation, so the second tap is inside it, not a second button beside it.
     await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete for good" }));
     await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/boulders/b1")).toBe(true));
+  });
+
+  it("offers only the link while video uploads are switched off on the server, without blaming the gym's allowance", async () => {
+    reply("GET", "/api/settings/videos", { uploadsEnabled: false, maxUploadMegabytes: 50 });
+    reply("GET", "/api/boulders/b1/beta", null);
+    renderAt("/b", "/b", <BetaEditor boulderId="b1" canAdd />);
+
+    expect(await screen.findByLabelText("Address of the video")).toBeInTheDocument();
+    expect(screen.queryByText(/used all its official beta videos/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /upload a video instead/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /choose a video/i })).not.toBeInTheDocument();
   });
 });

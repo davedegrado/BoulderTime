@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Clapperboard, Clock, Play, Trash2, Video as VideoIcon, X, XCircle } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
-import { useBeta, useVideoMutations, useVideos, type Video } from "@/features/community/api";
+import { useBeta, useVideoMutations, useVideos, useVideoSettings, type Video } from "@/features/community/api";
 import { showFirstFrame } from "@/features/community/firstFrame";
 import { ReportButton } from "@/features/community/ReportButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -87,6 +87,10 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
   const list = open?.list === "mine" ? mine : approved;
 
   const scroll = (dir: -1 | 1) => rail.current?.scrollBy({ left: dir * rail.current.clientWidth * 0.85, behavior: "smooth" });
+  // With uploads switched off on the server (ADR-049) nobody can add one: videos already there stay, an empty
+  // section with nothing to do in it doesn't.
+  const { uploadsEnabled } = useVideoSettings();
+  if (!uploadsEnabled && videos.isSuccess && approved.length === 0 && mine.length === 0) return null;
 
   return (
     <section className="section" aria-labelledby="videos-title">
@@ -116,7 +120,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
               </div>
             )}
             {approved.length === 0 ? (
-              <EmptyState icon={<VideoIcon />} title={t("No community videos yet.")} body={session ? t("Post your send — it goes live after the gym approves it.") : undefined} />
+              <EmptyState icon={<VideoIcon />} title={t("No community videos yet.")} body={session && uploadsEnabled ? t("Post your send — it goes live after the gym approves it.") : undefined} />
             ) : (
               <div className="video-rail" ref={rail} aria-label={t("Approved videos")}>
                 {approved.map((v, i) => <Thumb key={v.id} video={v} onOpen={() => setOpen({ list: "approved", index: i })} />)}
@@ -130,7 +134,7 @@ export function CommunityVideosSection({ boulderId }: { boulderId: string }) {
           </>
         )}
 
-      {session && (
+      {session && uploadsEnabled && (
         <VideoUploader boulderId={boulderId} kind="COMMUNITY" submitLabel={t("Send for review")} busy={m.submit.isPending}
           onUploaded={(v, caption) => m.submit.mutateAsync({ storagePath: v.path, thumbnailPath: v.thumbnailPath, caption }).then(() => toast.success(t("Sent! It appears once the gym approves it.")))} />
       )}

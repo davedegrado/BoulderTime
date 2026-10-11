@@ -35,7 +35,7 @@ vi.mock("@/lib/api", () => ({
         return { path: "gyms/g/boulders/b/videos/x.thumb.jpg", uploadUrl: "/api/storage/upload/thumb", method: "PUT", headers: { "Content-Type": "image/jpeg" }, maxBytes: 1048576, resumable: null };
       }
       return {
-        path: "gyms/g/boulders/b/videos/x.mov", uploadUrl: "/api/storage/upload/t", method: "PUT", headers: {}, maxBytes: 104857600,
+        path: "gyms/g/boulders/b/videos/x.mov", uploadUrl: "/api/storage/upload/t", method: "PUT", headers: {}, maxBytes: 52428800,
         resumable: { endpoint: "/api/storage/tus", headers: { "x-signature": "sig" }, metadata: { bucketName: "community-videos", objectName: "gyms/g/boulders/b/videos/x.mov", contentType: "video/quicktime" }, chunkSize: 6 * 1024 * 1024 },
       };
     },
@@ -51,7 +51,7 @@ describe("video uploads", () => {
     const file = new File([new Uint8Array(1000)], "IMG_7258.mov", { type: "video/quicktime" });
     const progress: number[] = [];
 
-    const uploaded = await uploadVideo("b", file, "COMMUNITY", (p) => progress.push(p));
+    const uploaded = await uploadVideo("b", file, "COMMUNITY", 50, (p) => progress.push(p));
 
     expect(uploaded).toEqual({ path: "gyms/g/boulders/b/videos/x.mov", thumbnailPath: null });
     expect(posts[0]).toEqual({ path: "/api/boulders/b/video-uploads", body: { kind: "COMMUNITY", contentType: "video/quicktime", sizeBytes: 1000 } });
@@ -68,7 +68,7 @@ describe("video uploads", () => {
     thumbnail = new Blob([new Uint8Array(20)], { type: "image/jpeg" });
     const file = new File([new Uint8Array(1000)], "clip.mp4", { type: "video/mp4" });
 
-    const uploaded = await uploadVideo("b", file, "BETA");
+    const uploaded = await uploadVideo("b", file, "BETA", 50);
 
     expect(uploaded.thumbnailPath).toBe("gyms/g/boulders/b/videos/x.thumb.jpg");
     expect(posts[1]).toEqual({ path: "/api/boulders/b/video-uploads", body: { kind: "BETA_THUMBNAIL", contentType: "image/jpeg", sizeBytes: 20 } });
@@ -78,18 +78,18 @@ describe("video uploads", () => {
   it("explains an interrupted upload instead of blaming BoulderTime", async () => {
     outcome = "error";
     const file = new File([new Uint8Array(10)], "v.mp4", { type: "video/mp4" });
-    await expect(uploadVideo("b", file, "BETA")).rejects.toThrow("The upload was interrupted. Check your connection and try again.");
+    await expect(uploadVideo("b", file, "BETA", 50)).rejects.toThrow("The upload was interrupted. Check your connection and try again.");
   });
 
-  it("rejects videos over 50 MB before uploading anything, saying how big it is and how to get under", async () => {
+  it("rejects videos over the server's limit before uploading anything, saying how big it is and how to get under", async () => {
     const big = { size: 80 * 1024 * 1024, type: "video/mp4", name: "big.mp4" } as File;
-    await expect(uploadVideo("b", big, "COMMUNITY")).rejects.toThrow("This video is 80 MB and the limit is 50 MB. Trim it, or record in 1080p, and try again.");
+    await expect(uploadVideo("b", big, "COMMUNITY", 50)).rejects.toThrow("This video is 80 MB and the limit is 50 MB. Trim it, or record in 1080p, and try again.");
     expect(posts).toHaveLength(0);
   });
 
-  it("explains storage refusing the file as a size problem, with the limit", async () => {
+  it("explains storage refusing the file as a size problem, with the limit from the ticket", async () => {
     outcome = "too-large";
     const file = new File([new Uint8Array(10)], "v.mp4", { type: "video/mp4" });
-    await expect(uploadVideo("b", file, "COMMUNITY")).rejects.toThrow(/limit is 50 MB/);
+    await expect(uploadVideo("b", file, "COMMUNITY", 50)).rejects.toThrow(/limit is 50 MB/);
   });
 });

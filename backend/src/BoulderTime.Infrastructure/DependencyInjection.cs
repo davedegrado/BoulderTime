@@ -39,6 +39,10 @@ public static class DependencyInjection
         services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<WebPushSender>());
         services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<FcmPushSender>());
         services.AddSingleton<IPushConfig>(sp => new PushConfig(sp.GetRequiredService<IOptions<WebPushOptions>>().Value.PublicKey));
+        // Video uploads: off unless switched on, and never larger than storage takes (ADR-049).
+        services.AddSingleton<IVideoSettings>(new VideoSettings(
+            bool.TryParse(configuration["Videos:UploadsEnabled"], out var uploads) && uploads,
+            int.TryParse(configuration["Videos:MaxUploadMegabytes"], out var megabytes) && megabytes > 0 ? megabytes : VideoSettings.DefaultMaxUploadMegabytes));
         services.AddSingleton<PushDispatcher>();
         services.AddSingleton<IPushQueue>(sp => sp.GetRequiredService<PushDispatcher>());
         services.AddHostedService(sp => sp.GetRequiredService<PushDispatcher>());
@@ -87,3 +91,9 @@ public static class DependencyInjection
 
 /// <summary>Exposes the public VAPID key to the application layer without handing it the whole options object.</summary>
 internal sealed record PushConfig(string? PublicKey) : IPushConfig;
+
+internal sealed record VideoSettings(bool UploadsEnabled, int MaxUploadMegabytes) : IVideoSettings
+{
+    /// <summary>Supabase Free's cap on any single upload.</summary>
+    public const int DefaultMaxUploadMegabytes = 50;
+}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, Link2, Lock, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { InstagramIcon } from "@/components/BrandIcons";
-import { useBeta, useSaveBeta, type Beta } from "@/features/community/api";
+import { useBeta, useSaveBeta, useVideoSettings, type Beta } from "@/features/community/api";
 import { BetaLinkForm } from "@/features/community/BetaLinkForm";
 import { Player, VideoUploader } from "@/features/community/VideoUploader";
 import { Button } from "@/components/Button";
@@ -55,9 +55,14 @@ export function BetaEditor({ boulderId, canAdd }: { boulderId: string; canAdd: b
   const beta = useBeta(boulderId);
   const save = useSaveBeta(boulderId);
   const toast = useToast();
+  const { uploadsEnabled } = useVideoSettings();
+  // Uploading needs both: uploads switched on for the service (ADR-049) and a free slot in the gym's allowance.
+  const canUpload = canAdd && uploadsEnabled;
   const [replacing, setReplacing] = useState(false);
-  // A gym out of upload slots can still link, so that is the form it opens on.
-  const [linking, setLinking] = useState(!canAdd);
+  // A gym that can't upload can still link, so that is the form it opens on. Until the person picks, follow the
+  // settings: they arrive after the first render.
+  const [picked, setLinking] = useState<boolean | null>(null);
+  const linking = picked ?? !canUpload;
 
   if (beta.isPending) return <LoadingState label={t("Loading beta")} />;
   if (beta.isError) return <ErrorState error={beta.error} onRetry={() => beta.refetch()} />;
@@ -70,7 +75,7 @@ export function BetaEditor({ boulderId, canAdd }: { boulderId: string; canAdd: b
       {beta.data ? <BetaView beta={beta.data} /> : <p className="list__sub">{t("No official beta yet.")}</p>}
 
       {/* Told before filming, not after uploading: the limit is the gym's, and hitting it at the last step wastes real work. */}
-      {editing && !canAdd && (
+      {editing && uploadsEnabled && !canAdd && (
         <p className="notice notice--inline">
           <Lock aria-hidden />
           {t("This gym has used all its official beta videos. You can still link a video published elsewhere, or remove a beta from another boulder.")}
@@ -88,14 +93,14 @@ export function BetaEditor({ boulderId, canAdd }: { boulderId: string; canAdd: b
           )}
           <div className="form__actions">
             {linking
-              ? canAdd && <Button variant="ghost" icon={<Upload aria-hidden />} onClick={() => setLinking(false)}>{t("Upload a video instead")}</Button>
+              ? canUpload && <Button variant="ghost" icon={<Upload aria-hidden />} onClick={() => setLinking(false)}>{t("Upload a video instead")}</Button>
               : <Button variant="ghost" icon={<Link2 aria-hidden />} onClick={() => setLinking(true)}>{t("Link a video instead")}</Button>}
             {beta.data && <Button variant="ghost" onClick={() => setReplacing(false)}>{t("Cancel")}</Button>}
           </div>
         </>
       ) : (
         <div className="form__actions">
-          <Button variant="secondary" onClick={() => { setLinking(!canAdd); setReplacing(true); }}>{t("Replace")}</Button>
+          <Button variant="secondary" onClick={() => { setLinking(null); setReplacing(true); }}>{t("Replace")}</Button>
           <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete beta?")} loading={save.isPending}
             onConfirm={() => save.mutate(null, { onError: (e) => toast.error(errorMessage(e)) })}>{t("Delete")}</ConfirmButton>
         </div>

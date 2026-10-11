@@ -51,15 +51,16 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M6 | iOS: Xcode project built in CI, universal links, signed builds | **Done**: simulator build, signed archive and TestFlight upload from `main` (ADR-036, ADR-045) |
 | M6c | iOS notifications: Firebase Messaging in the app, APNs key in Firebase (ADR-039) | **Done**: delivered on TestFlight builds; a test notification in the settings reports what Firebase answered |
 | M6b | Reporting a person and suspending an account, platform-wide (ADR-037); deleting a suspended account no longer escapes it (ADR-038) | **Done** — Apple 1.2's "block abusive users **from the service**" |
-| M6d | Store readiness fixes (ADR-048): coarse location, word filter, video limit and posters, deletion hides at once, 16 KB check, permission texts in English and Italian | **Done in code**; console steps and device tests in `docs/store-checklist.md` |
+| M6d | Store readiness fixes (ADR-048): coarse location, word filter, video limit and posters, deletion hides at once, 16 KB check, permission texts in English and Italian; video uploads behind a server switch, off for launch (ADR-049) | **Done in code**; console steps and device tests in `docs/store-checklist.md` |
 | M7 | The stores themselves: Google Play, then App Store. Privacy answers ready (`docs/store-privacy.md`), deletion page live | **Google Play:** in internal testing; links verified for the store app; every build of `main` uploaded to a testing track (ADR-040). Next: closed test, then production. **App Store:** TestFlight builds from `main`; store listing and review next |
 
 ## Planned, deliberately not started
 
 - **Videos on iOS.** Checked on devices (October 2026): short videos picked or filmed on iPhone upload and play, and
   play on Android with sound. Found and fixed (ADR-048): posters refused by storage, Android tiles without a frame,
-  a 100 MB limit above what storage takes. Still open: conversion of `.mov`/HEVC for desktop browsers that can't play
-  it, and a check of longer clips once the 50 MB limit is in place.
+  a 100 MB limit above what storage takes. Uploads are switched off for launch (ADR-049) and come back with a paid
+  storage plan (about 10–15 paying gyms): then raise the limit, and decide on conversion of `.mov`/HEVC for desktop
+  browsers that can't play it.
 - **Under-14 climbers.** A child profile created and used by a parent from their own account, with no login, public
   profile, leaderboards, comments or videos of its own; proposed, waiting for a legal review and the choice of markets.
 - **Google sign-in (and then Sign in with Apple).** Built but switched off: see `docs/mobile.md` → Sign-in. Comes back

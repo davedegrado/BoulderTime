@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSaveVideoAllowance, useVideoAllowance } from "@/features/admin/api";
+import { useVideoSettings } from "@/features/community/api";
 import { Toggle } from "@/features/notifications/NotificationBits";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
@@ -16,6 +17,7 @@ export function VideoAllowanceCard({ gymId }: { gymId: string }) {
   const allowance = useVideoAllowance(gymId);
   const save = useSaveVideoAllowance();
   const toast = useToast();
+  const { uploadsEnabled, maxUploadMegabytes } = useVideoSettings();
   const [community, setCommunity] = useState(false);
   const [unlimited, setUnlimited] = useState(false);
   const [limit, setLimit] = useState("20");
@@ -32,6 +34,12 @@ export function VideoAllowanceCard({ gymId }: { gymId: string }) {
 
   return (
     <div className="stack">
+      {/* The allowance is kept, but nothing is uploaded while the server-wide switch is off (ADR-049). */}
+      <p className="field__hint">
+        {uploadsEnabled
+          ? t("Video uploads are on for BoulderTime, up to {max} MB per video.", { max: maxUploadMegabytes })
+          : t("Video uploads are off for all of BoulderTime (server setting Videos__UploadsEnabled). These settings apply once they are switched on; linking a beta works anyway.")}
+      </p>
       <Toggle
         label={t("Climber videos")}
         description={t("Climbers of this gym can upload their own beta. Off by default: video is what fills the storage.")}

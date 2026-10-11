@@ -41,15 +41,8 @@ public sealed record ModerationVideoDto(VideoDto Video, BoulderSummaryDto Boulde
 /// Both live in PRIVATE buckets; every URL handed out is short-lived and only issued to viewers allowed to see the video:
 /// approved videos → anyone who can see the boulder; pending/rejected → the uploader and the gym's staff.
 /// </summary>
-public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Users.BlockedPeople blocked)
+public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAccess gyms, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Users.BlockedPeople blocked, IVideoSettings settings)
 {
-    /// <summary>
-    /// The largest video accepted. It must not exceed what storage itself takes: Supabase's Free plan refuses any file
-    /// over 50 MB whatever the bucket says, so a higher number here let 50–100 MB videos upload for minutes and then
-    /// fail with a vague "too large". Raising it means raising the plan's upload limit and the buckets' file_size_limit
-    /// (database/supabase/storage.sql) to match, and the figure in the FAQ and in the app (MAX_VIDEO_BYTES).
-    /// </summary>
-    public const long MaxVideoBytes = 50 * 1024 * 1024;
     public const long MaxThumbnailBytes = 1024 * 1024;
     private static readonly Dictionary<string, string> ThumbnailTypes = new(StringComparer.OrdinalIgnoreCase) { ["image/jpeg"] = "jpg", ["image/webp"] = "webp" };
     public const int MaxVideosPerUserPerBoulder = 3;
@@ -79,6 +72,12 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
             : await boulders.RequireVisibleAsync(boulderId, ct);
 
         // Checked here, before any file is accepted: hiding the button in the app is not a limit.
+        // With uploads switched off (ADR-049) no video file is taken at all; an official beta can still be a link.
+        if (!settings.UploadsEnabled)
+        {
+            if (!IsBeta(kind)) throw new ConflictException("Climber videos aren't available at this gym yet.", "community_videos_disabled");
+            throw new ConflictException("Uploading videos isn't available yet. Link a video published online instead.", "video_uploads_disabled");
+        }
         if (!IsBeta(kind)) RequireCommunityVideosEnabled(scope.Gym);
         else if (!IsThumbnail(kind)) await RequireBetaAllowanceAsync(scope.Gym, boulderId, ct);
 
@@ -103,10 +102,10 @@ public sealed class VideoService(IAppDbContext db, BoulderAccess boulders, GymAc
 
         new Validator()
             .Check(r.ContentType is not null && VideoTypes.ContainsKey(r.ContentType), "contentType", "Upload an MP4, MOV or WebM video.")
-            .Check(r.SizeBytes is > 0 and <= MaxVideoBytes, "sizeBytes", $"Videos must be under {MaxVideoBytes / 1024 / 1024} MB.")
+            .Check(r.SizeBytes is > 0 && r.SizeBytes <= settings.MaxUploadBytes, "sizeBytes", $"Videos must be under {settings.MaxUploadMegabytes} MB.")
             .ThrowIfInvalid();
         var path = $"{Prefix(scope.Gym.Id, boulderId, kind)}{Guid.NewGuid():N}.{VideoTypes[r.ContentType!]}";
-        return await storage.CreateUploadTicketAsync(Bucket(kind), path, r.ContentType!.ToLowerInvariant(), MaxVideoBytes, ct);
+        return await storage.CreateUploadTicketAsync(Bucket(kind), path, r.ContentType!.ToLowerInvariant(), settings.MaxUploadBytes, ct);
     }
 
     /// <summary>Community video is granted gym by gym: a gym without it has no climber videos in the app at all.</summary>

@@ -115,12 +115,13 @@ palestra ha disegnato la mappa, lo vedi evidenziato sulla piantina; toccandolo a
       title: "Commenti, video e segnalazioni",
       items: [
         {
+          videoUploads: true,
           q: "Come carico un mio video?",
           a: `Nella pagina del blocco, in **Video della community**, tocca **Scegli un video**, aggiungi se vuoi una
 didascalia e tocca **Invia per la revisione**. Lo staff della palestra lo approva prima che sia visibile a tutti.
 
-- Formati MP4, MOV o WebM, sotto i 50 MB. Su iPhone, registrando in 1080p a 30 fps (Impostazioni → Fotocamera →
-Registrazione video) ci stanno circa 45 secondi; in 4K molto meno.
+- Formati MP4, MOV o WebM, fino a {maxVideoMb} MB. Se è più pesante, accorcialo o registralo in 1080p invece che in 4K
+(su iPhone: Impostazioni → Fotocamera → Registrazione video).
 - Al massimo 3 video per blocco.
 - Se non viene approvato, vedi il motivo sotto il video.
 
@@ -244,10 +245,17 @@ Prima di tutto la palestra deve avere almeno un settore e una scala di grado att
 il riquadro mostra quello che vuoi, poi **Usa questa parte**. La foto intera resta nella pagina del blocco.`,
         },
         {
+          videoUploads: true,
           q: "Come aggiungo la beta ufficiale?",
           a: `Dopo aver creato il blocco, aprilo in modifica: in **Beta ufficiale** carica un video oppure **Collega
 invece un video** (YouTube, Instagram, Vimeo, TikTok, Facebook). I link non contano nel limite di video della
 palestra. Chi segue il blocco o lo sta provando viene avvisato.`,
+        },
+        {
+          videoUploads: false,
+          q: "Come aggiungo la beta ufficiale?",
+          a: `Dopo aver creato il blocco, aprilo in modifica: in **Beta ufficiale** incolla il link di un video
+pubblicato su YouTube, Instagram, Vimeo, TikTok o Facebook. Chi segue il blocco o lo sta provando viene avvisato.`,
         },
         {
           q: "Ho ritracciato un settore: come tolgo i vecchi blocchi?",

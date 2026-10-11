@@ -5,14 +5,14 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 ## Project settings (once)
 
+- [ ] **Railway:** leave `Videos__UploadsEnabled` unset (video uploads off, ADR-049). Check:
+  `https://<api>/api/settings/videos` answers `"uploadsEnabled": false`.
 - [ ] **Supabase → SQL editor:** run `database/supabase/storage.sql` again. It lets the video buckets accept the
-  posters (JPEG/WebP) and sets their limit to 50 MB. Check: Storage → `community-videos` → bucket settings list
-  `image/jpeg`; a video uploaded afterwards has a poster on Android.
-- [ ] **Supabase → Storage → Settings:** the global upload limit is at least 50 MB (the Free plan's maximum).
+  posters (JPEG/WebP) and sets their limit to 50 MB, ready for when uploads are switched on.
 - [ ] **GitHub → Settings → Variables:** `VITE_MAP_TILE_URL` (and `VITE_MAP_TILE_URL_IOS` if the key is
   origin-restricted) set to the MapTiler URL. The Android and iOS builds print a warning when it is missing.
-- [ ] **Railway:** the API deployed from the same commit as the apps (the word filter and the 50 MB limit are checked
-  by the API).
+- [ ] **Railway:** the API deployed from the same commit as the apps (the word filter and the video switch live in the
+  API).
 
 ## Tests on real devices (each on an iPhone and an Android phone, store builds)
 
@@ -22,13 +22,16 @@ is done. Kept short on purpose: when an item is done for good, delete it.
   Sign out, then send something that would notify that account: nothing arrives. Sign back in: the switch is off.
 - [ ] A comment with an insult is refused with the message in the app's language; an ordinary one goes through; edit
   a comment into an insult: refused.
-- [ ] Upload a video under 50 MB from the camera and from the gallery: it uploads, the tile shows a poster on both
-  phones (after the bucket change above). Pick a video over 50 MB: refused at once, with its size and the limit.
-- [ ] Older videos without a poster: on Android the tile shows a frame instead of an empty box.
-- [ ] Caption refused by the filter after the upload: fix the caption and send again; it doesn't upload again.
+- [ ] With uploads off: no "Choose a video" anywhere; the boulder editor's official beta opens on the link form and a
+  link publishes; the help pages don't mention uploading; a boulder without videos shows no "Community videos".
+- [ ] Videos already stored (if any) still play; on Android a tile without a poster shows a frame.
 - [ ] Ask to delete an account: from another account its profile is gone and its comments and videos are hidden;
   cancel the deletion: they are back.
 - [ ] Fonts look the same as before (Inter), also offline.
+
+When video uploads are switched on later (`Videos__UploadsEnabled=true` on Railway, with a plan that takes the
+limit): upload from camera and gallery on both phones, the tile has a poster, a video over the limit is refused at
+once with its size, and a caption refused by the filter can be fixed and sent without uploading again.
 
 ## Store consoles
 

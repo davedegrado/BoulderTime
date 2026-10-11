@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload } from "lucide-react";
-import { uploadVideo, type UploadedVideo } from "@/features/community/api";
+import { uploadVideo, useVideoSettings, type UploadedVideo } from "@/features/community/api";
 import { showStartFrame } from "@/features/community/firstFrame";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
@@ -27,6 +27,7 @@ export function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }
   // instead of sending it again and leaving the first copy behind with nothing pointing to it.
   const [uploaded, setUploaded] = useState<{ file: File; video: UploadedVideo } | null>(null);
   const toast = useToast();
+  const { maxUploadMegabytes } = useVideoSettings();
 
   // Preview the chosen file locally before it's sent.
   useEffect(() => {
@@ -42,7 +43,7 @@ export function VideoUploader({ boulderId, kind, submitLabel, onUploaded, busy }
       setProgress(0);
       let video = uploaded?.file === file ? uploaded.video : null;
       if (!video) {
-        video = await uploadVideo(boulderId, file, kind, setProgress);
+        video = await uploadVideo(boulderId, file, kind, maxUploadMegabytes, setProgress);
         setUploaded({ file, video });
       }
       await onUploaded(video, caption.trim());

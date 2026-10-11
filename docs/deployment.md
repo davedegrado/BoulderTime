@@ -36,6 +36,8 @@ Secrets never go in the repository: they are entered in the Railway and Cloudfla
 | `Push__PublicKey`, `Push__PrivateKey` | web push keys, from `dotnet run --project src/BoulderTime.Api -- generate-push-keys` (private one is a **secret**) |
 | `Push__Subject` | `mailto:support@bouldertime.com` |
 | `Push__ServiceAccountJson` | the Firebase service-account JSON, for the store apps (a **secret**) |
+| `Videos__UploadsEnabled` | leave unset (off) until the storage plan can carry videos; `true` turns uploads on (ADR-049) |
+| `Videos__MaxUploadMegabytes` | optional, 50 by default; never above what storage accepts per file |
 
 4. **Settings → Networking → Custom domain**: `api.bouldertime.com`; add the CNAME it shows in Cloudflare DNS
    (proxy status **DNS only**, grey cloud, so Railway can issue the certificate).

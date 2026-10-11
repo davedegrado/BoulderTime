@@ -56,15 +56,27 @@ export const reportReasonLabel: Record<ReportReason, string> = new Proxy({} as R
 interface ResumableUpload { endpoint: string; headers: Record<string, string>; metadata: Record<string, string>; chunkSize: number }
 interface UploadTicket { path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; resumable?: ResumableUpload | null }
 
-/** Same as the server (VideoService.MaxVideoBytes): checked here too, so a video that is too big is never uploaded. */
-export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
-const MAX_VIDEO_MB = MAX_VIDEO_BYTES / 1024 / 1024;
+/** The server's video settings (ADR-049): whether files can be uploaded at all, and how large. */
+export interface VideoSettings { uploadsEnabled: boolean; maxUploadMegabytes: number }
+
+/** Until the server has answered (or if it can't), uploads count as off: never offer what may be refused. */
+export const VIDEO_SETTINGS_OFF: VideoSettings = { uploadsEnabled: false, maxUploadMegabytes: 50 };
+
+export function useVideoSettings(): VideoSettings {
+  const q = useQuery({
+    queryKey: ["settings", "videos"],
+    queryFn: ({ signal }) => api.get<VideoSettings>("/api/settings/videos", { signal }),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
+  return q.data ?? VIDEO_SETTINGS_OFF;
+}
 
 /** What to tell someone whose video is too big: how big it is, the limit, and how to get under it. */
-export function videoTooLargeMessage(sizeBytes?: number): string {
+export function videoTooLargeMessage(maxMegabytes: number, sizeBytes?: number): string {
   return sizeBytes
-    ? t("This video is {size} MB and the limit is {max} MB. Trim it, or record in 1080p, and try again.", { size: Math.ceil(sizeBytes / 1024 / 1024), max: MAX_VIDEO_MB })
-    : t("This video is over the {max} MB limit. Trim it, or record in 1080p, and try again.", { max: MAX_VIDEO_MB });
+    ? t("This video is {size} MB and the limit is {max} MB. Trim it, or record in 1080p, and try again.", { size: Math.ceil(sizeBytes / 1024 / 1024), max: maxMegabytes })
+    : t("This video is over the {max} MB limit. Trim it, or record in 1080p, and try again.", { max: maxMegabytes });
 }
 
 export const communityKeys = {
@@ -98,6 +110,7 @@ export const RESUMABLE_RETRY_DELAYS = [0, 1000, 3000, 5000, 10000, 20000];
  * continues from the last byte the server confirmed — it never restarts from zero.
  */
 export async function uploadResumable(ticket: UploadTicket & { resumable: ResumableUpload }, file: Blob, onProgress?: (fraction: number) => void): Promise<void> {
+  const maxMegabytes = Math.round(ticket.maxBytes / 1024 / 1024);
   // Loaded on demand: only people who actually upload a video download the tus client.
   const { Upload: TusUpload } = await import("tus-js-client");
   return new Promise((resolve, reject) => {
@@ -116,7 +129,7 @@ export async function uploadResumable(ticket: UploadTicket & { resumable: Resuma
         const status = (error as { originalResponse?: { getStatus(): number } }).originalResponse?.getStatus() ?? 0;
         reject(new ApiError(status, null, status === 0
           ? t("The upload was interrupted. Check your connection and try again.")
-          : status === 413 ? videoTooLargeMessage(file.size) : t("The upload failed. Try again.")));
+          : status === 413 ? videoTooLargeMessage(maxMegabytes, file.size) : t("The upload failed. Try again.")));
       },
     });
     upload.start();
@@ -129,8 +142,9 @@ export interface UploadedVideo { path: string; thumbnailPath: string | null }
  * Uploads a video (resumable) plus a poster frame captured on the device. A thumbnail that can't be produced or
  * uploaded never blocks the video itself.
  */
-export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", onProgress?: (f: number) => void): Promise<UploadedVideo> {
-  if (file.size > MAX_VIDEO_BYTES) throw new ApiError(400, null, videoTooLargeMessage(file.size));
+export async function uploadVideo(boulderId: string, file: File, kind: "COMMUNITY" | "BETA", maxMegabytes: number, onProgress?: (f: number) => void): Promise<UploadedVideo> {
+  // Checked here too, against the server's own limit, so a video that is too big is never sent.
+  if (file.size > maxMegabytes * 1024 * 1024) throw new ApiError(400, null, videoTooLargeMessage(maxMegabytes, file.size));
   const contentType = file.type || "video/mp4";
   const ticket = await api.post<UploadTicket>(`/api/boulders/${boulderId}/video-uploads`, { kind, contentType, sizeBytes: file.size });
   if (ticket.resumable) await uploadResumable({ ...ticket, resumable: ticket.resumable }, file, onProgress);

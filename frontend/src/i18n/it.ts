@@ -593,6 +593,8 @@ export const it: Record<string, string> = {
   "The upload failed. Try again.": "Caricamento non riuscito. Riprova.",
   "The upload was interrupted. Check your connection and try again.": "Il caricamento si è interrotto. Controlla la connessione e riprova.",
   "This video is {size} MB and the limit is {max} MB. Trim it, or record in 1080p, and try again.": "Questo video pesa {size} MB e il limite è {max} MB. Accorcialo, oppure registralo in 1080p, e riprova.",
+  "Video uploads are on for BoulderTime, up to {max} MB per video.": "Il caricamento dei video è attivo su BoulderTime, fino a {max} MB per video.",
+  "Video uploads are off for all of BoulderTime (server setting Videos__UploadsEnabled). These settings apply once they are switched on; linking a beta works anyway.": "Il caricamento dei video è spento per tutta BoulderTime (impostazione del server Videos__UploadsEnabled). Queste impostazioni valgono quando verrà acceso; collegare una beta funziona comunque.",
   "This video is over the {max} MB limit. Trim it, or record in 1080p, and try again.": "Questo video supera il limite di {max} MB. Accorcialo, oppure registralo in 1080p, e riprova.",
   "Add a photo of the boulder.": "Aggiungi una foto del blocco.",
   "Choose a sector.": "Scegli un settore.",
