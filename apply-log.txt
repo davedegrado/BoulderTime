@@ -1,8 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Store readiness: coarse location, word filter, video limit and posters, deletion
-applicata: Store readiness: coarse location, word filter, video
-Applying: Video uploads behind a server switch, off for launch
-applicata: Video uploads behind a server switch, off for launch
+Applying: Fix the erasure test: set the date through EF, not raw SQL
+applicata: Fix the erasure test: set the date through EF, not raw SQL
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -14,24 +12,11 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:08.93
+Time Elapsed 00:00:04.32
 OK
 == 5. TEST BACKEND ==
---- test falliti ---
-      Failed executing DbCommand (2ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
-[xUnit.net 00:00:24.84]     BoulderTime.Tests.Users.AccountDeletionTests.An_erased_account_is_not_erased_again_by_later_runs [FAIL]
-  Failed BoulderTime.Tests.Users.AccountDeletionTests.An_erased_account_is_not_erased_again_by_later_runs [45 ms]
-      Failed executing DbCommand (9ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?', @p3='?', @p4='?', @p5='?' (DbType = DateTime), @p6='?' (DbType = DateTime), @p7='?', @p8='?', @p9='?', @p10='?' (DbType = DateTime), @p11='?' (DbType = Guid), @p12='?' (DbType = Boolean), @p13='?' (DbType = DateTime), @p14='?' (DbType = DateTime), @p15='?' (DbType = Guid), @p16='?', @p17='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
-      Failed executing DbCommand (1ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?', @p3='?' (DbType = Guid), @p4='?', @p5='?' (DbType = Boolean), @p6='?', @p7='?', @p8='?' (DbType = Int32), @p9='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
-     Failed: 1
-  Error Message:
-   Npgsql.PostgresException : 42P01: relation "users" does not exist
-
-POSITION: 8
-  Stack Trace:
-     at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
 Total tests: 280
+test backend: ok
 == 6. FRONTEND ==
       Tests  216 passed (216)
 vite v5.4.21 building for production...
@@ -104,7 +89,7 @@ dist/assets/router-Cz7mQZ69.js                     559.68 kB │ gzip: 156.13 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.52s
+✓ built in 5.43s
 
 PWA v0.21.2
 mode      generateSW
@@ -113,4 +98,4 @@ files generated
   dist/sw.js
   dist/workbox-835c8c05.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
