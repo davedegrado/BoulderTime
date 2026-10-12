@@ -1,30 +1,62 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Reviewers' demo gyms: live but unlisted instead of drafts
-applicata: Reviewers' demo gyms: live but unlisted instead of drafts
+Applying: Points staff can set, boulder names, two-colour grades, opening hours, "I'll be there", help by role
+applicata: Points staff can set, boulder names, two-colour grades,
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
 == 3. MIGRAZIONE ==
 Build started...
 Build succeeded.
+An operation was scaffolded that may result in the loss of data. Please review the migration for accuracy.
 Done. To undo this action, use 'ef migrations remove'
-creata: Model202610112039
+creata: Model202610120828
 == 4. BUILD BACKEND ==
 
 Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:12.21
+Time Elapsed 00:00:13.38
 OK
 == 5. TEST BACKEND ==
-Total tests: 283
-test backend: ok
+--- test falliti ---
+[xUnit.net 00:02:14.05]     BoulderTime.Tests.Help.FaqTests.Staff_of_any_gym_and_platform_admins_receive_both_guides [FAIL]
+[xUnit.net 00:02:14.64]     BoulderTime.Tests.Help.FaqTests.Climbers_and_visitors_never_receive_the_staff_answers [FAIL]
+[xUnit.net 00:02:15.23]     BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions [FAIL]
+  Failed BoulderTime.Tests.Help.FaqTests.Staff_of_any_gym_and_platform_admins_receive_both_guides [151 ms]
+  Failed BoulderTime.Tests.Help.FaqTests.Climbers_and_visitors_never_receive_the_staff_answers [13 ms]
+  Failed BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions [39 ms]
+      Failed executing DbCommand (3ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?', @p3='?' (DbType = Guid), @p4='?', @p5='?' (DbType = Boolean), @p6='?', @p7='?', @p8='?' (DbType = Int32), @p9='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+     Failed: 3
+  Error Message:
+   Expected forStaff.Staff not to be empty, but found <null>.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+--
+  Error Message:
+   Expected anonymous.Climbers not to be empty, but found <null>.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+--
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'source')
+  Stack Trace:
+     at System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)
+   at System.Linq.Enumerable.Select[TSource,TResult](IEnumerable`1 source, Func`2 selector)
+   at BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Help/FaqTests.cs:line 51
+--- End of stack trace from previous location ---
+Total tests: 309
 == 6. FRONTEND ==
-      Tests  222 passed (222)
+      Tests  238 passed (238)
 vite v5.4.21 building for production...
 transforming...
-✓ 2209 modules transformed.
+✓ 2211 modules transformed.
 rendering chunks...
 [plugin:vite:reporter] [plugin vite:reporter] 
 (!) /workspaces/BoulderTime/frontend/src/lib/theme.ts is dynamically imported by /workspaces/BoulderTime/frontend/src/lib/native.ts but also statically imported by /workspaces/BoulderTime/frontend/src/components/Logo.tsx, /workspaces/BoulderTime/frontend/src/main.tsx, /workspaces/BoulderTime/frontend/src/pages/ProfilePage.tsx, dynamic import will not move module into another chunk.
@@ -42,65 +74,64 @@ dist/assets/inter-latin-500-normal-BL9OpVg8.woff    31.28 kB
 dist/assets/inter-latin-800-normal-D1mf63XC.woff    31.30 kB
 dist/assets/inter-latin-700-normal-BLAVimhd.woff    31.32 kB
 dist/assets/GymMap-CIGW-MKW.css                     15.61 kB │ gzip:   6.46 kB
-dist/assets/index-DZGCYdWj.css                      88.30 kB │ gzip:  15.89 kB
-dist/assets/web-D12sGV4c.js                          0.12 kB │ gzip:   0.13 kB
-dist/assets/SubNav-DtEi1mks.js                       0.28 kB │ gzip:   0.22 kB
-dist/assets/index-Vc8JWnx9.js                        0.32 kB │ gzip:   0.24 kB
-dist/assets/index-AkuLxWB7.js                        0.33 kB │ gzip:   0.23 kB
-dist/assets/index-Dqr367dF.js                        0.36 kB │ gzip:   0.24 kB
-dist/assets/inbox-C7hFjOHH.js                        0.49 kB │ gzip:   0.36 kB
-dist/assets/mail-plus-B7pTgqfe.js                    0.52 kB │ gzip:   0.36 kB
-dist/assets/save-b9brYMd_.js                         0.53 kB │ gzip:   0.36 kB
-dist/assets/building-complex-C3S-zbvj.js             0.62 kB │ gzip:   0.38 kB
-dist/assets/arrow-up-Cy4GLo9P.js                     0.69 kB │ gzip:   0.35 kB
-dist/assets/virtual_pwa-register-B3w8U7Lg.js         0.76 kB │ gzip:   0.46 kB
-dist/assets/web-CLmwokxp.js                          0.84 kB │ gzip:   0.40 kB
-dist/assets/index-cZuJS-Z4.js                        0.99 kB │ gzip:   0.51 kB
-dist/assets/AdminLayout-CrNBsTGt.js                  1.04 kB │ gzip:   0.52 kB
-dist/assets/CreateGymForm-CDumdcZO.js                1.70 kB │ gzip:   0.86 kB
-dist/assets/AdminUsers-ChlGU3wp.js                   2.04 kB │ gzip:   0.95 kB
-dist/assets/web-ClGQeAME.js                          2.37 kB │ gzip:   0.93 kB
-dist/assets/ManageLayout-DJ_Ou7Nv.js                 2.49 kB │ gzip:   1.18 kB
-dist/assets/AdminReports-oQFGPS4Q.js                 2.52 kB │ gzip:   1.17 kB
-dist/assets/AdminCandidates-C2IfOgfJ.js              3.01 kB │ gzip:   1.35 kB
-dist/assets/AdminLeaderboards-B_LZ2AV8.js            3.23 kB │ gzip:   1.16 kB
-dist/assets/api-CXU4g9Ca.js                          3.27 kB │ gzip:   0.99 kB
-dist/assets/ManageModeration-DiR6Jah0.js             3.28 kB │ gzip:   1.40 kB
-dist/assets/ReportsList-D0wusyHt.js                  3.48 kB │ gzip:   1.66 kB
-dist/assets/SuggestGymPage-DavD_KEc.js               3.63 kB │ gzip:   1.67 kB
-dist/assets/ManageTags-C5EsRXqg.js                   3.77 kB │ gzip:   1.70 kB
-dist/assets/ManageOverview-B469aQ6u.js               3.86 kB │ gzip:   1.32 kB
-dist/assets/AdminPartners-Bg98MJDy.js                4.43 kB │ gzip:   1.53 kB
-dist/assets/ManageSectors-BKpfAkXm.js                4.49 kB │ gzip:   1.78 kB
-dist/assets/AdminDashboard-CV-GrSma.js               4.77 kB │ gzip:   1.82 kB
-dist/assets/ManageStaff-BBeWU24C.js                  4.98 kB │ gzip:   2.03 kB
-dist/assets/AdminGyms-Cyaag37s.js                    5.11 kB │ gzip:   2.18 kB
-dist/assets/ManageAnnouncements-COZWn5BQ.js          5.47 kB │ gzip:   2.28 kB
-dist/assets/ManageSettings-BMAXWGnl.js               5.54 kB │ gzip:   2.25 kB
+dist/assets/index-C1a9iM7f.css                      94.51 kB │ gzip:  16.87 kB
+dist/assets/web-CAATFA_C.js                          0.12 kB │ gzip:   0.13 kB
+dist/assets/SubNav-CtqzWGmE.js                       0.28 kB │ gzip:   0.22 kB
+dist/assets/index-Bgeidgn-.js                        0.32 kB │ gzip:   0.24 kB
+dist/assets/index-CeZqBK5L.js                        0.33 kB │ gzip:   0.24 kB
+dist/assets/index-CJwkV1dR.js                        0.36 kB │ gzip:   0.24 kB
+dist/assets/inbox-CLl9OP2t.js                        0.49 kB │ gzip:   0.36 kB
+dist/assets/mail-plus-naIDqwuj.js                    0.52 kB │ gzip:   0.36 kB
+dist/assets/building-complex-SFjICDYv.js             0.62 kB │ gzip:   0.38 kB
+dist/assets/arrow-up-B0zacELR.js                     0.69 kB │ gzip:   0.34 kB
+dist/assets/virtual_pwa-register-DraTNWpv.js         0.76 kB │ gzip:   0.46 kB
+dist/assets/web-BIecPG3c.js                          0.84 kB │ gzip:   0.40 kB
+dist/assets/index-C2HyJuGW.js                        0.99 kB │ gzip:   0.51 kB
+dist/assets/AdminLayout-T2PRG2WU.js                  1.04 kB │ gzip:   0.52 kB
+dist/assets/CreateGymForm-BUbnaEzU.js                1.70 kB │ gzip:   0.86 kB
+dist/assets/AdminUsers-CkLuhYKa.js                   2.05 kB │ gzip:   0.95 kB
+dist/assets/web-CDw1lmfU.js                          2.37 kB │ gzip:   0.93 kB
+dist/assets/ManageLayout-Do62yjKp.js                 2.49 kB │ gzip:   1.19 kB
+dist/assets/AdminReports-bZMFMgMQ.js                 2.52 kB │ gzip:   1.18 kB
+dist/assets/AdminCandidates-C9SlZntp.js              3.01 kB │ gzip:   1.35 kB
+dist/assets/AdminLeaderboards-IDBkN0a1.js            3.23 kB │ gzip:   1.16 kB
+dist/assets/HelpPage-2OzwVklQ.js                     3.25 kB │ gzip:   1.48 kB
+dist/assets/api-CyClSAJT.js                          3.27 kB │ gzip:   0.99 kB
+dist/assets/ManageModeration-BFhjdaBH.js             3.28 kB │ gzip:   1.40 kB
+dist/assets/ReportsList-CGrJCWV6.js                  3.47 kB │ gzip:   1.66 kB
+dist/assets/SuggestGymPage-Cc-UrcCW.js               3.63 kB │ gzip:   1.67 kB
+dist/assets/ManageTags-CUZBDS87.js                   3.77 kB │ gzip:   1.70 kB
+dist/assets/ManageOverview-DCTM4fbG.js               3.86 kB │ gzip:   1.32 kB
+dist/assets/AdminPartners-Cx69wnio.js                4.43 kB │ gzip:   1.54 kB
+dist/assets/ManageSectors-OYR2THme.js                4.49 kB │ gzip:   1.78 kB
+dist/assets/AdminDashboard-CW1PL06b.js               4.77 kB │ gzip:   1.83 kB
+dist/assets/ManageStaff-ClFeI7Xo.js                  4.98 kB │ gzip:   2.03 kB
+dist/assets/AdminGyms-DNp90ca6.js                    5.12 kB │ gzip:   2.19 kB
+dist/assets/ManageAnnouncements-cfwIgxgB.js          5.47 kB │ gzip:   2.29 kB
+dist/assets/ManageSettings-BOmOgE0o.js               5.54 kB │ gzip:   2.24 kB
 dist/assets/workbox-window.prod.es5-BqEJf4Xk.js      5.71 kB │ gzip:   2.34 kB
-dist/assets/ManageGrading-eJRI8odz.js                5.80 kB │ gzip:   2.44 kB
-dist/assets/NotificationSettingsPage-C56KhzgD.js     6.55 kB │ gzip:   2.51 kB
-dist/assets/ManageBoulders-DTRJ1E3A.js               7.10 kB │ gzip:   2.81 kB
-dist/assets/ManageSectorMap-Csh2OzML.js              7.88 kB │ gzip:   3.03 kB
-dist/assets/App-DZtGrBM3.js                          8.89 kB │ gzip:   2.95 kB
-dist/assets/BoulderEditorPage-BriMjqdd.js           14.90 kB │ gzip:   5.48 kB
-dist/assets/HelpPage-DzT_bf8R.js                    28.67 kB │ gzip:  10.95 kB
-dist/assets/index-CPSoKoAq.js                       60.09 kB │ gzip:  15.78 kB
-dist/assets/GymMap-CgTBBQR7.js                     157.92 kB │ gzip:  46.33 kB
-dist/assets/index-BC1nTtN1.js                      217.43 kB │ gzip:  72.70 kB
-dist/assets/router-CGnlPC3g.js                     563.58 kB │ gzip: 157.44 kB
+dist/assets/NotificationSettingsPage-je2sxpeK.js     6.55 kB │ gzip:   2.51 kB
+dist/assets/ManageBoulders-BkjThYRq.js               7.10 kB │ gzip:   2.81 kB
+dist/assets/ManageSectorMap-ugBraaR_.js              7.85 kB │ gzip:   3.02 kB
+dist/assets/ManageGrading-BN05Nvm4.js                7.97 kB │ gzip:   3.01 kB
+dist/assets/App-C0oKywmF.js                          8.89 kB │ gzip:   2.95 kB
+dist/assets/BoulderEditorPage-Diz3KpiG.js           16.75 kB │ gzip:   6.03 kB
+dist/assets/index-tDgUHLDU.js                       60.09 kB │ gzip:  15.79 kB
+dist/assets/GymMap-D64g0001.js                     157.92 kB │ gzip:  46.33 kB
+dist/assets/index-Bnd9UPmq.js                      221.70 kB │ gzip:  74.11 kB
+dist/assets/router-DNMMjiXv.js                     579.03 kB │ gzip: 161.94 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.29s
+✓ built in 5.86s
 
 PWA v0.21.2
 mode      generateSW
-precache  63 entries (1663.85 KiB)
+precache  62 entries (1667.60 KiB)
 files generated
   dist/sw.js
   dist/workbox-835c8c05.js
 OK
-== ESITO: ok ==
+== ESITO: fail ==

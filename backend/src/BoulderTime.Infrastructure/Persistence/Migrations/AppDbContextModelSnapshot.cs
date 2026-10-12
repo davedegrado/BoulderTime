@@ -52,11 +52,20 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("intensity");
 
+                    b.Property<string>("Name")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("name");
+
                     b.Property<string>("PhotoPath")
                         .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
                         .HasColumnName("photo_path");
+
+                    b.Property<int?>("PointsOverride")
+                        .HasColumnType("integer")
+                        .HasColumnName("points_override");
 
                     b.Property<DateTimeOffset?>("RemovedAt")
                         .HasColumnType("timestamp with time zone")
@@ -916,6 +925,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(7)")
                         .HasColumnName("color_hex");
 
+                    b.Property<string>("ColorHex2")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("color_hex2");
+
                     b.Property<Guid>("GradeSystemId")
                         .HasColumnType("uuid")
                         .HasColumnName("grade_system_id");
@@ -930,9 +944,17 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("label");
 
+                    b.Property<int?>("PointsOverride")
+                        .HasColumnType("integer")
+                        .HasColumnName("points_override");
+
                     b.Property<int>("Rank")
                         .HasColumnType("integer")
                         .HasColumnName("rank");
+
+                    b.Property<int?>("RetiredPoints")
+                        .HasColumnType("integer")
+                        .HasColumnName("retired_points");
 
                     b.HasKey("Id")
                         .HasName("pk_grade_values");
@@ -1442,6 +1464,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("official_beta_limit");
 
+                    b.Property<string>("OpeningHours")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)")
+                        .HasColumnName("opening_hours");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
@@ -1617,6 +1644,29 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasFilter("status = 'Pending'");
 
                     b.ToTable("leaderboard_reports", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.AnnouncementAttendance", b =>
+                {
+                    b.Property<Guid>("AnnouncementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("announcement_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("AnnouncementId", "UserId")
+                        .HasName("pk_announcement_attendances");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_announcement_attendances_user_id");
+
+                    b.ToTable("announcement_attendances", "bouldertime");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
@@ -2594,6 +2644,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_leaderboard_reports_users_reported_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.AnnouncementAttendance", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Notifications.GymAnnouncement", null)
+                        .WithMany()
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_announcement_attendances_gym_announcements_announcement_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_announcement_attendances_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
