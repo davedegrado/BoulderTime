@@ -43,6 +43,8 @@
 	<string>BoulderTime opens your library so you can pick photos and videos of boulders to add to the app.</string>
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BoulderTime uses your approximate location only while you use the app, to show the gyms near you on the map and in search.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>BoulderTime uses your approximate location to show the gyms near you on the map and in search.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -29,6 +29,9 @@ describe("What the iOS app must declare", () => {
     ["NSMicrophoneUsageDescription", "the microphone, for the sound of a recorded video"],
     ["NSPhotoLibraryUsageDescription", "the photo library, for choosing a photo or a video"],
     ["NSLocationWhenInUseUsageDescription", "the location, for nearby gyms on the map"],
+    // Never asked for (the app only asks while in use), but the location plugin's code mentions it, and App Store
+    // Connect flags every build without it (ITMS-90683).
+    ["NSLocationAlwaysAndWhenInUseUsageDescription", "the location plugin's background API, never requested"],
   ])("says why it asks for %s (%s)", (key) => {
     expect(plistString(infoPlist, key)).not.toBeNull();
   });

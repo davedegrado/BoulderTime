@@ -38,7 +38,7 @@ values Cloudflare uses for the website:
 
 ## Versions
 
-`frontend/package.json` `version` is the version people see (`0.1.0`). The build number is the GitHub Actions run
+`frontend/package.json` `version` is the version people see (`1.0.0` since the first store release; it must match the version being prepared in App Store Connect). The build number is the GitHub Actions run
 number, so every build is higher than the previous one without editing a file.
 
 ## Photos and videos

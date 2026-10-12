@@ -3,3 +3,4 @@
 "NSMicrophoneUsageDescription" = "BoulderTime usa il microfono per registrare l'audio dei video di beta che giri.";
 "NSPhotoLibraryUsageDescription" = "BoulderTime apre la tua libreria per scegliere le foto e i video dei blocchi da aggiungere all'app.";
 "NSLocationWhenInUseUsageDescription" = "BoulderTime usa la tua posizione approssimativa per mostrarti le palestre vicine sulla mappa e nella ricerca.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "BoulderTime usa la tua posizione approssimativa solo mentre usi l'app, per mostrarti le palestre vicine sulla mappa e nella ricerca.";
