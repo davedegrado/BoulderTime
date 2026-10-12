@@ -63,6 +63,15 @@ describe("Help and FAQ", () => {
     expect(shape(FAQ_EN)).toEqual(shape(FAQ_IT));
   });
 
+  it("shows every question the API marks with videoUploads: null, whatever the video setting", () => {
+    // The API writes null rather than leaving the field out; the guide once kept only the video questions because of it.
+    const withNulls = JSON.parse(JSON.stringify(FAQ_EN, (k, v) => (k === "items" ? v.map((i: object) => ({ videoUploads: null, ...i })) : v))) as FaqGuide;
+    const all = (g: FaqGuide) => [...g.climbers, ...g.staff].flatMap((s) => s.items);
+    const shown = all(forSettings(withNulls, { uploadsEnabled: false, maxUploadMegabytes: 50 }));
+    expect(shown.map((i) => i.q)).toContain("How do I log a send?");
+    expect(shown.length).toBe(all(withNulls).filter((i) => i.videoUploads !== true).length);
+  });
+
   it("describes video uploads only when the server has them on, with the server's limit", () => {
     const questions = (g: FaqGuide) => [...g.climbers, ...g.staff].flatMap((sec) => sec.items);
     const off = questions(forSettings(FAQ_EN, { uploadsEnabled: false, maxUploadMegabytes: 50 }));

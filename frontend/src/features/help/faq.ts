@@ -6,7 +6,7 @@ import { activeLanguage } from "@/i18n/i18n";
  * `videoUploads`: shown only when video uploads are on (true) or off (false), so the guide never describes a button
  * the app doesn't show; left out, always shown. `{maxVideoMb}` in an answer becomes the server's limit.
  */
-export interface FaqItem { q: string; a: string; videoUploads?: boolean }
+export interface FaqItem { q: string; a: string; videoUploads?: boolean | null }
 export interface FaqSection { id: string; title: string; items: FaqItem[] }
 /** The guide: what climbers ask, and what gym staff ask. `staff` comes back empty for anyone who isn't gym staff. */
 export interface FaqGuide { climbers: FaqSection[]; staff: FaqSection[] }
@@ -32,7 +32,8 @@ export function forSettings(guide: FaqGuide, videos: { uploadsEnabled: boolean; 
     .map((s) => ({
       ...s,
       items: s.items
-        .filter((i) => i.videoUploads === undefined || i.videoUploads === videos.uploadsEnabled)
+        // null and absent both mean "always": the API sends null for the questions that don't depend on video uploads.
+        .filter((i) => i.videoUploads == null || i.videoUploads === videos.uploadsEnabled)
         .map((i) => ({ ...i, a: i.a.split("{maxVideoMb}").join(String(videos.maxUploadMegabytes)) })),
     }))
     .filter((s) => s.items.length > 0);

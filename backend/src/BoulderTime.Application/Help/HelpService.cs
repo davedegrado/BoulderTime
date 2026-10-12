@@ -10,7 +10,8 @@ namespace BoulderTime.Application.Help;
 public enum FaqAudience { Both = 0, Climbers = 1, Staff = 2 }
 
 /// <param name="VideoUploads">Shown only while video uploads are on (true) or off (false); null: always.</param>
-public sealed record FaqItemDto(string Q, string A, bool? VideoUploads = null);
+public sealed record FaqItemDto(string Q, string A,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? VideoUploads = null);
 public sealed record FaqSectionDto(string Id, string Title, IReadOnlyList<FaqItemDto> Items);
 
 /// <summary>The guide as the viewer may read it. <see cref="Staff"/> is empty for anyone who isn't gym staff.</summary>
