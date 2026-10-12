@@ -159,9 +159,10 @@ function BoulderWhere({ gymSlug, gymId, sectorId }: { gymSlug: string; gymId: st
         <h2 id="where-title" className="section__title">{t("Where it is")}</h2>
         <Link to={`/gyms/${gymSlug}?tab=sectors`} className="section__link">{t("Gym map")}</Link>
       </div>
-      {/* No "In {sector}" line: the plan names the sector it picks out, and the facts above name it too. */}
+      {/* No sector name here, neither above the plan nor on it: the facts at the top of the page already name it, and
+          the highlighted area shows where it is. */}
       <div style={{ maxWidth, width: "100%", margin: "0 auto" }}>
-        <SectorMap plan={plan} sectors={sectors.data} highlightId={sectorId} />
+        <SectorMap plan={plan} sectors={sectors.data} highlightId={sectorId} labels={false} />
       </div>
     </section>
   );

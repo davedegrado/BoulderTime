@@ -8,6 +8,9 @@ namespace BoulderTime.Application.Community;
 /// read them (App Store guideline 1.2: a method for filtering objectionable material). Reports, blocking and the
 /// staff's moderation handle the rest; this is the first line, not the only one.
 ///
+/// Italian blasphemy is turned away too ("porco dio", "diocane" and the like): many climbers find it offensive, and gyms
+/// asked for it. "Dio", "Madonna" and "cristo" on their own are left alone.
+///
 /// Whole words only, after folding case, accents, look-alike digits and symbols (0→o, 4→a, @→a, $→s…), and stretched
 /// letters ("stronzooo"); letters spelled out one by one ("s t r o n z o") are joined back up. Plain swearing about a
 /// boulder ("this crux is shit") is left to the community, as is anything that names an innocent word: the lists
@@ -24,6 +27,9 @@ public static class ContentFilter
         // Italian
         "troia", "troie", "zoccola", "zoccole", "negro", "negri", "negra", "negre", "ricchione", "ricchioni",
         "culattone", "culattoni", "pompino", "pompini", "sborra", "ammazzati", "suicidati", "impiccati",
+        // Italian blasphemy written as one word (the two-word forms are in Phrases)
+        "porcodio", "porcoddio", "dioporco", "diocane", "diocan", "dioboia", "diomaiale", "diobestia", "diomerda",
+        "porcamadonna", "madonnaporca", "porcocristo", "cristoporco",
         // English
         "nigger", "niggers", "nigga", "niggas", "twat", "twats", "kys", "tranny",
         "spastic", "spaz",
@@ -44,6 +50,10 @@ public static class ContentFilter
         ["fuck", "you"], ["fuck", "off"], ["fuck", "u"], ["kill", "yourself"], ["kill", "urself"], ["go", "die"],
         ["figlio", "di", "puttana"], ["testa", "di", "cazzo"], ["pezzo", "di", "merda"], ["piece", "of", "shit"],
         ["vai", "a", "morire"],
+        // Italian blasphemy: offensive to many climbers, and swearing aimed at no one is not what makes it acceptable.
+        ["porco", "dio"], ["porco", "ddio"], ["dio", "porco"], ["dio", "cane"], ["dio", "can"], ["dio", "boia"], ["dio", "maiale"],
+        ["dio", "bestia"], ["dio", "merda"], ["porca", "madonna"], ["madonna", "porca"], ["porco", "cristo"], ["cristo", "porco"],
+        ["madonna", "maiala"], ["dio", "porcello"],
     ];
 
     public static bool IsObjectionable(string? text)

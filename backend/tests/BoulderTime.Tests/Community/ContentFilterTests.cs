@@ -25,6 +25,12 @@ public sealed class ContentFilterTests
     [InlineData("kill yourself")]
     [InlineData("frocio")]
     [InlineData("Ritardato? no: retarded")]
+    [InlineData("porco dio che crimp")]
+    [InlineData("PORCODIO")]
+    [InlineData("dio cane, sono caduto all'ultima presa")]
+    [InlineData("d1o c4ne")]
+    [InlineData("porca madonna")]
+    [InlineData("Dioboia che tallone")]
     public void Catches_slurs_insults_and_their_disguises(string text) =>
         ContentFilter.IsObjectionable(text).Should().BeTrue();
 
@@ -41,6 +47,9 @@ public sealed class ContentFilterTests
     [InlineData("7a+ con un lancio, 6c per me")]
     [InlineData("Scunthorpe climbers say hi")]
     [InlineData("Più facile di quanto sembri: spingi sui piedi")]
+    [InlineData("Grazie a Dio ci sono le prese verdi")]
+    [InlineData("La via della Madonna della Ceriola")]
+    [InlineData("Il cane della palestra mi guarda mentre cado")]
     public void Leaves_ordinary_climbing_talk_alone(string text) =>
         ContentFilter.IsObjectionable(text).Should().BeFalse();
 }

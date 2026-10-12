@@ -19,6 +19,8 @@ interface Props {
   onSelect?: (sector: Sector) => void;
   /** The sector to stand out, the others fading back (the boulder page's "where is it"). */
   highlightId?: string | null;
+  /** False: the areas only, no names or markers on them (the boulder page, where the sector is already named). */
+  labels?: boolean;
   className?: string;
 }
 
@@ -27,7 +29,7 @@ interface Props {
  * drawing fits the plan at any width. A green dot marks sectors with new boulders this week, a bell the ones the
  * climber follows.
  */
-export function SectorMap({ plan, sectors, onSelect, highlightId, className = "" }: Props) {
+export function SectorMap({ plan, sectors, onSelect, highlightId, labels = true, className = "" }: Props) {
   const drawn = sectors.filter((s) => s.isActive && s.zone && s.zone.points.length >= 3);
   const { width: w, height: h } = plan;
 
@@ -46,7 +48,7 @@ export function SectorMap({ plan, sectors, onSelect, highlightId, className = ""
             {...(onSelect ? { role: "button", tabIndex: 0, "aria-label": t("Sector {name}", { name: s.name }), onClick: () => onSelect(s), onKeyDown: (e: KeyboardEvent) => keyed(e, s) } : {})} />
         ))}
       </svg>
-      {drawn.map((s) => {
+      {labels && drawn.map((s) => {
         const highlighted = s.id === highlightId;
         const isNew = (s.newThisWeek ?? 0) > 0;
         // A sector drawn without its name keeps only its markers (new boulders, followed), unless it is the one

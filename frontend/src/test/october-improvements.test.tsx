@@ -148,3 +148,18 @@ describe("Profile photo", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
+
+import { SectorMap } from "@/features/gyms/SectorMap";
+
+describe("Where it is, on the boulder's page", () => {
+  it("picks out the sector on the plan without writing names on it", () => {
+    const sector = { id: "s1", gymId: "g1", name: "Strapiombo", description: null, imageUrl: null, sortOrder: 0, isActive: true, isFollowing: false,
+      zone: { points: [{ x: 0.1, y: 0.1 }, { x: 0.5, y: 0.1 }, { x: 0.3, y: 0.5 }], label: { x: 0.3, y: 0.3 }, hideLabel: false }, activeBoulders: 3, newThisWeek: 0 };
+    const plan = { url: "/plan.png", width: 1000, height: 600 };
+    const { container, rerender } = render(<SectorMap plan={plan} sectors={[sector]} highlightId="s1" labels={false} />);
+    expect(container.querySelector(".sector-map__zone.is-highlighted")).not.toBeNull();
+    expect(screen.queryByText("Strapiombo")).not.toBeInTheDocument();
+    rerender(<SectorMap plan={plan} sectors={[sector]} highlightId="s1" />);
+    expect(screen.getByText("Strapiombo")).toBeInTheDocument();
+  });
+});
