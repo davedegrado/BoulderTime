@@ -770,6 +770,7 @@ export const it: Record<string, string> = {
   "Show the name on the map": "Mostra il nome sulla mappa",
   "Help and FAQ": "Guida e domande frequenti",
   "Intensity": "Intensità",
+  "{count} boulders now have a photo instead of a drawing.": "{count} blocchi ora hanno una foto al posto del disegno.",
   "Any intensity": "Tutte",
   "Low intensity": "Poco intenso",
   "Medium intensity": "Intensità media",

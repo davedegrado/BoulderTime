@@ -974,6 +974,11 @@ nothing else (drafts made by the first version become unlisted). "Live gyms" on 
 This is the one piece of seeding reachable over HTTP (`POST /api/admin/review-demo`, platform admins only); the full
 `seed` command stays CLI-only.
 
+**Photos (October 2026).** The demo boulders use sixteen wall photos embedded in the seeder (`Seeding/DemoPhotos`,
+the hold colour in the file name) instead of the drawn walls of the first version. Pressing the button again gives
+every demo boulder that still has a drawing (`demo-wall-*`) one of the photos, with the photo's hold colour, and
+deletes the drawings; a boulder whose photo staff changed is left alone.
+
 ## ADR-052 · Points staff can set, boulder names, two-colour grades, a new boulder card
 **Points.** What a send is worth is decided in one place (`BoulderPoints`), used by the leaderboard and by the
 `points` every boulder now carries, so the "+64 pt" on a card is always the number the leaderboard adds up. The

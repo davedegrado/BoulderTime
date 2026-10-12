@@ -7,7 +7,8 @@ import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
 import { t } from "@/i18n/i18n";
 
-interface ReviewDemoResult { gymsCreated: number; bouldersCreated: number; gyms: string[]; staffEmail: string | null }
+/** `photosReplaced`: demo boulders that still had a drawn wall and now have a photo (absent from older servers). */
+interface ReviewDemoResult { gymsCreated: number; bouldersCreated: number; gyms: string[]; staffEmail: string | null; photosReplaced?: number }
 
 /**
  * Demo gyms for the stores' reviewers (ADR-051): live but unlisted, so they work like any gym for the reviewers'
@@ -37,7 +38,8 @@ export function ReviewDemoCard() {
         <p className="notice" role="status">
           {t("Done: {gyms}.", { gyms: result.gyms.join(", ") })}{" "}
           {result.gymsCreated > 0 ? t("{count} new gyms, {boulders} boulders.", { count: result.gymsCreated, boulders: result.bouldersCreated }) : t("They already existed; nothing was duplicated.")}{" "}
-          {result.staffEmail && t("{email} is admin of them and follows them.", { email: result.staffEmail })}
+          {result.staffEmail && t("{email} is admin of them and follows them.", { email: result.staffEmail })}{" "}
+          {(result.photosReplaced ?? 0) > 0 && t("{count} boulders now have a photo instead of a drawing.", { count: result.photosReplaced ?? 0 })}
         </p>
       )}
     </section>

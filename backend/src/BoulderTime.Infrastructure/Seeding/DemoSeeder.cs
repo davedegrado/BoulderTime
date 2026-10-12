@@ -20,7 +20,8 @@ namespace BoulderTime.Infrastructure.Seeding;
 /// user's email to make them OWNER of every demo gym.
 /// </summary>
 /// <summary>What <see cref="DemoSeeder.SeedReviewGymsAsync"/> did.</summary>
-public sealed record ReviewDemoResult(int GymsCreated, int BouldersCreated, IReadOnlyList<string> Gyms, string? StaffEmail);
+/// <param name="PhotosReplaced">Demo boulders that still had a drawn wall and now have a photo.</param>
+public sealed record ReviewDemoResult(int GymsCreated, int BouldersCreated, IReadOnlyList<string> Gyms, string? StaffEmail, int PhotosReplaced = 0);
 
 public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage storage)
 {
@@ -43,13 +44,19 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
             ["Arena", "Tetto", "Verticale"], [GradeSystemType.Fontainebleau], 46.0833, 11.1165),
     ];
 
-    /// <summary>Embedded illustrations; the file name carries the hold colour drawn in the picture.</summary>
+    /// <summary>Embedded wall photos; the file name carries the colour of the boulder's holds in the picture.</summary>
     private static readonly (string Resource, HoldColor Holds)[] Photos =
     [
-        ("wall-1-blue.jpg", HoldColor.Blue), ("wall-2-yellow.jpg", HoldColor.Yellow), ("wall-3-red.jpg", HoldColor.Red),
-        ("wall-4-green.jpg", HoldColor.Green), ("wall-5-purple.jpg", HoldColor.Purple), ("wall-6-pink.jpg", HoldColor.Pink),
-        ("wall-7-orange.jpg", HoldColor.Orange), ("wall-8-black.jpg", HoldColor.Black),
+        ("photo-01-blue.jpg", HoldColor.Blue), ("photo-02-red.jpg", HoldColor.Red), ("photo-03-purple.jpg", HoldColor.Purple),
+        ("photo-04-yellow.jpg", HoldColor.Yellow), ("photo-05-green.jpg", HoldColor.Green), ("photo-06-orange.jpg", HoldColor.Orange),
+        ("photo-07-pink.jpg", HoldColor.Pink), ("photo-08-black.jpg", HoldColor.Black), ("photo-09-blue.jpg", HoldColor.Blue),
+        ("photo-10-red.jpg", HoldColor.Red), ("photo-11-purple.jpg", HoldColor.Purple), ("photo-12-yellow.jpg", HoldColor.Yellow),
+        ("photo-13-green.jpg", HoldColor.Green), ("photo-14-pink.jpg", HoldColor.Pink), ("photo-15-orange.jpg", HoldColor.Orange),
+        ("photo-16-white.jpg", HoldColor.White),
     ];
+
+    /// <summary>The drawn walls the demo gyms had before the photos (October 2026); swapped for photos when found.</summary>
+    private const string IllustrationMarker = "/demo-wall-";
 
     private const int ActiveBouldersPerGym = 14;
     private const int RemovedBouldersPerGym = 4;
@@ -83,6 +90,7 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
             await RenameLegacySectorsAsync(gym.Id, d.Sectors, ct);
             await SeedGradingAsync(gym.Id, d.Grading, ct);
             boulders += await SeedBouldersAsync(gym.Id, ct);
+            await ReplaceIllustrationsAsync(gym.Id, ct);
         }
 
         var climbers = await SeedDemoClimbersAsync(ct);
@@ -135,6 +143,7 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
 
         var created = 0;
         var boulders = 0;
+        var photosReplaced = 0;
         var gyms = new List<Gym>();
         foreach (var d in DemoGyms.Take(ReviewGymCount))
         {
@@ -157,6 +166,7 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
             await db.SaveChangesAsync(ct);
             await SeedGradingAsync(gym.Id, d.Grading, ct);
             boulders += await SeedBouldersAsync(gym.Id, ct);
+            photosReplaced += await ReplaceIllustrationsAsync(gym.Id, ct);
             gyms.Add(gym);
 
             if (!await db.GymStaff.AnyAsync(s => s.GymId == gym.Id && s.UserId == ownerUserId, ct))
@@ -170,7 +180,7 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
 
         var climbers = await SeedDemoClimbersAsync(ct);
         await SeedCommunityAsync(climbers, gyms, ownerUserId, ct);
-        return new ReviewDemoResult(created, boulders, gyms.Select(g => g.Name).ToList(), staff?.Email);
+        return new ReviewDemoResult(created, boulders, gyms.Select(g => g.Name).ToList(), staff?.Email, photosReplaced);
     }
 
     /// <summary>
@@ -364,17 +374,9 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
         await db.SaveChangesAsync(ct);
     }
 
-    private async Task<int> SeedBouldersAsync(Guid gymId, CancellationToken ct)
+    /// <summary>Uploads each embedded photo once per gym, under the same prefix real uploads use.</summary>
+    private async Task<List<(string Path, HoldColor Holds)>> UploadPhotosAsync(Guid gymId, CancellationToken ct)
     {
-        if (await db.Boulders.AnyAsync(b => b.GymId == gymId, ct)) return 0;
-
-        var sectors = await db.Sectors.Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
-        var systems = await db.GradeSystems.Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
-        var systemIds = systems.Select(s => s.Id).ToList();
-        var values = await db.GradeValues.Where(v => systemIds.Contains(v.GradeSystemId) && v.IsActive).OrderBy(v => v.Rank).ToListAsync(ct);
-        if (sectors.Count == 0 || systems.Count == 0) return 0;
-
-        // Upload each illustration once per gym, under the same prefix real uploads use.
         var photoPaths = new List<(string Path, HoldColor Holds)>();
         var assembly = typeof(DemoSeeder).Assembly;
         foreach (var (resource, holds) in Photos)
@@ -388,6 +390,44 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
             }
             photoPaths.Add((path, holds));
         }
+        return photoPaths;
+    }
+
+    /// <summary>
+    /// Gives the demo boulders made with the drawn walls one of the photos instead, with the photo's hold colour, and
+    /// deletes the drawings. Boulders staff uploaded themselves are never touched. Returns how many changed.
+    /// </summary>
+    private async Task<int> ReplaceIllustrationsAsync(Guid gymId, CancellationToken ct)
+    {
+        var drawn = await db.Boulders.Where(b => b.GymId == gymId && b.PhotoPath.Contains(IllustrationMarker))
+            .OrderBy(b => b.CreatedAt).ThenBy(b => b.Id).ToListAsync(ct);
+        if (drawn.Count == 0) return 0;
+
+        var photos = await UploadPhotosAsync(gymId, ct);
+        var old = new HashSet<string>();
+        for (var i = 0; i < drawn.Count; i++)
+        {
+            var b = drawn[i];
+            var photo = photos[i % photos.Count];
+            foreach (var path in b.Update(b.SectorId, photo.Path, null, photo.Holds, b.SetterUserId, b.Intensity)) old.Add(path);
+        }
+        await db.SaveChangesAsync(ct);
+        foreach (var path in old.Where(p => p.Contains(IllustrationMarker)))
+            await storage.DeleteAsync(StorageBuckets.BoulderImages, path, ct);
+        return drawn.Count;
+    }
+
+    private async Task<int> SeedBouldersAsync(Guid gymId, CancellationToken ct)
+    {
+        if (await db.Boulders.AnyAsync(b => b.GymId == gymId, ct)) return 0;
+
+        var sectors = await db.Sectors.Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
+        var systems = await db.GradeSystems.Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
+        var systemIds = systems.Select(s => s.Id).ToList();
+        var values = await db.GradeValues.Where(v => systemIds.Contains(v.GradeSystemId) && v.IsActive).OrderBy(v => v.Rank).ToListAsync(ct);
+        if (sectors.Count == 0 || systems.Count == 0) return 0;
+
+        var photoPaths = await UploadPhotosAsync(gymId, ct);
 
         var rnd = new Random(gymId.GetHashCode());
         var now = clock.UtcNow;

@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Follows;
 using BoulderTime.Application.Gyms;
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
 using BoulderTime.Infrastructure.Seeding;
@@ -51,6 +53,37 @@ public sealed class ReviewDemoTests(PostgresFixture postgres) : IAsyncLifetime
         var before = await Counts();
         (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = "review@example.com" })).EnsureSuccessStatusCode();
         (await Counts()).Should().Be(before);
+    }
+
+    [Fact]
+    public async Task Pressing_again_swaps_the_old_drawn_walls_for_photos_and_leaves_the_rest()
+    {
+        var admin = await _f.UserAsync(platformAdmin: true);
+        (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = (string?)null })).EnsureSuccessStatusCode();
+        var all = await _f.Db(db => db.Boulders.CountAsync());
+        all.Should().BeGreaterThan(5);
+        (await _f.Db(db => db.Boulders.ToListAsync())).Should().OnlyContain(b => b.PhotoPath.Contains("/demo-photo-"));
+
+        // Five boulders as the version with drawn walls made them; one more as staff uploaded it.
+        var drawn = await _f.Db(async db =>
+        {
+            var bs = await db.Boulders.OrderBy(b => b.Id).Take(6).ToListAsync();
+            foreach (var b in bs.Take(5))
+                b.Update(b.SectorId, $"{BoulderService.PhotoPrefix(b.GymId)}demo-wall-1-blue.jpg", null, HoldColor.Mixed, b.SetterUserId, b.Intensity);
+            bs[5].Update(bs[5].SectorId, $"{BoulderService.PhotoPrefix(bs[5].GymId)}staff-upload.jpg", null, HoldColor.Mixed, bs[5].SetterUserId, bs[5].Intensity);
+            await db.SaveChangesAsync();
+            return bs.Select(b => b.Id).ToList();
+        });
+
+        var result = (await (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = (string?)null })).ReadAsync<ReviewDemoResult>())!;
+        result.PhotosReplaced.Should().Be(5);
+        var after = await _f.Db(db => db.Boulders.Where(b => drawn.Contains(b.Id)).ToListAsync());
+        after.Where(b => b.Id != drawn[5]).Should().OnlyContain(b => b.PhotoPath.Contains("/demo-photo-") && b.HoldColor != HoldColor.Mixed && b.ThumbnailPath == null);
+        after.Single(b => b.Id == drawn[5]).PhotoPath.Should().EndWith("staff-upload.jpg", "a photo staff chose is theirs");
+        (await _f.Db(db => db.Boulders.CountAsync())).Should().Be(all);
+
+        var again = (await (await admin.Client.PostAsJsonAsync("/api/admin/review-demo", new { staffEmail = (string?)null })).ReadAsync<ReviewDemoResult>())!;
+        again.PhotosReplaced.Should().Be(0);
     }
 
     [Fact]
