@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Demo gyms: real wall photos instead of drawings, swapped on the existing demo boulders too
-applicata: Demo gyms: real wall photos instead of drawings, swapped on
+Applying: iOS: purpose string for the location plugin's background API; version 1.0.0 for the first store release
+applicata: iOS: purpose string for the location plugin's background API;
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -12,13 +12,13 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:10.00
+Time Elapsed 00:00:08.64
 OK
 == 5. TEST BACKEND ==
 Total tests: 322
 test backend: ok
 == 6. FRONTEND ==
-      Tests  246 passed (246)
+      Tests  247 passed (247)
 vite v5.4.21 building for production...
 transforming...
 ✓ 2212 modules transformed.
@@ -76,7 +76,7 @@ dist/assets/GymMap-DSf19Yb3.js                     158.07 kB │ gzip: 46.40 kB
 dist/assets/react-DevxjaPM.js                      208.17 kB │ gzip: 67.76 kB
 dist/assets/router-Dfnrhiuj.js                     216.27 kB │ gzip: 63.34 kB
 dist/assets/supabase-3Te545q_.js                   227.01 kB │ gzip: 58.86 kB
-✓ built in 5.62s
+✓ built in 5.54s
 
 PWA v0.21.2
 mode      generateSW
