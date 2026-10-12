@@ -7,7 +7,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The in-app help, one file per language (HelpService). -->
-    <EmbeddedResource Include="Help/faq.*.json" />
+    <!-- The in-app help, one file per language (HelpService). Named faq-it.json, not faq.it.json: a name ending in
+         ".it.json" is taken for an Italian resource and moved into a separate satellite assembly. -->
+    <EmbeddedResource Include="Help/faq-*.json" />
   </ItemGroup>
 </Project>

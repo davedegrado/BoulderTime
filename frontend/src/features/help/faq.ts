@@ -14,7 +14,7 @@ export type FaqAudience = keyof FaqGuide;
 
 /**
  * The guide in the language in use, as the server lets this person read it. The texts live on the server
- * (backend `Help/faq.{it,en}.json`), written whole in each language: answers are paragraphs that read best written
+ * (backend `Help/faq-it.json`, `faq-en.json`), written whole in each language: answers are paragraphs that read best written
  * once per language. Who reads which answer is decided there too, so the staff answers are not in the app at all.
  */
 export function useFaqGuide() {

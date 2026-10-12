@@ -7,8 +7,8 @@ import { forSettings, searchFaq, type FaqGuide } from "@/features/help/faq";
 
 // The guide lives on the server now; these are its files, read as the server reads them.
 const helpDir = resolve(__dirname, "../../../backend/src/BoulderTime.Application/Help");
-const FAQ_IT = JSON.parse(readFileSync(join(helpDir, "faq.it.json"), "utf8")) as FaqGuide;
-const FAQ_EN = JSON.parse(readFileSync(join(helpDir, "faq.en.json"), "utf8")) as FaqGuide;
+const FAQ_IT = JSON.parse(readFileSync(join(helpDir, "faq-it.json"), "utf8")) as FaqGuide;
+const FAQ_EN = JSON.parse(readFileSync(join(helpDir, "faq-en.json"), "utf8")) as FaqGuide;
 
 let served: FaqGuide = FAQ_EN;
 const calls: string[] = [];

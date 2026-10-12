@@ -20,7 +20,7 @@ public sealed record FaqGuideDto(IReadOnlyList<FaqSectionDto> Climbers, IReadOnl
 /// The in-app help, served by the API so who reads what is decided here and not in the app: the staff answers are
 /// not in the app's code at all, so hiding them is not a matter of a missing button. Each question says who it is for
 /// (<see cref="FaqAudience"/>); gym staff are people with a role at any gym, and BoulderTime's administrators.
-/// The texts are written once per language in <c>Help/faq.{language}.json</c>, embedded in this assembly.
+/// The texts are written once per language in <c>Help/faq-{language}.json</c>, embedded in this assembly.
 /// </summary>
 public sealed class HelpService(IAppDbContext db, ICurrentUser currentUser)
 {
@@ -38,8 +38,12 @@ public sealed class HelpService(IAppDbContext db, ICurrentUser currentUser)
 
     private static StoredGuide Load(string language)
     {
-        var name = $"BoulderTime.Application.Help.faq.{language}.json";
-        using var stream = typeof(HelpService).Assembly.GetManifestResourceStream(name)
+        // Found by the end of its name, so the folder's part of the resource name can't get in the way.
+        var assembly = typeof(HelpService).Assembly;
+        var file = $"faq-{language}.json";
+        var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith("." + file, StringComparison.Ordinal))
+                   ?? throw new InvalidOperationException($"The help texts are missing ({file}).");
+        using var stream = assembly.GetManifestResourceStream(name)
                            ?? throw new InvalidOperationException($"The help texts are missing ({name}).");
         return JsonSerializer.Deserialize<StoredGuide>(stream, Json) ?? throw new InvalidOperationException($"The help texts are empty ({name}).");
     }

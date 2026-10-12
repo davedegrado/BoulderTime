@@ -1020,7 +1020,7 @@ after the event's date. Everyone sees how many are going; the gym's **followers*
 people hidden from them (blocked either way, suspended, leaving). It is not a booking: no places, no waiting list.
 An event deleted takes its list with it, and so does an account when it is erased.
 
-**The help** moved to the API (`GET /api/help/faq`, texts in `Application/Help/faq.{it,en}.json`). Each answer says
+**The help** moved to the API (`GET /api/help/faq`, texts in `Application/Help/faq-it.json` and `faq-en.json`). Each answer says
 who it is for — climbers, staff or both — and the server sends only what the reader may read: gym staff are people
 with a role at any gym, and BoulderTime's administrators. The staff answers are no longer in the app's code at all.
 App builds already installed keep the guide they were built with.
