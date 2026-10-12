@@ -90,7 +90,8 @@ One codebase: the website, the installable PWA and the store apps are the same R
   (it does play in the Android app, tested October 2026).
 - **The privacy notice and terms are drafts** awaiting a lawyer's review, and exist in Italian only.
 - **No cross-gym leaderboard:** grades from different gyms are not comparable, so it is intentionally absent.
-- **Supabase free tier:** no point-in-time recovery; daily backups only. Every upload is capped at 50 MB (hence the
+- **Supabase free tier:** no automatic backups at all (nor point-in-time recovery): move to Pro, which keeps daily
+  backups for 7 days, before the first paying gym. Every upload is capped at 50 MB (hence the
   video limit), storage is small next to video, and inactive free projects can be paused: check the current terms on
   the plan page before opening to the public.
 

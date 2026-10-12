@@ -114,9 +114,9 @@ export function BoulderPage() {
             {(b.tags ?? []).map((tag) => <li key={tag.id} className="tag-pill">{tag.name}</li>)}
           </ul>
         )}
-        <CompletionsLine boulderId={b.id} count={b.completions ?? 0} />
 
         <ProgressTracker key={b.id} boulder={b} />
+        <CompletionsLine boulderId={b.id} count={b.completions ?? 0} />
         <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} />
 
         <BetaSection boulderId={b.id} gymName={b.gymName} />
