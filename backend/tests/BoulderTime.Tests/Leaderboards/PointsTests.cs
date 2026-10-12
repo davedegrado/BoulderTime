@@ -176,6 +176,13 @@ public sealed class PointsTests(PostgresFixture postgres) : IAsyncLifetime
         (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{b.Id}", Edit(w, b))).EnsureSuccessStatusCode();
         (await Detail(_f.CreateClient(), b.Id)).Name.Should().Be("La Fessura");
 
+        // The advanced search finds it by any part of its name, whatever the case; unnamed boulders never match.
+        await w.BoulderAsync("6B");
+        var found = (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/boulders?name=FESS")).ReadAsync<PagedResult<BoulderSummaryDto>>())!;
+        found.Items.Select(x => x.Id).Should().Equal(b.Id);
+        (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/boulders?name=100%25")).ReadAsync<PagedResult<BoulderSummaryDto>>())!
+            .Items.Should().BeEmpty("a % in the text is a character, not a wildcard");
+
         (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{b.Id}", Edit(w, b, name: "   "))).EnsureSuccessStatusCode();
         (await Detail(_f.CreateClient(), b.Id)).Name.Should().BeNull();
 

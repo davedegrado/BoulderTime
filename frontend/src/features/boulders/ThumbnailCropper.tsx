@@ -125,10 +125,16 @@ export function ThumbnailCropper({ src, onCancel, onDone }: { src: string; onCan
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onKeyDown={onKeyDown}>
           <img src={src} alt="" draggable={false} onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
             style={natural ? { width: natural.w * s, height: natural.h * s, transform: `translate(${view.x}px, ${view.y}px)` } : { visibility: "hidden" }} />
+          {/* Where the card puts its badges on the picture: the grade bottom left, the points bottom right, the
+              climber's state top right. What matters on the wall is best kept out of those corners. */}
+          <span className="cropper__badge cropper__badge--grade" aria-hidden>{t("Grade")}</span>
+          <span className="cropper__badge cropper__badge--points" aria-hidden>{t("+{points} pt", { points: 64 })}</span>
+          <span className="cropper__badge cropper__badge--state" aria-hidden>✓</span>
         </div>
       </div>
       <div className="cropper__controls">
         <p className="cropper__hint">{t("Drag to move, pinch or slide to zoom. This is what the boulder's cards show.")}</p>
+        <p className="cropper__hint">{t("The card puts the grade bottom left and the points bottom right: keep the holds that matter out of those corners.")}</p>
         <label className="cropper__zoom">
           <span className="sr-only">{t("Zoom")}</span>
           <input type="range" min={1} max={MAX_ZOOM} step={0.01} value={view.zoom} onChange={(e) => zoomTo(Number(e.target.value))} />

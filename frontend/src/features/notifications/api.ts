@@ -181,3 +181,17 @@ export function useAttendees(announcementId: string, enabled: boolean) {
   });
 }
 
+/**
+ * Takes one update off the person's Home (the gym's page keeps it). It disappears at once; the server is told after.
+ */
+export function useHideUpdate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.put(`/api/announcements/${id}/hidden`),
+    onMutate: (id) => {
+      qc.setQueryData<{ updates: Announcement[] }>(["climbing", "home"], (home) => (home ? { ...home, updates: home.updates.filter((a) => a.id !== id) } : home));
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["climbing", "home"] }); },
+  });
+}
+

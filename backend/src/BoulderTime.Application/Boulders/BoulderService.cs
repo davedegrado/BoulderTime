@@ -53,6 +53,12 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             query = query.Where(b => (low && b.Intensity == BoulderIntensity.Low) || (medium && b.Intensity == BoulderIntensity.Medium)
                                      || (high && b.Intensity == BoulderIntensity.High));
         }
+        var name = Input.Trimmed(q.Name);
+        if (name.Length > 0)
+        {
+            var pattern = Input.LikeContains((name.Length > Boulder.NameMaxLength ? name[..Boulder.NameMaxLength] : name).ToLowerInvariant());
+            query = query.Where(b => b.Name != null && EF.Functions.Like(b.Name.ToLower(), pattern, @"\"));
+        }
         if (q.MinRating is { } min and >= 1 and <= 5)
             query = query.Where(b => db.BoulderRatings.Where(r => r.BoulderId == b.Id).Average(r => (double?)r.Rating) >= min);
         if (currentUser.UserId is { } uid && q.Progress is { } progress && progress != ProgressFilter.All)
@@ -135,7 +141,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     public async Task<BoulderDetailDto> CreateAsync(Guid gymId, SaveBoulderRequest r, CancellationToken ct = default)
     {
         var (gym, _) = await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
-        var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, currentThumbnailPath: null, ct);
+        var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, currentThumbnailPath: null, currentValueIds: [], ct);
         var userId = currentUser.RequireUserId();
 
         var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity);
@@ -181,7 +187,11 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var boulder = await db.Boulders.FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
         if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
-        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, ct);
+        // A grade retired since the boulder was graded may stay on it: editing the photo or the sector must not force a
+        // regrade. Only a grade it doesn't already have has to be one in use.
+        var currentValueIds = await db.BoulderGrades.AsNoTracking().Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff)
+            .Select(g => g.GradeValueId).ToListAsync(ct);
+        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, currentValueIds, ct);
         var userId = currentUser.RequireUserId();
 
         var changes = new List<Localization.NotificationTexts.BoulderChange>();
@@ -380,7 +390,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         }
     }
 
-    private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath, CancellationToken ct)
+    private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath,
+        IReadOnlyCollection<Guid> currentValueIds, CancellationToken ct)
     {
         var v = new Validator();
         var photo = Input.Trimmed(r.PhotoPath);
@@ -420,11 +431,12 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         else if (choices.Count > 0)
         {
             var valueIds = choices.Select(c => c.GradeValueId!.Value).ToList();
+            var kept = currentValueIds.ToList();
             var matches = await db.GradeValues.AsNoTracking()
-                .Where(gv => valueIds.Contains(gv.Id) && gv.IsActive)
+                .Where(gv => valueIds.Contains(gv.Id) && (gv.IsActive || kept.Contains(gv.Id)))
                 .Join(db.GradeSystems, gv => gv.GradeSystemId, gs => gs.Id, (gv, gs) => new { gv.Id, SystemId = gs.Id, gs.GymId, gs.IsActive })
                 .ToListAsync(ct);
-            var ok = choices.All(c => matches.Any(m => m.Id == c.GradeValueId && m.SystemId == c.GradeSystemId && m.GymId == gymId && m.IsActive));
+            var ok = choices.All(c => matches.Any(m => m.Id == c.GradeValueId && m.SystemId == c.GradeSystemId && m.GymId == gymId && (m.IsActive || kept.Contains(m.Id))));
             v.Check(ok, "grades", "Use active grades from this gym's grading systems.");
         }
 

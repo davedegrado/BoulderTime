@@ -35,6 +35,8 @@ export interface BoulderSummary {
   name?: string | null;
   /** What completing it scores on the gym's leaderboard (the same number); null when it scores nothing. */
   points?: number | null;
+  /** The gym's logo, for lists that mix gyms; null when it has none. */
+  gymLogoUrl?: string | null;
 }
 
 export interface BoulderDetail extends BoulderSummary {
@@ -60,6 +62,8 @@ export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";
 export interface BoulderFilters {
   status?: BrowsableStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string;
   tagIds?: string[]; intensity?: Intensity[];
+  /** Part of the boulder's name (advanced search). */
+  name?: string;
 }
 
 export interface SaveBoulderInput {

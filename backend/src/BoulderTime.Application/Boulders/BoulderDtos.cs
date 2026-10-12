@@ -31,7 +31,9 @@ public sealed record BoulderSummaryDto(
     /// <summary>The setters' name for it; null when it has none (never empty).</summary>
     string? Name = null,
     /// <summary>What completing it scores on the gym's leaderboard; null when it scores nothing (ungraded).</summary>
-    int? Points = null);
+    int? Points = null,
+    /// <summary>The gym's logo, for lists that mix gyms (Home); null when the gym has none.</summary>
+    string? GymLogoUrl = null);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
@@ -78,10 +80,11 @@ public enum ProgressFilter { All, Untried, Projects, Completed }
 
 /// <param name="TagIds">Boulders carrying ALL of these tags (each one narrows, like every other filter).</param>
 /// <param name="Intensities">Boulders with ANY of these intensities; boulders without one are left out.</param>
+/// <param name="Name">Boulders whose name contains this text, whatever the case (boulders without a name never match).</param>
 public sealed record BoulderQuery(
     BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
     ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize,
-    IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null);
+    IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null, string? Name = null);
 
 /// <param name="NotifyFollowers">Send one "sector retraced" notification per affected sector to its followers.</param>
 public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool? NotifyFollowers = false);

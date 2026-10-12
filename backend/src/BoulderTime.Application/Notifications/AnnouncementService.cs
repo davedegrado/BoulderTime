@@ -47,6 +47,8 @@ public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObj
     {
         var rows = await db.GymAnnouncements.AsNoTracking()
             .Where(a => db.GymFollows.Any(f => f.UserId == userId && f.GymId == a.GymId))
+            // The ones the person took off their Home stay off it (the gym's page still has them).
+            .Where(a => !db.AnnouncementDismissals.Any(d => d.UserId == userId && d.AnnouncementId == a.Id))
             .Join(db.Gyms, a => a.GymId, g => g.Id, (a, g) => new { a, g.Status })
             .Where(x => x.Status == Domain.Gyms.GymStatus.Active)
             .OrderByDescending(x => x.a.CreatedAt).Take(take).Select(x => x.a).ToListAsync(ct);
@@ -95,6 +97,29 @@ public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObj
         db.GymAnnouncements.Remove(a);
         await db.SaveChangesAsync(ct);
         if (a.ImagePath is not null) await storage.DeleteAsync(StorageBuckets.GymImages, a.ImagePath, ct);
+    }
+
+    // ---------- Taken off Home ----------
+
+    /// <summary>Takes an update off the viewer's Home. Doing it twice is still once.</summary>
+    public async Task HideFromHomeAsync(Guid announcementId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var a = await VisibleAnnouncementAsync(announcementId, ct);
+        if (await db.AnnouncementDismissals.AnyAsync(x => x.AnnouncementId == a.Id && x.UserId == userId, ct)) return;
+        db.AnnouncementDismissals.Add(AnnouncementDismissal.Create(a.Id, userId, clock.UtcNow));
+        try { await db.SaveChangesAsync(ct); }
+        catch (UniqueConstraintViolationException) { /* hidden twice at once: hidden, which is the point */ }
+    }
+
+    /// <summary>Puts it back on Home.</summary>
+    public async Task ShowOnHomeAsync(Guid announcementId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var row = await db.AnnouncementDismissals.FirstOrDefaultAsync(x => x.AnnouncementId == announcementId && x.UserId == userId, ct);
+        if (row is null) return;
+        db.AnnouncementDismissals.Remove(row);
+        await db.SaveChangesAsync(ct);
     }
 
     // ---------- "I'll be there" ----------

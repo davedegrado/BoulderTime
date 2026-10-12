@@ -65,6 +65,9 @@ One codebase: the website, the installable PWA and the store apps are the same R
 - **A climber's videos on their profile.** The list of the videos they published, each opening the boulder; shown only
   while video uploads are switched on (ADR-049), and only videos from gyms that allow them. Waits for uploads to come
   back.
+- **Notifications in the reader's language, also the ones already received.** Today a notification keeps the
+  language it was written in (the reader's language at the time); someone who switches language sees the old ones
+  unchanged. To do: store the notification as a type and its values, and word it when it is read.
 - **Staying signed in, saved passwords, Face ID / fingerprint.** Saved passwords through the phone's own password
   manager (iCloud Keychain, Google Password Manager: `webcredentials` and `get_login_creds` associations, no new
   library); the session kept in the phone's secure storage; an optional biometric unlock in front of the same Supabase

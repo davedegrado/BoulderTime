@@ -1,7 +1,7 @@
 import { env } from "@/config/env";
 import { supabase } from "@/lib/supabase";
 import { ApiError, defaultMessage, toApiError } from "@/lib/apiError";
-import { activeLanguage } from "@/i18n/i18n";
+import { activeLanguage, t } from "@/i18n/i18n";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -40,10 +40,24 @@ async function send(method: Method, path: string, options: RequestOptions = {}, 
   return response;
 }
 
+/**
+ * The name an erased account keeps (User.Anonymise on the server), stored once in Italian. Shown in the reader's
+ * language instead, wherever a person's name comes back: comments, setters, leaderboards, lists.
+ */
+export const ERASED_NAME = "Utente eliminato";
+
+/** Reads a response, putting erased accounts' names into the language in use. */
+export function parseBody(text: string): unknown {
+  if (!text.includes(ERASED_NAME)) return JSON.parse(text);
+  const shown = t("Deleted user");
+  return JSON.parse(text, (key, value) => (key === "displayName" && value === ERASED_NAME ? shown : value));
+}
+
 async function request<T>(method: Method, path: string, options: RequestOptions = {}): Promise<T> {
   const response = await send(method, path, options);
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const text = await response.text();
+  return (text ? parseBody(text) : undefined) as T;
 }
 
 export const api = {

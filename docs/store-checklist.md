@@ -7,9 +7,9 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 - [ ] **Railway:** leave `Videos__UploadsEnabled` unset (video uploads off, ADR-049). Check:
   `https://<api>/api/settings/videos` answers `"uploadsEnabled": false`.
-- [ ] **Railway:** `Email__ResendApiKey` (Resend → API Keys) and `Moderation__AlertEmail=support@bouldertime.com`, so
+- [x] **Railway:** `Email__ResendApiKey` (Resend → API Keys) and `Moderation__AlertEmail=support@bouldertime.com`, so
   reports reach you by email (ADR-050). Check: report a comment from a test account; the email arrives.
-- [ ] **Supabase → SQL editor:** run `database/supabase/storage.sql` again. It lets the video buckets accept the
+- [x] **Supabase → SQL editor:** run `database/supabase/storage.sql` again (done 11 October 2026). It lets the video buckets accept the
   posters (JPEG/WebP) and sets their limit to 50 MB, ready for when uploads are switched on.
 - [ ] **GitHub → Settings → Variables:** `VITE_MAP_TILE_URL` (and `VITE_MAP_TILE_URL_IOS` if the key is
   origin-restricted) set to the MapTiler URL. The Android and iOS builds print a warning when it is missing.
@@ -18,12 +18,12 @@ is done. Kept short on purpose: when an item is done for good, delete it.
 
 ## Account for the stores' reviewers
 
-- [ ] Sign up in the app with `review@bouldertime.com` (Cloudflare → Email Routing → a rule forwarding it to you),
-  confirm the email, accept the terms. In **Profile → Leaderboards** turn on "Don't show me in leaderboards or lists".
-- [ ] **Admin → Demo gyms for store review** → Create: three unlisted demo gyms, the reviewers' account as their
+- [x] Sign up in the app with `review@bouldertime.com` (Cloudflare → Email Routing → a rule forwarding it to you),
+  confirm the email, accept the terms. New accounts are out of the leaderboards by default (ADR-054): leave it so.
+- [x] **Admin → Demo gyms for store review** → Create: three unlisted demo gyms, the reviewers' account as their
   admin and following them.
-- [ ] With the reviewers' account, log a few attempts in a demo gym, so Home and Activity aren't empty.
-- [ ] App Store Connect (App Review Information) and Play Console (App access): these credentials, and in the notes:
+- [x] With the reviewers' account, log a few attempts in a demo gym, so Home and Activity aren't empty.
+- [ ] App Store Connect (App Review Information) **done**; Play Console (App access) **still to do**: these credentials, and in the notes:
   *"This account follows three demo gyms (unlisted, so regular users don't see them) and is an admin of them: climber
   features are on Home and in each gym; staff features are under Profile → Manage. Video uploads are currently
   disabled; official beta videos are added as links."*

@@ -53,7 +53,7 @@ function PendingVideo({ gymId, item }: { gymId: string; item: ModerationVideo })
     <article className="card moderation-video">
       <video className="player" src={item.video.videoUrl} poster={item.video.thumbnailUrl ?? undefined} controls playsInline preload="metadata" aria-label={t("Video by {name}", { name: item.video.author.displayName })} />
       <div className="moderation-video__side">
-        <div className="moderation-video__boulder"><BoulderCard boulder={item.boulder} /></div>
+        <div className="moderation-video__boulder"><BoulderCard boulder={item.boulder} compact /></div>
         <div className="stack">
           <p className="list__title">@{item.video.author.displayName}</p>
           {item.video.caption && <p className="prose">{item.video.caption}</p>}

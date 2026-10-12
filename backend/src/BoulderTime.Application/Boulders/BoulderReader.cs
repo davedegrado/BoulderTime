@@ -23,17 +23,18 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var sectorIds = boulders.Select(b => b.SectorId).Distinct().ToList();
         var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
         var gymIds = boulders.Select(b => b.GymId).Distinct().ToList();
-        var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id)).ToDictionaryAsync(g => g.Id, g => g.Name, ct);
+        var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id)).Select(g => new { g.Id, g.Name, g.LogoUrl })
+            .ToDictionaryAsync(g => g.Id, ct);
         var scales = await points.ForGymsAsync(gymIds, ct);
 
         return boulders.Select(b => new BoulderSummaryDto(
-            b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId, ""), b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
+            b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId)?.Name ?? "", b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
             // A deleted boulder has no photo left to point at, and a signed url for an empty path would 404.
             b.Status == BoulderStatus.Deleted ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath),
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
-            b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, []))))
+            b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl))
             .ToList();
     }
 

@@ -46,6 +46,7 @@ public interface IAppDbContext
     DbSet<NotificationSettings> NotificationSettings { get; }
     DbSet<GymAnnouncement> GymAnnouncements { get; }
     DbSet<AnnouncementAttendance> AnnouncementAttendances { get; }
+    DbSet<AnnouncementDismissal> AnnouncementDismissals { get; }
     DbSet<EarlyPartnership> EarlyPartnerships { get; }
     DbSet<LeaderboardReport> LeaderboardReports { get; }
     DbSet<PushSubscription> PushSubscriptions { get; }

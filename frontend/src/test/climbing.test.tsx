@@ -88,6 +88,38 @@ describe("Home", () => {
   });
 });
 
+describe("Home updates", () => {
+  const me = { id: "u1", email: "me@x.com", displayName: "Dave", avatarUrl: null, isPlatformAdmin: false, createdAt: "2026-01-01T00:00:00Z", staffGyms: [], pendingInvitations: 0 };
+  const update = (id: string, title: string) => ({
+    id, gymId: "g1", gymName: "Crimp Factory", gymSlug: "crimp", type: "ANNOUNCEMENT", title, content: "Body", imageUrl: null, imagePath: null,
+    eventDate: null, sectorId: null, sectorName: null, notifiedFollowers: false, author: { userId: "s", displayName: "Staff", avatarUrl: null },
+    createdAt: "2026-09-01T00:00:00Z", updatedAt: "2026-09-01T00:00:00Z",
+  });
+  beforeEach(() => { try { localStorage.clear(); } catch { /* none */ } });
+
+  it("folds away, remembers it, and lets one update be hidden", async () => {
+    reply("GET", "/api/users/me", me);
+    let hidden = false;
+    reply("GET", "/api/users/me/home", () => ({ stats, gyms: [], projects: [], freshToTry: [], recentCompletions: [], updates: [update("a1", "New circuit"), update("a2", "Closed Monday")].filter((u) => !hidden || u.id !== "a1") }));
+    reply("PUT", "/api/announcements/a1/hidden", () => { hidden = true; return undefined; });
+    renderAt("/", "/", <HomePage />);
+
+    const toggle = await screen.findByRole("button", { name: /Gym updates/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("New circuit")).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole("button", { name: "Hide this update from Home" })[0]!);
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT" && c.path === "/api/announcements/a1/hidden")).toBe(true));
+    await waitFor(() => expect(screen.queryByText("New circuit")).not.toBeInTheDocument());
+    expect(screen.getByText("Closed Monday")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Gym updates/ }));
+    expect(screen.queryByText("Closed Monday")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Gym updates/ })).toHaveAttribute("aria-expanded", "false");
+    expect(localStorage.getItem("bt:home-updates-collapsed")).toBe("1");
+  });
+});
+
 describe("Home gyms", () => {
   it("puts every favourite gym first, and the others after them", async () => {
     const homeGym = (id: string, name: string, isFavorite: boolean) =>

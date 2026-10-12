@@ -83,7 +83,7 @@ Privacy Framework e clausole contrattuali standard). Se non attivi le notifiche,
 ## Per quanto tempo
 
 - **Finché hai l'account.** Quando lo cancelli, hai **7 giorni** per ripensarci; poi i dati personali sono eliminati.
-- **Registri tecnici**: circa 90 giorni.
+- **Registri tecnici**: per il tempo previsto dai termini dei fornitori che li tengono.
 - **Account sospesi.** Se un account sospeso per violazione delle regole viene cancellato, conserviamo per **2 anni**
   soltanto un'impronta crittografica (hash) del suo indirizzo email, che non contiene l'indirizzo e non permette di
   leggerlo. Serve unicamente a riconoscere un nuovo account creato con lo stesso indirizzo, che parte sospeso finché

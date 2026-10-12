@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Bell, CalendarDays, CheckCircle2, Clapperboard, Flag, Megaphone, MessageSquare, Mountain, Pencil, RefreshCw, Sparkles, Wrench, XCircle } from "lucide-react";
+import { Bell, CalendarDays, CheckCircle2, Clapperboard, Flag, Megaphone, MessageSquare, Mountain, Pencil, RefreshCw, Sparkles, Wrench, X, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Announcement, NotificationType } from "@/features/notifications/api";
 import { announcementTypeLabel } from "@/features/notifications/api";
@@ -42,7 +42,8 @@ export function Toggle({ checked, onChange, label, description, disabled }: { ch
 
 const TYPE_ICON = { EVENT: CalendarDays, COMPETITION: CalendarDays, MAINTENANCE: Wrench, SCHEDULE_CHANGE: CalendarDays, ANNOUNCEMENT: Megaphone, OTHER: Bell } as const;
 
-export function AnnouncementCard({ a, showGym = false, actions }: { a: Announcement; showGym?: boolean; actions?: ReactNode }) {
+/** `onHide`: Home's "take this off my Home", a small cross in the card's corner. */
+export function AnnouncementCard({ a, showGym = false, actions, onHide }: { a: Announcement; showGym?: boolean; actions?: ReactNode; onHide?: () => void }) {
   const Icon = TYPE_ICON[a.type];
   const [viewing, setViewing] = useState(false);
   return (
@@ -56,7 +57,14 @@ export function AnnouncementCard({ a, showGym = false, actions }: { a: Announcem
       {viewing && a.imageUrl && <PhotoViewer src={a.imageUrl} alt={a.title} onClose={() => setViewing(false)} />}
       <div className="announcement__head">
         <span className="announcement__type"><Icon aria-hidden /> {announcementTypeLabel[a.type]}</span>
-        <span className="list__sub">{showGym ? `${a.gymName} · ` : ""}{relativeTime(a.createdAt)}</span>
+        <span className="announcement__meta">
+          <span className="list__sub">{showGym ? `${a.gymName} · ` : ""}{relativeTime(a.createdAt)}</span>
+          {onHide && (
+            <button type="button" className="icon-btn announcement__hide" onClick={onHide} aria-label={t("Hide this update from Home")} title={t("Hide this update from Home")}>
+              <X aria-hidden />
+            </button>
+          )}
+        </span>
       </div>
       <h3 className="announcement__title">{a.title}</h3>
       {a.eventDate && (

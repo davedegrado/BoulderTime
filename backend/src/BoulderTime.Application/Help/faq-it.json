@@ -16,7 +16,7 @@
         },
         {
           "q": "Come vedo i blocchi di un solo settore?",
-          "a": "Nella pagina della palestra apri **Settori**. Se la palestra ha caricato la piantina, tocca il settore sulla\nmappa e poi **Vedi i blocchi**; altrimenti scegli il settore dalla lista.\n\nPuoi anche usare **Filtri** nella scheda Blocchi: settore, grado, colore delle prese, i tuoi progressi e valutazione.",
+          "a": "Nella pagina della palestra apri **Settori**. Se la palestra ha caricato la piantina, tocca il settore sulla\nmappa e poi **Vedi i blocchi**; altrimenti scegli il settore dalla lista.\n\nPuoi anche usare **Filtri** nella scheda Blocchi: settore, grado, colore delle prese, i tuoi progressi e valutazione. In\n**Ricerca avanzata**, dentro i filtri, cerchi un blocco per nome o per tag.",
           "audience": "both"
         },
         {

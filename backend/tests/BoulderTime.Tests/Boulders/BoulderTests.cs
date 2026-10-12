@@ -286,5 +286,13 @@ public sealed class BoulderTests(PostgresFixture postgres) : IAsyncLifetime
             .Grades.Should().ContainSingle(g => g.Label == "6A");
         (await staff.Client.PostAsJsonAsync($"/api/gyms/{gym.Id}/boulders",
             BoulderTestData.BoulderBody(sector, await staff.UploadPhotoAsync(_f, gym), font, "6A"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        // The boulder that already has it can still be edited without a regrade.
+        (await staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", BoulderTestData.BoulderBody(sector, created.PhotoPath, font, "6A", holdColor: "RED")))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        // But it can't be given to it again once it has another grade.
+        (await staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", BoulderTestData.BoulderBody(sector, created.PhotoPath, font, "6B"))).EnsureSuccessStatusCode();
+        (await staff.Client.PutAsJsonAsync($"/api/boulders/{created.Id}", BoulderTestData.BoulderBody(sector, created.PhotoPath, font, "6A")))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

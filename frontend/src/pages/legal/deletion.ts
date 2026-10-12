@@ -37,7 +37,7 @@ entro 30 giorni e te lo confermiamo.
   parte dello staff.
 - Se l'account era sospeso per violazione delle regole, per **2 anni** un'impronta crittografica (hash) dell'email,
   che non contiene l'indirizzo e non permette di leggerlo: serve solo a non far ripartire da zero un account sospeso.
-- I registri tecnici dei fornitori, per circa 90 giorni.
+- I registri tecnici dei fornitori, per il tempo previsto dai loro termini.
 
 Tutti i dettagli sono nell'informativa sulla privacy.
 `.trim();
@@ -77,7 +77,7 @@ Write to **support@bouldertime.com** from the account's email address and ask fo
 - If the account was suspended for breaking the rules, for **2 years** a cryptographic fingerprint (hash) of the
   email address, which doesn't contain the address and can't be read back into it: it only stops a suspended account
   from starting over.
-- Our providers' technical logs, for about 90 days.
+- Our providers' technical logs, for as long as their terms provide.
 
 The full details are in the privacy notice (in Italian).
 `.trim();

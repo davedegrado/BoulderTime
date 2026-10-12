@@ -53,6 +53,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
     public DbSet<GymAnnouncement> GymAnnouncements => Set<GymAnnouncement>();
     public DbSet<AnnouncementAttendance> AnnouncementAttendances => Set<AnnouncementAttendance>();
+    public DbSet<AnnouncementDismissal> AnnouncementDismissals => Set<AnnouncementDismissal>();
     public DbSet<EarlyPartnership> EarlyPartnerships => Set<EarlyPartnership>();
     public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();

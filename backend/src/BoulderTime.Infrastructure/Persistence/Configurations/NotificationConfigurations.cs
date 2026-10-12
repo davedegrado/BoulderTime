@@ -69,6 +69,17 @@ internal sealed class AnnouncementAttendanceConfiguration : IEntityTypeConfigura
     }
 }
 
+internal sealed class AnnouncementDismissalConfiguration : IEntityTypeConfiguration<AnnouncementDismissal>
+{
+    public void Configure(EntityTypeBuilder<AnnouncementDismissal> b)
+    {
+        b.ToTable("announcement_dismissals");
+        b.HasKey(x => new { x.UserId, x.AnnouncementId });
+        b.HasOne<GymAnnouncement>().WithMany().HasForeignKey(x => x.AnnouncementId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<PushSubscription>
 {
     public void Configure(EntityTypeBuilder<PushSubscription> b)

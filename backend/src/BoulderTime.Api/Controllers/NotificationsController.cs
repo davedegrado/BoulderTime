@@ -51,6 +51,13 @@ public sealed class NotificationsController(NotificationService notifications, A
     public Task<AnnouncementDto> UpdateAnnouncement(Guid id, [FromBody] SaveAnnouncementRequest request, CancellationToken ct) =>
         announcements.UpdateAsync(id, request, ct);
 
+    /// <summary>Takes an update off the viewer's Home (the gym's page keeps it); DELETE puts it back.</summary>
+    [HttpPut("api/announcements/{id:guid}/hidden"), Authorize]
+    public async Task<IActionResult> HideFromHome(Guid id, CancellationToken ct) { await announcements.HideFromHomeAsync(id, ct); return NoContent(); }
+
+    [HttpDelete("api/announcements/{id:guid}/hidden"), Authorize]
+    public async Task<IActionResult> ShowOnHome(Guid id, CancellationToken ct) { await announcements.ShowOnHomeAsync(id, ct); return NoContent(); }
+
     [HttpPut("api/announcements/{id:guid}/attendance"), Authorize]
     public Task<AttendanceDto> Attend(Guid id, CancellationToken ct) => announcements.AttendAsync(id, ct);
 

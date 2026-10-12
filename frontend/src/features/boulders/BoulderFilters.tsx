@@ -3,7 +3,9 @@ import type { GradeSystem } from "@/features/grading/api";
 import type { BoulderFilters as Filters, ProgressFilter } from "@/features/boulders/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
-import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { SearchField } from "@/components/SearchField";
 import { SelectField } from "@/components/Fields";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
@@ -55,17 +57,48 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
           ))}
         </div>
       </fieldset>
-      {tags.length > 0 && (
-        <fieldset className="filter-group">
-          <legend className="field__label">{t("Tags")}</legend>
-          <div className="chips chips--wrap">
-            {tags.map((tag) => (
-              <button key={tag.id} type="button" className="chip" aria-pressed={!!filters.tagIds?.includes(tag.id)} onClick={() => set({ tagIds: toggled(filters.tagIds, tag.id) })}>
-                {tag.name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+      <AdvancedSearch filters={filters} set={set} tags={tags} />
+    </div>
+  );
+}
+
+/**
+ * Name and tags, behind a "Advanced search" button: most people filter by sector and grade, so these stay out of the
+ * way until asked for. Already in use, they open by themselves.
+ */
+function AdvancedSearch({ filters, set, tags }: { filters: Filters; set: (patch: Partial<Filters>) => void; tags: GymTag[] }) {
+  const [open, setOpen] = useState(() => !!filters.name || !!filters.tagIds?.length);
+  const [name, setName] = useState(filters.name ?? "");
+  // The list is asked for once typing pauses, not at every letter.
+  useEffect(() => {
+    const next = name.trim() || undefined;
+    if (next === filters.name) return;
+    const id = window.setTimeout(() => set({ name: next }), 350);
+    return () => window.clearTimeout(id);
+  }, [name]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!filters.name) setName(""); }, [filters.name]);
+
+  return (
+    <div className="advanced-search">
+      <button type="button" className="text-btn advanced-search__toggle" aria-expanded={open} aria-controls="advanced-search" onClick={() => setOpen((v) => !v)}>
+        <Search aria-hidden /> {t("Advanced search")} <ChevronDown aria-hidden className={open ? "is-open" : ""} />
+      </button>
+      {open && (
+        <div id="advanced-search" className="advanced-search__body">
+          <SearchField label={t("Boulder name")} placeholder={t("e.g. La Fessura")} value={name} onChange={setName} />
+          {tags.length > 0 && (
+            <fieldset className="filter-group">
+              <legend className="field__label">{t("Tags")}</legend>
+              <div className="chips chips--wrap">
+                {tags.map((tag) => (
+                  <button key={tag.id} type="button" className="chip" aria-pressed={!!filters.tagIds?.includes(tag.id)} onClick={() => set({ tagIds: toggled(filters.tagIds, tag.id) })}>
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+        </div>
       )}
     </div>
   );
@@ -88,6 +121,7 @@ export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSyste
   if (f.minRating) out.push({ id: "minRating", label: f.minRating === "4" ? t("4+ stars") : t("3+ stars"), clear: drop("minRating") });
   for (const i of f.intensity ?? [])
     out.push({ id: `intensity-${i}`, label: intensityLabel(i as Intensity), clear: (x) => ({ ...x, intensity: toggled(x.intensity, i) }) });
+  if (f.name) out.push({ id: "name", label: t("Name: {name}", { name: f.name }), clear: drop("name") });
   for (const id of f.tagIds ?? [])
     out.push({ id: `tag-${id}`, label: tags.find((tag) => tag.id === id)?.name ?? t("Tag"), clear: (x) => ({ ...x, tagIds: toggled(x.tagIds, id) }) });
   return out;

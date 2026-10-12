@@ -57,11 +57,14 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
           <div className="history-row__top">
             {item.completed ? <span className="sent-mark" aria-label={t("Completed")}><Check aria-hidden /></span> : <span className="project-mark">{t("Project")}</span>}
             <GradeLine grades={b.grades} />
+            {b.points != null && <span className="history-row__points">{t("+{points} pt", { points: b.points })}</span>}
           </div>
+          {/* As on the cards: the name when the boulder has one, never something else in its place. */}
+          {b.name && <p className="history-row__name">{b.name}</p>}
           <p className="list__sub">{b.sectorName} · {b.gymName}</p>
           <p className="history-row__meta">
             {item.completed && item.completedAt ? t("Completed {date}", { date: formatDate(item.completedAt) }) : t("Last tried {date}", { date: formatDate(item.updatedAt) })}
-            {` · ${plural(item.attempts, t("{count} attempt"), t("{count} attempts"))}`}
+            {` · ${plural(item.attempts, "{count} attempt", "{count} attempts")}`}
           </p>
           <div className="history-row__tags">
             <HoldBadge color={b.holdColor} compact />

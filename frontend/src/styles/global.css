@@ -469,9 +469,9 @@ svg { flex-shrink: 0; }
 .sent-mark--lg svg { width: 26px; height: 26px; }
 .project-mark { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--bt-radius-pill); background: var(--bt-orange-tint); color: var(--bt-orange-ink); font-size: var(--bt-text-xs); font-weight: 700; }
 
-.boulder-card__sent { position: absolute; right: 8px; top: 8px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--bt-success); color: #fff; box-shadow: 0 0 0 2px #fff; }
+.boulder-card__sent { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--bt-success); color: #fff; box-shadow: 0 0 0 2px #fff; }
 .boulder-card__sent svg { width: 18px; height: 18px; stroke-width: 3; }
-.boulder-card__tries { position: absolute; right: 8px; top: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 7px; border-radius: var(--bt-radius-pill); background: var(--bt-orange); color: var(--bt-charcoal); font-size: var(--bt-text-xs); font-weight: 800; }
+.boulder-card__tries { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 7px; border-radius: var(--bt-radius-pill); background: var(--bt-orange); color: var(--bt-charcoal); font-size: var(--bt-text-xs); font-weight: 800; }
 .boulder-card__tries svg { width: 13px; height: 13px; stroke-width: 2.6; }
 .boulder-card__foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%; }
 
@@ -597,7 +597,7 @@ svg { flex-shrink: 0; }
 /* Moderation */
 .moderation-video { display: grid; gap: var(--bt-4); }
 @media (min-width: 900px) { .moderation-video { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
-.moderation-video__side { display: grid; grid-template-columns: 120px 1fr; gap: var(--bt-3); align-items: start; }
+.moderation-video__side { display: grid; grid-template-columns: 136px 1fr; gap: var(--bt-3); align-items: start; }
 .report { display: flex; flex-direction: column; gap: var(--bt-3); }
 .report__excerpt { margin: 0; padding: var(--bt-3); border-left: 4px solid var(--bt-orange); background: var(--bt-surface-2); border-radius: 0 var(--bt-radius-sm) var(--bt-radius-sm) 0; white-space: pre-line; overflow-wrap: anywhere; }
 
@@ -1329,3 +1329,52 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 /* The leaderboard's own "take part" switch: a quiet card above the board, the same row as in the profile. */
 .leaderboard-optin { padding: var(--bt-3) var(--bt-4); }
 .leaderboard-optin .list__title { font-weight: 700; }
+
+/* Date and time pickers. iOS draws them as its own control: content centred, a minimum width that pushes past the
+   card, a lighter border and a different height. Without its own appearance the field looks like every other one,
+   and tapping it still opens the system's picker. */
+.field__input[type="date"], .field__input[type="time"], .field__input[type="datetime-local"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%;
+  min-height: var(--bt-touch); line-height: var(--bt-touch); text-align: left;
+  font-size: 1rem; color: var(--bt-ink); background-color: var(--bt-surface);
+}
+.field__input[type="date"]::-webkit-date-and-time-value,
+.field__input[type="time"]::-webkit-date-and-time-value,
+.field__input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+/* The opening-hours times sit two to a row: no wider than they need. */
+.opening-editor__interval .field__input[type="time"] { flex: 1 1 0; width: auto; min-width: 0; max-width: 10rem; }
+.opening-editor__interval { width: 100%; max-width: 24rem; }
+
+/* Top right of the photo: the climber's state and, in lists that mix gyms, the gym's logo after it. */
+.boulder-card__corner { position: absolute; right: 8px; top: 8px; display: flex; align-items: center; gap: 6px; }
+.boulder-card__gym { display: inline-flex; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgb(0 0 0 / 0.35); }
+.boulder-card__gym .gym-avatar, .boulder-card__gym img { border-radius: 50%; }
+/* In a narrow column only what tells the boulder apart: the grade on the photo, holds and sector under it. */
+.boulder-card--compact .boulder-card__points, .boulder-card--compact .boulder-card__intensity, .boulder-card--compact .boulder-card__stats { display: none; }
+.boulder-card--compact .boulder-card__grades .grade--sm { display: none; }
+
+/* The cropper shows where the card's badges will sit, as faint outlines that move with nothing. */
+.cropper__badge { position: absolute; display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 0 8px; border: 1.5px dashed rgb(255 255 255 / 0.8); border-radius: 6px; background: rgb(0 0 0 / 0.35); color: #fff; font-size: 0.6875rem; font-weight: 800; pointer-events: none; }
+.cropper__badge--grade { left: 4%; bottom: 4%; width: 34%; }
+.cropper__badge--points { right: 4%; bottom: 4%; border-radius: var(--bt-radius-pill); }
+.cropper__badge--state { right: 4%; top: 4%; width: 26px; min-height: 26px; padding: 0; border-radius: 50%; }
+.history-row__points { margin-left: auto; font-size: var(--bt-text-xs); font-weight: 800; color: var(--bt-ink-2); white-space: nowrap; }
+.history-row__name { margin: 0; font-weight: 700; color: var(--bt-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Advanced search: name and tags, closed until asked for. */
+.advanced-search { grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--bt-3); }
+.advanced-search__toggle { align-self: flex-start; }
+.advanced-search__toggle svg.is-open { transform: rotate(180deg); }
+.advanced-search__body { display: flex; flex-direction: column; gap: var(--bt-3); }
+
+/* A section that folds away: its title is the button. */
+.section__toggle { display: flex; align-items: center; gap: var(--bt-2); width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.section__title--toggle { margin: 0; }
+.section__count { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-3); }
+.section__chevron { width: 20px; height: 20px; margin-left: auto; color: var(--bt-ink-2); transition: transform 150ms; }
+.section__chevron.is-open { transform: rotate(180deg); }
+.announcement__meta { display: inline-flex; align-items: center; gap: 4px; }
+.announcement__hide { width: 32px; height: 32px; min-height: 32px; margin: -6px -8px -6px 0; color: var(--bt-ink-3); }
+.announcement__hide svg { width: 18px; height: 18px; }
+

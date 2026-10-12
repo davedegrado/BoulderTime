@@ -6,6 +6,7 @@ import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
 import { dataLabel } from "@/i18n/data";
+import { GymAvatar } from "@/components/GymAvatar";
 import { plural, t } from "@/i18n/i18n";
 
 interface BoulderCardProps {
@@ -16,12 +17,16 @@ interface BoulderCardProps {
   onToggle?: () => void;
   /** Press and hold to start selecting, the way a phone's home screen arms its icons. */
   onLongPress?: () => void;
+  /** Lists that mix gyms (Home): the gym's logo in the photo's corner says where the boulder is. */
+  showGym?: boolean;
+  /** A narrow column (the moderation queue): grade, holds and sector only. */
+  compact?: boolean;
 }
 
 const LONG_PRESS_MS = 450;
 
 /** Image-first card for scanning many boulders: grade and holds are always both visible, and the holds always labelled. */
-export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress }: BoulderCardProps) {
+export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false }: BoulderCardProps) {
   const timer = useRef<number | null>(null);
   const fired = useRef(false);
 
@@ -61,11 +66,22 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
           : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
         {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
         {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
-        {!selectable && boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
-        {!selectable && tries > 0 && (
-          <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
-            <RotateCw aria-hidden /><span aria-hidden>{tries}</span>
-            <span className="sr-only">{plural(tries, "{count} try", "{count} tries")}</span>
+        {!selectable && (
+          // Top right: the climber's own state, and the gym's logo where a list mixes gyms.
+          <span className="boulder-card__corner">
+            {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
+            {tries > 0 && (
+              <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
+                <RotateCw aria-hidden /><span aria-hidden>{tries}</span>
+                <span className="sr-only">{plural(tries, "{count} try", "{count} tries")}</span>
+              </span>
+            )}
+            {showGym && (
+              <span className="boulder-card__gym" title={boulder.gymName}>
+                <GymAvatar name={boulder.gymName} logoUrl={boulder.gymLogoUrl ?? null} size={30} />
+                <span className="sr-only">{t("At {gym}", { gym: boulder.gymName })}</span>
+              </span>
+            )}
           </span>
         )}
         {selectable && <span className={`boulder-card__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
@@ -103,11 +119,11 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
 
   if (selectable) {
     return (
-      <button type="button" className={`boulder-card ${selected ? "boulder-card--selected" : ""}`} onClick={onToggle} aria-pressed={selected}
+      <button type="button" className={`boulder-card ${selected ? "boulder-card--selected" : ""} ${compact ? "boulder-card--compact" : ""}`} onClick={onToggle} aria-pressed={selected}
         aria-label={[name, boulder.grades.map((g) => dataLabel(g.label)).join(" ") || t("Ungraded"), boulder.sectorName].filter(Boolean).join(", ")}>
         {body}
       </button>
     );
   }
-  return <Link to={to ?? `/boulders/${boulder.id}`} className="boulder-card" {...pressHandlers}>{body}</Link>;
+  return <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${compact ? "boulder-card--compact" : ""}`} {...pressHandlers}>{body}</Link>;
 }

@@ -1,6 +1,7 @@
 import { Rail } from "@/components/Rail";
 import { Link } from "react-router-dom";
-import { ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { useHome, type HomeGym } from "@/features/climbing/api";
@@ -8,6 +9,9 @@ import { InvitationsCard } from "@/features/staff/InvitationsCard";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { HistoryRow } from "@/features/climbing/ClimbingBits";
 import { AnnouncementCard } from "@/features/notifications/NotificationBits";
+import { useHideUpdate, type Announcement } from "@/features/notifications/api";
+import { useToast } from "@/components/Toast";
+import { errorMessage } from "@/lib/apiError";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Logo } from "@/components/Logo";
@@ -109,24 +113,19 @@ function SignedInHome() {
         )}
       </section>
 
-      {updates.length > 0 && (
-        <section aria-labelledby="updates-title" className="section">
-          <h2 id="updates-title" className="section__title">{t("Gym updates")}</h2>
-          <div className="stack">{updates.map((a) => <AnnouncementCard key={a.id} a={a} showGym />)}</div>
-        </section>
-      )}
+      {updates.length > 0 && <GymUpdates updates={updates} total={h.updates.length} />}
 
       {h.freshToTry.length > 0 && (
         <section aria-labelledby="fresh-title" className="section">
           <h2 id="fresh-title" className="section__title">{t("Fresh on the wall")}</h2>
-          <Rail>{h.freshToTry.map((b) => <BoulderCard key={b.id} boulder={b} />)}</Rail>
+          <Rail>{h.freshToTry.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
         </section>
       )}
 
       {h.projects.length > 0 && (
         <section aria-labelledby="projects-title" className="section">
           <h2 id="projects-title" className="section__title">{t("Keep trying")}</h2>
-          <Rail>{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} />)}</Rail>
+          <Rail>{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
         </section>
       )}
 
@@ -176,3 +175,41 @@ function SignedInHome() {
     </div>
   );
 }
+
+const COLLAPSED_KEY = "bt:home-updates-collapsed";
+const readCollapsed = () => { try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; } };
+
+/**
+ * The gyms' news on Home. It can be folded away, so following many gyms never buries the boulders under it (the choice
+ * is remembered on this device), and any single update can be taken off Home; the gym's page still has them all.
+ */
+function GymUpdates({ updates, total }: { updates: Announcement[]; total: number }) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const hide = useHideUpdate();
+  const toast = useToast();
+  const toggle = () => setCollapsed((c) => {
+    try { localStorage.setItem(COLLAPSED_KEY, c ? "0" : "1"); } catch { /* remembered for this visit only */ }
+    return !c;
+  });
+  return (
+    <section aria-labelledby="updates-title" className="section">
+      {/* The heading holds the button, not the other way round: a heading inside a button stops being one. */}
+      <h2 id="updates-title" className="section__title section__title--toggle">
+        <button type="button" className="section__toggle" aria-expanded={!collapsed} aria-controls="home-updates" onClick={toggle}>
+          <span>{t("Gym updates")}</span>
+          {collapsed && <span className="section__count">{plural(total, "1 update", "{count} updates")}</span>}
+          <ChevronDown aria-hidden className={`section__chevron ${collapsed ? "" : "is-open"}`} />
+        </button>
+      </h2>
+      {!collapsed && (
+        <div id="home-updates" className="stack">
+          {updates.map((a) => (
+            <AnnouncementCard key={a.id} a={a} showGym
+              onHide={() => hide.mutate(a.id, { onSuccess: () => toast.success(t("Hidden from Home. It stays on the gym's page.")), onError: (e) => toast.error(errorMessage(e)) })} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+

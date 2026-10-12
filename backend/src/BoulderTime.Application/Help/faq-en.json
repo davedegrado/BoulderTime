@@ -16,7 +16,7 @@
         },
         {
           "q": "How do I see the boulders of one sector?",
-          "a": "On the gym's page open **Sectors**. If the gym uploaded its floor plan, tap the sector on the map, then\n**See the boulders**; otherwise pick the sector from the list.\n\n**Filters** in the Boulders tab work too: sector, grade, hold colour, your progress and rating.",
+          "a": "On the gym's page open **Sectors**. If the gym uploaded its floor plan, tap the sector on the map, then\n**See the boulders**; otherwise pick the sector from the list.\n\n**Filters** in the Boulders tab work too: sector, grade, hold colour, your progress and rating. Inside them,\n**Advanced search** finds a boulder by name or by tag.",
           "audience": "both"
         },
         {

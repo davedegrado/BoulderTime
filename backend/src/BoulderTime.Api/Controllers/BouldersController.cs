@@ -41,8 +41,8 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
     public Task<PagedResult<BoulderSummaryDto>> List(Guid gymId, [FromQuery] BoulderStatus? status, [FromQuery] Guid? sectorId,
         [FromQuery] HoldColor? holdColor, [FromQuery] Guid? gradeValueId, [FromQuery] ProgressFilter? progress, [FromQuery] int? minRating,
         [FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery(Name = "tagId")] Guid[]? tagIds, [FromQuery(Name = "intensity")] BoulderIntensity[]? intensities,
-        CancellationToken ct) =>
-        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, holdColor, gradeValueId, progress, minRating, page, pageSize, tagIds, intensities), ct);
+        [FromQuery] string? name, CancellationToken ct) =>
+        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, holdColor, gradeValueId, progress, minRating, page, pageSize, tagIds, intensities, name), ct);
 
     [HttpGet("api/boulders/{boulderId:guid}"), AllowAnonymous]
     public Task<BoulderDetailDto> Get(Guid boulderId, CancellationToken ct) => boulders.GetAsync(boulderId, ct);

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using BoulderTime.Application.Boulders;
+using BoulderTime.Application.Climbing;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Notifications;
 using BoulderTime.Tests.Climbing;
@@ -98,6 +99,28 @@ public sealed class AttendanceTests(PostgresFixture postgres) : IAsyncLifetime
         // Blocking hides people here as everywhere: the list leaves them out, both ways.
         (await anna.Client.PutAsJsonAsync($"/api/users/me/blocks/{follower.Id}", new { })).EnsureSuccessStatusCode();
         (await (await follower.Client.GetAsync($"/api/announcements/{e.Id}/attendees")).ReadAsync<List<PersonDto>>())!.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task An_update_taken_off_Home_stays_on_the_gyms_page_and_can_come_back()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var e = await PostAsync(w, "ANNOUNCEMENT");
+        var me = await _f.UserAsync();
+        (await me.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/follow", new { })).EnsureSuccessStatusCode();
+        async Task<List<Guid>> HomeUpdates() => (await (await me.Client.GetAsync("/api/users/me/home")).ReadAsync<HomeDto>())!.Updates.Select(a => a.Id).ToList();
+        (await HomeUpdates()).Should().Contain(e.Id);
+
+        (await me.Client.PutAsync($"/api/announcements/{e.Id}/hidden", null)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await me.Client.PutAsync($"/api/announcements/{e.Id}/hidden", null)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await HomeUpdates()).Should().NotContain(e.Id);
+        (await AsSeenBy(me.Client, w.Gym.Id, e.Id)).Id.Should().Be(e.Id, "the gym's page still lists it");
+        var other = await _f.UserAsync();
+        (await other.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/follow", new { })).EnsureSuccessStatusCode();
+        (await (await other.Client.GetAsync("/api/users/me/home")).ReadAsync<HomeDto>())!.Updates.Should().Contain(a => a.Id == e.Id, "hiding is one person's");
+
+        (await me.Client.DeleteAsync($"/api/announcements/{e.Id}/hidden")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await HomeUpdates()).Should().Contain(e.Id);
     }
 
     [Fact]
