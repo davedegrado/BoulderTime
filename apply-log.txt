@@ -1,6 +1,6 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Leaderboards opt-in; deletion page accurate; quieter build and tests
-applicata: Leaderboards opt-in; deletion page accurate; quieter build
+Applying: Leaderboard opt-in as a switch; no names on the favourite-sector map
+applicata: Leaderboard opt-in as a switch; no names on the
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
@@ -12,7 +12,7 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:11.10
+Time Elapsed 00:00:08.65
 OK
 == 5. TEST BACKEND ==
 Total tests: 320
@@ -36,51 +36,51 @@ dist/assets/inter-latin-500-normal-BL9OpVg8.woff    31.28 kB
 dist/assets/inter-latin-800-normal-D1mf63XC.woff    31.30 kB
 dist/assets/inter-latin-700-normal-BLAVimhd.woff    31.32 kB
 dist/assets/GymMap-CIGW-MKW.css                     15.61 kB │ gzip:  6.46 kB
-dist/assets/index-C1a9iM7f.css                      94.51 kB │ gzip: 16.87 kB
+dist/assets/index-C4DqFism.css                      94.61 kB │ gzip: 16.90 kB
 dist/assets/SubNav-CKcDfOu_.js                       0.24 kB │ gzip:  0.19 kB
 dist/assets/virtual_pwa-register-DXWILRaU.js         0.76 kB │ gzip:  0.46 kB
-dist/assets/App-BgZl7kGD.js                          1.06 kB │ gzip:  0.63 kB
-dist/assets/AdminLayout-zIbW8c4T.js                  1.19 kB │ gzip:  0.59 kB
-dist/assets/CreateGymForm-nPNf1Nq7.js                1.76 kB │ gzip:  0.89 kB
-dist/assets/AdminUsers-DU00fY60.js                   2.20 kB │ gzip:  1.03 kB
-dist/assets/ManageLayout-BwTuIefP.js                 2.55 kB │ gzip:  1.21 kB
-dist/assets/AdminReports-CzOtLsz2.js                 2.68 kB │ gzip:  1.25 kB
-dist/assets/ReportsList-CvKLMntW.js                  2.99 kB │ gzip:  1.33 kB
-dist/assets/AdminCandidates-CwZMk75-.js              3.14 kB │ gzip:  1.42 kB
-dist/assets/SuggestGymPage-CgX8EXW0.js               3.15 kB │ gzip:  1.40 kB
-dist/assets/api-CBvYAAeI.js                          3.30 kB │ gzip:  1.01 kB
-dist/assets/AdminLeaderboards-BiArSONz.js            3.38 kB │ gzip:  1.23 kB
-dist/assets/HelpPage-Bowq7580.js                     3.40 kB │ gzip:  1.56 kB
-dist/assets/ManageModeration-Cgerxpjy.js             3.44 kB │ gzip:  1.47 kB
-dist/assets/ManageTags-B8PooixO.js                   3.45 kB │ gzip:  1.48 kB
-dist/assets/ManageOverview-DnpdvEyM.js               3.55 kB │ gzip:  1.11 kB
-dist/assets/AdminDashboard-Ki-tzp7Y.js               3.87 kB │ gzip:  1.40 kB
-dist/assets/AdminPartners-EQRLziPI.js                4.59 kB │ gzip:  1.61 kB
-dist/assets/ManageSectors-BxWMwQS3.js                4.61 kB │ gzip:  1.83 kB
-dist/assets/ManageStaff-DfXoDzig.js                  4.68 kB │ gzip:  1.82 kB
-dist/assets/AdminGyms-Cof0zrCL.js                    5.19 kB │ gzip:  2.22 kB
-dist/assets/ManageAnnouncements-DGoj48Ms.js          5.62 kB │ gzip:  2.35 kB
+dist/assets/App-ii6OxkAP.js                          1.06 kB │ gzip:  0.63 kB
+dist/assets/AdminLayout-CyATykRe.js                  1.19 kB │ gzip:  0.59 kB
+dist/assets/CreateGymForm-CSmX1j0S.js                1.76 kB │ gzip:  0.88 kB
+dist/assets/AdminUsers-DbYK6lk4.js                   2.20 kB │ gzip:  1.02 kB
+dist/assets/ManageLayout-2KlEZjqp.js                 2.55 kB │ gzip:  1.21 kB
+dist/assets/AdminReports-fovQTYRA.js                 2.68 kB │ gzip:  1.25 kB
+dist/assets/ReportsList-BNF-UisL.js                  2.99 kB │ gzip:  1.33 kB
+dist/assets/AdminCandidates-Bj0nkdUk.js              3.14 kB │ gzip:  1.41 kB
+dist/assets/SuggestGymPage-Dm1RzMgc.js               3.15 kB │ gzip:  1.40 kB
+dist/assets/api-Dcrasly8.js                          3.30 kB │ gzip:  1.01 kB
+dist/assets/AdminLeaderboards-CjnD1_C-.js            3.38 kB │ gzip:  1.23 kB
+dist/assets/HelpPage-CPIdsnTh.js                     3.40 kB │ gzip:  1.56 kB
+dist/assets/ManageModeration-CaSNb9Lx.js             3.44 kB │ gzip:  1.47 kB
+dist/assets/ManageTags-BYzB5hJM.js                   3.45 kB │ gzip:  1.48 kB
+dist/assets/ManageOverview-CDLdLsNz.js               3.55 kB │ gzip:  1.11 kB
+dist/assets/AdminDashboard-D1mqRzjF.js               3.87 kB │ gzip:  1.39 kB
+dist/assets/AdminPartners-m8zL9Is8.js                4.59 kB │ gzip:  1.61 kB
+dist/assets/ManageSectors-Dxix1fld.js                4.61 kB │ gzip:  1.83 kB
+dist/assets/ManageStaff-4r8hKAVf.js                  4.68 kB │ gzip:  1.83 kB
+dist/assets/AdminGyms-C4zCThwC.js                    5.19 kB │ gzip:  2.22 kB
+dist/assets/ManageAnnouncements-DRoniDiR.js          5.62 kB │ gzip:  2.35 kB
 dist/assets/workbox-window.prod.es5-BqEJf4Xk.js      5.71 kB │ gzip:  2.34 kB
-dist/assets/ManageSettings-rfLX7Qk1.js               5.85 kB │ gzip:  2.34 kB
-dist/assets/NotificationSettingsPage-wnJEJT7P.js     6.37 kB │ gzip:  2.49 kB
-dist/assets/ManageBoulders-C_ra6EOU.js               6.84 kB │ gzip:  2.63 kB
-dist/assets/ManageGrading-DdI5vd0T.js                7.54 kB │ gzip:  2.77 kB
-dist/assets/ManageSectorMap-CVHWcTj0.js              8.00 kB │ gzip:  3.08 kB
+dist/assets/ManageSettings-B4oXi6Kk.js               5.85 kB │ gzip:  2.34 kB
+dist/assets/NotificationSettingsPage-C9nt0sBf.js     6.37 kB │ gzip:  2.49 kB
+dist/assets/ManageBoulders-CU_cqNpb.js               6.84 kB │ gzip:  2.63 kB
+dist/assets/ManageGrading-C1X02rgk.js                7.54 kB │ gzip:  2.77 kB
+dist/assets/ManageSectorMap-Zn3T2ZuI.js              8.00 kB │ gzip:  3.08 kB
 dist/assets/capacitor-dVyno5Eu.js                   14.43 kB │ gzip:  5.28 kB
-dist/assets/BoulderEditorPage-BXEVleLZ.js           16.56 kB │ gzip:  5.88 kB
+dist/assets/BoulderEditorPage-DiCaeHkW.js           16.56 kB │ gzip:  5.88 kB
 dist/assets/query-COwOXT4q.js                       41.89 kB │ gzip: 12.37 kB
 dist/assets/icons-DrUb7eF4.js                       48.64 kB │ gzip: 10.34 kB
 dist/assets/index-1ASYgoII.js                       60.09 kB │ gzip: 15.79 kB
-dist/assets/index-BQbuFCHd.js                       71.65 kB │ gzip: 25.38 kB
-dist/assets/GymMap-DsTBmvH4.js                     158.07 kB │ gzip: 46.40 kB
+dist/assets/index-DmZipthn.js                       71.58 kB │ gzip: 25.38 kB
+dist/assets/GymMap-CeHjGXBE.js                     158.07 kB │ gzip: 46.40 kB
 dist/assets/react-DevxjaPM.js                      208.17 kB │ gzip: 67.76 kB
-dist/assets/router-BHQmgTQD.js                     213.15 kB │ gzip: 62.42 kB
+dist/assets/router-C82n5f-G.js                     213.09 kB │ gzip: 62.40 kB
 dist/assets/supabase-3Te545q_.js                   227.01 kB │ gzip: 58.86 kB
-✓ built in 5.98s
+✓ built in 5.75s
 
 PWA v0.21.2
 mode      generateSW
-precache  56 entries (1674.74 KiB)
+precache  56 entries (1674.72 KiB)
 files generated
   dist/sw.js
   dist/workbox-835c8c05.js
