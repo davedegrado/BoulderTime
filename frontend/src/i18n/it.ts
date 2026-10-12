@@ -1158,4 +1158,11 @@ export const it: Record<string, string> = {
   "{count} user": "{count} utente",
   "{count} users": "{count} utenti",
   "Removed after a report.": "Rimosso dopo una segnalazione.",
+  "In this browser": "In questo browser",
+  "Notifications in this browser": "Notifiche in questo browser",
+  "Browser notifications on": "Notifiche del browser attive",
+  "Browser notifications off": "Notifiche del browser disattivate",
+  "This browser is blocking notifications from BoulderTime. Allow them in the site's settings (the icon beside the address), then try again.": "Questo browser blocca le notifiche di BoulderTime. Consentile nelle impostazioni del sito (l'icona accanto all'indirizzo), poi riprova.",
+  "Sent. It should appear within a few seconds. If it doesn't, the browser or the computer isn't letting it through: check the site's notification permission, the system's notification settings and Do Not Disturb.": "Inviata. Dovrebbe comparire entro pochi secondi. Se non arriva, la blocca il browser o il computer: controlla il permesso di notifica del sito, le impostazioni di notifica del sistema e la modalità Non disturbare.",
+  "Notifications aren't set up correctly on the server.": "Le notifiche non sono configurate correttamente sul server.",
 };

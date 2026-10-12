@@ -163,3 +163,14 @@ describe("Where it is, on the boulder's page", () => {
     expect(screen.getByText("Strapiombo")).toBeInTheDocument();
   });
 });
+
+import { pushWording } from "@/features/notifications/pushWording";
+
+describe("Notification messages on the website", () => {
+  it("talk about the browser, not a phone", () => {
+    const words = pushWording();
+    expect(words.on).toBe("Browser notifications on");
+    expect(words.denied).toContain("site's settings");
+    expect(Object.values(words).join(" ")).not.toMatch(/phone/i);
+  });
+});

@@ -8,6 +8,7 @@ import { errorMessage } from "@/lib/apiError";
 import { t } from "@/i18n/i18n";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { pushWording } from "@/features/notifications/pushWording";
 import { disablePush, enablePush, nativePushInThisBuild, needsInstallFirst, pushStatus, pushSupportedHere, sendTestPush, type PushTestResult } from "@/features/notifications/push";
 import { isNativeApp } from "@/lib/native";
 
@@ -43,13 +44,13 @@ function PhoneNotifications() {
     try {
       if (!on) {
         await disablePush();
-        toast.success(t("Phone notifications off"));
+        toast.success(pushWording().off);
       } else {
         const outcome = await enablePush(status.data?.publicKey ?? "");
-        if (outcome === "denied") toast.error(t("Your phone refused notifications. Turn them on for BoulderTime in the phone's settings."));
+        if (outcome === "denied") toast.error(pushWording().denied);
         else if (outcome === "unsupported") toast.error(t("This browser can't do notifications."));
-        else if (outcome === "misconfigured") toast.error(t("Phone notifications aren't set up correctly on the server."));
-        else toast.success(t("Phone notifications on"));
+        else if (outcome === "misconfigured") toast.error(t("Notifications aren't set up correctly on the server."));
+        else toast.success(pushWording().on);
       }
       setTest(null);
       await status.refetch();
@@ -75,12 +76,12 @@ function PhoneNotifications() {
 
   return (
     <section className="card stack" aria-labelledby="phone-title">
-      <h2 id="phone-title" className="section__title">{t("On your phone")}</h2>
+      <h2 id="phone-title" className="section__title">{pushWording().title}</h2>
       {needsInstallFirst() ? (
         <p className="notice">{t("On iPhone, notifications arrive only once BoulderTime is on your home screen: tap Share, then “Add to Home Screen”, and open it from there.")}</p>
       ) : (
         <Toggle
-          label={t("Notifications on this phone")}
+          label={pushWording().toggle}
           description={t("New boulders, retraces and gym updates reach you even with the app closed. What you receive follows the settings below.")}
           checked={status.data?.subscribedOnThisDevice ?? false}
           disabled={busy || status.isPending}
@@ -105,7 +106,7 @@ function PhoneNotifications() {
 
 /** What a test notification's outcome means, in words that point at what to fix. */
 function testExplanation({ outcome, detail }: PushTestResult): string {
-  if (outcome === "delivered") return t("Sent. It should appear within a few seconds, even with the app open. If it doesn't, the phone isn't letting it through: check BoulderTime's notifications in the phone's settings and any Focus mode.");
+  if (outcome === "delivered") return pushWording().delivered;
   if (outcome === "skipped") return t("The server can't send notifications to this kind of device: it isn't set up for it.");
   if (outcome === "gone") return t("This device is no longer registered. Turn notifications on again.");
   if (detail?.includes("THIRD_PARTY_AUTH_ERROR")) return t("Firebase can't reach Apple: the APNs key in the Firebase project (Cloud Messaging, Apple app) is missing or wrong.");

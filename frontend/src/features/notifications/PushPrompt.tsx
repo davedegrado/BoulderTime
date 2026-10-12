@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { enablePush, needsInstallFirst, pushStatus, pushSupportedHere } from "@/features/notifications/push";
 import { errorMessage } from "@/lib/apiError";
+import { pushWording } from "@/features/notifications/pushWording";
 import { t } from "@/i18n/i18n";
 
 const ASKED_KEY = "bt:push-asked-session";
@@ -55,10 +56,11 @@ export function PushPrompt() {
     setBusy(true);
     try {
       const outcome = await enablePush(status.data?.publicKey ?? "");
-      if (outcome === "denied") toast.error(t("Your phone refused notifications. Turn them on for BoulderTime in the phone's settings."));
+      const words = pushWording();
+      if (outcome === "denied") toast.error(words.denied);
       else if (outcome === "unsupported") toast.error(t("This browser can't do notifications."));
-      else if (outcome === "misconfigured") toast.error(t("Phone notifications aren't set up correctly on the server."));
-      else toast.success(t("Phone notifications on"));
+      else if (outcome === "misconfigured") toast.error(t("Notifications aren't set up correctly on the server."));
+      else toast.success(words.on);
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
