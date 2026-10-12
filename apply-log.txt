@@ -1,57 +1,22 @@
 == 1. APPLICO LE MODIFICHE ==
-Applying: Points staff can set, boulder names, two-colour grades, opening hours, "I'll be there", help by role
-applicata: Points staff can set, boulder names, two-colour grades,
+Applying: Help texts stay in the main assembly
+applicata: Help texts stay in the main assembly
 == 2. STRUMENTI ==
 Tool 'dotnet-ef' (version '10.0.12') is already installed.
 OK
 == 3. MIGRAZIONE ==
-Build started...
-Build succeeded.
-An operation was scaffolded that may result in the loss of data. Please review the migration for accuracy.
-Done. To undo this action, use 'ef migrations remove'
-creata: Model202610120828
+nessuna modifica al modello
 == 4. BUILD BACKEND ==
 
 Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:13.38
+Time Elapsed 00:00:09.51
 OK
 == 5. TEST BACKEND ==
---- test falliti ---
-[xUnit.net 00:02:14.05]     BoulderTime.Tests.Help.FaqTests.Staff_of_any_gym_and_platform_admins_receive_both_guides [FAIL]
-[xUnit.net 00:02:14.64]     BoulderTime.Tests.Help.FaqTests.Climbers_and_visitors_never_receive_the_staff_answers [FAIL]
-[xUnit.net 00:02:15.23]     BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions [FAIL]
-  Failed BoulderTime.Tests.Help.FaqTests.Staff_of_any_gym_and_platform_admins_receive_both_guides [151 ms]
-  Failed BoulderTime.Tests.Help.FaqTests.Climbers_and_visitors_never_receive_the_staff_answers [13 ms]
-  Failed BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions [39 ms]
-      Failed executing DbCommand (3ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?', @p3='?' (DbType = Guid), @p4='?', @p5='?' (DbType = Boolean), @p6='?', @p7='?', @p8='?' (DbType = Int32), @p9='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
-     Failed: 3
-  Error Message:
-   Expected forStaff.Staff not to be empty, but found <null>.
-  Stack Trace:
-     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
---
-  Error Message:
-   Expected anonymous.Climbers not to be empty, but found <null>.
-  Stack Trace:
-     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
---
-  Error Message:
-   System.ArgumentNullException : Value cannot be null. (Parameter 'source')
-  Stack Trace:
-     at System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)
-   at System.Linq.Enumerable.Select[TSource,TResult](IEnumerable`1 source, Func`2 selector)
-   at BoulderTime.Tests.Help.FaqTests.Both_languages_ask_the_same_questions() in /workspaces/BoulderTime/backend/tests/BoulderTime.Tests/Help/FaqTests.cs:line 51
---- End of stack trace from previous location ---
 Total tests: 309
+test backend: ok
 == 6. FRONTEND ==
       Tests  238 passed (238)
 vite v5.4.21 building for production...
@@ -125,7 +90,7 @@ dist/assets/router-DNMMjiXv.js                     579.03 kB │ gzip: 161.94 kB
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.86s
+✓ built in 5.70s
 
 PWA v0.21.2
 mode      generateSW
@@ -134,4 +99,4 @@ files generated
   dist/sw.js
   dist/workbox-835c8c05.js
 OK
-== ESITO: fail ==
+== ESITO: ok ==
