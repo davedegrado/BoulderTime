@@ -48,7 +48,7 @@ Le classifiche si basano su quello che dichiari tu. Dichiarare completati mai fa
 se i risultati di qualcuno appaiono implausibili, possiamo escluderlo dalle classifiche. L'account resta attivo e la
 persona vede l'avviso nel proprio profilo. Se pensi sia un errore, scrivi a support@bouldertime.com.
 
-Puoi anche decidere da solo di non comparire in classifica: **Profilo → Classifiche**.
+Comparire in classifica è una tua scelta: lo attivi, e lo togli quando vuoi, da **Profilo → Classifiche**.
 
 ## Le palestre
 

@@ -9,7 +9,7 @@ vi.mock("@/auth/AuthProvider", () => ({ useAuth: () => ({ session: null, signUpW
 
 import { SignUpPage } from "@/pages/SignUpPage";
 
-const show = () => render(<I18nProvider initial="it"><MemoryRouter><SignUpPage /></MemoryRouter></I18nProvider>);
+const show = () => render(<I18nProvider initial="it"><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><SignUpPage /></MemoryRouter></I18nProvider>);
 
 async function fillIn() {
   await userEvent.type(screen.getByLabelText("Nome visualizzato"), "MatteoClimbs");

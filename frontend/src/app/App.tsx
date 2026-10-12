@@ -48,7 +48,7 @@ export function App() {
         <AuthProvider>
           <ToastProvider>
             <LanguageFromProfile />
-            <RouterProvider router={router} />
+            <RouterProvider router={router} future={{ v7_startTransition: true }} />
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

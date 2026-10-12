@@ -1027,3 +1027,11 @@ App builds already installed keep the guide they were built with.
 
 **Links.** Addresses written in an update become links (http and https only; nothing else in the text is ever
 interpreted), opening outside the app. Update images keep their proportions, centred, and open full screen.
+
+## ADR-054 · Leaderboards are opt-in
+A new account doesn't appear in leaderboards, nor by name among the people who completed a boulder, until the person
+turns it on (**Profile → Leaderboards**, or the button the Leaderboard tab shows them). Being ranked by name in front
+of a gym is a choice, not a default. Accounts created before October 2026 keep the setting they had. Asking to delete
+an account takes it off the leaderboard without touching that setting (the leaderboard leaves out accounts on their
+way out), so changing one's mind within the week gives back exactly what one had. The demo climbers take part, so the
+demo gyms still have a leaderboard.

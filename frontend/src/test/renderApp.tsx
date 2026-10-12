@@ -10,7 +10,7 @@ export function renderAt(url: string, path: string, element: ReactElement, child
   return render(
     <QueryClientProvider client={client}>
       <ToastProvider>
-        <MemoryRouter initialEntries={[url]}>
+        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={[url]}>
           <Routes>
             <Route path={path} element={element}>{children}</Route>
           </Routes>

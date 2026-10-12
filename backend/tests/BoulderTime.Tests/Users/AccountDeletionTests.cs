@@ -42,8 +42,9 @@ public sealed class AccountDeletionTests(PostgresFixture postgres) : IAsyncLifet
         status.PendingDeletion.Should().BeTrue();
         status.ErasedAfter.Should().NotBeNull();
 
-        // Out of the leaderboards immediately: being on the way out shouldn't leave you ranked.
-        (await _f.Db(db => db.Users.Where(u => u.Id == climber.Id).Select(u => u.LeaderboardOptOut).FirstAsync())).Should().BeTrue();
+        // The person's own leaderboard choice is left as it was (the leaderboard leaves pending accounts out by itself:
+        // LeaderboardOptInTests), so changing their mind gives back exactly what they had.
+        (await _f.Db(db => db.Users.Where(u => u.Id == climber.Id).Select(u => u.LeaderboardOptOut).FirstAsync())).Should().BeFalse();
 
         var back = (await (await climber.Client.DeleteAsync("/api/users/me/deletion")).ReadAsync<DeletionStatusDto>())!;
         back.PendingDeletion.Should().BeFalse();

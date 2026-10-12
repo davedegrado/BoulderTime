@@ -22,8 +22,9 @@ Per qualsiasi richiesta: **support@bouldertime.com**. L'indirizzo completo è di
 mai: è gestita in forma cifrata dal nostro fornitore di autenticazione.
 
 **Quando usi l'app** registriamo quello che fai tu: tentativi e blocchi completati, valutazioni, proposte di grado,
-commenti, palestre e settori che segui. Servono a mostrarti il tuo storico e a costruire le classifiche delle
-palestre. Puoi uscire dalle classifiche quando vuoi dal tuo profilo.
+commenti, palestre e settori che segui. Servono a mostrarti il tuo storico e, se scegli di comparirci, a costruire
+le classifiche delle palestre: un account nuovo non compare in classifica finché non lo attivi dal profilo, e puoi
+uscirne quando vuoi.
 
 **Se carichi una foto profilo o un video** conserviamo il file e chi l'ha caricato. I video sono visibili solo dopo
 l'approvazione dello staff della palestra.
@@ -84,9 +85,9 @@ Privacy Framework e clausole contrattuali standard). Se non attivi le notifiche,
 - **Finché hai l'account.** Quando lo cancelli, hai **7 giorni** per ripensarci; poi i dati personali sono eliminati.
 - **Registri tecnici**: circa 90 giorni.
 - **Account sospesi.** Se un account sospeso per violazione delle regole viene cancellato, conserviamo per **2 anni**
-  soltanto un'impronta crittografica (hash) del suo indirizzo email, da cui l'indirizzo non si può ricavare. Serve
-  unicamente a riconoscere un nuovo account creato con lo stesso indirizzo, che parte sospeso finché non lo
-  valutiamo. Le segnalazioni fatte da te o su di te sono invece eliminate con l'account.
+  soltanto un'impronta crittografica (hash) del suo indirizzo email, che non contiene l'indirizzo e non permette di
+  leggerlo. Serve unicamente a riconoscere un nuovo account creato con lo stesso indirizzo, che parte sospeso finché
+  non lo valutiamo. Le segnalazioni fatte da te o su di te sono invece eliminate con l'account.
 - Restano, senza il tuo nome, i contenuti che appartengono alla palestra: i blocchi che hai tracciato e le beta
   ufficiali, se facevi parte dello staff.
 

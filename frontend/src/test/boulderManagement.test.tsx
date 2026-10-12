@@ -125,7 +125,7 @@ describe("Removing boulders", () => {
 
   it("starts selection when a card is held down, and the same press does not also open the boulder", async () => {
     const started = vi.fn();
-    render(<MemoryRouter initialEntries={["/m"]}>{grid({ onLongPress: started })}</MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>{grid({ onLongPress: started })}</MemoryRouter>);
 
     const card = screen.getByRole("link");
     await userEvent.pointer([{ keys: "[MouseLeft>]", target: card }]);   // press and hold
@@ -137,7 +137,7 @@ describe("Removing boulders", () => {
   });
 
   it("still opens the boulder on an ordinary tap", async () => {
-    render(<MemoryRouter initialEntries={["/m"]}>{grid({ onLongPress: vi.fn() })}</MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>{grid({ onLongPress: vi.fn() })}</MemoryRouter>);
     await userEvent.click(screen.getByRole("link"));
     expect(await screen.findByText("Boulder editor")).toBeInTheDocument();
   });

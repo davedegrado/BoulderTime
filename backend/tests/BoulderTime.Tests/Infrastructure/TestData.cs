@@ -24,18 +24,24 @@ public sealed record TestUser(Guid Id, string Email, HttpClient Client);
 public static class TestData
 {
     /// <param name="language">The language this person reads the app in: it decides the language of their notifications.</param>
-    public static async Task<TestUser> UserAsync(this ApiFactory f, string? email = null, bool platformAdmin = false, string language = "en")
+    /// <param name="inLeaderboards">
+    /// New accounts start out of the leaderboards; most tests are about people who are in them, so test users join
+    /// unless a test says otherwise. <c>LeaderboardOptInTests</c> covers the real default.
+    /// </param>
+    public static async Task<TestUser> UserAsync(this ApiFactory f, string? email = null, bool platformAdmin = false, string language = "en",
+        bool inLeaderboards = true)
     {
         var id = Guid.NewGuid();
         email ??= $"user-{id:N}@example.com";
         var client = f.ClientFor(id, email, language: language);
         (await client.GetAsync("/api/users/me")).EnsureSuccessStatusCode(); // provisions the user
-        if (platformAdmin)
+        if (platformAdmin || inLeaderboards)
         {
             await f.WithDbAsync(async db =>
             {
                 var u = await db.Users.FirstAsync(x => x.Id == id);
-                u.GrantPlatformAdmin();
+                if (platformAdmin) u.GrantPlatformAdmin();
+                if (inLeaderboards) u.SetLeaderboardOptOut(false);
                 return await db.SaveChangesAsync();
             });
         }

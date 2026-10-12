@@ -9,7 +9,7 @@ import { PRIVACY_IT } from "@/pages/legal/privacy.it";
 import { TERMS_IT } from "@/pages/legal/terms.it";
 
 const show = (document: "privacy" | "terms") =>
-  render(<I18nProvider initial="it"><MemoryRouter><LegalPage document={document} /></MemoryRouter></I18nProvider>);
+  render(<I18nProvider initial="it"><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><LegalPage document={document} /></MemoryRouter></I18nProvider>);
 
 describe("Privacy notice and terms", () => {
   it("name the controller and a working way to reach him", () => {
@@ -49,7 +49,7 @@ describe("Privacy notice and terms", () => {
 
 describe("Account deletion page", () => {
   const open = (url: string, initial: "it" | "en" = "it") =>
-    render(<I18nProvider initial={initial}><MemoryRouter initialEntries={[url]}><DeletionPage /></MemoryRouter></I18nProvider>);
+    render(<I18nProvider initial={initial}><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={[url]}><DeletionPage /></MemoryRouter></I18nProvider>);
 
   it("explains it to someone who isn't signed in, in the app's language, as Google Play asks", () => {
     open("/delete-account");

@@ -9,7 +9,7 @@ import { ColorGrade } from "@/features/boulders/BoulderBits";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 import { Flag } from "lucide-react";
-import { useCurrentUser } from "@/features/users/api";
+import { useCurrentUser, useLeaderboardVisibility } from "@/features/users/api";
 import { useReportClimber } from "@/features/leaderboards/api";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
@@ -91,9 +91,22 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
   const [reporting, setReporting] = useState<LeaderboardEntry | null>(null);
   const report = useReportClimber(gymId);
   const toast = useToast();
+  const visibility = useLeaderboardVisibility();
+  // Leaderboards are opt-in: someone signed in and not taking part is told so, with the switch right here.
+  const outOfBoard = !!session && !!me.data && me.data.leaderboardOptOut && !me.data.leaderboardExcluded;
 
   return (
     <div className="stack">
+      {outOfBoard && (
+        <div className="notice leaderboard-optin" role="note">
+          <p>{t("You don't appear in leaderboards. Your sends still count for you, and you can take part whenever you like.")}</p>
+          <Button variant="secondary" loading={visibility.isPending}
+            onClick={() => visibility.mutate(false, {
+              onSuccess: () => toast.success(t("You appear in leaderboards now")),
+              onError: (e) => toast.error(errorMessage(e)),
+            })}>{t("Show me in leaderboards")}</Button>
+        </div>
+      )}
       <div className="chips" role="radiogroup" aria-label={t("Ranking by")}>
         {METRICS.map((m) => <button key={m} role="radio" aria-checked={metric === m} className="chip" onClick={() => setMetric(m)}>{metricLabel[m]}</button>)}
       </div>

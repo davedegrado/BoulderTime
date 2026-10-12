@@ -67,7 +67,7 @@
         },
         {
           "q": "How does the leaderboard work?",
-          "a": "In the gym's **Leaderboard** tab you can rank by points, sends or hardest grade, by week, month, year or all\ntime. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100, the others evenly\nspaced. The gym can set more or fewer points by hand for a grade or a single boulder: each boulder's card shows what it\nis worth (**+64 pt**). Attempts never cost points.\n\nRather not appear? In **Profile → Leaderboards** turn on **Don't show me in leaderboards or lists**.",
+          "a": "In the gym's **Leaderboard** tab you can rank by points, sends or hardest grade, by week, month, year or all\ntime. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100, the others evenly\nspaced. The gym can set more or fewer points by hand for a grade or a single boulder: each boulder's card shows what it\nis worth (**+64 pt**). Attempts never cost points.\n\nYou appear in leaderboards only if you choose to: turn on **Show me in leaderboards and lists** in **Profile → Leaderboards**, or tap **Show me in leaderboards** on the Leaderboard tab. Turn it off whenever you like.",
           "audience": "both"
         },
         {
@@ -77,7 +77,7 @@
         },
         {
           "q": "How do I see who completed a boulder?",
-          "a": "The boulder's page says **Completed by N people**: tap it to see who, most recent first. Each person counts once,\nhowever many times they tried. People who chose **Don't show me in leaderboards or lists** count in the number but\ndon't appear by name.",
+          "a": "The boulder's page says **Completed by N people**: tap it to see who, most recent first. Each person counts once,\nhowever many times they tried. People who haven't turned on **Show me in leaderboards and lists** count in the number but\ndon't appear by name.",
           "audience": "both"
         },
         {
@@ -156,7 +156,7 @@
         },
         {
           "q": "Who sees my profile?",
-          "a": "Your **public profile** shows your name, photo, stats, history and the gyms you follow; see it yourself from\n**Profile → Public profile**. To stay out of leaderboards, use **Profile → Leaderboards**.",
+          "a": "Your **public profile** shows your name, photo, stats, history and the gyms you follow; see it yourself from\n**Profile → Public profile**. You appear in leaderboards only if you turn it on in **Profile → Leaderboards**.",
           "audience": "both"
         },
         {

@@ -42,14 +42,14 @@ const tags = [{ id: "t1", name: "Placca", boulders: 4 }, { id: "t2", name: "Tecn
 
 describe("A boulder's intensity, tags and sends", () => {
   it("shows intensity and sends on the card, and leaves the tags to the boulder's page", () => {
-    render(<MemoryRouter><BoulderCard boulder={boulder()} /></MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder()} /></MemoryRouter>);
     expect(screen.getByTitle("High intensity")).toBeInTheDocument();
     expect(screen.queryByText(/Placca/)).not.toBeInTheDocument();
     expect(screen.getByText("Completed by 18 people")).toBeInTheDocument();
   });
 
   it("puts the intensity next to the grade, on the photo, with the points opposite", () => {
-    const { container } = render(<MemoryRouter><BoulderCard boulder={boulder({ points: 64 })} /></MemoryRouter>);
+    const { container } = render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ points: 64 })} /></MemoryRouter>);
     const overlay = container.querySelector(".boulder-card__overlay")!;
     expect(overlay.querySelector(".boulder-card__grades")!.textContent).toContain("High intensity");
     expect(overlay.querySelector(".boulder-card__points")!.textContent).toContain("+64 pt");
@@ -57,20 +57,20 @@ describe("A boulder's intensity, tags and sends", () => {
   });
 
   it("has a name line only for a boulder with a name, and never puts the sector there instead", () => {
-    const { container, rerender } = render(<MemoryRouter><BoulderCard boulder={boulder({ name: "La Fessura" })} /></MemoryRouter>);
+    const { container, rerender } = render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ name: "La Fessura" })} /></MemoryRouter>);
     expect(container.querySelector(".boulder-card__name")!.textContent).toBe("La Fessura");
-    rerender(<MemoryRouter><BoulderCard boulder={boulder({ name: null })} /></MemoryRouter>);
+    rerender(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ name: null })} /></MemoryRouter>);
     expect(container.querySelector(".boulder-card__name")).toBeNull();
     expect(container.querySelector(".boulder-card__sector")).not.toBeNull();
   });
 
   it("counts tries with an icon and a number, read out in words", () => {
-    render(<MemoryRouter><BoulderCard boulder={boulder({ viewer: { attempts: 1, completed: false, completedAt: null, rating: null } })} /></MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ viewer: { attempts: 1, completed: false, completedAt: null, rating: null } })} /></MemoryRouter>);
     expect(screen.getByText("1 try")).toHaveClass("sr-only");
   });
 
   it("leaves out what a boulder doesn't have", () => {
-    render(<MemoryRouter><BoulderCard boulder={boulder({ intensity: null, tags: [], completions: 0 })} /></MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ intensity: null, tags: [], completions: 0 })} /></MemoryRouter>);
     expect(screen.queryByTitle(/intensity/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Completed by/)).not.toBeInTheDocument();
   });
@@ -153,7 +153,7 @@ describe("The gym's own tags, for staff", () => {
 
 describe("The favourite sector", () => {
   it("names the sector, the gym and the count, and links to its boulders", () => {
-    render(<MemoryRouter><FavoriteSectorCard isMe sector={{
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><FavoriteSectorCard isMe sector={{
       sectorId: "s1", sectorName: "Grotta", gymId: "g1", gymName: "Crimp Factory", gymSlug: "crimp", completed: 23,
       floorPlanUrl: null, floorPlanWidth: null, floorPlanHeight: null, zone: null,
     }} /></MemoryRouter>);

@@ -67,7 +67,7 @@
         },
         {
           "q": "Come funziona la classifica?",
-          "a": "Nella scheda **Classifica** della palestra puoi ordinare per punti, completati o grado più alto, per\nsettimana, mese, anno o da sempre. I punti dipendono dal grado: nella scala principale della palestra il più facile\nvale 10 e il più difficile 100, con gli altri a intervalli regolari. La palestra può dare a mano più o meno punti a un\ngrado o a un singolo blocco: quanto vale ogni blocco lo vedi sulla sua card (**+64 pt**). I tentativi non tolgono punti.\n\nNon vuoi comparire? In **Profilo → Classifiche** attiva **Non mostrarmi in classifiche ed elenchi**.",
+          "a": "Nella scheda **Classifica** della palestra puoi ordinare per punti, completati o grado più alto, per\nsettimana, mese, anno o da sempre. I punti dipendono dal grado: nella scala principale della palestra il più facile\nvale 10 e il più difficile 100, con gli altri a intervalli regolari. La palestra può dare a mano più o meno punti a un\ngrado o a un singolo blocco: quanto vale ogni blocco lo vedi sulla sua card (**+64 pt**). I tentativi non tolgono punti.\n\nIn classifica compari solo se lo scegli: attiva **Mostrami in classifiche ed elenchi** in **Profilo → Classifiche**, o tocca **Mostrami in classifica** nella scheda Classifica. Lo togli quando vuoi.",
           "audience": "both"
         },
         {
@@ -77,7 +77,7 @@
         },
         {
           "q": "Come vedo chi ha completato un blocco?",
-          "a": "Nella pagina del blocco c'è **Completato da N persone**: toccalo per vedere chi, dal più recente. Ogni persona\nconta una volta, anche se ci ha provato molte volte. Chi ha scelto **Non mostrarmi in classifiche ed elenchi** conta nel\nnumero ma non compare per nome.",
+          "a": "Nella pagina del blocco c'è **Completato da N persone**: toccalo per vedere chi, dal più recente. Ogni persona\nconta una volta, anche se ci ha provato molte volte. Chi non ha attivato **Mostrami in classifiche ed elenchi** conta nel numero ma non compare\nper nome.",
           "audience": "both"
         },
         {
@@ -156,7 +156,7 @@
         },
         {
           "q": "Chi vede il mio profilo?",
-          "a": "Il **profilo pubblico** mostra nome, foto, statistiche, storico e palestre che segui; lo vedi tu stesso da\n**Profilo → Profilo pubblico**. Se non vuoi comparire nelle classifiche puoi nasconderti da **Profilo →\nClassifiche**.",
+          "a": "Il **profilo pubblico** mostra nome, foto, statistiche, storico e palestre che segui; lo vedi tu stesso da\n**Profilo → Profilo pubblico**. Nelle classifiche compari solo se lo attivi da **Profilo → Classifiche**.",
           "audience": "both"
         },
         {

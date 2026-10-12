@@ -24,7 +24,7 @@ import { ToastProvider } from "@/components/Toast";
 
 function renderItalian(ui: React.ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<I18nProvider initial="it"><QueryClientProvider client={client}><ToastProvider><MemoryRouter>{ui}</MemoryRouter></ToastProvider></QueryClientProvider></I18nProvider>);
+  return render(<I18nProvider initial="it"><QueryClientProvider client={client}><ToastProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>{ui}</MemoryRouter></ToastProvider></QueryClientProvider></I18nProvider>);
 }
 
 describe("Italian", () => {

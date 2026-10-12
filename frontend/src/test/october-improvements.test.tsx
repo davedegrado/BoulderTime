@@ -140,11 +140,11 @@ describe("Points and grades in the reader's language", () => {
 
 describe("Profile photo", () => {
   it("opens big when there is one, and is just initials when there isn't", async () => {
-    const { unmount } = render(<MemoryRouter><EnlargeableAvatar name="Giulia" url="/g.jpg" /></MemoryRouter>);
+    const { unmount } = render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><EnlargeableAvatar name="Giulia" url="/g.jpg" /></MemoryRouter>);
     await userEvent.click(screen.getByRole("button", { name: "Enlarge Giulia's photo" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     unmount();
-    render(<MemoryRouter><EnlargeableAvatar name="Giulia" url={null} /></MemoryRouter>);
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><EnlargeableAvatar name="Giulia" url={null} /></MemoryRouter>);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
@@ -172,5 +172,19 @@ describe("Notification messages on the website", () => {
     expect(words.on).toBe("Browser notifications on");
     expect(words.denied).toContain("site's settings");
     expect(Object.values(words).join(" ")).not.toMatch(/phone/i);
+  });
+});
+
+import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
+
+describe("Leaderboards are opt-in", () => {
+  it("tells a climber who isn't taking part, with the switch right there", async () => {
+    reply("GET", "/api/users/me", { id: "u1", displayName: "Me", staffGyms: [], isPlatformAdmin: false, leaderboardOptOut: true, leaderboardExcluded: false });
+    reply("GET", "/api/gyms/g1/leaderboard", { gymId: "g1", metric: "POINTS", period: "MONTH", from: null, gradeSystemId: null, gradeSystemName: null,
+      gradeSystemType: null, scoringExplanation: "", climbers: 0, entries: [], viewer: null });
+    reply("PUT", "/api/users/me/leaderboard-visibility", undefined);
+    renderAt("/g", "/g", <LeaderboardTab gymId="g1" />);
+    await userEvent.click(await screen.findByRole("button", { name: "Show me in leaderboards" }));
+    expect(calls).toContainEqual({ method: "PUT", path: "/api/users/me/leaderboard-visibility" });
   });
 });

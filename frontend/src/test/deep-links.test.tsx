@@ -33,7 +33,7 @@ describe("Links the phone hands to the app", () => {
 const showAt = (url: string) =>
   render(
     <I18nProvider initial="it">
-      <MemoryRouter initialEntries={[url]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={[url]}>
         <Routes>
           <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
           <Route path="/reset-password" element={<p>Pagina nuova password</p>} />

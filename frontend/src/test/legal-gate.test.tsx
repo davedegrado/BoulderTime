@@ -27,7 +27,7 @@ const show = (returning: boolean) => {
   return render(
     <I18nProvider initial="it">
       <QueryClientProvider client={client}>
-        <ToastProvider><MemoryRouter><AcceptLegalPage returning={returning} /></MemoryRouter></ToastProvider>
+        <ToastProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AcceptLegalPage returning={returning} /></MemoryRouter></ToastProvider>
       </QueryClientProvider>
     </I18nProvider>,
   );

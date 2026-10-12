@@ -34,6 +34,23 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
+  build: {
+    rollupOptions: {
+      output: {
+        // The libraries every screen needs, in a few chunks of their own instead of one of 580 kB: they change less
+        // often than the app's code, so a new release doesn't make browsers download them again.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler|@remix-run)\//.test(id)) return "react";
+          if (id.includes("node_modules/@supabase/")) return "supabase";
+          if (id.includes("node_modules/@tanstack/")) return "query";
+          if (id.includes("node_modules/lucide-react/")) return "icons";
+          if (id.includes("node_modules/@capacitor/")) return "capacitor";
+          return undefined;
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     host: true,

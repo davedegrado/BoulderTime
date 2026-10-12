@@ -30,7 +30,11 @@ public class User : IAuditable
     /// </summary>
     public bool IsPlatformAdmin { get; private set; }
 
-    /// <summary>The person chose not to appear in leaderboards. Their own activity and history stay untouched.</summary>
+    /// <summary>
+    /// The person doesn't appear in leaderboards, nor by name among the people who completed a boulder. Their own
+    /// activity and history stay untouched. True for every new account: appearing is something the person turns on
+    /// (October 2026); accounts created before then keep the choice they had.
+    /// </summary>
     public bool LeaderboardOptOut { get; private set; }
 
     /// <summary>
@@ -99,6 +103,8 @@ public class User : IAuditable
             Email = NormalizeEmail(email),
             DisplayName = SanitizeDisplayName(displayName),
             AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim(),
+            // Leaderboards are opt-in: nobody is ranked by name until they say so.
+            LeaderboardOptOut = true,
         };
     }
 

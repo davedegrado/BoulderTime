@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { startStatusBar } from "@/lib/theme";
 
 /**
  * The one place that knows whether BoulderTime is running as a store app or in a browser. Everything native is
@@ -99,7 +100,8 @@ export async function startNativeShell(): Promise<void> {
   requestAnimationFrame(() => {
     window.setTimeout(() => {
       void SplashScreen.hide({ fadeOutDuration: 400 });
-      void import("@/lib/theme").then(({ startStatusBar }) => startStatusBar());
+      // A plain import: the theme module is in the first chunk anyway (the logo and the app shell need it).
+      void startStatusBar();
     }, splashDelay(performance.now()));
   });
 }

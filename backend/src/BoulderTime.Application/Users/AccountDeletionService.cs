@@ -41,9 +41,9 @@ public sealed class AccountDeletionService(IAppDbContext db, ICurrentUser curren
         if (orphaned > 0)
             throw new ConflictException("You are the only owner of a gym. Make someone else an owner first, or write to support@bouldertime.com.", "sole_owner");
 
+        // Hidden from leaderboards straight away (the leaderboard leaves out accounts on their way out), without touching
+        // the person's own choice, so changing their mind gives back exactly what they had.
         user.RequestDeletion(clock.UtcNow);
-        // Hidden from leaderboards straight away: being deleted shouldn't leave you ranked.
-        user.SetLeaderboardOptOut(true);
         await db.SaveChangesAsync(ct);
         return Status(user.DeletionRequestedAt);
     }
@@ -53,7 +53,6 @@ public sealed class AccountDeletionService(IAppDbContext db, ICurrentUser curren
     {
         var user = await CurrentAsync(ct);
         user.CancelDeletion();
-        user.SetLeaderboardOptOut(false);
         await db.SaveChangesAsync(ct);
         return Status(null);
     }

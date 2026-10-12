@@ -22,8 +22,8 @@ describe("Route error page", () => {
   it("replaces a crashed screen with a friendly message and a reload button", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const Boom = () => { throw new Error("boom"); };
-    const router = createMemoryRouter([{ path: "/", element: <Boom />, errorElement: <RouteErrorPage /> }]);
-    render(<RouterProvider router={router} />);
+    const router = createMemoryRouter([{ path: "/", element: <Boom />, errorElement: <RouteErrorPage /> }], { future: { v7_relativeSplatPath: true } });
+    render(<RouterProvider router={router} future={{ v7_startTransition: true }} />);
 
     expect(await screen.findByRole("heading", { name: "Something went wrong" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();

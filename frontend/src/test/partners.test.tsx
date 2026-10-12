@@ -13,7 +13,7 @@ const gym = (over: Partial<GymSummary> = {}): GymSummary => ({
 });
 
 const inLanguage = (language: "it" | "en", ui: React.ReactNode) =>
-  render(<I18nProvider initial={language}><MemoryRouter>{ui}</MemoryRouter></I18nProvider>);
+  render(<I18nProvider initial={language}><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>{ui}</MemoryRouter></I18nProvider>);
 
 describe("Founding gym and early partner badges", () => {
   it("shows nothing for an ordinary gym", () => {
@@ -26,7 +26,7 @@ describe("Founding gym and early partner badges", () => {
     expect(screen.getByText("Founding Gym")).toBeInTheDocument();
     expect(screen.queryByText("Early Partner")).not.toBeInTheDocument();
 
-    rerender(<I18nProvider initial="en"><MemoryRouter><GymBadges isFoundingGym isEarlyPartner /></MemoryRouter></I18nProvider>);
+    rerender(<I18nProvider initial="en"><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><GymBadges isFoundingGym isEarlyPartner /></MemoryRouter></I18nProvider>);
     expect(screen.getByText("Founding Gym")).toBeInTheDocument();
     expect(screen.getByText("Early Partner")).toBeInTheDocument();
   });

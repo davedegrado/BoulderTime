@@ -205,6 +205,8 @@ public sealed class DemoSeeder(AppDbContext db, IClock clock, IObjectStorage sto
                 // Deterministic id derived from the handle, so re-seeding finds the same profiles.
                 user = User.Provision(DemoUserId(handle), email, name, null);
                 user.SetLanguage("it");
+                // Demo climbers fill the demo gyms' leaderboards, so they take part (real accounts start out of them).
+                user.SetLeaderboardOptOut(false);
                 db.Users.Add(user);
             }
             users.Add(user);

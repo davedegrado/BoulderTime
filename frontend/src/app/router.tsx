@@ -109,4 +109,8 @@ export const router = createBrowserRouter([
       { path: "*", element: <NotFoundPage /> },
     ],
   },
-]);
+], {
+  // React Router 7's behaviour now, so the upgrade changes nothing and the console stays quiet. The app has no loaders,
+  // actions or fetchers, so only the relative-path rule could matter, and no link inside a "*" route is relative.
+  future: { v7_relativeSplatPath: true, v7_fetcherPersist: true, v7_normalizeFormMethod: true, v7_partialHydration: true, v7_skipActionErrorRevalidation: true },
+});

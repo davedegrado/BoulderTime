@@ -32,7 +32,7 @@ function renderBoard() {
     <I18nProvider initial="it">
       <QueryClientProvider client={client}>
         <ToastProvider>
-          <MemoryRouter><LeaderboardTab gymId="g1" /></MemoryRouter>
+          <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><LeaderboardTab gymId="g1" /></MemoryRouter>
         </ToastProvider>
       </QueryClientProvider>
     </I18nProvider>,

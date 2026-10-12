@@ -27,15 +27,16 @@ entro 30 giorni e te lo confermiamo.
 
 - Esci subito dalle classifiche. Per **7 giorni** puoi ancora cambiare idea dallo stesso punto del profilo.
 - Passati i 7 giorni eliminiamo: nome, email, foto profilo, tentativi e blocchi completati, valutazioni, proposte di
-  grado, commenti e like, video caricati, palestre, settori e blocchi seguiti, notifiche, dispositivi registrati,
-  segnalazioni e blocchi tra utenti, e l'accesso stesso.
+  grado, commenti e like, video caricati, palestre, settori e blocchi seguiti, partecipazioni agli eventi, ruolo nello
+  staff delle palestre e inviti ricevuti come staff, notifiche, dispositivi registrati, segnalazioni e blocchi tra
+  utenti, e l'accesso stesso.
 
 ## Cosa resta
 
 - Senza il tuo nome, quello che appartiene alla palestra: i blocchi che hai tracciato e le beta ufficiali, se facevi
   parte dello staff.
 - Se l'account era sospeso per violazione delle regole, per **2 anni** un'impronta crittografica (hash) dell'email,
-  da cui l'indirizzo non si può ricavare: serve solo a non far ripartire da zero un account sospeso.
+  che non contiene l'indirizzo e non permette di leggerlo: serve solo a non far ripartire da zero un account sospeso.
 - I registri tecnici dei fornitori, per circa 90 giorni.
 
 Tutti i dettagli sono nell'informativa sulla privacy.
@@ -66,14 +67,16 @@ Write to **support@bouldertime.com** from the account's email address and ask fo
 - You leave the leaderboards straight away. For **7 days** you can still change your mind from the same place in
   your profile.
 - After the 7 days we delete: your name, email, profile photo, attempts and sends, ratings, grade suggestions,
-  comments and likes, uploaded videos, the gyms, sectors and boulders you follow, notifications, registered devices,
-  reports and blocks between users, and the sign-in itself.
+  comments and likes, uploaded videos, the gyms, sectors and boulders you follow, the events you said you'd attend,
+  your role on gyms' staff and the staff invitations you received, notifications, registered devices, reports and
+  blocks between users, and the sign-in itself.
 
 ## What stays
 
 - Without your name, what belongs to the gym: the boulders you set and the official beta, if you were on its staff.
 - If the account was suspended for breaking the rules, for **2 years** a cryptographic fingerprint (hash) of the
-  email address, from which the address can't be recovered: it only stops a suspended account from starting over.
+  email address, which doesn't contain the address and can't be read back into it: it only stops a suspended account
+  from starting over.
 - Our providers' technical logs, for about 90 days.
 
 The full details are in the privacy notice (in Italian).

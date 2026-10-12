@@ -169,13 +169,14 @@ export function ProfilePage() {
       <section className="section" aria-labelledby="board-title">
         <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
         <div className="card">
+          {/* Opt-in: off for every new account until the person turns it on. */}
           <Toggle
-            label={t("Don't show me in leaderboards or lists")}
-            description={t("Your sends and history stay yours: you don't appear in gyms' rankings, nor by name among the people who completed a boulder.")}
-            checked={user.leaderboardOptOut}
+            label={t("Show me in leaderboards and lists")}
+            description={t("You appear in gyms' rankings and by name among the people who completed a boulder. Off, your sends and history stay yours, and nobody sees your name there.")}
+            checked={!user.leaderboardOptOut}
             disabled={visibility.isPending}
-            onChange={(hidden) => visibility.mutate(hidden, {
-              onSuccess: () => toast.success(hidden ? t("You no longer appear in leaderboards") : t("You appear in leaderboards again")),
+            onChange={(shown) => visibility.mutate(!shown, {
+              onSuccess: () => toast.success(shown ? t("You appear in leaderboards now") : t("You no longer appear in leaderboards")),
               onError: (e) => toast.error(errorMessage(e)),
             })} />
         </div>
