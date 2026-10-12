@@ -192,6 +192,52 @@ public static partial class Translations
         ("Say whether to suspend the account.", "Indica se sospendere l'account."),
         ("You can't suspend yourself.", "Non puoi sospendere te stesso."),
         ("A BoulderTime administrator can't be suspended. Revoke the role first.", "Un amministratore di BoulderTime non può essere sospeso. Togli prima il ruolo."),
+
+        // ---- Boulder names, points and two-colour grades ----
+        ("Keep the name to {0} characters or fewer.", "Il nome può avere al massimo {0} caratteri."),
+        ("Points go from 1 to {0}.", "I punti vanno da 1 a {0}."),
+        ("Only colour grades can have two colours.", "Solo i gradi a colori possono avere due colori."),
+        ("The two colours of a grade must be different.", "I due colori di un grado devono essere diversi."),
+        ("A value doesn't belong to this grading system.", "Un grado non appartiene a questa scala."),
+
+        // ---- Opening hours ----
+        ("Days go from 1 (Monday) to 7 (Sunday).", "I giorni vanno da 1 (lunedì) a 7 (domenica)."),
+        ("Give each day once.", "Indica ogni giorno una volta sola."),
+        ("Use at most {0} opening times a day.", "Al massimo {0} fasce orarie al giorno."),
+        ("Add at most {0} closures.", "Al massimo {0} chiusure."),
+        ("A closure can't end before it starts.", "Una chiusura non può finire prima di cominciare."),
+        ("Keep each note to {0} characters or fewer.", "Ogni nota può avere al massimo {0} caratteri."),
+        ("Write times as HH:mm, for example 09:30.", "Scrivi gli orari come HH:mm, per esempio 09:30."),
+        ("Each opening time has to close after it opens.", "Ogni fascia oraria deve chiudere dopo l'apertura."),
+        ("Opening times on the same day can't overlap.", "Le fasce orarie dello stesso giorno non possono sovrapporsi."),
+
+        // ---- Events ----
+        ("Only events take names.", "Solo gli eventi raccolgono i partecipanti."),
+        ("This event is over.", "Questo evento è già passato."),
+        ("Follow the gym to see who is coming.", "Segui la palestra per vedere chi partecipa."),
+
+        // ---- Messages that had no Italian yet ----
+        ("Too many requests", "Troppe richieste"),
+        ("Slow down for a moment and try again.", "Aspetta un momento e riprova."),
+        ("A gym was already created from this suggestion.", "Da questa segnalazione è già stata creata una palestra."),
+        ("Say whether this gym is the founding gym.", "Indica se questa è la palestra fondatrice."),
+        ("Say whether climber videos are allowed.", "Indica se i video degli arrampicatori sono ammessi."),
+        ("Give a limit of zero or more, or choose no limit.", "Indica un limite di zero o più, oppure nessun limite."),
+        ("{0} is already the founding gym. Remove that first — there can only be one.", "{0} è già la palestra fondatrice. Togli prima quella: ce ne può essere una sola."),
+        ("Another gym is already the founding gym.", "Un'altra palestra è già la palestra fondatrice."),
+        ("Say whether to hide yourself.", "Indica se vuoi nasconderti."),
+        ("Choose the climber to report.", "Scegli la persona da segnalare."),
+        ("Say what looks wrong.", "Spiega cosa non ti torna."),
+        ("Say whether to exclude the climber.", "Indica se escludere la persona."),
+        ("Unknown kind of device.", "Tipo di dispositivo sconosciuto."),
+        ("The device didn't provide a complete subscription.", "Il dispositivo non ha fornito un'iscrizione completa."),
+        ("That isn't a valid push endpoint.", "Non è un indirizzo valido per le notifiche."),
+        ("The app didn't provide a valid notification token.", "L'app non ha fornito un codice valido per le notifiche."),
+        ("There's already an open invitation for this email.", "C'è già un invito in attesa per questa email."),
+        ("Type your email address exactly to confirm.", "Per confermare, scrivi esattamente il tuo indirizzo email."),
+        ("You are the only owner of a gym. Make someone else an owner first, or write to support@bouldertime.com.", "Sei l'unico proprietario di una palestra. Nomina prima un altro proprietario, oppure scrivi a support@bouldertime.com."),
+        ("You can't block yourself.", "Non puoi bloccare te stesso."),
+        ("Keep the note under {0} characters.", "La nota deve restare sotto i {0} caratteri."),
     ];
 
     private static readonly Dictionary<string, string> Exact =

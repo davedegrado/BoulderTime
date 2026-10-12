@@ -2,24 +2,29 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, Mail } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
-import { faqGuide, forSettings, searchFaq, type FaqAudience, type FaqSection } from "@/features/help/faq";
+import { forSettings, searchFaq, useFaqGuide, type FaqAudience, type FaqSection } from "@/features/help/faq";
+import { ErrorState, LoadingState } from "@/components/States";
 import { useVideoSettings } from "@/features/community/api";
 import { renderLegal } from "@/pages/legal/LegalPage";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { t } from "@/i18n/i18n";
 
 /**
- * How things are done, as questions and answers: one guide for climbers and one for gym staff, with a search across
- * both. Readable without signing in. `#staff` in the address opens the staff guide, which is where the staff area
- * links to.
+ * How things are done, as questions and answers: one guide for climbers and, for gym staff, one for them, with a
+ * search across what the person can read. Readable without signing in. `#staff` in the address opens the staff guide,
+ * which is where the staff area links to.
  */
 export function HelpPage() {
   const { hash } = useLocation();
   const navigate = useNavigate();
   const videos = useVideoSettings();
-  const guide = forSettings(faqGuide(), videos);
-  const [audience, setAudience] = useState<FaqAudience>(hash === "#staff" ? "staff" : "climbers");
+  const faq = useFaqGuide();
+  const guide = forSettings(faq.data ?? { climbers: [], staff: [] }, videos);
+  const hasStaff = guide.staff.length > 0;
+  const [chosen, setAudience] = useState<FaqAudience>(hash === "#staff" ? "staff" : "climbers");
   const [query, setQuery] = useState("");
+  // Someone who isn't staff following a "#staff" link reads the climbers' guide: there is no other for them.
+  const audience: FaqAudience = chosen === "staff" && !hasStaff ? "climbers" : chosen;
 
   useEffect(() => { if (hash === "#staff") setAudience("staff"); }, [hash]);
 
@@ -43,16 +48,19 @@ export function HelpPage() {
 
       <SearchField label={t("Search the guide")} placeholder={t("e.g. notifications, grade, sector")} value={query} onChange={setQuery} />
 
-      {!searching && (
+      {faq.isPending && <LoadingState label={t("Loading the guide")} />}
+      {faq.isError && <ErrorState error={faq.error} onRetry={() => faq.refetch()} />}
+
+      {!searching && hasStaff && (
         <div className="chips" role="radiogroup" aria-label={t("Guide for")}>
           <button type="button" role="radio" aria-checked={audience === "climbers"} className="chip" onClick={() => choose("climbers")}>{t("Climbers")}</button>
           <button type="button" role="radio" aria-checked={audience === "staff"} className="chip" onClick={() => choose("staff")}>{t("Gym staff")}</button>
         </div>
       )}
 
-      {results.length === 0
+      {faq.isSuccess && (results.length === 0
         ? <p className="help__empty">{t("Nothing found. Try other words, or write to us.")}</p>
-        : results.map((section) => <HelpSection key={`${section.id}-${section.title}`} section={section} open={searching} />)}
+        : results.map((section) => <HelpSection key={`${section.id}-${section.title}`} section={section} open={searching} />))}
 
       <p className="help__contact">
         <Mail aria-hidden />

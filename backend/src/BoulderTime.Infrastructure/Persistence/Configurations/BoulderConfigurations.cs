@@ -37,6 +37,7 @@ internal sealed class GradeValueConfiguration : IEntityTypeConfiguration<GradeVa
         b.Property(v => v.Id).ValueGeneratedNever();
         b.Property(v => v.Label).HasMaxLength(GradeValue.LabelMaxLength).IsRequired();
         b.Property(v => v.ColorHex).HasMaxLength(7);
+        b.Property(v => v.ColorHex2).HasMaxLength(7);
         b.HasOne<GradeSystem>().WithMany().HasForeignKey(v => v.GradeSystemId).OnDelete(DeleteBehavior.Restrict);
         // Label uniqueness among ACTIVE values is enforced by the service; retired values may repeat a label.
         b.HasIndex(v => new { v.GradeSystemId, v.Rank });
@@ -56,6 +57,7 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.PhotoPath).HasMaxLength(512).IsRequired();
         b.Property(x => x.ThumbnailPath).HasMaxLength(512);
+        b.Property(x => x.Name).HasMaxLength(Boulder.NameMaxLength);
         b.Property(x => x.HoldColor).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.Property(x => x.Intensity).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();

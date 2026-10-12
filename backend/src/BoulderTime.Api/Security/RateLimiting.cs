@@ -26,12 +26,14 @@ public static class RateLimiting
             options.OnRejected = async (context, ct) =>
             {
                 context.HttpContext.Response.Headers.RetryAfter = "60";
+                // In the caller's language, like every other error (ApiExceptionHandler).
+                var language = Application.Localization.Language.Normalize(context.HttpContext.Request.Headers.AcceptLanguage.ToString());
                 await context.HttpContext.Response.WriteAsJsonAsync(new
                 {
                     type = "https://tools.ietf.org/html/rfc9110#section-15.5.29",
-                    title = "Too many requests",
+                    title = Application.Localization.Translations.Translate("Too many requests", language),
                     status = StatusCodes.Status429TooManyRequests,
-                    detail = "Slow down for a moment and try again.",
+                    detail = Application.Localization.Translations.Translate("Slow down for a moment and try again.", language),
                 }, ct);
             };
 

@@ -51,6 +51,15 @@ public sealed class NotificationsController(NotificationService notifications, A
     public Task<AnnouncementDto> UpdateAnnouncement(Guid id, [FromBody] SaveAnnouncementRequest request, CancellationToken ct) =>
         announcements.UpdateAsync(id, request, ct);
 
+    [HttpPut("api/announcements/{id:guid}/attendance"), Authorize]
+    public Task<AttendanceDto> Attend(Guid id, CancellationToken ct) => announcements.AttendAsync(id, ct);
+
+    [HttpDelete("api/announcements/{id:guid}/attendance"), Authorize]
+    public Task<AttendanceDto> WithdrawAttendance(Guid id, CancellationToken ct) => announcements.WithdrawAttendanceAsync(id, ct);
+
+    [HttpGet("api/announcements/{id:guid}/attendees"), Authorize]
+    public Task<IReadOnlyList<PersonDto>> Attendees(Guid id, CancellationToken ct) => announcements.AttendeesAsync(id, ct);
+
     [HttpDelete("api/announcements/{id:guid}"), Authorize]
     public async Task<IActionResult> DeleteAnnouncement(Guid id, CancellationToken ct) { await announcements.DeleteAsync(id, ct); return NoContent(); }
 }

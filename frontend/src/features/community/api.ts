@@ -15,7 +15,7 @@ export interface Comment {
   createdAt: string; editedAt: string | null; likes: number; likedByViewer: boolean; isMine: boolean; canModerate: boolean;
 }
 
-export interface ConsensusBucket { gradeValueId: string; label: string; rank: number; colorHex: string | null; votes: number }
+export interface ConsensusBucket { gradeValueId: string; label: string; rank: number; colorHex: string | null; votes: number; colorHex2?: string | null }
 export interface SystemConsensus {
   gradeSystemId: string; systemName: string; systemType: GradeSystemType; totalVotes: number;
   consensusValueId: string | null; officialValueId: string | null; viewerValueId: string | null;

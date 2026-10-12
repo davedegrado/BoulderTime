@@ -109,7 +109,7 @@ public sealed class ReportService(IAppDbContext db, BoulderAccess boulders, GymA
                     var video = await db.BoulderVideos.FirstOrDefaultAsync(v => v.Id == report.EntityId, ct);
                     if (video is not null && video.UserId != reviewer)
                     {
-                        video.Reject(reviewer, clock.UtcNow, string.IsNullOrWhiteSpace(r.Note) ? "Removed after a report." : r.Note.Trim());
+                        video.Reject(reviewer, clock.UtcNow, string.IsNullOrWhiteSpace(r.Note) ? Localization.NotificationTexts.RemovedAfterReport : r.Note.Trim());
                         await notifications.VideoReviewedAsync(video, report.GymId, reviewer, ct);
                     }
                     else if (video is not null)

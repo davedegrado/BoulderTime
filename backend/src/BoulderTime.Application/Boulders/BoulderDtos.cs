@@ -5,7 +5,8 @@ using BoulderTime.Domain.Staff;
 namespace BoulderTime.Application.Boulders;
 
 /// <summary>An official grade, labelled with its system so clients never confuse a colour GRADE with hold colour.</summary>
-public sealed record BoulderGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, Guid GradeValueId, string Label, int Rank, string? ColorHex);
+public sealed record BoulderGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, Guid GradeValueId, string Label, int Rank, string? ColorHex,
+    string? ColorHex2 = null);
 
 public sealed record RatingSummaryDto(double? Average, int Count);
 
@@ -26,7 +27,11 @@ public sealed record BoulderSummaryDto(
     RatingSummaryDto Rating, ViewerProgressDto? Viewer,
     BoulderIntensity? Intensity = null, IReadOnlyList<BoulderTagDto>? Tags = null,
     /// <summary>How many people have completed it (one each, however many times they tried). Suspended accounts don't count.</summary>
-    int Completions = 0);
+    int Completions = 0,
+    /// <summary>The setters' name for it; null when it has none (never empty).</summary>
+    string? Name = null,
+    /// <summary>What completing it scores on the gym's leaderboard; null when it scores nothing (ungraded).</summary>
+    int? Points = null);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
@@ -50,16 +55,23 @@ public sealed record BoulderDetailDto(
     bool CanAddOfficialBeta = true,
     /// <summary>The small picture the cards show (the whole photo, or the part staff chose); null when there is none.</summary>
     string? ThumbnailUrl = null,
-    BoulderIntensity? Intensity = null, IReadOnlyList<BoulderTagDto>? Tags = null, int Completions = 0);
+    BoulderIntensity? Intensity = null, IReadOnlyList<BoulderTagDto>? Tags = null, int Completions = 0,
+    string? Name = null,
+    /// <summary>What completing it scores: <see cref="PointsOverride"/> when staff set one, else its grade's points.</summary>
+    int? Points = null,
+    /// <summary>The points staff set on this boulder by hand, shown to its gym's staff only; null when it follows its grade.</summary>
+    int? PointsOverride = null);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
 /// <param name="ThumbnailPath">Optional small version of the photo for lists (generated on the device).</param>
 /// <param name="Intensity">Optional; none means "not said". Independent of the grades.</param>
 /// <param name="TagIds">The gym's tags for this boulder. Null leaves the tags as they are (older apps don't send them); empty clears them.</param>
+/// <param name="Name">Optional name. Null leaves it as it is (older apps don't send it); empty removes it.</param>
+/// <param name="Points">Points set by hand for this boulder. Null leaves them as they are, 0 goes back to the grade's, 1–1000 sets them.</param>
 public sealed record SaveBoulderRequest(
     Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null,
-    BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null);
+    BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null, string? Name = null, int? Points = null);
 
 /// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
 public enum ProgressFilter { All, Untried, Projects, Completed }

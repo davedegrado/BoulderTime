@@ -12,9 +12,26 @@ export const gradeSystemTypeLabel = labels<GradeSystemType>({
   CUSTOM: "Custom",
 });
 
-export interface GradeValue { id: string; label: string; rank: number; colorHex: string | null; isActive: boolean }
+/**
+ * `colorHex2`: second colour of an in-between grade ("green/blue"). `points`: what a send of it scores —
+ * `pointsOverride` when staff set one, otherwise `automaticPoints` (10 for the easiest grade, 100 for the hardest).
+ */
+export interface GradeValue {
+  id: string; label: string; rank: number; colorHex: string | null; isActive: boolean;
+  colorHex2?: string | null; points?: number; automaticPoints?: number; pointsOverride?: number | null;
+}
 export interface GradeSystem { id: string; gymId: string; name: string; type: GradeSystemType; isActive: boolean; sortOrder: number; values: GradeValue[] }
-export interface GradeValueInput { id?: string; label: string; colorHex?: string | null }
+/** `colorHex2`: "" makes it one colour. `points`: 0 goes back to automatic. Left out, both stay as they are. */
+export interface GradeValueInput { id?: string; label: string; colorHex?: string | null; colorHex2?: string | null; points?: number }
+
+/**
+ * The automatic points of the grade at `index` (0 = easiest) on a scale of `count` grades in use: 10 for the easiest,
+ * 100 for the hardest, evenly spaced. The same rule the server uses (RankBasedScoring), for previews while editing.
+ */
+export function automaticPoints(index: number, count: number): number {
+  if (count <= 1) return 100;
+  return Math.round(10 + (90 * index) / (count - 1));
+}
 
 export const gradingKeys = { list: (gymId: string) => ["grading", gymId] as const };
 
@@ -31,6 +48,8 @@ function useInvalidate(gymId: string) {
   return () => {
     qc.invalidateQueries({ queryKey: gradingKeys.list(gymId) });
     qc.invalidateQueries({ queryKey: ["boulders"] });
+    // Points follow the grades, past sends included.
+    qc.invalidateQueries({ queryKey: ["leaderboard"] });
   };
 }
 

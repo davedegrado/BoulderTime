@@ -33,6 +33,11 @@ public sealed class GymsController(GymService gyms, SectorService sectors, Staff
     public Task<GymDetailDto> Update(Guid gymId, [FromBody] UpdateGymRequest request, CancellationToken ct) =>
         gyms.UpdateAsync(gymId, request, ct);
 
+    /// <summary>The gym's usual week and its closures. An empty week with no closures clears them.</summary>
+    [HttpPut("{gymId:guid}/opening-hours"), Authorize]
+    public Task<OpeningHoursDto?> SetOpeningHours(Guid gymId, [FromBody] OpeningHoursDto? request, CancellationToken ct) =>
+        gyms.SetOpeningHoursAsync(gymId, request, ct);
+
     // ---- Sectors ----
 
     [HttpGet("{gymId:guid}/sectors"), AllowAnonymous]

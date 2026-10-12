@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<NotificationService>();
         services.AddScoped<AnnouncementService>();
         services.AddSingleton<IClimbScoring, RankBasedScoring>();
+        services.AddScoped<BoulderPoints>();
         services.AddScoped<LeaderboardService>();
         services.AddScoped<ImageService>();
         services.AddScoped<PartnerService>();
@@ -55,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<UserModerationService>();
         services.AddScoped<LegalAcceptanceService>();
         services.AddScoped<AccountEraser>();
+        services.AddScoped<Help.HelpService>();
         return services;
     }
 }

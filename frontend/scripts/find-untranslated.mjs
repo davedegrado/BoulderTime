@@ -24,7 +24,7 @@ function files(dir) {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) return name === "test" ? [] : files(p);
-    return /\.tsx$/.test(name) && !/\.test\.tsx$/.test(name) ? [p] : [];
+    return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) && !p.includes("/i18n/") ? [p] : [];
   });
 }
 
@@ -40,7 +40,7 @@ function isCopy(text) {
 const found = [];
 for (const file of files(SRC)) {
   const source = readFileSync(file, "utf8");
-  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const short = file.replace(SRC, "src");
   const at = (node) => sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1;
 
@@ -60,11 +60,34 @@ for (const file of files(SRC)) {
         found.push({ file: short, line: at(node), text: literal.text });
       }
     }
-    // toast.success("Saved") and friends.
+    // toast.success("Saved") and friends, including text assembled in a template: `You're now ${role}`.
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
         && node.expression.expression.getText(sf) === "toast") {
       const arg = node.arguments[0];
       if (arg && ts.isStringLiteral(arg) && isCopy(arg.text)) found.push({ file: short, line: at(node), text: arg.text });
+      if (arg && (ts.isNoSubstitutionTemplateLiteral(arg) || ts.isTemplateExpression(arg))) {
+        const words = ts.isNoSubstitutionTemplateLiteral(arg) ? arg.text : [arg.head.text, ...arg.templateSpans.map((x) => x.literal.text)].join(" ");
+        if (isCopy(words)) found.push({ file: short, line: at(node), text: arg.getText(sf) });
+      }
+    }
+    // A choice between two texts inside JSX: {liked ? "Unlike" : "Like"}.
+    if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
+      const branches = [];
+      const collect = (e) => {
+        if (ts.isParenthesizedExpression(e)) return collect(e.expression);
+        if (ts.isConditionalExpression(e)) { collect(e.whenTrue); collect(e.whenFalse); return; }
+        if (ts.isBinaryExpression(e) && (e.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken || e.operatorToken.kind === ts.SyntaxKind.BarBarToken || e.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken)) { collect(e.right); return; }
+        if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) branches.push(e.text);
+      };
+      collect(node.expression);
+      for (const text of branches) if (isCopy(text)) found.push({ file: short, line: at(node), text });
+    }
+    // t() called when the module loads: the text stays in the language the app started in, whatever the person picks
+    // later. Wrap the labels in labels() or a function instead.
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && (node.expression.text === "t" || node.expression.text === "plural")) {
+      let p = node.parent;
+      while (p && !ts.isSourceFile(p) && !ts.isFunctionLike(p) && !ts.isClassLike(p)) p = p.parent;
+      if (p && ts.isSourceFile(p)) found.push({ file: short, line: at(node), text: `module-level ${node.getText(sf).slice(0, 60)}` });
     }
     ts.forEachChild(node, visit);
   };

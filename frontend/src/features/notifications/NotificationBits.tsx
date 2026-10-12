@@ -1,9 +1,12 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Bell, CalendarDays, CheckCircle2, Clapperboard, Flag, Megaphone, MessageSquare, Mountain, Pencil, RefreshCw, Sparkles, Wrench, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Announcement, NotificationType } from "@/features/notifications/api";
 import { announcementTypeLabel } from "@/features/notifications/api";
 import { formatDate } from "@/lib/format";
+import { LinkifiedText } from "@/components/LinkifiedText";
+import { PhotoViewer } from "@/features/boulders/PhotoViewer";
+import { AttendanceBar } from "@/features/notifications/Attendance";
 import { t } from "@/i18n/i18n";
 
 export const notificationIcon: Record<NotificationType, LucideIcon> = {
@@ -41,9 +44,16 @@ const TYPE_ICON = { EVENT: CalendarDays, COMPETITION: CalendarDays, MAINTENANCE:
 
 export function AnnouncementCard({ a, showGym = false, actions }: { a: Announcement; showGym?: boolean; actions?: ReactNode }) {
   const Icon = TYPE_ICON[a.type];
+  const [viewing, setViewing] = useState(false);
   return (
     <article className={`card announcement announcement--${a.type.toLowerCase()}`}>
-      {a.imageUrl && <img className="announcement__image" src={a.imageUrl} alt="" loading="lazy" />}
+      {/* The whole picture, in its own proportions (a poster is often tall): never cropped, and a tap opens it big. */}
+      {a.imageUrl && (
+        <button type="button" className="announcement__image-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the image")}>
+          <img className="announcement__image" src={a.imageUrl} alt="" loading="lazy" />
+        </button>
+      )}
+      {viewing && a.imageUrl && <PhotoViewer src={a.imageUrl} alt={a.title} onClose={() => setViewing(false)} />}
       <div className="announcement__head">
         <span className="announcement__type"><Icon aria-hidden /> {announcementTypeLabel[a.type]}</span>
         <span className="list__sub">{showGym ? `${a.gymName} · ` : ""}{relativeTime(a.createdAt)}</span>
@@ -55,7 +65,8 @@ export function AnnouncementCard({ a, showGym = false, actions }: { a: Announcem
         </p>
       )}
       {a.sectorName && <p className="list__sub">{t("Sector")}: {a.sectorName}</p>}
-      <p className="prose">{a.content}</p>
+      <p className="prose"><LinkifiedText text={a.content} /></p>
+      <AttendanceBar a={a} />
       {actions && <div className="form__actions">{actions}</div>}
     </article>
   );

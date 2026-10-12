@@ -6,4 +6,8 @@
     <!-- EF Core abstractions only (DbSet/LINQ). The PostgreSQL provider lives in Infrastructure. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The in-app help, one file per language (HelpService). -->
+    <EmbeddedResource Include="Help/faq.*.json" />
+  </ItemGroup>
 </Project>

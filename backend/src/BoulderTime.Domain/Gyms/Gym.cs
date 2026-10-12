@@ -15,6 +15,7 @@ public class Gym : IAuditable
     public const int UrlMaxLength = 2048;
     public const int EmailMaxLength = 320;
     public const int PhoneMaxLength = 40;
+    public const int OpeningHoursMaxLength = 8000;
 
     public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -66,6 +67,12 @@ public class Gym : IAuditable
     public int? OfficialBetaLimit { get; private set; } = DefaultOfficialBetaLimit;
 
     public const int DefaultOfficialBetaLimit = 20;
+
+    /// <summary>
+    /// Opening hours as the gym's admins set them: the week and any closures, kept as one JSON document (the shape is
+    /// the application's <c>OpeningHoursDto</c>). Null until the gym says.
+    /// </summary>
+    public string? OpeningHours { get; private set; }
     public GymStatus Status { get; private set; } = GymStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -144,6 +151,13 @@ public class Gym : IAuditable
     }
 
     public void SetStatus(GymStatus status) => Status = status;
+
+    /// <summary>Null clears them. The application validates the document; this only keeps it within its column.</summary>
+    public void SetOpeningHours(string? json)
+    {
+        if (json is { Length: > OpeningHoursMaxLength }) throw new ArgumentException("Opening hours are too long.", nameof(json));
+        OpeningHours = string.IsNullOrWhiteSpace(json) ? null : json;
+    }
 
     public void SetFoundingGym(bool isFounding) => IsFoundingGym = isFounding;
 

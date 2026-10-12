@@ -11,7 +11,7 @@ namespace BoulderTime.Application.Boulders;
 /// Boulder lifecycle. Viewing active boulders is public for visible gyms; a removed boulder stays readable by id
 /// forever (climbing history links to it). Creating, editing, removing and restoring need STAFF+.
 /// </summary>
-public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAccess boulderAccess, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications)
+public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAccess boulderAccess, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Leaderboards.BoulderPoints points)
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
@@ -83,6 +83,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var tags = (await reader.TagsAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
         var completions = (await reader.CompletionsAsync([b.Id], ct)).GetValueOrDefault(b.Id);
         var viewer = (await reader.ViewerAsync([b.Id], currentUser.UserId, ct)).GetValueOrDefault(b.Id);
+        var scales = new Dictionary<Guid, Leaderboards.GymScales> { [gym.Id] = await points.ForGymAsync(gym.Id, ct) };
         var following = currentUser.UserId is { } uid && await db.BoulderFollows.AnyAsync(f => f.BoulderId == b.Id && f.UserId == uid, ct);
         PersonDto? setter = null;
         if (b.SetterUserId is { } setterId)
@@ -93,7 +94,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
             await CanAddBetaAsync(gym, b.Id, ct),
             b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath),
-            b.Intensity, tags, completions);
+            b.Intensity, tags, completions,
+            b.Name, BoulderReader.PointsOf(scales, b, grades), role is null ? null : b.PointsOverride);
     }
 
     /// <summary>
@@ -137,6 +139,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var userId = currentUser.RequireUserId();
 
         var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity);
+        valid.ApplyNameAndPoints(boulder);
         db.Boulders.Add(boulder);
         foreach (var tagId in valid.TagIds ?? []) db.BoulderTags.Add(BoulderTag.Create(boulder.Id, tagId));
         foreach (var (systemId, valueId) in valid.Grades)
@@ -186,6 +189,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (boulder.HoldColor != valid.HoldColor) changes.Add(Localization.NotificationTexts.BoulderChange.HoldColor);
         if (boulder.PhotoPath != valid.PhotoPath) changes.Add(Localization.NotificationTexts.BoulderChange.Photo);
         var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity);
+        // Naming a boulder or setting its points is not news for its followers either.
+        valid.ApplyNameAndPoints(boulder);
         if (valid.TagIds is { } tagIds)
         {
             // Tags and intensity describe the boulder for climbers looking for one; changing them is not news for its
@@ -365,7 +370,15 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     // ---------- Helpers ----------
 
     private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId,
-        HashSet<(Guid SystemId, Guid ValueId)> Grades, BoulderIntensity? Intensity, IReadOnlyList<Guid>? TagIds);
+        HashSet<(Guid SystemId, Guid ValueId)> Grades, BoulderIntensity? Intensity, IReadOnlyList<Guid>? TagIds, string? Name, int? Points)
+    {
+        /// <summary>Null name or points: what the boulder has stays (older apps don't send them).</summary>
+        public void ApplyNameAndPoints(Boulder boulder)
+        {
+            if (Name is not null) boulder.Rename(Name);
+            if (Points is { } p) boulder.SetPointsOverride(p == 0 ? null : p);
+        }
+    }
 
     private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath, CancellationToken ct)
     {
@@ -430,10 +443,16 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
                 v.Check(false, "tagIds", "Use this gym's tags.");
         }
 
+        // The name is the boulder's label wherever it shows: a word filter like comments', and no empty labels (blank is no name).
+        var name = r.Name?.Trim();
+        v.Check(name is null || name.Length <= Boulder.NameMaxLength, "name", $"Keep the name to {Boulder.NameMaxLength} characters or fewer.")
+         .Check(name is null || !Community.ContentFilter.IsObjectionable(name), "name", Community.ContentFilter.Message)
+         .Check(r.Points is null or (>= 0 and <= Boulder.MaxPoints), "points", $"Points go from 1 to {Boulder.MaxPoints}.");
+
         v.ThrowIfInvalid();
         // When the photo is unchanged, the domain keeps the existing thumbnail.
         return new ValidBoulder(r.SectorId!.Value, photo, thumbnail, r.HoldColor!.Value, r.SetterUserId,
-            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet(), r.Intensity, tagIds);
+            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet(), r.Intensity, tagIds, name, r.Points);
     }
 
 }

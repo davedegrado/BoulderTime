@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useProfile } from "@/features/climbing/api";
 import { ClimbingActivity } from "@/pages/ActivityPage";
-import { Avatar } from "@/components/Avatar";
+import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
 import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
@@ -20,7 +20,7 @@ export function UserProfilePage() {
   const header = p && (
     <header className="stack">
       <div className="profile-head">
-        <Avatar name={p.displayName} url={p.avatarUrl} size={72} />
+        <EnlargeableAvatar name={p.displayName} url={p.avatarUrl} size={72} />
         <div>
           <h1 className="page__title">{p.displayName}</h1>
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>

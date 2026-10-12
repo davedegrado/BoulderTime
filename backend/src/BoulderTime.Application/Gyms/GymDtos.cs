@@ -37,13 +37,16 @@ public sealed record GymDetailDto(
     /// <summary>The floor plan the sectors are drawn on, with its size in pixels (for its proportions).</summary>
     string? FloorPlanUrl = null,
     int? FloorPlanWidth = null,
-    int? FloorPlanHeight = null)
+    int? FloorPlanHeight = null,
+    /// <summary>The usual week and any closures still to come; null when the gym hasn't set them.</summary>
+    OpeningHoursDto? OpeningHours = null)
 {
     public static GymDetailDto From(Gym g, GymRole? viewerRole) => new(
         g.Id, g.Slug, g.Name, g.Description, g.Address, g.City, g.Website, g.Email, g.Phone, g.InstagramUrl, g.FacebookUrl,
         g.LogoUrl, g.CoverImageUrl, g.Status, g.CreatedAt, viewerRole, Latitude: g.Latitude, Longitude: g.Longitude,
         IsFoundingGym: g.IsFoundingGym, CommunityVideosEnabled: g.CommunityVideosEnabled,
-        FloorPlanUrl: g.FloorPlanUrl, FloorPlanWidth: g.FloorPlanWidth, FloorPlanHeight: g.FloorPlanHeight);
+        FloorPlanUrl: g.FloorPlanUrl, FloorPlanWidth: g.FloorPlanWidth, FloorPlanHeight: g.FloorPlanHeight,
+        OpeningHours: OpeningHoursDto.FromJson(g.OpeningHours));
 }
 
 /// <param name="Latitude">Set both coordinates, or send ClearLocation to remove them; omit both to keep the current ones.</param>

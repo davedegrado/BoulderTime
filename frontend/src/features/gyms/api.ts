@@ -43,6 +43,8 @@ export interface GymDetail extends GymSummary {
   floorPlanUrl?: string | null;
   floorPlanWidth?: number | null;
   floorPlanHeight?: number | null;
+  /** The usual week and the closures; null until the gym sets them. */
+  openingHours?: import("@/features/gyms/openingHours").OpeningHours | null;
 }
 
 export interface Sector {

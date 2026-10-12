@@ -32,7 +32,7 @@ export function InvitationsCard({ count }: { count: number }) {
                   loading={busy && respond.variables?.accept}
                   disabled={respond.isPending}
                   onClick={() => respond.mutate({ id: inv.id, accept: true }, {
-                    onSuccess: () => toast.success(`You're now ${roleLabel[inv.role].toLowerCase()} at ${inv.gymName}`),
+                    onSuccess: () => toast.success(t("You're now {role} at {gym}", { role: roleLabel[inv.role].toLowerCase(), gym: inv.gymName })),
                     onError: (e) => toast.error(errorMessage(e)),
                   })}
                 >{t("Accept")}</Button>

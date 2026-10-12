@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
+import { colorGradeLook } from "@/features/boulders/BoulderBits";
 
 /**
  * Community grade: what climbers think, side by side with the gym's grade and never mixed with it. The rule for the
@@ -76,7 +77,7 @@ function rowsOf(s: SystemConsensus): ConsensusBucket[] {
 }
 
 function Swatch({ bucket }: { bucket: ConsensusBucket }) {
-  return bucket.colorHex ? <span className="consensus__swatch" style={{ background: bucket.colorHex }} aria-hidden /> : null;
+  return bucket.colorHex ? <span className="consensus__swatch" style={{ background: colorGradeLook(bucket.colorHex, bucket.colorHex2).style.background }} aria-hidden /> : null;
 }
 
 function SystemBlock({ boulderId, system: s, canSuggest, showName }: { boulderId: string; system: SystemConsensus; canSuggest: boolean; showName: boolean }) {

@@ -30,6 +30,7 @@ internal sealed class GymConfiguration : IEntityTypeConfiguration<Gym>
         b.Property(g => g.CoverImagePath).HasMaxLength(512);
         b.Property(g => g.FloorPlanUrl).HasMaxLength(Gym.UrlMaxLength);
         b.Property(g => g.FloorPlanPath).HasMaxLength(512);
+        b.Property(g => g.OpeningHours).HasMaxLength(Gym.OpeningHoursMaxLength);
         b.Property(g => g.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
         b.HasIndex(g => new { g.Status, g.Name });
         b.HasIndex(g => new { g.Status, g.City });

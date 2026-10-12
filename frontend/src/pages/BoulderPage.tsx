@@ -20,7 +20,7 @@ import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 import type { BoulderGrade } from "@/features/boulders/api";
 
 /**
@@ -41,7 +41,9 @@ export function BoulderPage() {
 
   const b = boulder.data;
   const removed = b.status === "REMOVED";
-  const photoAlt = t("Boulder in {sector}", { sector: b.sectorName });
+  const name = b.name?.trim() || null;
+  const photoAlt = name ? t("{name}, boulder in {sector}", { name, sector: b.sectorName }) : t("Boulder in {sector}", { sector: b.sectorName });
+  const pointsLabel = b.points != null ? plural(b.points, "Worth {count} point", "Worth {count} points") : null;
 
   return (
     <article className="page page--flush boulder-page">
@@ -58,6 +60,11 @@ export function BoulderPage() {
           </button>
         )}
         {b.photoUrl && <Grades grades={b.grades} className="boulder-page__grades--on-photo" />}
+        {b.photoUrl && b.points != null && (
+          <span className="boulder-page__points" title={pointsLabel ?? undefined}>
+            <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
+          </span>
+        )}
       </div>
       {viewing && b.photoUrl && <PhotoViewer src={b.photoUrl} alt={photoAlt} onClose={() => setViewing(false)} />}
 
@@ -70,10 +77,12 @@ export function BoulderPage() {
         )}
 
         <header className="boulder-page__head">
+          {name && <h1 className="boulder-page__name">{name}</h1>}
           {!b.photoUrl && <Grades grades={b.grades} />}
           <div className="boulder-page__info">
             <div className="boulder-meta__clip">
             <ul className="boulder-meta" aria-label={t("About this boulder")}>
+              {!b.photoUrl && b.points != null && <li>{pointsLabel}</li>}
               <li><HoldBadge color={b.holdColor} compact /></li>
               {b.intensity && <li><IntensityBadge intensity={b.intensity} /></li>}
               <li><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
@@ -108,7 +117,7 @@ export function BoulderPage() {
         <CompletionsLine boulderId={b.id} count={b.completions ?? 0} />
 
         <ProgressTracker key={b.id} boulder={b} />
-        <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} sectorName={b.sectorName} />
+        <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} />
 
         <BetaSection boulderId={b.id} gymName={b.gymName} />
         {b.communityVideosEnabled && <CommunityVideosSection boulderId={b.id} />}
@@ -137,7 +146,7 @@ function Grades({ grades, className = "" }: { grades: BoulderGrade[]; className?
 }
 
 /** "Where is it": the gym's floor plan with this boulder's sector picked out, when the gym has drawn it. */
-function BoulderWhere({ gymSlug, gymId, sectorId, sectorName }: { gymSlug: string; gymId: string; sectorId: string; sectorName: string }) {
+function BoulderWhere({ gymSlug, gymId, sectorId }: { gymSlug: string; gymId: string; sectorId: string }) {
   const gym = useGym(gymSlug);
   const sectors = useSectors(gymId);
   const plan = gym.data ? floorPlanOf(gym.data) : null;
@@ -150,7 +159,7 @@ function BoulderWhere({ gymSlug, gymId, sectorId, sectorName }: { gymSlug: strin
         <h2 id="where-title" className="section__title">{t("Where it is")}</h2>
         <Link to={`/gyms/${gymSlug}?tab=sectors`} className="section__link">{t("Gym map")}</Link>
       </div>
-      <p className="list__sub">{t("In {sector}", { sector: sectorName })}</p>
+      {/* No "In {sector}" line: the plan names the sector it picks out, and the facts above name it too. */}
       <div style={{ maxWidth, width: "100%", margin: "0 auto" }}>
         <SectorMap plan={plan} sectors={sectors.data} highlightId={sectorId} />
       </div>

@@ -18,6 +18,7 @@ import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
 import { AnnouncementCard } from "@/features/notifications/NotificationBits";
+import { OpeningHoursCard } from "@/features/gyms/openingHours";
 import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { useAuth } from "@/auth/AuthProvider";
@@ -304,6 +305,7 @@ function InfoTab({ gym }: { gym: GymDetail }) {
         </Suspense>
       )}
       {gym.description && <p className="prose">{gym.description}</p>}
+      {gym.openingHours && <OpeningHoursCard hours={gym.openingHours} />}
       <ul className="list">
         <li className="list__row">
           <MapPin className="list__icon" aria-hidden />

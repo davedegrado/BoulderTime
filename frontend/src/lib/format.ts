@@ -5,7 +5,8 @@ export type GymRole = "STAFF" | "ADMIN" | "OWNER";
 export type CandidateStatus = "PENDING" | "CONTACTED" | "ACCEPTED" | "REJECTED";
 
 const GYM_STATUS: Record<GymStatus, string> = { DRAFT: "Draft", ACTIVE: "Active", ARCHIVED: "Archived" };
-const ROLES: Record<GymRole, string> = { STAFF: t("Staff"), ADMIN: t("Admin"), OWNER: t("Owner") };
+// English here, translated when read (labels): a t() at load time would stay in the language the app started in.
+const ROLES: Record<GymRole, string> = { STAFF: "Staff", ADMIN: "Admin", OWNER: "Owner" };
 
 /** Label maps are read at render time, so they follow the language in use. */
 export function labels<T extends string>(source: Record<T, string>): Record<T, string> {

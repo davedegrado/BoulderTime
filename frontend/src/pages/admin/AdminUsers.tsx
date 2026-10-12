@@ -10,7 +10,7 @@ import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useDebounced } from "@/lib/useDebounced";
 import { formatDate } from "@/lib/format";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 export function AdminUsers() {
   const [text, setText] = useState("");
@@ -28,7 +28,7 @@ export function AdminUsers() {
         : users.data.items.length === 0 ? <EmptyState icon={<UserRound />} title={t("No users found")} />
         : (
           <>
-            <p className="section__meta">{users.data.total} {users.data.total === 1 ? "user" : "users"}</p>
+            <p className="section__meta">{plural(users.data.total, "{count} user", "{count} users")}</p>
             <ul className="list">
               {users.data.items.map((u) => (
                 <li key={u.id} className="list__row">

@@ -9,12 +9,16 @@ export type LeaderboardPeriod = "WEEK" | "MONTH" | "YEAR" | "ALL";
 
 export interface LeaderboardEntry {
   position: number; climber: Person; points: number; completed: number;
-  highest: { label: string; rank: number; colorHex: string | null } | null; isViewer: boolean;
+  highest: { label: string; rank: number; colorHex: string | null; colorHex2?: string | null } | null; isViewer: boolean;
 }
 
 export interface Leaderboard {
   gymId: string; metric: LeaderboardMetric; period: LeaderboardPeriod; from: string | null;
-  gradeSystemId: string | null; gradeSystemName: string | null; gradeSystemType: GradeSystemType | null; scoringExplanation: string;
+  gradeSystemId: string | null; gradeSystemName: string | null; gradeSystemType: GradeSystemType | null;
+  /** The rule in English, kept by the server for older app builds. The app says it from `scoring`, in the reader's language. */
+  scoringExplanation: string;
+  /** How points are worked out; `customised` when the gym set some grades' or boulders' points by hand. */
+  scoring?: { minPoints: number; maxPoints: number; customised: boolean } | null;
   climbers: number; entries: LeaderboardEntry[]; viewer: LeaderboardEntry | null;
 }
 

@@ -1,10 +1,11 @@
 import { useEffect, useRef, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import { Check, MountainSnow, Users } from "lucide-react";
+import { Check, MountainSnow, RotateCw, Users } from "lucide-react";
 import { IntensityBadge } from "@/features/boulders/intensity";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
+import { dataLabel } from "@/i18n/data";
 import { plural, t } from "@/i18n/i18n";
 
 interface BoulderCardProps {
@@ -19,7 +20,7 @@ interface BoulderCardProps {
 
 const LONG_PRESS_MS = 450;
 
-/** Image-first card for scanning many boulders: grade and holds are always both visible and always labelled. */
+/** Image-first card for scanning many boulders: grade and holds are always both visible, and the holds always labelled. */
 export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress }: BoulderCardProps) {
   const timer = useRef<number | null>(null);
   const fired = useRef(false);
@@ -46,6 +47,12 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
 
   useEffect(() => cancel, []);
 
+  // Fixed anatomy, so a card never grows with what it happens to hold. On the photo: the grade (bottom left, as on the
+  // boulder's page) with its intensity, the points (bottom right), the climber's own state (top right). Under it: the
+  // name when the boulder has one, the holds, and the sector with how it is rated and how many sent it.
+  const name = boulder.name?.trim() || null;
+  const sends = boulder.completions ?? 0;
+  const tries = boulder.viewer && !boulder.viewer.completed ? boulder.viewer.attempts : 0;
   const body = (
     <>
       <div className="boulder-card__photo">
@@ -55,30 +62,39 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
         {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
         {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
         {!selectable && boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
-        {!selectable && boulder.viewer && !boulder.viewer.completed && boulder.viewer.attempts > 0 && (
-          <span className="boulder-card__tries">{plural(boulder.viewer.attempts, "{count} try", "{count} tries")}</span>
+        {!selectable && tries > 0 && (
+          <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
+            <RotateCw aria-hidden /><span aria-hidden>{tries}</span>
+            <span className="sr-only">{plural(tries, "{count} try", "{count} tries")}</span>
+          </span>
         )}
         {selectable && <span className={`boulder-card__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
+        <span className="boulder-card__overlay">
+          <span className="boulder-card__grades">
+            <GradeLine grades={boulder.grades} />
+            {boulder.intensity && <span className="boulder-card__intensity"><IntensityBadge intensity={boulder.intensity} compact /></span>}
+          </span>
+          {boulder.points != null && (
+            <span className="boulder-card__points" title={plural(boulder.points, "Worth {count} point", "Worth {count} points")}>
+              <span aria-hidden>{t("+{points} pt", { points: boulder.points })}</span>
+              <span className="sr-only">{plural(boulder.points, "Worth {count} point", "Worth {count} points")}</span>
+            </span>
+          )}
+        </span>
       </div>
       <div className="boulder-card__body">
-        <GradeLine grades={boulder.grades} />
-        <div className="boulder-card__holds">
-          <HoldBadge color={boulder.holdColor} compact />
-          {boulder.intensity && <IntensityBadge intensity={boulder.intensity} compact />}
-        </div>
-        {(boulder.tags ?? []).length > 0 && (
-          <p className="boulder-card__tags">{(boulder.tags ?? []).slice(0, 2).map((x) => x.name).join(" · ")}{(boulder.tags ?? []).length > 2 ? ` +${(boulder.tags ?? []).length - 2}` : ""}</p>
-        )}
+        {name && <p className="boulder-card__name">{name}</p>}
+        <div className="boulder-card__holds"><HoldBadge color={boulder.holdColor} compact /></div>
         <div className="boulder-card__foot">
           <p className="boulder-card__sector">{boulder.sectorName}</p>
           <span className="boulder-card__stats">
-            {(boulder.completions ?? 0) > 0 && (
-              <span className="boulder-card__sends" title={plural(boulder.completions ?? 0, "Completed by 1 person", "Completed by {count} people")}>
-                <Users aria-hidden />{boulder.completions}
-                <span className="sr-only">{plural(boulder.completions ?? 0, "Completed by 1 person", "Completed by {count} people")}</span>
+            <RatingSummaryText rating={boulder.rating} compact />
+            {sends > 0 && (
+              <span className="boulder-card__sends" title={plural(sends, "Completed by 1 person", "Completed by {count} people")}>
+                <Users aria-hidden />{sends}
+                <span className="sr-only">{plural(sends, "Completed by 1 person", "Completed by {count} people")}</span>
               </span>
             )}
-            <RatingSummaryText rating={boulder.rating} compact />
           </span>
         </div>
       </div>
@@ -88,7 +104,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   if (selectable) {
     return (
       <button type="button" className={`boulder-card ${selected ? "boulder-card--selected" : ""}`} onClick={onToggle} aria-pressed={selected}
-        aria-label={`${boulder.grades.map((g) => g.label).join(" ")}, ${boulder.sectorName}`}>
+        aria-label={[name, boulder.grades.map((g) => dataLabel(g.label)).join(" ") || t("Ungraded"), boulder.sectorName].filter(Boolean).join(", ")}>
         {body}
       </button>
     );

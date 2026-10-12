@@ -973,3 +973,57 @@ nothing else (drafts made by the first version become unlisted). "Live gyms" on 
 
 This is the one piece of seeding reachable over HTTP (`POST /api/admin/review-demo`, platform admins only); the full
 `seed` command stays CLI-only.
+
+## ADR-052 · Points staff can set, boulder names, two-colour grades, a new boulder card
+**Points.** What a send is worth is decided in one place (`BoulderPoints`), used by the leaderboard and by the
+`points` every boulder now carries, so the "+64 pt" on a card is always the number the leaderboard adds up. The
+automatic rule is unchanged in shape — 10 for the easiest grade, 100 for the hardest, evenly spaced — but it now
+spreads only the scale's **active** grades: before, retired grades still counted in the scale's size, so retiring one
+quietly lowered everyone else's points. A grade retired from now on keeps the automatic points it had that day
+(`grade_values.retired_points`); grades retired before keep being valued as they always were. Staff (admins, from
+**Manage → Grades**) can set a grade's points by hand (`grade_values.points_override`), and any staff member a single
+boulder's (`boulders.points_override`, 1–1000): the boulder's own wins, then the grade's, then the automatic one.
+Points are still worked out on read and never stored per send, so **a change applies to every send, past periods
+included** (decision of 12 October 2026, option A of the plan): the editor says so before saving. Adding, removing or
+reordering active grades still moves the automatic points of the others, as an evenly spaced scale has to; a value
+that must not move is set by hand. The leaderboard sends the rule as numbers (`scoring`) and the app words it in the
+reader's language; the English `scoringExplanation` stays for app builds already installed.
+
+**Compatibility.** Every new request field means "leave it as it is" when absent, so an app build from before (in the
+stores' test tracks) saving a boulder or a scale doesn't wipe names, points or second colours: `name` empty clears
+it, `points` 0 goes back to automatic, `colorHex2` empty makes a grade one-colour again.
+
+**Names.** A boulder may have a name (`boulders.name`, 60 characters, word filter, blank is no name). It heads the
+card and the boulder's page; a boulder without one has no name line at all — never the sector, never an id in its
+place.
+
+**Two-colour grades.** A colour grade can have a second colour (`grade_values.color_hex2`) for the in-between grades
+some gyms use (green/blue). It sits in the scale like any grade, ordered by the same arrows, and shows split on the
+diagonal wherever a grade shows: cards, the boulder's page, leaderboards, profiles, the community grade. Other scales
+are untouched.
+
+**The card.** Grade (bottom left of the photo, as on the boulder's page) with the intensity beside it, the points
+opposite (bottom right), the climber's own state top right (✓, or ↻ and the number of tries, read out in words).
+Under the photo: the name when there is one, the holds, the sector with rating and sends. Tags left the card for the
+boulder's page and the filters: they made cards of different heights in the same row. The "In {sector}" line under
+"Where it is" went too: the plan names the sector it picks out.
+
+## ADR-053 · Opening hours, "I'll be there", help by role, links in updates
+**Opening hours** are one JSON document on the gym (`gyms.opening_hours`): a usual week with up to three time slots
+a day, and closures with an optional note. No seasons, no per-sector times. Admins set them in **Manage → Settings**;
+the Info tab says whether the gym is open now, on Italian time (every gym is in Italy for now), the week, and the
+closures to come. Closures already over are dropped when the hours are saved and not shown before.
+
+**"I'll be there"** (`announcement_attendances`, one row per person and event, so tapping twice is still once) is
+offered on events only: not on competitions, which have their own registration, and not on news. It closes the day
+after the event's date. Everyone sees how many are going; the gym's **followers** and its staff see who, minus the
+people hidden from them (blocked either way, suspended, leaving). It is not a booking: no places, no waiting list.
+An event deleted takes its list with it, and so does an account when it is erased.
+
+**The help** moved to the API (`GET /api/help/faq`, texts in `Application/Help/faq.{it,en}.json`). Each answer says
+who it is for — climbers, staff or both — and the server sends only what the reader may read: gym staff are people
+with a role at any gym, and BoulderTime's administrators. The staff answers are no longer in the app's code at all.
+App builds already installed keep the guide they were built with.
+
+**Links.** Addresses written in an update become links (http and https only; nothing else in the text is ever
+interpreted), opening outside the app. Update images keep their proportions, centred, and open full screen.

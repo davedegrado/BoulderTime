@@ -36,6 +36,8 @@ Counts come from the most recent `apply.sh` run recorded in `apply-log.txt`.
 | — | Card picture chosen by cropping the photo; dark theme; in-app help and FAQ (`/aiuto`); test notification | **Done** | cropper, theme, help and push tests |
 | — | Gym tags and boulder intensity, with filters (ADR-046) | **Done** | tag uniqueness, ownership, filter and validation tests |
 | — | "Completed by N people" with the list of names, and the climber's most climbed sector (ADR-047) | **Done** | counting, undo, privacy and favourite-sector tests |
+| — | Points staff can set per grade and per boulder, the same number on cards and leaderboards; boulder names; two-colour grades; the new boulder card (ADR-052) | **Done in code** | points, retirement, compatibility, name and two-colour tests |
+| — | Opening hours; "I'll be there" on events; help answers by role, served by the API; links and whole images in updates; profile photos that open full screen; translation sweep (ADR-053) | **Done in code** | hours, attendance, help-by-role and translation-coverage tests |
 
 ## Store apps (in progress)
 
@@ -55,6 +57,18 @@ One codebase: the website, the installable PWA and the store apps are the same R
 | M7 | The stores themselves: Google Play, then App Store. Privacy answers ready (`docs/store-privacy.md`), deletion page live | **Google Play:** in internal testing; links verified for the store app; every build of `main` uploaded to a testing track (ADR-040). Next: closed test, then production. **App Store:** TestFlight builds from `main`; store listing and review next |
 
 ## Planned, deliberately not started
+
+- **Hold colours chosen by each gym** (next). Each gym's own palette, more than one colour per boulder, colours that
+  can be renamed, retired or removed without touching the boulders that use them, the twelve of today as the start.
+  Planned in detail in the October 2026 improvement plan (item 4.2): its own table per gym, a link table for the
+  boulders, a data migration from today's single colour, and the old `holdColor` field kept for installed app builds.
+- **A climber's videos on their profile.** The list of the videos they published, each opening the boulder; shown only
+  while video uploads are switched on (ADR-049), and only videos from gyms that allow them. Waits for uploads to come
+  back.
+- **Staying signed in, saved passwords, Face ID / fingerprint.** Saved passwords through the phone's own password
+  manager (iCloud Keychain, Google Password Manager: `webcredentials` and `get_login_creds` associations, no new
+  library); the session kept in the phone's secure storage; an optional biometric unlock in front of the same Supabase
+  sign-in, not a second one. Needs a native plugin and new store builds.
 
 - **Videos on iOS.** Checked on devices (October 2026): short videos picked or filmed on iPhone upload and play, and
   play on Android with sound. Found and fixed (ADR-048): posters refused by storage, Android tiles without a frame,

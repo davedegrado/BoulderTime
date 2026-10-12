@@ -83,8 +83,11 @@ public static class NotificationTexts
         ? new("Il tuo video è online", "La palestra ha approvato il tuo video. Ora possono vederlo tutti.")
         : new("Your video is live", "The gym approved your video. Everyone can watch it now.");
 
+    /// <summary>The reason the app writes on its own when a moderator removes a video after a report without a note.</summary>
+    public const string RemovedAfterReport = "Removed after a report.";
+
     public static NotificationText VideoRejected(string language, string? reason) => It(language)
-        ? new("Il tuo video non è stato approvato", reason)
+        ? new("Il tuo video non è stato approvato", reason == RemovedAfterReport ? "Rimosso dopo una segnalazione." : reason)
         : new("Your video wasn't approved", reason);
 
     public static NotificationText ReportReviewed(string language, bool resolved) => (It(language), resolved) switch

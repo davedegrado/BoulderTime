@@ -1,6 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { activeLanguage } from "@/i18n/i18n";
-import { FAQ_EN } from "@/features/help/faq.en";
-import { FAQ_IT } from "@/features/help/faq.it";
 
 /**
  * `videoUploads`: shown only when video uploads are on (true) or off (false), so the guide never describes a button
@@ -8,15 +8,23 @@ import { FAQ_IT } from "@/features/help/faq.it";
  */
 export interface FaqItem { q: string; a: string; videoUploads?: boolean }
 export interface FaqSection { id: string; title: string; items: FaqItem[] }
-/** The guide: what climbers ask, and what gym staff ask. */
+/** The guide: what climbers ask, and what gym staff ask. `staff` comes back empty for anyone who isn't gym staff. */
 export interface FaqGuide { climbers: FaqSection[]; staff: FaqSection[] }
 export type FaqAudience = keyof FaqGuide;
 
 /**
- * The guide in the language in use. It is kept as whole texts per language, not as strings in the dictionary:
- * answers are paragraphs that read best written once in each language, not assembled from fragments.
+ * The guide in the language in use, as the server lets this person read it. The texts live on the server
+ * (backend `Help/faq.{it,en}.json`), written whole in each language: answers are paragraphs that read best written
+ * once per language. Who reads which answer is decided there too, so the staff answers are not in the app at all.
  */
-export const faqGuide = (): FaqGuide => (activeLanguage() === "en" ? FAQ_EN : FAQ_IT);
+export function useFaqGuide() {
+  const language = activeLanguage();
+  return useQuery({
+    queryKey: ["help", "faq", language],
+    queryFn: ({ signal }) => api.get<FaqGuide>(`/api/help/faq?lang=${language}`, { signal }),
+    staleTime: 60 * 60 * 1000,
+  });
+}
 
 /** The guide as this server has it set up: items for the other setting left out, the video limit filled in. */
 export function forSettings(guide: FaqGuide, videos: { uploadsEnabled: boolean; maxUploadMegabytes: number }): FaqGuide {

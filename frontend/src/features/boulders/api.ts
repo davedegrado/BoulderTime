@@ -13,7 +13,8 @@ export type BoulderStatus = "ACTIVE" | "REMOVED" | "DELETED";
 /** The two a list can be asked for. A deleted boulder is in no list, so asking for it is an error, not a filter. */
 export type BrowsableStatus = "ACTIVE" | "REMOVED";
 
-export interface BoulderGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gradeValueId: string; label: string; rank: number; colorHex: string | null }
+/** `colorHex2`: the second colour of an in-between grade ("green/blue"); null or absent for one colour. */
+export interface BoulderGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gradeValueId: string; label: string; rank: number; colorHex: string | null; colorHex2?: string | null }
 
 export interface RatingSummary { average: number | null; count: number }
 /** One of the gym's own tags, as a boulder carries it. */
@@ -30,6 +31,10 @@ export interface BoulderSummary {
   tags?: BoulderTag[] | null;
   /** How many people completed it, each once. */
   completions?: number;
+  /** The setters' name for it; null when it has none (never empty). */
+  name?: string | null;
+  /** What completing it scores on the gym's leaderboard (the same number); null when it scores nothing. */
+  points?: number | null;
 }
 
 export interface BoulderDetail extends BoulderSummary {
@@ -43,6 +48,8 @@ export interface BoulderDetail extends BoulderSummary {
   canAddOfficialBeta: boolean;
   /** The small picture the cards show: the whole photo, or the part staff chose. Null for older boulders. */
   thumbnailUrl?: string | null;
+  /** Points staff set on this boulder by hand; only staff receive it. Null: it scores as its grade does. */
+  pointsOverride?: number | null;
 }
 
 /** What deleting a boulder would take with it. `sends` is what it would NOT take. */
@@ -61,6 +68,10 @@ export interface SaveBoulderInput {
   setterUserId: string | null;
   intensity: Intensity | null;
   tagIds: string[];
+  /** Empty string removes the name. */
+  name: string;
+  /** Points set by hand; 0 goes back to the grade's. */
+  points: number;
 }
 
 export interface RemoveResult { removed: number; sectors: { sectorId: string; sectorName: string; removed: number }[] }

@@ -13,7 +13,13 @@ public enum LeaderboardMetric { Points = 0, Completed = 1, Highest = 2 }
 /// <remarks>Single-word names: query-string enum binding does not apply the SCREAMING_SNAKE JSON policy.</remarks>
 public enum LeaderboardPeriod { Week = 0, Month = 1, Year = 2, All = 3 }
 
-public sealed record LeaderboardGradeDto(string Label, int Rank, string? ColorHex);
+public sealed record LeaderboardGradeDto(string Label, int Rank, string? ColorHex, string? ColorHex2 = null);
+
+/// <summary>
+/// How points are worked out, as numbers rather than a sentence, so the app can say it in the reader's language.
+/// <see cref="Customised"/>: the gym has set some grades' or boulders' points by hand.
+/// </summary>
+public sealed record ScoringRuleDto(int MinPoints, int MaxPoints, bool Customised);
 
 public sealed record LeaderboardEntryDto(
     int Position, PersonDto Climber, int Points, int Completed, LeaderboardGradeDto? Highest, bool IsViewer);
@@ -21,13 +27,15 @@ public sealed record LeaderboardEntryDto(
 public sealed record LeaderboardDto(
     Guid GymId, LeaderboardMetric Metric, LeaderboardPeriod Period, DateTimeOffset? From,
     Guid? GradeSystemId, string? GradeSystemName, GradeSystemType? GradeSystemType, string ScoringExplanation,
-    int Climbers, IReadOnlyList<LeaderboardEntryDto> Entries, LeaderboardEntryDto? Viewer);
+    int Climbers, IReadOnlyList<LeaderboardEntryDto> Entries, LeaderboardEntryDto? Viewer,
+    /// <summary>The rule behind <see cref="ScoringExplanation"/>, which stays for the app builds that show that English sentence.</summary>
+    ScoringRuleDto? Scoring = null);
 
 /// <summary>
 /// Per-gym leaderboards computed on read from completions (never stored). A completion counts in the period of its
 /// completion date, including boulders removed since. Grades are only compared within the gym's scales.
 /// </summary>
-public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, IClimbScoring scoring)
+public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, IClimbScoring scoring, BoulderPoints boulderPoints)
 {
     public const int DefaultLimit = 50;
 
@@ -74,15 +82,16 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var systems = await db.GradeSystems.AsNoTracking().Where(s => s.GymId == gymId && s.IsActive).OrderBy(s => s.SortOrder).ToListAsync(ct);
         var primary = systems.FirstOrDefault();
         var systemIds = systems.Select(s => s.Id).ToList();
-        var scaleSizes = await db.GradeValues.AsNoTracking().Where(v => systemIds.Contains(v.GradeSystemId))
-            .GroupBy(v => v.GradeSystemId).Select(g => new { g.Key, Size = g.Max(v => v.Rank) + 1 })
-            .ToDictionaryAsync(x => x.Key, x => x.Size, ct);
+        var scales = await boulderPoints.ForGymAsync(gymId, ct);
 
         var boulderIds = sends.Select(s => s.BoulderId).Distinct().ToList();
         var grades = await db.BoulderGrades.AsNoTracking()
             .Where(g => boulderIds.Contains(g.BoulderId) && g.Source == GradeSource.Staff && systemIds.Contains(g.GradeSystemId))
-            .Join(db.GradeValues, g => g.GradeValueId, v => v.Id, (g, v) => new { g.BoulderId, g.GradeSystemId, v.Label, v.Rank, v.ColorHex })
+            .Join(db.GradeValues, g => g.GradeValueId, v => v.Id, (g, v) => new { g.BoulderId, g.GradeSystemId, g.GradeValueId, v.Label, v.Rank, v.ColorHex, v.ColorHex2 })
             .ToListAsync(ct);
+        // Points staff set on single boulders win over their grade's.
+        var overrides = await db.Boulders.AsNoTracking().Where(b => boulderIds.Contains(b.Id) && b.PointsOverride != null)
+            .ToDictionaryAsync(b => b.Id, b => b.PointsOverride, ct);
         var order = systems.Select((s, i) => (s.Id, i)).ToDictionary(x => x.Id, x => x.i);
         var gradesByBoulder = grades.GroupBy(g => g.BoulderId).ToDictionary(g => g.Key, g => g.OrderBy(x => order[x.GradeSystemId]).ToList());
 
@@ -92,12 +101,12 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
             LeaderboardGradeDto? highest = null;
             foreach (var send in g)
             {
-                if (!gradesByBoulder.TryGetValue(send.BoulderId, out var list) || list.Count == 0) continue;
-                var scored = list[0]; // primary system if graded in it, otherwise the next system of the gym
-                points += scoring.PointsFor(new GradedSend(scored.Rank, scaleSizes.GetValueOrDefault(scored.GradeSystemId, scored.Rank + 1)));
+                var list = gradesByBoulder.GetValueOrDefault(send.BoulderId) ?? [];
+                // Primary system if graded in it, otherwise the next system of the gym; a boulder's own points first.
+                points += scales.PointsOf(overrides.GetValueOrDefault(send.BoulderId), list.Select(x => (x.GradeSystemId, x.GradeValueId))) ?? 0;
                 var inPrimary = primary is null ? null : list.FirstOrDefault(x => x.GradeSystemId == primary.Id);
                 if (inPrimary is not null && (highest is null || inPrimary.Rank > highest.Rank))
-                    highest = new LeaderboardGradeDto(inPrimary.Label, inPrimary.Rank, inPrimary.ColorHex);
+                    highest = new LeaderboardGradeDto(inPrimary.Label, inPrimary.Rank, inPrimary.ColorHex, inPrimary.ColorHex2);
             }
             var lastSend = g.Max(x => x.CompletedAt) ?? DateTimeOffset.MinValue;
             return new Row(g.Key, points, g.Count(), highest, lastSend);
@@ -129,8 +138,10 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var entries = Enumerable.Range(0, Math.Min(take, sorted.Count)).Select(ToEntry).ToList();
         var viewer = viewerIndex >= 0 ? ToEntry(viewerIndex) : null;
         var scoringSystem = primary?.Name ?? "grade";
+        var customised = await db.GradeValues.AsNoTracking().AnyAsync(v => systemIds.Contains(v.GradeSystemId) && v.PointsOverride != null, ct)
+                         || await db.Boulders.AsNoTracking().AnyAsync(b => b.GymId == gymId && b.PointsOverride != null, ct);
         return new LeaderboardDto(gymId, m, p, from, primary?.Id, primary?.Name, primary?.Type, scoring.Describe(scoringSystem),
-            sorted.Count, entries, viewer);
+            sorted.Count, entries, viewer, new ScoringRuleDto(RankBasedScoring.MinPoints, RankBasedScoring.MaxPoints, customised));
     }
 
     /// <remarks>Ties on the metric are ordered by who got there first (earlier last send).</remarks>

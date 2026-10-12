@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { Bell, BellRing, Check, MountainSnow, Star } from "lucide-react";
 import type { RatingSummary } from "@/features/boulders/api";
 import type { HighestGrade, HistoryItem, WeekActivity } from "@/features/climbing/api";
-import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
-import { inkOn } from "@/features/boulders/holdColors";
+import { ColorGrade, GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
@@ -108,7 +107,7 @@ export function HighestGrades({ grades }: { grades: HighestGrade[] }) {
       {grades.map((g) => (
         <li key={g.gradeSystemId} className="highest__item">
           {g.systemType === "COLOR" && g.colorHex
-            ? <span className="grade grade--color grade--md" style={{ background: g.colorHex, color: inkOn(g.colorHex) }}>{dataLabel(g.label)}</span>
+            ? <ColorGrade label={g.label} colorHex={g.colorHex} colorHex2={g.colorHex2} />
             : <span className="grade grade--text grade--md">{dataLabel(g.label)}</span>}
           <span className="list__sub">{dataLabel(g.systemName)}{g.systemType === "COLOR" || g.systemType === "CUSTOM" ? ` · ${g.gymName}` : ""}</span>
         </li>

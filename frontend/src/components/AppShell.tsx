@@ -20,7 +20,8 @@ interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: b
  * "Gyms" from the product brief lives inside Explore (discovery) and Home (followed gyms)
  * to keep the phone tab bar at five thumb-reachable targets.
  */
-const NAV: NavItem[] = [
+/** A function, so the labels are read in the language in use, not the one the app started in. */
+const NAV = (): NavItem[] => [
   { to: "/", label: t("Home"), icon: Home, requiresAuth: false },
   { to: "/explore", label: t("Explore"), icon: Compass, requiresAuth: false },
   { to: "/activity", label: t("Activity"), icon: Activity, requiresAuth: true },
@@ -31,7 +32,7 @@ const NAV: NavItem[] = [
 export function AppShell() {
   const { session } = useAuth();
   const me = useCurrentUser();
-  const items = NAV.filter((i) => session || !i.requiresAuth);
+  const items = NAV().filter((i) => session || !i.requiresAuth);
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;

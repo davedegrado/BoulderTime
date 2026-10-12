@@ -16,6 +16,9 @@ import { Player, VideoUploader } from "@/features/community/VideoUploader";
  * What a climber sees: the gym's beta, and nothing to edit. Publishing it is a setting job and lives in the boulder
  * editor, next to the photo and the grade — a staff member reading the page as a climber is reading, not working.
  */
+/** The reason the server writes on its own when a video comes down after a report without a note (English, translated here). */
+const REMOVED_AFTER_REPORT = "Removed after a report.";
+
 export function BetaSection({ boulderId, gymName }: { boulderId: string; gymName?: string }) {
   const beta = useBeta(boulderId);
   if (beta.isPending) return <LoadingState label={t("Loading beta")} />;
@@ -218,7 +221,7 @@ function VideoViewer({ videos, index, signedIn, canLoadMore, onLoadMore, onIndex
         <p className="list__title">{v.author.displayName}</p>
         {v.caption && <p className="viewer__caption">{v.caption}</p>}
         {v.isMine && v.status === "PENDING" && <p className="status-line"><Clock aria-hidden /> {t("Waiting for the gym's approval. Only you can see it.")}</p>}
-        {v.isMine && v.status === "REJECTED" && <p className="status-line status-line--bad"><XCircle aria-hidden /> {t("Not approved")}: {v.rejectionReason}</p>}
+        {v.isMine && v.status === "REJECTED" && <p className="status-line status-line--bad"><XCircle aria-hidden /> {t("Not approved")}: {v.rejectionReason === REMOVED_AFTER_REPORT ? t(REMOVED_AFTER_REPORT) : v.rejectionReason}</p>}
         <div className="comment__actions">
           {v.isMine && <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete video?")} onConfirm={() => onDelete(v.id)}>{t("Delete")}</ConfirmButton>}
           {signedIn && !v.isMine && <ReportButton entityType="VIDEO" entityId={v.id} />}

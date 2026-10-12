@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Community;
 
-public sealed record ConsensusBucketDto(Guid GradeValueId, string Label, int Rank, string? ColorHex, int Votes);
+public sealed record ConsensusBucketDto(Guid GradeValueId, string Label, int Rank, string? ColorHex, int Votes, string? ColorHex2 = null);
 
 /// <param name="UsedByGym">False for a reference scale the gym doesn't use (ReferenceGrades): there is no official
 /// grade in it, only votes.</param>
@@ -64,10 +64,10 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
             .Select(s =>
         {
             var scale = values.Where(v => v.GradeSystemId == s.Id && v.IsActive)
-                .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes.GetValueOrDefault(v.Id))).ToList();
+                .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes.GetValueOrDefault(v.Id), v.ColorHex2)).ToList();
             // Votes for since-retired values still count and are shown.
             var buckets = values.Where(v => v.GradeSystemId == s.Id && votes.ContainsKey(v.Id))
-                .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes[v.Id])).ToList();
+                .Select(v => new ConsensusBucketDto(v.Id, v.Label, v.Rank, v.ColorHex, votes[v.Id], v.ColorHex2)).ToList();
             return new SystemConsensusDto(s.Id, s.Name, s.Type, buckets.Sum(b => b.Votes), GradeConsensus.Pick(buckets),
                 official.TryGetValue(s.Id, out var o) ? o : null, mine.TryGetValue(s.Id, out var m) ? m : null, buckets, scale,
                 s.GymId is not null);

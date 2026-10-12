@@ -10,12 +10,23 @@ namespace BoulderTime.Application.Notifications;
 
 public sealed record AnnouncementDto(
     Guid Id, Guid GymId, string GymName, string GymSlug, AnnouncementType Type, string Title, string Content, string? ImageUrl, string? ImagePath,
-    DateTimeOffset? EventDate, Guid? SectorId, string? SectorName, bool NotifiedFollowers, PersonDto Author, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+    DateTimeOffset? EventDate, Guid? SectorId, string? SectorName, bool NotifiedFollowers, PersonDto Author, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
+    /// <summary>Whether people can say they'll come: events only, not competitions or news.</summary>
+    bool TakesAttendance = false,
+    /// <summary>How many people said they'll come (suspended accounts and accounts on their way out don't count).</summary>
+    int Attendees = 0,
+    /// <summary>Whether the signed-in viewer said they'll come.</summary>
+    bool ViewerAttending = false,
+    /// <summary>Whether the viewer may see who is coming: the gym's followers and its staff.</summary>
+    bool CanSeeAttendees = false);
+
+public sealed record AttendanceDto(int Attendees, bool ViewerAttending);
 
 public sealed record SaveAnnouncementRequest(
     AnnouncementType? Type, string? Title, string? Content, Guid? SectorId, string? ImagePath, DateTimeOffset? EventDate, bool? NotifyFollowers);
 
-public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, NotificationPublisher publisher)
+public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObjectStorage storage, ICurrentUser currentUser, NotificationPublisher publisher, IClock clock,
+    Users.BlockedPeople blocked)
 {
     private static readonly Dictionary<string, string> ImageTypes = new(StringComparer.OrdinalIgnoreCase) { ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp" };
     public static string ImagePrefix(Guid gymId) => $"gyms/{gymId}/announcements/";
@@ -86,6 +97,94 @@ public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObj
         if (a.ImagePath is not null) await storage.DeleteAsync(StorageBuckets.GymImages, a.ImagePath, ct);
     }
 
+    // ---------- "I'll be there" ----------
+
+    /// <summary>
+    /// How long after its date an event still takes names: the date is often the day rather than the hour, so the
+    /// whole of that day counts.
+    /// </summary>
+    public static readonly TimeSpan AttendanceGrace = TimeSpan.FromDays(1);
+
+    /// <summary>Says the viewer will come. Saying it again changes nothing.</summary>
+    public async Task<AttendanceDto> AttendAsync(Guid announcementId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var a = await VisibleAnnouncementAsync(announcementId, ct);
+        if (!AnnouncementAttendance.TakesAttendance(a.Type))
+            throw new ConflictException("Only events take names.", "attendance_not_offered");
+        if (a.EventDate is { } date && date + AttendanceGrace < clock.UtcNow)
+            throw new ConflictException("This event is over.", "event_over");
+        if (!await db.AnnouncementAttendances.AnyAsync(x => x.AnnouncementId == a.Id && x.UserId == userId, ct))
+        {
+            db.AnnouncementAttendances.Add(AnnouncementAttendance.Create(a.Id, userId, clock.UtcNow));
+            try { await db.SaveChangesAsync(ct); }
+            catch (UniqueConstraintViolationException) { /* tapped twice at once: already there, which is the point */ }
+        }
+        return await AttendanceAsync(a.Id, userId, ct);
+    }
+
+    /// <summary>Takes the viewer's name off. Always possible, even after the event, and fine if it was never there.</summary>
+    public async Task<AttendanceDto> WithdrawAttendanceAsync(Guid announcementId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var a = await VisibleAnnouncementAsync(announcementId, ct);
+        var row = await db.AnnouncementAttendances.FirstOrDefaultAsync(x => x.AnnouncementId == a.Id && x.UserId == userId, ct);
+        if (row is not null)
+        {
+            db.AnnouncementAttendances.Remove(row);
+            await db.SaveChangesAsync(ct);
+        }
+        return await AttendanceAsync(a.Id, userId, ct);
+    }
+
+    /// <summary>
+    /// Who said they'll come, for the gym's followers and staff. People hidden from the viewer — blocked either way,
+    /// suspended, leaving — are left out, as they are everywhere else.
+    /// </summary>
+    public async Task<IReadOnlyList<PersonDto>> AttendeesAsync(Guid announcementId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var a = await VisibleAnnouncementAsync(announcementId, ct);
+        if (!await CanSeeAttendeesAsync(a.GymId, userId, ct))
+            throw new ForbiddenException("Follow the gym to see who is coming.", "follow_required");
+        var hidden = await blocked.ForViewerAsync(ct);
+        var rows = await db.AnnouncementAttendances.AsNoTracking()
+            .Where(x => x.AnnouncementId == a.Id && !hidden.Contains(x.UserId))
+            .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new { x.CreatedAt, u.Id, u.DisplayName, u.AvatarUrl })
+            .ToListAsync(ct);
+        return rows.OrderBy(x => x.CreatedAt).Select(x => new PersonDto(x.Id, x.DisplayName, x.AvatarUrl)).ToList();
+    }
+
+    private async Task<GymAnnouncement> VisibleAnnouncementAsync(Guid announcementId, CancellationToken ct)
+    {
+        var a = await db.GymAnnouncements.AsNoTracking().FirstOrDefaultAsync(x => x.Id == announcementId, ct)
+                ?? throw new NotFoundException("Announcement", announcementId);
+        var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == a.GymId, ct);
+        if (!gym.IsPubliclyVisible && await access.GetRoleAsync(gym.Id, ct) is null) throw new NotFoundException("Announcement", announcementId);
+        return a;
+    }
+
+    private async Task<bool> CanSeeAttendeesAsync(Guid gymId, Guid userId, CancellationToken ct) =>
+        await db.GymFollows.AnyAsync(f => f.GymId == gymId && f.UserId == userId, ct) || await access.GetRoleAsync(gymId, ct) is not null;
+
+    private async Task<AttendanceDto> AttendanceAsync(Guid announcementId, Guid userId, CancellationToken ct)
+    {
+        var counts = await CountsAsync([announcementId], ct);
+        var mine = await db.AnnouncementAttendances.AnyAsync(x => x.AnnouncementId == announcementId && x.UserId == userId, ct);
+        return new AttendanceDto(counts.GetValueOrDefault(announcementId), mine);
+    }
+
+    /// <summary>People coming to each event. Accounts hidden from everybody (suspended, leaving) are not counted.</summary>
+    private async Task<Dictionary<Guid, int>> CountsAsync(List<Guid> announcementIds, CancellationToken ct)
+    {
+        if (announcementIds.Count == 0) return [];
+        return await db.AnnouncementAttendances.AsNoTracking()
+            .Where(x => announcementIds.Contains(x.AnnouncementId))
+            .Join(db.Users.Where(u => u.SuspendedAt == null && u.DeletionRequestedAt == null), x => x.UserId, u => u.Id, (x, u) => x.AnnouncementId)
+            .GroupBy(id => id).Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+    }
+
     private async Task<string?> ValidateAsync(Guid gymId, SaveAnnouncementRequest r, string? currentImage, CancellationToken ct)
     {
         var v = new Validator()
@@ -121,9 +220,24 @@ public sealed class AnnouncementService(IAppDbContext db, GymAccess access, IObj
         var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
         var authorIds = rows.Select(a => a.CreatedByUserId).Distinct().ToList();
         var authors = await db.Users.AsNoTracking().Where(u => authorIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl), ct);
+
+        var events = rows.Where(a => AnnouncementAttendance.TakesAttendance(a.Type)).Select(a => a.Id).ToList();
+        var counts = await CountsAsync(events, ct);
+        var mine = new HashSet<Guid>();
+        var canSee = new HashSet<Guid>();
+        if (currentUser.UserId is { } uid && events.Count > 0)
+        {
+            mine = (await db.AnnouncementAttendances.AsNoTracking().Where(x => x.UserId == uid && events.Contains(x.AnnouncementId))
+                .Select(x => x.AnnouncementId).ToListAsync(ct)).ToHashSet();
+            foreach (var gymId in rows.Where(a => events.Contains(a.Id)).Select(a => a.GymId).Distinct())
+                if (await CanSeeAttendeesAsync(gymId, uid, ct)) canSee.Add(gymId);
+        }
+
         return rows.Select(a => new AnnouncementDto(a.Id, a.GymId, gyms[a.GymId].Name, gyms[a.GymId].Slug, a.Type, a.Title, a.Content,
             a.ImagePath is null ? null : storage.PublicUrl(StorageBuckets.GymImages, a.ImagePath), a.ImagePath, a.EventDate,
             a.SectorId, a.SectorId is { } sid ? sectors.GetValueOrDefault(sid) : null, a.NotifyFollowers,
-            authors.GetValueOrDefault(a.CreatedByUserId, new PersonDto(a.CreatedByUserId, "Staff", null)), a.CreatedAt, a.UpdatedAt)).ToList();
+            authors.GetValueOrDefault(a.CreatedByUserId, new PersonDto(a.CreatedByUserId, "Staff", null)), a.CreatedAt, a.UpdatedAt,
+            AnnouncementAttendance.TakesAttendance(a.Type), counts.GetValueOrDefault(a.Id), mine.Contains(a.Id),
+            AnnouncementAttendance.TakesAttendance(a.Type) && canSee.Contains(a.GymId))).ToList();
     }
 }

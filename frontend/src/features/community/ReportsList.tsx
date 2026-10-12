@@ -8,10 +8,12 @@ import { TextField } from "@/components/TextField";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
+import { labels } from "@/lib/format";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
 
-const TYPE_LABEL = { COMMENT: t("Comment"), VIDEO: t("Video"), BOULDER: t("Boulder") } as const;
+// Translated when read, not when the module loads, so it follows a change of language.
+const TYPE_LABEL = labels({ COMMENT: "Comment", VIDEO: "Video", BOULDER: "Boulder" });
 
 /** Report queue shared by the gym staff area (scope = gym id) and platform admin (scope = "all"). */
 export function ReportsList({ scope, showGym = false }: { scope: string; showGym?: boolean }) {

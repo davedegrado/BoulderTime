@@ -8,6 +8,7 @@ import { useStaff } from "@/features/staff/api";
 import { fetchBoulderPhoto, uploadBoulderPhoto, uploadBoulderThumbnail, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { SelectField } from "@/components/Fields";
+import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { ErrorState, LoadingState } from "@/components/States";
@@ -56,6 +57,10 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [setterUserId, setSetterUserId] = useState(initial?.setter?.userId ?? "");
   const [intensity, setIntensity] = useState<Intensity | null>(initial?.intensity ?? null);
   const [tagIds, setTagIds] = useState<string[]>(() => (initial?.tags ?? []).map((x) => x.id));
+  const [name, setName] = useState(initial?.name ?? "");
+  // Points set by hand for this one boulder; null follows its grade.
+  const [points, setPoints] = useState<number | null>(initial?.pointsOverride ?? null);
+  const [pointsText, setPointsText] = useState(initial?.pointsOverride != null ? String(initial.pointsOverride) : "");
   const [stage, setStage] = useState<Stage>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
   // The part of the photo the cards show, when staff chose one; otherwise the cards show the whole photo.
@@ -67,6 +72,14 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
   const activeSystems = useMemo(() => (systems.data ?? []).filter((s) => s.isActive), [systems.data]);
   const activeSectors = (sectors.data ?? []).filter((s) => s.isActive || s.id === initial?.sectorId);
+  // What the chosen grade is worth: the first of the gym's scales it is graded in, as the leaderboard counts it.
+  const gradePoints = useMemo(() => {
+    for (const system of activeSystems) {
+      const value = system.values.find((v) => v.id === grades[system.id]);
+      if (value) return value.points ?? null;
+    }
+    return null;
+  }, [activeSystems, grades]);
 
   function pickFile(f: File | undefined) {
     if (!f) return;
@@ -96,6 +109,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     if (!file && !initial) local.photoPath = t("Add a photo of the boulder.");
     if (!sectorId) local.sectorId = t("Choose a sector.");
     if (!holdColor) local.holdColor = t("Choose the hold colour.");
+    if (points !== null && !(Number.isInteger(points) && points >= 1 && points <= 1000)) local.points = t("Points go from 1 to {max}.", { max: 1000 });
     setErrors(local);
     if (Object.keys(local).length) return;
 
@@ -107,7 +121,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       const input: SaveBoulderInput = {
         sectorId, photoPath: uploaded.path, thumbnailPath: uploaded.thumbnailPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
         grades: Object.entries(grades).filter(([, v]) => v).map(([gradeSystemId, gradeValueId]) => ({ gradeSystemId, gradeValueId })),
-        intensity, tagIds,
+        intensity, tagIds, name: name.trim(), points: points ?? 0,
       };
       if (initial) {
         await update.mutateAsync(input);
@@ -171,6 +185,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       )}
       {cropping && preview && <ThumbnailCropper src={preview} onCancel={() => setCropping(false)} onDone={applyCrop} />}
 
+      <TextField label={t("Name")} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} error={errors.name}
+        hint={t("Optional. The name the setters gave it, shown on its card and page.")} />
+
       <SelectField label={t("Sector *")} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
         options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
 
@@ -186,6 +203,32 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           ))}
         </div>
         {errors.grades && <p className="field__error">{errors.grades}</p>}
+      </section>
+
+      {/* Points: the grade's, unless staff set this one boulder's by hand (a classic, an event problem). */}
+      <section className="editor__section" aria-labelledby="points-label">
+        <p id="points-label" className="field__label">{t("Points")}</p>
+        {points === null ? (
+          <>
+            <p className="field__hint">{gradePoints != null
+              ? t("Worth {points} points on the leaderboard, like every boulder of its grade.", { points: gradePoints })
+              : t("Ungraded boulders score no points until they have a grade.")}</p>
+            <Button type="button" variant="secondary" onClick={() => { const start = gradePoints ?? 50; setPoints(start); setPointsText(String(start)); }}>{t("Set points for this boulder")}</Button>
+          </>
+        ) : (
+          <>
+            <div className="points-input">
+              <input className="field__input" type="number" inputMode="numeric" min={1} max={1000} step={1} value={pointsText} aria-label={t("Points for this boulder")}
+                aria-invalid={!!errors.points || undefined}
+                onChange={(e) => { setPointsText(e.target.value); setPoints(e.target.value === "" ? Number.NaN : Number(e.target.value)); }} />
+              <Button type="button" variant="ghost" onClick={() => { setPoints(null); setPointsText(""); }}>
+                {gradePoints != null ? t("Back to the grade's {points}", { points: gradePoints }) : t("Back to the grade's points")}
+              </Button>
+            </div>
+            <p className="field__hint">{t("Every send of this boulder scores this, past ones included.")}</p>
+          </>
+        )}
+        {errors.points && <p className="field__error">{errors.points}</p>}
       </section>
 
       {/* Hold colour — deliberately a different control type from grades */}

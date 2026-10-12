@@ -56,7 +56,21 @@ public class GradeValue
     public int Rank { get; private set; }
     /// <summary>Only for colour systems: the colour of the GRADE (e.g. "#F5C400" for yellow). Never a hold colour.</summary>
     public string? ColorHex { get; private set; }
+    /// <summary>
+    /// A second colour, for the in-between grades some gyms mark with two colours ("green/blue", between green and
+    /// blue). Only for colour systems; null for an ordinary one-colour grade.
+    /// </summary>
+    public string? ColorHex2 { get; private set; }
+    /// <summary>Points staff set for this grade instead of the automatic ones. Null means automatic.</summary>
+    public int? PointsOverride { get; private set; }
+    /// <summary>
+    /// The automatic points the grade was worth on the day it was retired, kept so that retiring a grade doesn't change
+    /// what it is worth to the people who climbed it. Null while the grade is in use.
+    /// </summary>
+    public int? RetiredPoints { get; private set; }
     public bool IsActive { get; private set; } = true;
+
+    public const int MaxPoints = 1000;
 
     private GradeValue() { }
 
@@ -72,6 +86,29 @@ public class GradeValue
         Rank = rank;
         ColorHex = string.IsNullOrWhiteSpace(colorHex) ? null : colorHex.Trim().ToUpperInvariant();
         IsActive = true;
+        RetiredPoints = null;
+    }
+
+    /// <summary>Null or blank: a one-colour grade.</summary>
+    public void SetSecondColor(string? colorHex) =>
+        ColorHex2 = string.IsNullOrWhiteSpace(colorHex) ? null : colorHex.Trim().ToUpperInvariant();
+
+    /// <summary>Null: automatic points again.</summary>
+    public void SetPointsOverride(int? points)
+    {
+        if (points is < 1 or > MaxPoints) throw new ArgumentOutOfRangeException(nameof(points));
+        PointsOverride = points;
+    }
+
+    /// <summary>
+    /// Takes the grade out of the scale, after the active ones. <paramref name="automaticPoints"/> is what it was worth
+    /// until now, kept for the boulders that carry it; a grade retired earlier keeps the value it already has.
+    /// </summary>
+    public void Retire(int rank, int automaticPoints)
+    {
+        Rank = rank;
+        if (IsActive || RetiredPoints is null) RetiredPoints = automaticPoints;
+        IsActive = false;
     }
 
     public void Deactivate() => IsActive = false;

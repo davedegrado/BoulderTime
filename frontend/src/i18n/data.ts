@@ -13,6 +13,7 @@ const ITALIAN: Record<string, string> = {
   "Colour": "Colori",
   "Color": "Colori",
   "V-scale": "Scala V",
+  "Custom": "Personalizzata",
   // Colour grade preset labels
   "White": "Bianco",
   "Yellow": "Giallo",
@@ -30,5 +31,12 @@ const ITALIAN: Record<string, string> = {
 /** Translates a name that came from the database when BoulderTime generated it; leaves anything else untouched. */
 export function dataLabel(value: string): string {
   if (activeLanguage() !== "it") return value;
-  return ITALIAN[value] ?? ITALIAN[value.trim()] ?? value;
+  const known = ITALIAN[value] ?? ITALIAN[value.trim()];
+  if (known) return known;
+  // An in-between colour grade named after its two colours: "Green/Blue" is "Verde/Blu".
+  if (value.includes("/")) {
+    const parts = value.split("/").map((p) => p.trim());
+    if (parts.every((p) => ITALIAN[p])) return parts.map((p) => ITALIAN[p]).join("/");
+  }
+  return value;
 }

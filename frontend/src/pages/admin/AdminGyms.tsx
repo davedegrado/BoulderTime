@@ -16,7 +16,7 @@ import { gymStatusLabel, type GymStatus } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
 import { VideoAllowanceCard } from "@/features/admin/VideoAllowanceCard";
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS = () => [
   { value: "", label: t("All statuses") },
   { value: "DRAFT", label: t("Draft") },
   { value: "ACTIVE", label: t("Active") },
@@ -38,7 +38,7 @@ export function AdminGyms() {
       )}
       <div className="filters">
         <SearchField label={t("Search gyms")} placeholder={t("Name or city")} value={text} onChange={setText} />
-        <SelectField label={t("Status")} hideLabel value={status} options={STATUS_OPTIONS}
+        <SelectField label={t("Status")} hideLabel value={status} options={STATUS_OPTIONS()}
           onChange={(e) => setParams((p) => { e.target.value ? p.set("status", e.target.value) : p.delete("status"); return p; }, { replace: true })} />
       </div>
       {gyms.isPending ? <LoadingState label={t("Loading gyms")} />
@@ -79,7 +79,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
       {videoOpen && <VideoAllowanceCard gymId={gym.id} />}
       <div className="form__actions">
         <SelectField label={t("Status of {name}", { name: gym.name })} hideLabel value={gym.status} disabled={setStatus.isPending}
-          options={STATUS_OPTIONS.slice(1)}
+          options={STATUS_OPTIONS().slice(1)}
           onChange={(e) => setStatus.mutate({ gymId: gym.id, status: e.target.value as GymStatus }, {
             onSuccess: (g) => toast.success(t("{name} is now {status}", { name: g.name, status: gymStatusLabel[g.status].toLowerCase() })),
             onError: (err) => toast.error(errorMessage(err)),

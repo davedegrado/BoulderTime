@@ -1,0 +1,273 @@
+{
+  "climbers": [
+    {
+      "id": "inizio",
+      "title": "Palestre e settori",
+      "items": [
+        {
+          "q": "Come trovo la mia palestra?",
+          "a": "Apri **Esplora** e cerca per nome o città, oppure passa a **Mappa** per vedere le palestre intorno a te. Se\npermetti all'app di conoscere la tua posizione, la lista parte dalla più vicina.\n\nLa tua palestra non c'è? In fondo alla lista tocca **Segnalacela**: la contattiamo noi. Le tue segnalazioni e il loro\nstato le trovi nella stessa pagina.",
+          "audience": "both"
+        },
+        {
+          "q": "Perché conviene seguire una palestra?",
+          "a": "Tocca la **campanella** in alto nella pagina della palestra. Così ricevi le novità (blocchi nuovi, avvisi,\neventi) e la palestra compare nella Home. Con il **cuore** la metti tra le preferite e resta in cima.",
+          "audience": "both"
+        },
+        {
+          "q": "Come vedo i blocchi di un solo settore?",
+          "a": "Nella pagina della palestra apri **Settori**. Se la palestra ha caricato la piantina, tocca il settore sulla\nmappa e poi **Vedi i blocchi**; altrimenti scegli il settore dalla lista.\n\nPuoi anche usare **Filtri** nella scheda Blocchi: settore, grado, colore delle prese, i tuoi progressi e valutazione.",
+          "audience": "both"
+        },
+        {
+          "q": "Cosa vuol dire seguire un settore?",
+          "a": "Ti avvisiamo quando nel settore arrivano blocchi nuovi o quando viene ritracciato. Seguilo dalla scheda del\nsettore (**Segui**) o con la campanella accanto al suo nome nella lista.",
+          "audience": "both"
+        },
+        {
+          "q": "Cosa sono i blocchi smontati?",
+          "a": "Sono i blocchi che la palestra ha tolto dal muro. Restano consultabili, così ritrovi quello che hai salito:\nnella scheda Blocchi passa da **Montati** a **Smontati**.",
+          "audience": "both"
+        },
+        {
+          "q": "Dove vedo gli orari della palestra?",
+          "a": "Nella pagina della palestra apri **Info**: trovi se in questo momento è aperta, gli orari di ogni giorno\ne le chiusure in arrivo (festività, lavori). Gli orari li inserisce la palestra: se non ci sono, non li ha ancora\nindicati.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "progressi",
+      "title": "Blocchi e progressi",
+      "items": [
+        {
+          "q": "Come segno un blocco completato?",
+          "a": "Apri il blocco e, in **I tuoi progressi**, tocca **Segna come completato**. Se hai sbagliato, tocca\n**Annulla**.\n\nCon **Tentativi** conti quante volte l'hai provato. Si salva da solo: non c'è nessun pulsante da premere.",
+          "audience": "both"
+        },
+        {
+          "q": "Cos'è un progetto?",
+          "a": "Un blocco che hai provato almeno una volta ma non hai ancora completato. Li ritrovi in **Attività** e con\nil filtro **I tuoi progressi → Progetti**.",
+          "audience": "both"
+        },
+        {
+          "q": "Come valuto un blocco con le stelle?",
+          "a": "In **La tua valutazione** scegli da 1 a 5 stelle. Serve almeno un tentativo registrato: le stelle le dà\nsolo chi il blocco l'ha provato.",
+          "audience": "both"
+        },
+        {
+          "q": "Come propongo un grado diverso da quello ufficiale?",
+          "a": "Nella sezione **Grado della community** scegli il tuo grado. Puoi farlo dopo aver registrato almeno un\ntentativo, e puoi votare in ogni scala: quelle della palestra e anche quelle che la palestra non usa (es. scala V).\n\n- Un voto per scala: se lo cambi, sostituisce il precedente.\n- **Nessuna proposta** ritira il voto.\n- **Più votato** mostra il grado scelto dalla maggioranza; **Vedi i voti** mostra come si distribuiscono.\n\nIl grado ufficiale lo decide la palestra e non cambia con i voti.",
+          "audience": "both"
+        },
+        {
+          "q": "Dove trovo la beta di un blocco?",
+          "a": "Se la palestra l'ha pubblicata, nella pagina del blocco c'è **Beta ufficiale**. Dove la palestra lo\npermette, sotto trovi anche i **Video della community**.",
+          "audience": "both"
+        },
+        {
+          "q": "Come funziona la classifica?",
+          "a": "Nella scheda **Classifica** della palestra puoi ordinare per punti, completati o grado più alto, per\nsettimana, mese, anno o da sempre. I punti dipendono dal grado: nella scala principale della palestra il più facile\nvale 10 e il più difficile 100, con gli altri a intervalli regolari. La palestra può dare a mano più o meno punti a un\ngrado o a un singolo blocco: quanto vale ogni blocco lo vedi sulla sua card (**+64 pt**). I tentativi non tolgono punti.\n\nNon vuoi comparire? In **Profilo → Classifiche** attiva **Non mostrarmi in classifiche ed elenchi**.",
+          "audience": "both"
+        },
+        {
+          "q": "Cosa sono i tag e l'intensità di un blocco?",
+          "a": "Sono scelti dallo staff della palestra. I **tag** descrivono il blocco con le parole della palestra (per esempio\nPlacca, Dinamico, Resistenza). L'**intensità** dice quanto è faticoso, con tre livelli: poco intenso, intensità media,\nmolto intenso. È indipendente dal grado: un verde può essere tranquillo o sfiancante.\n\nPuoi filtrare i blocchi per entrambi da **Filtri** nella scheda Blocchi. Scegliendo più tag, vedi i blocchi che li\nhanno tutti.",
+          "audience": "both"
+        },
+        {
+          "q": "Come vedo chi ha completato un blocco?",
+          "a": "Nella pagina del blocco c'è **Completato da N persone**: toccalo per vedere chi, dal più recente. Ogni persona\nconta una volta, anche se ci ha provato molte volte. Chi ha scelto **Non mostrarmi in classifiche ed elenchi** conta nel\nnumero ma non compare per nome.",
+          "audience": "both"
+        },
+        {
+          "q": "Cos'è il settore preferito nel profilo?",
+          "a": "È il settore dove hai completato più blocchi, ognuno contato una volta, anche quelli ormai smontati. Se la\npalestra ha disegnato la mappa, lo vedi evidenziato sulla piantina; toccandolo apri i blocchi di quel settore.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "title": "Commenti, video e segnalazioni",
+      "items": [
+        {
+          "videoUploads": true,
+          "q": "Come carico un mio video?",
+          "a": "Nella pagina del blocco, in **Video della community**, tocca **Scegli un video**, aggiungi se vuoi una\ndidascalia e tocca **Invia per la revisione**. Lo staff della palestra lo approva prima che sia visibile a tutti.\n\n- Formati MP4, MOV o WebM, fino a {maxVideoMb} MB. Se è più pesante, accorcialo o registralo in 1080p invece che in 4K\n(su iPhone: Impostazioni → Fotocamera → Registrazione video).\n- Al massimo 3 video per blocco.\n- Se non viene approvato, vedi il motivo sotto il video.\n\nLa sezione c'è solo nelle palestre dove i video della community sono attivi.",
+          "audience": "both"
+        },
+        {
+          "q": "Posso modificare o cancellare un commento?",
+          "a": "Sì, solo i tuoi: **Modifica** o **Elimina** sotto il commento. Un commento modificato mostra\n\"modificato\".",
+          "audience": "both"
+        },
+        {
+          "q": "Come segnalo un problema?",
+          "a": "Per un blocco (presa rotta, grado sbagliato…) tocca **Segnala un problema con questo blocco** in fondo alla\nsua pagina. Per un commento o un video usa **Segnala** accanto. Le segnalazioni vanno alla palestra, e ti avvisiamo\nquando le ha gestite.\n\nPer segnalare una persona apri il suo profilo e usa **Segnala**: quella arriva al team di BoulderTime.",
+          "audience": "both"
+        },
+        {
+          "q": "Come blocco qualcuno?",
+          "a": "Apri il suo profilo e tocca **Blocca**. Da quel momento non vedete più i commenti e i video l'uno\ndell'altro. Non riceve nessun avviso. Le persone bloccate le trovi in **Profilo → Persone bloccate**.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "notifiche",
+      "title": "Notifiche",
+      "items": [
+        {
+          "q": "Come attivo le notifiche sul telefono?",
+          "a": "Vai in **Profilo → Notifiche** e attiva **Notifiche su questo telefono**, poi accetta la richiesta del\ntelefono. Va fatto su ogni dispositivo che usi.\n\nSu iPhone, se usi BoulderTime dal browser, prima aggiungilo alla schermata Home (**Condividi → Aggiungi a Home**) e\naprilo da lì.",
+          "audience": "both"
+        },
+        {
+          "q": "Cosa fa suonare il telefono?",
+          "a": "Solo le novità di palestre e settori che segui: blocchi nuovi, ritracciature e avvisi della palestra. Il\nresto (commenti, modifiche ai blocchi, esito dei tuoi video e delle segnalazioni) lo trovi in **Avvisi**.\n\nPiù novità dello stesso tipo si raccolgono in un solo avviso finché non lo leggi. Non ricevi mai avvisi per quello\nche fai tu.",
+          "audience": "both"
+        },
+        {
+          "q": "Non mi arrivano le notifiche. Cosa controllo?",
+          "a": "- In **Profilo → Notifiche**, l'interruttore **Notifiche su questo telefono** deve essere attivo.\n- Tocca **Invia una notifica di prova**: ti dice subito se il telefono è raggiungibile.\n- Nelle impostazioni del telefono, le notifiche di BoulderTime devono essere permesse, e nessuna modalità Full\nimmersion o Non disturbare deve bloccarle.\n- La categoria giusta (es. **Novità dei settori**) deve essere attiva, e in **Cosa segui** l'elemento non deve essere\nsilenziato.",
+          "audience": "both"
+        },
+        {
+          "q": "Come smetto di ricevere avvisi da una palestra senza smettere di seguirla?",
+          "a": "In **Profilo → Notifiche**, sotto **Cosa segui**, spegni l'interruttore accanto alla palestra, al settore o\nal blocco. La X invece smette di seguirlo.",
+          "audience": "both"
+        },
+        {
+          "q": "Come dico che parteciperò a un evento?",
+          "a": "Sotto un evento della palestra tocca **Parteciperò**; per ripensarci tocca di nuovo. Tutti vedono quante\npersone partecipano; chi segue la palestra vede anche chi sono (**Vedi chi partecipa**). Non è una prenotazione: per le\ngare la palestra usa le sue iscrizioni.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "title": "Account e privacy",
+      "items": [
+        {
+          "q": "Come cambio nome, foto o lingua?",
+          "a": "**Profilo → Modifica profilo**. La lingua vale subito per l'app e anche per le notifiche che ricevi.",
+          "audience": "both"
+        },
+        {
+          "q": "Chi vede il mio profilo?",
+          "a": "Il **profilo pubblico** mostra nome, foto, statistiche, storico e palestre che segui; lo vedi tu stesso da\n**Profilo → Profilo pubblico**. Se non vuoi comparire nelle classifiche puoi nasconderti da **Profilo →\nClassifiche**.",
+          "audience": "both"
+        },
+        {
+          "q": "Come cancello il mio account?",
+          "a": "In fondo a **Profilo** c'è **Elimina il mio account**. Per 7 giorni puoi ancora ripensarci con **Mantieni il\nmio account**; poi i dati vengono cancellati.",
+          "audience": "both"
+        }
+      ]
+    }
+  ],
+  "staff": [
+    {
+      "id": "accesso",
+      "title": "Accesso e ruoli",
+      "items": [
+        {
+          "q": "Come entro nell'area staff?",
+          "a": "Serve un invito. Un amministratore della palestra ti invita da **Gestisci → Staff → Invita qualcuno** con\nla tua email. Accedi a BoulderTime con quella email: in Home trovi **Hai ricevuto un invito**, tocca **Accetta**.\nL'invito scade dopo 7 giorni.\n\nPoi l'area staff la apri da **Profilo → Gestisci**, o dalla rotella nella pagina della palestra.",
+          "audience": "staff"
+        },
+        {
+          "q": "Che differenza c'è tra Staff, Admin e Proprietario?",
+          "a": "- **Staff**: blocchi, beta ufficiale, settori e mappa, novità, moderazione.\n- **Admin**: tutto quello dello staff, più scale di grado, impostazioni della palestra (profilo, logo, copertina),\neliminazione definitiva dei blocchi e gestione del team.\n- **Proprietario**: come l'admin, e in più può nominare altri proprietari. Una palestra ha sempre almeno un\nproprietario.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "blocchi",
+      "title": "Blocchi",
+      "items": [
+        {
+          "q": "Come aggiungo un blocco?",
+          "a": "In **Gestisci → Blocchi** tocca il **+**. Servono la foto, il settore e il colore delle prese; il grado\nufficiale si può lasciare vuoto. Se vuoi, dagli un **Nome**: compare sulla card e nella pagina del blocco. Poi\n**Aggiungi blocco**.\n\nIl blocco vale i punti del suo grado; con **Imposta i punti di questo blocco** puoi dargliene altri (un classico, il\nblocco di un evento) e tornare a quelli del grado quando vuoi.\n\nPrima di tutto la palestra deve avere almeno un settore e una scala di grado attivi.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come scelgo cosa si vede nella card del blocco?",
+          "a": "Nell'editor del blocco, sotto la foto, tocca **Scegli la parte**: trascina e ingrandisci la foto finché\nil riquadro mostra quello che vuoi, poi **Usa questa parte**. La foto intera resta nella pagina del blocco.",
+          "audience": "staff"
+        },
+        {
+          "videoUploads": true,
+          "q": "Come aggiungo la beta ufficiale?",
+          "a": "Dopo aver creato il blocco, aprilo in modifica: in **Beta ufficiale** carica un video oppure **Collega\ninvece un video** (YouTube, Instagram, Vimeo, TikTok, Facebook). I link non contano nel limite di video della\npalestra. Chi segue il blocco o lo sta provando viene avvisato.",
+          "audience": "staff"
+        },
+        {
+          "videoUploads": false,
+          "q": "Come aggiungo la beta ufficiale?",
+          "a": "Dopo aver creato il blocco, aprilo in modifica: in **Beta ufficiale** incolla il link di un video\npubblicato su YouTube, Instagram, Vimeo, TikTok o Facebook. Chi segue il blocco o lo sta provando viene avvisato.",
+          "audience": "staff"
+        },
+        {
+          "q": "Ho ritracciato un settore: come tolgo i vecchi blocchi?",
+          "a": "In **Gestisci → Blocchi** tocca l'icona di selezione (o tieni premuto su una card), scegli i blocchi (anche\n**Tutti**) e tocca **Rimuovi**. Con **Avvisa i follower** attivo, chi segue il settore riceve un solo avviso per\nsettore. Subito dopo puoi scrivere un aggiornamento per raccontare la ritracciatura.\n\nUn blocco ritracciato va rimosso e creato di nuovo, non modificato: chi l'aveva salito tiene il suo completato.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come uso tag e intensità?",
+          "a": "In **Gestisci → Tag** crei, rinomini ed elimini i tag della palestra. Nell'editor del blocco scegli fino a 6\ntag (o ne crei uno al volo) e l'intensità, che puoi lasciare **Non indicata**. Rinominare un tag lo rinomina su tutti i\nblocchi; eliminarlo lo toglie da tutti, dopo una seconda conferma che dice quanti blocchi lo usano. \"Placca\" e \"placca\"\nsono lo stesso tag.",
+          "audience": "staff"
+        },
+        {
+          "q": "Ho rimosso un blocco per sbaglio",
+          "a": "Passa a **Smontati** e tocca **Ripristina**. Gli admin possono anche **Eliminare definitivamente** un blocco\nsmontato: prima l'app mostra cosa si perde.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "settori",
+      "title": "Settori e mappa",
+      "items": [
+        {
+          "q": "Come creo e ordino i settori?",
+          "a": "In **Gestisci → Settori** scrivi il nome in **Nuovo settore** e tocca **Aggiungi**. Le frecce cambiano\nl'ordine, la matita il nome, l'occhio lo nasconde. I settori non si cancellano, così lo storico di chi arrampica resta\nintatto.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come disegno i settori sulla piantina?",
+          "a": "In **Gestisci → Settori** apri **Mappa dei settori** e carica la piantina (un'immagine fino a 5 MB). Poi,\nper ogni settore:\n\n- sceglilo in alto;\n- tocca la piantina sugli angoli del settore e chiudi toccando di nuovo il primo angolo;\n- trascina gli angoli o il nome per sistemarli;\n- tocca **Salva il settore**: l'editor passa da solo al prossimo da disegnare.\n\nSe i nomi si accavallano, togli la spunta a **Mostra il nome sulla mappa**: il settore resta toccabile e mostra il\nnome quando lo si apre.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "gestione",
+      "title": "Gradi, moderazione e novità",
+      "items": [
+        {
+          "q": "Come imposto le scale di grado?",
+          "a": "In **Gestisci → Gradi** (solo admin) aggiungi una scala: colori, Fontainebleau, scala V o personalizzata.\nCon **Modifica i gradi** cambi nomi, ordine e colori. Un grado tolto resta sui blocchi che lo usano già e mantiene i\npunti che aveva.\n\nPer un grado intermedio a due colori (per esempio verde/blu) aggiungi il grado, mettilo al suo posto con le frecce e\ntocca **+ colore**. Accanto a ogni grado c'è il campo **Punti**: vuoto usa quelli automatici (in grigio), un numero li\nsostituisce. I punti valgono anche per i completamenti già fatti: le classifiche cambiano appena salvi.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come approvo i video e gestisco le segnalazioni?",
+          "a": "In **Gestisci → Moderazione**:\n\n- **Video**: **Approva**, oppure **Rifiuta** scrivendo il motivo, che vede chi l'ha caricato. Non puoi approvare un\ntuo video.\n- **Segnalazioni contenuti**: nascondi il commento o rifiuta il video se serve, poi segna come **Risolta** o\n**Archivia**. Chi ha segnalato viene avvisato.\n\nI commenti si possono nascondere anche direttamente dalla pagina del blocco.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come pubblico un avviso o un evento?",
+          "a": "In **Gestisci → Novità** tocca **Pubblica una novità**, scegli il tipo (annuncio, evento, cambio orari,\nmanutenzione, gara…), scrivi titolo e messaggio e, se vuoi, aggiungi un'immagine o limita la novità a un settore. Gli\nindirizzi web nel messaggio diventano link. Con **Avvisa i follower** arriva anche sul telefono di chi segue la\npalestra. Le modifiche successive non rimandano l'avviso.\n\nSotto gli **eventi** compare **Parteciperò**: vedi quante persone vengono e, toccando **Vedi chi partecipa**, chi sono.\nLe gare non lo hanno: per quelle usate le vostre iscrizioni.",
+          "audience": "staff"
+        },
+        {
+          "q": "Come cambio logo, copertina e informazioni della palestra?",
+          "a": "In **Gestisci → Impostazioni** (solo admin): logo, foto di copertina, contatti, descrizione e posizione\nsulla mappa (**Trova dall'indirizzo**, poi trascina il segnaposto).\n\nPiù in basso ci sono gli **Orari di apertura**: per ogni giorno fino a tre fasce orarie, e le chiusure straordinarie\ncon una nota. Compaiono nella scheda **Info** della palestra, con l'indicazione se in questo momento siete aperti.",
+          "audience": "staff"
+        }
+      ]
+    }
+  ]
+}

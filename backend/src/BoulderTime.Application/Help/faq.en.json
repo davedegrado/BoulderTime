@@ -1,0 +1,273 @@
+{
+  "climbers": [
+    {
+      "id": "inizio",
+      "title": "Gyms and sectors",
+      "items": [
+        {
+          "q": "How do I find my gym?",
+          "a": "Open **Explore** and search by name or city, or switch to **Map** to see the gyms around you. If you let the\napp know where you are, the list starts from the nearest.\n\nYour gym isn't there? At the bottom of the list, tap **Suggest it**: we get in touch with them. Your suggestions and their\nstatus are on the same page.",
+          "audience": "both"
+        },
+        {
+          "q": "Why follow a gym?",
+          "a": "Tap the **bell** at the top of the gym's page. You get its news (new boulders, announcements, events) and\nthe gym shows up on Home. The **heart** makes it a favourite, kept at the top.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I see the boulders of one sector?",
+          "a": "On the gym's page open **Sectors**. If the gym uploaded its floor plan, tap the sector on the map, then\n**See the boulders**; otherwise pick the sector from the list.\n\n**Filters** in the Boulders tab work too: sector, grade, hold colour, your progress and rating.",
+          "audience": "both"
+        },
+        {
+          "q": "What does following a sector do?",
+          "a": "We tell you when new boulders go up there or when it is retraced. Follow it from the sector's sheet\n(**Follow**) or with the bell next to its name in the list.",
+          "audience": "both"
+        },
+        {
+          "q": "What are removed boulders?",
+          "a": "Boulders the gym took off the wall. They stay listed, so you can find what you climbed: in the Boulders tab\nswitch from **On the wall** to **Taken down**.",
+          "audience": "both"
+        },
+        {
+          "q": "Where do I find the gym's opening hours?",
+          "a": "On the gym's page open **Info**: it says whether the gym is open right now, the hours of each day and the\nclosures coming up (holidays, works). The gym enters them itself: if there are none, it hasn't yet.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "progressi",
+      "title": "Boulders and progress",
+      "items": [
+        {
+          "q": "How do I log a send?",
+          "a": "Open the boulder and, in **Your progress**, tap **Mark as completed**. Made a mistake? Tap **Undo**.\n\n**Attempts** counts how many times you tried it. It saves by itself: there is no button to press.",
+          "audience": "both"
+        },
+        {
+          "q": "What is a project?",
+          "a": "A boulder you have tried at least once but not completed yet. Find them in **Activity** and with the filter\n**Your progress → Projects**.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I rate a boulder?",
+          "a": "In **Your rating** pick 1 to 5 stars. You need at least one logged attempt: only people who tried a\nboulder rate it.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I suggest a different grade?",
+          "a": "In **Community grade** pick your grade. You can once you have logged at least one attempt, and you can vote\nin every scale: the gym's own and also those the gym doesn't use (e.g. V-scale).\n\n- One vote per scale: changing it replaces the old one.\n- **No suggestion** withdraws your vote.\n- **Most voted** shows the grade most people chose; **See the votes** shows how they spread.\n\nThe official grade is the gym's and votes never change it.",
+          "audience": "both"
+        },
+        {
+          "q": "Where is the beta?",
+          "a": "If the gym published it, the boulder's page has **Official beta**. Where the gym allows it, **Community\nvideos** are below.",
+          "audience": "both"
+        },
+        {
+          "q": "How does the leaderboard work?",
+          "a": "In the gym's **Leaderboard** tab you can rank by points, sends or hardest grade, by week, month, year or all\ntime. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100, the others evenly\nspaced. The gym can set more or fewer points by hand for a grade or a single boulder: each boulder's card shows what it\nis worth (**+64 pt**). Attempts never cost points.\n\nRather not appear? In **Profile → Leaderboards** turn on **Don't show me in leaderboards or lists**.",
+          "audience": "both"
+        },
+        {
+          "q": "What are a boulder's tags and intensity?",
+          "a": "The gym's staff choose them. **Tags** describe the boulder in the gym's own words (Slab, Dynamic, Endurance…).\n**Intensity** says how hard it is on the body, in three levels: low, medium, high. It is independent of the grade: a\ngreen can be gentle or punishing.\n\nYou can filter by both under **Filters** in the Boulders tab. With several tags chosen, you see the boulders that have\nthem all.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I see who completed a boulder?",
+          "a": "The boulder's page says **Completed by N people**: tap it to see who, most recent first. Each person counts once,\nhowever many times they tried. People who chose **Don't show me in leaderboards or lists** count in the number but\ndon't appear by name.",
+          "audience": "both"
+        },
+        {
+          "q": "What is the favourite sector on my profile?",
+          "a": "The sector where you completed the most boulders, each counted once, taken-down ones included. If the gym drew\nits map, you see it picked out on the floor plan; tapping it opens that sector's boulders.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "title": "Comments, videos and reports",
+      "items": [
+        {
+          "videoUploads": true,
+          "q": "How do I upload a video?",
+          "a": "On the boulder's page, in **Community videos**, tap **Choose a video**, add a caption if you like and tap\n**Send for review**. The gym's staff approve it before everyone can see it.\n\n- MP4, MOV or WebM, up to {maxVideoMb} MB. If it's heavier, trim it or record in 1080p rather than 4K (on iPhone:\nSettings → Camera → Record Video).\n- Up to 3 videos per boulder.\n- If it isn't approved, the reason shows under the video.\n\nThe section is there only at gyms where community videos are on.",
+          "audience": "both"
+        },
+        {
+          "q": "Can I edit or delete a comment?",
+          "a": "Yes, your own: **Edit** or **Delete** under the comment. An edited comment says \"edited\".",
+          "audience": "both"
+        },
+        {
+          "q": "How do I report a problem?",
+          "a": "For a boulder (broken hold, wrong grade…) tap **Report a problem with this boulder** at the bottom of its\npage. For a comment or a video use **Report** next to it. Reports go to the gym, and we tell you when it has handled\nthem.\n\nTo report a person, open their profile and use **Report**: that one goes to the BoulderTime team.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I block someone?",
+          "a": "Open their profile and tap **Block**. From then on neither of you sees the other's comments and videos.\nThey are not told. Blocked people are in **Profile → Blocked people**.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "notifiche",
+      "title": "Notifications",
+      "items": [
+        {
+          "q": "How do I turn on phone notifications?",
+          "a": "Go to **Profile → Notifications** and turn on **Notifications on this phone**, then accept the phone's\nrequest. Do it on every device you use.\n\nOn iPhone, if you use BoulderTime in the browser, first add it to the Home Screen (**Share → Add to Home Screen**)\nand open it from there.",
+          "audience": "both"
+        },
+        {
+          "q": "What makes my phone buzz?",
+          "a": "Only news from gyms and sectors you follow: new boulders, retraces and gym announcements. Everything else\n(comments, boulder changes, the outcome of your videos and reports) is in **Notifications** inside the app.\n\nSeveral updates of the same kind gather into one until you read it. You are never notified about what you did\nyourself.",
+          "audience": "both"
+        },
+        {
+          "q": "Notifications don't arrive. What do I check?",
+          "a": "- In **Profile → Notifications**, **Notifications on this phone** must be on.\n- Tap **Send a test notification**: it tells you straight away whether the phone can be reached.\n- In the phone's settings, BoulderTime's notifications must be allowed, and no Focus or Do Not Disturb mode must hold\nthem back.\n- The right category (e.g. **Sector updates**) must be on, and under **What you follow** the item must not be muted.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I mute a gym without unfollowing it?",
+          "a": "In **Profile → Notifications**, under **What you follow**, switch off the gym, sector or boulder. The X\nunfollows it instead.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I say I'll go to an event?",
+          "a": "Under one of the gym's events tap **I'll be there**; tap again if you change your mind. Everyone sees how many\nare going; people who follow the gym also see who (**See who is going**). It isn't a booking: for competitions the gym\nuses its own registration.",
+          "audience": "both"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "title": "Account and privacy",
+      "items": [
+        {
+          "q": "How do I change my name, photo or language?",
+          "a": "**Profile → Edit profile**. The language applies at once to the app and to the notifications you get.",
+          "audience": "both"
+        },
+        {
+          "q": "Who sees my profile?",
+          "a": "Your **public profile** shows your name, photo, stats, history and the gyms you follow; see it yourself from\n**Profile → Public profile**. To stay out of leaderboards, use **Profile → Leaderboards**.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I delete my account?",
+          "a": "At the bottom of **Profile** there is **Delete my account**. For 7 days you can still change your mind with\n**Keep my account**; then the data is deleted.",
+          "audience": "both"
+        }
+      ]
+    }
+  ],
+  "staff": [
+    {
+      "id": "accesso",
+      "title": "Access and roles",
+      "items": [
+        {
+          "q": "How do I get into the staff area?",
+          "a": "You need an invitation. A gym admin invites you from **Manage → Staff → Invite someone** with your email.\nSign in to BoulderTime with that email: Home shows **You've been invited**, tap **Accept**. Invitations expire after\n7 days.\n\nThen open the staff area from **Profile → Manage**, or the gear on the gym's page.",
+          "audience": "staff"
+        },
+        {
+          "q": "What's the difference between Staff, Admin and Owner?",
+          "a": "- **Staff**: boulders, official beta, sectors and the map, news, moderation.\n- **Admin**: everything staff do, plus grading scales, gym settings (profile, logo, cover), deleting boulders for good\nand managing the team.\n- **Owner**: like an admin, and can make others owners. A gym always keeps at least one owner.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "blocchi",
+      "title": "Boulders",
+      "items": [
+        {
+          "q": "How do I add a boulder?",
+          "a": "In **Manage → Boulders** tap **+**. You need a photo, the sector and the hold colour; the official grade can\nstay empty. If you like, give it a **Name**: it shows on its card and page. Then **Add boulder**.\n\nThe boulder is worth the points of its grade; **Set points for this boulder** gives it others (a classic, an event's\nproblem), and you can go back to the grade's whenever you like.\n\nThe gym first needs at least one active sector and one active grading scale.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I choose what the boulder's card shows?",
+          "a": "In the boulder editor, under the photo, tap **Choose the part**: drag and zoom until the frame shows what you\nwant, then **Use this part**. The whole photo stays on the boulder's page.",
+          "audience": "staff"
+        },
+        {
+          "videoUploads": true,
+          "q": "How do I add the official beta?",
+          "a": "Once the boulder exists, open it to edit: in **Official beta** upload a video or **Link a video instead**\n(YouTube, Instagram, Vimeo, TikTok, Facebook). Links don't count towards the gym's video limit. People following or\nprojecting the boulder are told.",
+          "audience": "staff"
+        },
+        {
+          "videoUploads": false,
+          "q": "How do I add the official beta?",
+          "a": "Once the boulder exists, open it to edit: in **Official beta** paste the link of a video published on\nYouTube, Instagram, Vimeo, TikTok or Facebook. People following or projecting the boulder are told.",
+          "audience": "staff"
+        },
+        {
+          "q": "I retraced a sector: how do I take the old boulders off?",
+          "a": "In **Manage → Boulders** tap the select icon (or long-press a card), pick the boulders (or **All**) and tap\n**Remove**. With **Notify followers** on, people following the sector get one notification per sector. Right after,\nyou can write an update about the retrace.\n\nA retraced boulder is removed and created again, not edited: people who sent it keep their send.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I use tags and intensity?",
+          "a": "In **Manage → Tags** you create, rename and delete the gym's tags. In the boulder editor you pick up to 6 tags\n(or create one on the spot) and the intensity, which can stay **Not given**. Renaming a tag renames it on every\nboulder; deleting it takes it off all of them, after a second tap that says how many boulders use it. \"Slab\" and \"slab\"\nare the same tag.",
+          "audience": "staff"
+        },
+        {
+          "q": "I removed a boulder by mistake",
+          "a": "Switch to **Taken down** and tap **Restore**. Admins can also **Delete for good** a removed boulder: the app\nfirst shows what would be lost.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "settori",
+      "title": "Sectors and the map",
+      "items": [
+        {
+          "q": "How do I create and order sectors?",
+          "a": "In **Manage → Sectors** type the name in **New sector** and tap **Add**. The arrows change the order, the\npencil the name, the eye hides it. Sectors are never deleted, so climbers' history stays intact.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I draw the sectors on the floor plan?",
+          "a": "In **Manage → Sectors** open **Sector map** and upload the floor plan (an image up to 5 MB). Then, for each\nsector:\n\n- pick it at the top;\n- tap the plan at the sector's corners and close it by tapping the first corner again;\n- drag the corners or the name to adjust;\n- tap **Save the sector**: the editor moves on to the next one to draw.\n\nIf names overlap, untick **Show the name on the map**: the sector stays tappable and shows its name when opened.",
+          "audience": "staff"
+        }
+      ]
+    },
+    {
+      "id": "gestione",
+      "title": "Grades, moderation and news",
+      "items": [
+        {
+          "q": "How do I set up grading scales?",
+          "a": "In **Manage → Grades** (admins only) add a scale: colours, Fontainebleau, V-scale or custom. **Edit grades**\nchanges names, order and colours. A retired grade stays on the boulders that already use it and keeps the points it had.\n\nFor an in-between grade in two colours (say green/blue), add the grade, move it into place with the arrows and tap\n**+ colour**. Next to each grade is the **Points** field: empty uses the automatic ones (greyed), a number replaces them.\nPoints apply to sends already made too: leaderboards change as soon as you save.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I approve videos and handle reports?",
+          "a": "In **Manage → Moderation**:\n\n- **Videos**: **Approve**, or **Reject** with a reason the uploader sees. You can't approve your own video.\n- **Reports**: hide the comment or reject the video if needed, then mark it **Resolved** or **Archive** it.\nThe person who reported is told.\n\nComments can also be hidden straight from the boulder's page.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I post an announcement or an event?",
+          "a": "In **Manage → Updates** tap **New update**, pick the kind (announcement, event, opening hours,\nmaintenance, competition…), write a title and message and, if you like, add an image or limit it to one sector. Web\naddresses in the message become links. With **Notify followers** it also reaches the phones of people following the\ngym. Later edits don't notify again.\n\n**Events** get an **I'll be there** button: you see how many are coming and, with **See who is going**, who. Competitions\ndon't: use your own registration for those.",
+          "audience": "staff"
+        },
+        {
+          "q": "How do I change the gym's logo, cover and details?",
+          "a": "In **Manage → Settings** (admins only): logo, cover photo, contacts, description and position on the map\n(**Find from address**, then drag the pin).\n\nFurther down are the **Opening hours**: up to three time slots a day, and closures with a note. They show on the gym's\n**Info** tab, with whether you are open right now.",
+          "audience": "staff"
+        }
+      ]
+    }
+  ]
+}

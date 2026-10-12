@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IGeocoder geocoder, PartnerService partners)
+public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IGeocoder geocoder, PartnerService partners, IClock clock)
 {
     public const int MaxPins = 500;
 
@@ -114,6 +114,20 @@ public sealed class GymService(IAppDbContext db, GymAccess access, ICurrentUser 
             Follow = follow, FollowerCount = followers,
             IsEarlyPartner = partnership is not null, EarlyPartnerSince = partnership?.StartedAt,
         };
+    }
+
+    /// <summary>
+    /// Sets the opening hours (ADMIN+, like the rest of the gym's profile). Nothing open and no closure clears them.
+    /// Closures already over are dropped: the page only ever shows the ones to come.
+    /// </summary>
+    public async Task<OpeningHoursDto?> SetOpeningHoursAsync(Guid gymId, OpeningHoursDto? hours, CancellationToken ct = default)
+    {
+        var (gym, _) = await access.RequireRoleAsync(gymId, Domain.Staff.GymRole.Admin, ct);
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var tidy = OpeningHoursDto.Normalize(hours, today);
+        gym.SetOpeningHours(tidy?.ToJson());
+        await db.SaveChangesAsync(ct);
+        return tidy;
     }
 
     public async Task<GymDetailDto> UpdateAsync(Guid gymId, UpdateGymRequest r, CancellationToken ct = default)

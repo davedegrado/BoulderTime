@@ -36,6 +36,10 @@ export interface Announcement {
   id: string; gymId: string; gymName: string; gymSlug: string; type: AnnouncementType; title: string; content: string;
   imageUrl: string | null; imagePath: string | null; eventDate: string | null; sectorId: string | null; sectorName: string | null;
   notifiedFollowers: boolean; author: Person; createdAt: string; updatedAt: string;
+  /** "I'll be there": events only. Absent from servers older than the feature. */
+  takesAttendance?: boolean; attendees?: number; viewerAttending?: boolean;
+  /** The gym's followers and staff may see who is coming. */
+  canSeeAttendees?: boolean;
 }
 export interface SaveAnnouncementInput {
   type: AnnouncementType; title: string; content: string; sectorId: string | null; imagePath: string | null; eventDate: string | null; notifyFollowers?: boolean;
@@ -148,3 +152,32 @@ export async function uploadAnnouncementImage(gymId: string, file: File): Promis
   await putWithProgress(ticket, blob);
   return ticket.path;
 }
+
+// ---- "I'll be there" ----
+
+export interface Attendance { attendees: number; viewerAttending: boolean }
+
+/** Saying you'll come to an event, or taking it back. The lists that show the event are refreshed after. */
+export function useAttendance(announcement: Announcement) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (attending: boolean) => attending
+      ? api.put<Attendance>(`/api/announcements/${announcement.id}/attendance`)
+      : api.delete<Attendance>(`/api/announcements/${announcement.id}/attendance`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: notificationKeys.announcements(announcement.gymId) });
+      qc.invalidateQueries({ queryKey: ["climbing"] });
+      qc.invalidateQueries({ queryKey: ["announcement-attendees", announcement.id] });
+    },
+  });
+}
+
+/** Who is coming, for the gym's followers and staff; fetched only when someone opens the list. */
+export function useAttendees(announcementId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["announcement-attendees", announcementId],
+    queryFn: ({ signal }) => api.get<Person[]>(`/api/announcements/${announcementId}/attendees`, { signal }),
+    enabled,
+  });
+}
+

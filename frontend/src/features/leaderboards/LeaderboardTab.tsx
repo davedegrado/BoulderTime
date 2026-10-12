@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Info, Trophy } from "lucide-react";
-import { useLeaderboard, metricLabel, periodLabel, periodShortLabel, type LeaderboardEntry, type LeaderboardMetric, type LeaderboardPeriod } from "@/features/leaderboards/api";
+import { useLeaderboard, metricLabel, periodLabel, periodShortLabel, type Leaderboard, type LeaderboardEntry, type LeaderboardMetric, type LeaderboardPeriod } from "@/features/leaderboards/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { Avatar } from "@/components/Avatar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
-import { inkOn } from "@/features/boulders/holdColors";
+import { ColorGrade } from "@/features/boulders/BoulderBits";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
 import { Flag } from "lucide-react";
@@ -23,7 +23,7 @@ function Value({ entry, metric }: { entry: LeaderboardEntry; metric: Leaderboard
   if (metric === "HIGHEST" && entry.highest) {
     const h = entry.highest;
     return h.colorHex
-      ? <span className="grade grade--color grade--sm" style={{ background: h.colorHex, color: inkOn(h.colorHex) }}>{dataLabel(h.label)}</span>
+      ? <ColorGrade label={h.label} colorHex={h.colorHex} colorHex2={h.colorHex2} size="sm" />
       : <span className="grade grade--text grade--sm">{dataLabel(h.label)}</span>;
   }
   if (metric === "COMPLETED") return <span className="board__value">{entry.completed} <small>{plural(entry.completed, "send", "sends", { count: entry.completed }).replace(String(entry.completed), "").trim()}</small></span>;
@@ -69,6 +69,16 @@ function ReportPanel({ entry, busy, onCancel, onSend }: {
   );
 }
 
+/**
+ * How points work, in the reader's language, from the numbers the server sends (never from its English sentence, which
+ * stays only for older app builds).
+ */
+export function scoringText(b: Leaderboard): string {
+  const vars = { system: b.gradeSystemName ? dataLabel(b.gradeSystemName) : t("primary"), min: b.scoring?.minPoints ?? 10, max: b.scoring?.maxPoints ?? 100 };
+  const rule = t("Each completed boulder scores by its grade on the {system} scale: the easiest grade is worth {min} points and the hardest {max}, evenly spaced in between. A retired grade keeps the points it had.", vars);
+  return b.scoring?.customised ? `${rule} ${t("This gym set some points by hand: each boulder's card shows what it is worth.")}` : rule;
+}
+
 export function LeaderboardTab({ gymId }: { gymId: string }) {
   const { session } = useAuth();
   const [metric, setMetric] = useState<LeaderboardMetric>("POINTS");
@@ -106,7 +116,7 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
               </div>
               {explain && metric !== "COMPLETED" && (
                 <p className="notice notice--inline">
-                  {metric === "POINTS" ? b.scoringExplanation : t("Highest completed grade in the gym's {system} scale.", { system: b.gradeSystemName ? dataLabel(b.gradeSystemName) : t("primary") })}
+                  {metric === "POINTS" ? scoringText(b) : t("Highest completed grade in the gym's {system} scale.", { system: b.gradeSystemName ? dataLabel(b.gradeSystemName) : t("primary") })}
                 </p>
               )}
               {b.entries.length === 0 ? (

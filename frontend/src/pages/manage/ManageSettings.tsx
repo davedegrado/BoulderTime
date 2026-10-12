@@ -9,6 +9,7 @@ import { useSetGymImage } from "@/features/images/api";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useUpdateGym, type UpdateGymInput } from "@/features/gyms/api";
 import { atLeast } from "@/features/staff/roles";
+import { OpeningHoursEditor } from "@/features/gyms/openingHours";
 import { TextField } from "@/components/TextField";
 import { TextAreaField } from "@/components/Fields";
 import { Button } from "@/components/Button";
@@ -109,6 +110,7 @@ export function ManageSettings() {
       <TextAreaField label={t("Description")} rows={5} value={form.description} onChange={set("description")} error={err?.fieldError("description")} hint={t("What makes your gym special? Shown on your public page.")} />
       <Button type="submit" icon={<Save aria-hidden />} loading={update.isPending}>{t("Save changes")}</Button>
     </form>
+    <OpeningHoursEditor gym={gym} />
     </div>
   );
 }

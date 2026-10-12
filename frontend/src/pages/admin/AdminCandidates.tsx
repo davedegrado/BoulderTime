@@ -12,7 +12,7 @@ import { errorMessage } from "@/lib/apiError";
 import { candidateStatusLabel, formatDate, type CandidateStatus } from "@/lib/format";
 import { t } from "@/i18n/i18n";
 
-const FILTERS: { value: CandidateStatus | ""; label: string }[] = [
+const FILTERS = (): { value: CandidateStatus | ""; label: string }[] => [
   { value: "PENDING", label: t("Pending") },
   { value: "CONTACTED", label: t("Contacted") },
   { value: "ACCEPTED", label: t("Accepted") },
@@ -27,7 +27,7 @@ export function AdminCandidates() {
   return (
     <div className="stack">
       <div className="chips" role="radiogroup" aria-label={t("Filter by status")}>
-        {FILTERS.map((f) => (
+        {FILTERS().map((f) => (
           <button key={f.label} role="radio" aria-checked={status === f.value} className="chip" onClick={() => setStatus(f.value)}>{f.label}</button>
         ))}
       </div>

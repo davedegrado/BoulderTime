@@ -8,7 +8,7 @@ namespace BoulderTime.Application.Boulders;
 /// Turns boulder entities into card DTOs (grades, gym and sector names, community rating, viewer progress) with a
 /// fixed number of queries regardless of list size. Shared by boulder lists, climbing history and Home.
 /// </summary>
-public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICurrentUser currentUser)
+public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICurrentUser currentUser, Leaderboards.BoulderPoints points)
 {
     public async Task<IReadOnlyList<BoulderSummaryDto>> SummariesAsync(IReadOnlyList<Boulder> boulders, CancellationToken ct)
     {
@@ -24,6 +24,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
         var gymIds = boulders.Select(b => b.GymId).Distinct().ToList();
         var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id)).ToDictionaryAsync(g => g.Id, g => g.Name, ct);
+        var scales = await points.ForGymsAsync(gymIds, ct);
 
         return boulders.Select(b => new BoulderSummaryDto(
             b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId, ""), b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
@@ -31,11 +32,16 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             b.Status == BoulderStatus.Deleted ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath),
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
-            b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id)))
+            b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
+            b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, []))))
             .ToList();
     }
 
     public static readonly RatingSummaryDto NoRatings = new(null, 0);
+
+    /// <summary>The same number the leaderboard adds up for a send of this boulder.</summary>
+    public static int? PointsOf(IReadOnlyDictionary<Guid, Leaderboards.GymScales> scales, Boulder b, IReadOnlyList<BoulderGradeDto> grades) =>
+        scales.GetValueOrDefault(b.GymId, Leaderboards.GymScales.Empty).PointsOf(b.PointsOverride, grades.Select(g => (g.GradeSystemId, g.GradeValueId)));
 
     public async Task<Dictionary<Guid, IReadOnlyList<BoulderGradeDto>>> GradesAsync(List<Guid> boulderIds, CancellationToken ct)
     {
@@ -49,7 +55,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             .GroupBy(x => x.BoulderId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<BoulderGradeDto>)g
                 .OrderBy(x => x.System.SortOrder)
-                .Select(x => new BoulderGradeDto(x.System.Id, x.System.Name, x.System.Type, x.Value.Id, x.Value.Label, x.Value.Rank, x.Value.ColorHex))
+                .Select(x => new BoulderGradeDto(x.System.Id, x.System.Name, x.System.Type, x.Value.Id, x.Value.Label, x.Value.Rank, x.Value.ColorHex, x.Value.ColorHex2))
                 .ToList());
     }
 

@@ -86,7 +86,7 @@ function CommentItem({ comment: c, boulderId, signedIn }: { comment: Comment; bo
           <div className="comment__actions">
             <button type="button" className={`text-btn ${c.likedByViewer ? "is-on" : ""}`} disabled={!signedIn || m.like.isPending} aria-pressed={c.likedByViewer}
               onClick={() => m.like.mutate({ id: c.id, like: !c.likedByViewer }, { onError })}>
-              <Heart aria-hidden /> {c.likes > 0 ? c.likes : ""}<span className="sr-only">{c.likedByViewer ? "Unlike" : "Like"}</span>
+              <Heart aria-hidden /> {c.likes > 0 ? c.likes : ""}<span className="sr-only">{c.likedByViewer ? t("Unlike") : t("Like")}</span>
             </button>
             {c.isMine && <button type="button" className="text-btn" onClick={() => setEditing(true)}><Pencil aria-hidden /> {t("Edit")}</button>}
             {c.isMine && <ConfirmButton icon={<Trash2 aria-hidden />} confirmLabel={t("Delete?")} loading={m.remove.isPending} onConfirm={() => m.remove.mutate(c.id, { onError })}>{t("Delete")}</ConfirmButton>}

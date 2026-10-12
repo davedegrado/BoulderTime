@@ -19,6 +19,10 @@ public enum BoulderStatus
 /// </summary>
 public class Boulder : IAuditable
 {
+    public const int NameMaxLength = 60;
+    /// <summary>The most a single boulder can be worth when staff set its points by hand.</summary>
+    public const int MaxPoints = 1000;
+
     public Guid Id { get; private set; }
     public Guid GymId { get; private set; }
     public Guid SectorId { get; private set; }
@@ -27,6 +31,15 @@ public class Boulder : IAuditable
     /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
     public string? ThumbnailPath { get; private set; }
     public HoldColor HoldColor { get; private set; }
+    /// <summary>
+    /// The name the setters gave it ("La Fessura"), optional. Never empty: no name is null, so no screen ever shows an
+    /// empty label, and a nameless boulder is never called by its id.
+    /// </summary>
+    public string? Name { get; private set; }
+    /// <summary>
+    /// Points staff set for this one boulder, overriding what its grade is worth. Null means it scores as its grade does.
+    /// </summary>
+    public int? PointsOverride { get; private set; }
     /// <summary>How intense it is to climb, independent of the grade. Null until staff say (boulders set before it existed).</summary>
     public BoulderIntensity? Intensity { get; private set; }
     public Guid? SetterUserId { get; private set; }
@@ -71,6 +84,16 @@ public class Boulder : IAuditable
         HoldColor = holdColor;
         SetterUserId = setterUserId;
         return obsolete;
+    }
+
+    /// <summary>Blank or spaces only means no name.</summary>
+    public void Rename(string? name) => Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+
+    /// <summary>Null goes back to the points of the grade.</summary>
+    public void SetPointsOverride(int? points)
+    {
+        if (points is < 1 or > MaxPoints) throw new ArgumentOutOfRangeException(nameof(points));
+        PointsOverride = points;
     }
 
     /// <returns>False if it was already removed, or deleted (idempotent bulk operations).</returns>

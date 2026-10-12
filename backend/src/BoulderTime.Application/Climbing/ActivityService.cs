@@ -21,7 +21,8 @@ public sealed record ClimbHistoryItemDto(BoulderSummaryDto Boulder, int Attempts
 public sealed record ClimbingStatsDto(int Completed, int Projects, int TotalAttempts, int CompletedThisMonth);
 
 /// <summary>Highest completed grade within ONE grading system (grades from different systems are never compared).</summary>
-public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, string GymName, string Label, int Rank, string? ColorHex);
+public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, string GymName, string Label, int Rank, string? ColorHex,
+    string? ColorHex2 = null);
 
 public sealed record WeekActivityDto(DateOnly WeekStart, int Completed);
 
@@ -203,7 +204,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .Select(g => g.OrderByDescending(x => x.v.Rank).First())
             .OrderBy(x => TypeOrder(x.s.Type)).ThenByDescending(x => x.v.Rank)
             .Take(6)
-            .Select(x => new HighestGradeDto(x.s.Id, x.s.Name, x.s.Type, x.GymName, x.v.Label, x.v.Rank, x.v.ColorHex))
+            .Select(x => new HighestGradeDto(x.s.Id, x.s.Name, x.s.Type, x.GymName, x.v.Label, x.v.Rank, x.v.ColorHex, x.v.ColorHex2))
             .ToList();
     }
 

@@ -12,7 +12,7 @@ import { communityKeys } from "@/features/community/api";
 
 export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null }
 export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number }
-export interface HighestGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gymName: string; label: string; rank: number; colorHex: string | null }
+export interface HighestGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gymName: string; label: string; rank: number; colorHex: string | null; colorHex2?: string | null }
 export interface WeekActivity { weekStart: string; completed: number }
 export interface Profile {
   id: string; displayName: string; avatarUrl: string | null; memberSince: string; isMe: boolean;

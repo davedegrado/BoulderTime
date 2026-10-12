@@ -13,6 +13,7 @@ import { SelectField } from "@/components/Fields";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { Avatar } from "@/components/Avatar";
+import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
 import { ImagePicker } from "@/components/ImagePicker";
 import { useSetAvatar } from "@/features/images/api";
 import { LANGUAGES, t, useI18n, type Language } from "@/i18n/i18n";
@@ -74,7 +75,7 @@ export function ProfilePage() {
   return (
     <div className="page page--narrow">
       <header className="profile-head">
-        <Avatar name={user.displayName} url={user.avatarUrl} size={72} />
+        <EnlargeableAvatar name={user.displayName} url={user.avatarUrl} size={72} />
         <div className="profile-head__text">
           <h1 className="page__title">{user.displayName}</h1>
           <p className="page__subtitle">{t("On BoulderTime since {date}", { date: formatDate(user.createdAt, { month: "long", year: "numeric" }) })}</p>

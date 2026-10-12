@@ -46,3 +46,21 @@ public class GymAnnouncement : IAuditable
         EventDate = eventDate;
     }
 }
+
+/// <summary>
+/// Someone saying they'll come to a gym's event ("I'll be there"). One row per person and event: saying it twice is
+/// still once. Only events take it — not competitions, which have their own registration, and not plain news.
+/// </summary>
+public class AnnouncementAttendance
+{
+    public Guid AnnouncementId { get; private set; }
+    public Guid UserId { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    private AnnouncementAttendance() { }
+
+    public static AnnouncementAttendance Create(Guid announcementId, Guid userId, DateTimeOffset now) =>
+        new() { AnnouncementId = announcementId, UserId = userId, CreatedAt = now };
+
+    public static bool TakesAttendance(AnnouncementType type) => type == AnnouncementType.Event;
+}

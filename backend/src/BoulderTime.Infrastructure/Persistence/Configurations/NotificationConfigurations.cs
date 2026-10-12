@@ -55,6 +55,20 @@ internal sealed class GymAnnouncementConfiguration : IEntityTypeConfiguration<Gy
     }
 }
 
+internal sealed class AnnouncementAttendanceConfiguration : IEntityTypeConfiguration<AnnouncementAttendance>
+{
+    public void Configure(EntityTypeBuilder<AnnouncementAttendance> b)
+    {
+        b.ToTable("announcement_attendances");
+        // The key is what makes "I'll be there" once per person, however many times it is tapped.
+        b.HasKey(x => new { x.AnnouncementId, x.UserId });
+        // An event taken down takes its list with it; so does an account when it is erased.
+        b.HasOne<GymAnnouncement>().WithMany().HasForeignKey(x => x.AnnouncementId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => x.UserId);
+    }
+}
+
 internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<PushSubscription>
 {
     public void Configure(EntityTypeBuilder<PushSubscription> b)
