@@ -1669,6 +1669,29 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("announcement_attendances", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.AnnouncementDismissal", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("AnnouncementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("announcement_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("UserId", "AnnouncementId")
+                        .HasName("pk_announcement_dismissals");
+
+                    b.HasIndex("AnnouncementId")
+                        .HasDatabaseName("ix_announcement_dismissals_announcement_id");
+
+                    b.ToTable("announcement_dismissals", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2661,6 +2684,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_announcement_attendances_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Notifications.AnnouncementDismissal", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Notifications.GymAnnouncement", null)
+                        .WithMany()
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_announcement_dismissals_gym_announcements_announcement_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_announcement_dismissals_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Notifications.GymAnnouncement", b =>
