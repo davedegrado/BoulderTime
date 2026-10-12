@@ -13,6 +13,7 @@ import { useCurrentUser, useLeaderboardVisibility } from "@/features/users/api";
 import { useReportClimber } from "@/features/leaderboards/api";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
+import { Toggle } from "@/features/notifications/NotificationBits";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
 
@@ -98,13 +99,17 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
   return (
     <div className="stack">
       {outOfBoard && (
-        <div className="notice leaderboard-optin" role="note">
-          <p>{t("You don't appear in leaderboards. Your sends still count for you, and you can take part whenever you like.")}</p>
-          <Button variant="secondary" loading={visibility.isPending}
-            onClick={() => visibility.mutate(false, {
+        // The same switch as in the profile, where the person is looking at the leaderboard: one tap to take part.
+        <div className="card leaderboard-optin">
+          <Toggle
+            label={t("You're not on the leaderboard")}
+            description={t("Turn it on to appear by name. Your sends count for you either way.")}
+            checked={false}
+            disabled={visibility.isPending}
+            onChange={() => visibility.mutate(false, {
               onSuccess: () => toast.success(t("You appear in leaderboards now")),
               onError: (e) => toast.error(errorMessage(e)),
-            })}>{t("Show me in leaderboards")}</Button>
+            })} />
         </div>
       )}
       <div className="chips" role="radiogroup" aria-label={t("Ranking by")}>

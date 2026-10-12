@@ -184,7 +184,7 @@ describe("Leaderboards are opt-in", () => {
       gradeSystemType: null, scoringExplanation: "", climbers: 0, entries: [], viewer: null });
     reply("PUT", "/api/users/me/leaderboard-visibility", undefined);
     renderAt("/g", "/g", <LeaderboardTab gymId="g1" />);
-    await userEvent.click(await screen.findByRole("button", { name: "Show me in leaderboards" }));
+    await userEvent.click(await screen.findByRole("switch", { name: "You're not on the leaderboard" }));
     expect(calls).toContainEqual({ method: "PUT", path: "/api/users/me/leaderboard-visibility" });
   });
 });

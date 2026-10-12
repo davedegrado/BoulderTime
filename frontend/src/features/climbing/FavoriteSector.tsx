@@ -30,7 +30,7 @@ export function FavoriteSectorCard({ sector, isMe }: { sector: FavoriteSector; i
       </Link>
       {plan && (
         <div className="favorite-sector__map" style={{ maxWidth }}>
-          <SectorMap plan={plan} sectors={onPlan} highlightId={sector.sectorId} className="sector-map--mini" />
+          <SectorMap plan={plan} sectors={onPlan} highlightId={sector.sectorId} labels={false} className="sector-map--mini" />
         </div>
       )}
     </section>

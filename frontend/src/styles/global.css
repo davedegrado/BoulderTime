@@ -1326,3 +1326,6 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 }
 .avatar-btn { display: inline-flex; flex: none; padding: 0; border: 0; border-radius: 50%; background: none; cursor: zoom-in; }
 .avatar-btn:focus-visible { outline: 3px solid var(--bt-orange); outline-offset: 2px; }
+/* The leaderboard's own "take part" switch: a quiet card above the board, the same row as in the profile. */
+.leaderboard-optin { padding: var(--bt-3) var(--bt-4); }
+.leaderboard-optin .list__title { font-weight: 700; }

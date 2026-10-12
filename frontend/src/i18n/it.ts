@@ -1165,9 +1165,9 @@ export const it: Record<string, string> = {
   "This browser is blocking notifications from BoulderTime. Allow them in the site's settings (the icon beside the address), then try again.": "Questo browser blocca le notifiche di BoulderTime. Consentile nelle impostazioni del sito (l'icona accanto all'indirizzo), poi riprova.",
   "Sent. It should appear within a few seconds. If it doesn't, the browser or the computer isn't letting it through: check the site's notification permission, the system's notification settings and Do Not Disturb.": "Inviata. Dovrebbe comparire entro pochi secondi. Se non arriva, la blocca il browser o il computer: controlla il permesso di notifica del sito, le impostazioni di notifica del sistema e la modalità Non disturbare.",
   "Notifications aren't set up correctly on the server.": "Le notifiche non sono configurate correttamente sul server.",
-  "You don't appear in leaderboards. Your sends still count for you, and you can take part whenever you like.": "Non compari nelle classifiche. I tuoi completamenti contano comunque per te, e puoi partecipare quando vuoi.",
-  "Show me in leaderboards": "Mostrami in classifica",
   "You appear in leaderboards now": "Ora compari nelle classifiche",
   "Show me in leaderboards and lists": "Mostrami in classifiche ed elenchi",
   "You appear in gyms' rankings and by name among the people who completed a boulder. Off, your sends and history stay yours, and nobody sees your name there.": "Compari nelle classifiche delle palestre e per nome tra chi ha completato un blocco. Se è spento, completamenti e storico restano tuoi e il tuo nome lì non lo vede nessuno.",
+  "You're not on the leaderboard": "Non sei in classifica",
+  "Turn it on to appear by name. Your sends count for you either way.": "Attivalo per comparire con il tuo nome. I tuoi completamenti contano comunque.",
 };

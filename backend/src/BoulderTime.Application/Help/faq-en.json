@@ -67,7 +67,7 @@
         },
         {
           "q": "How does the leaderboard work?",
-          "a": "In the gym's **Leaderboard** tab you can rank by points, sends or hardest grade, by week, month, year or all\ntime. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100, the others evenly\nspaced. The gym can set more or fewer points by hand for a grade or a single boulder: each boulder's card shows what it\nis worth (**+64 pt**). Attempts never cost points.\n\nYou appear in leaderboards only if you choose to: turn on **Show me in leaderboards and lists** in **Profile → Leaderboards**, or tap **Show me in leaderboards** on the Leaderboard tab. Turn it off whenever you like.",
+          "a": "In the gym's **Leaderboard** tab you can rank by points, sends or hardest grade, by week, month, year or all\ntime. Points follow the grade: on the gym's main scale the easiest is worth 10 and the hardest 100, the others evenly\nspaced. The gym can set more or fewer points by hand for a grade or a single boulder: each boulder's card shows what it\nis worth (**+64 pt**). Attempts never cost points.\n\nYou appear in leaderboards only if you choose to: turn on **Show me in leaderboards and lists** in **Profile → Leaderboards**, or use the switch at the top of the Leaderboard tab. Turn it off whenever you like.",
           "audience": "both"
         },
         {
