@@ -16,7 +16,7 @@
         },
         {
           "q": "How do I see the boulders of one sector?",
-          "a": "On the gym's page open **Sectors**. If the gym uploaded its floor plan, tap the sector on the map, then\n**See the boulders**; otherwise pick the sector from the list.\n\n**Filters** in the Boulders tab work too: sector, grade, hold colour, your progress and rating. Inside them,\n**Advanced search** finds a boulder by name or by tag.",
+          "a": "On the gym's page open **Sectors**. If the gym uploaded its floor plan, tap the sector on the map, then\n**See the boulders**; otherwise pick the sector from the list.\n\n**Filters** in the Boulders tab work too: sector, grade and your progress. Inside them, **Advanced search** has the\nrest: the boulder's name, hold colour, rating, intensity and tags.",
           "audience": "both"
         },
         {
@@ -72,7 +72,7 @@
         },
         {
           "q": "What are a boulder's tags and intensity?",
-          "a": "The gym's staff choose them. **Tags** describe the boulder in the gym's own words (Slab, Dynamic, Endurance…).\n**Intensity** says how hard it is on the body, in three levels: low, medium, high. It is independent of the grade: a\ngreen can be gentle or punishing.\n\nYou can filter by both under **Filters** in the Boulders tab. With several tags chosen, you see the boulders that have\nthem all.",
+          "a": "The gym's staff choose them. **Tags** describe the boulder in the gym's own words (Slab, Dynamic, Endurance…).\n**Intensity** says how hard it is on the body, in three levels: low, medium, high. It is independent of the grade: a\ngreen can be gentle or punishing.\n\nYou can filter by both under **Filters → Advanced search** in the Boulders tab. With several tags chosen, you see the boulders that have\nthem all.",
           "audience": "both"
         },
         {

@@ -57,7 +57,13 @@ describe("Boulder list (climber)", () => {
     expect(screen.queryByRole("combobox", { name: "Grade" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Filters" }));
     expect(screen.getByRole("combobox", { name: "Grade" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Your progress" })).toBeInTheDocument();
+    // Hold colour, rating and intensity wait behind "Advanced search".
+    expect(screen.queryByRole("combobox", { name: "Hold colour" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Advanced search/ }));
     expect(screen.getByRole("combobox", { name: "Hold colour" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Rating" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Intensity" })).toBeInTheDocument();
   });
 
   it("switches between boulders on the wall and taken down from one compact drop-down", async () => {

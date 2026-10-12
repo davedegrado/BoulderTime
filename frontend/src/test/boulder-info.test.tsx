@@ -117,7 +117,7 @@ describe("Filtering by tags and intensity", () => {
     rerender(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
     await userEvent.click(screen.getByRole("button", { name: "Tecnico" }));
     rerender(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
-    await userEvent.click(screen.getByRole("button", { name: /High intensity/ }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Intensity" }), "HIGH");
     expect(filters).toEqual({ tagIds: ["t1", "t2"], intensity: ["HIGH"] });
 
     const active = activeFilters(filters, [], [], tags);

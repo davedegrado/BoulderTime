@@ -9,7 +9,7 @@ import { SearchField } from "@/components/SearchField";
 import { SelectField } from "@/components/Fields";
 import { plural, t } from "@/i18n/i18n";
 import { dataLabel } from "@/i18n/data";
-import { INTENSITIES, IntensityBars, intensityLabel, intensityShort, type Intensity } from "@/features/boulders/intensity";
+import { INTENSITIES, intensityLabel, type Intensity } from "@/features/boulders/intensity";
 import type { GymTag } from "@/features/boulders/tags";
 
 interface Props {
@@ -27,7 +27,7 @@ function toggled<T>(list: T[] | undefined, value: T): T[] | undefined {
   return next.length ? next : undefined;
 }
 
-/** Sector, grade and hold-colour filters. Grade and hold colour are separate controls with separate labels. */
+/** Sector, grade and the climber's own progress up front; everything else behind "Advanced search". */
 export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = [] }: Props) {
   const { session } = useAuth();
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
@@ -39,35 +39,21 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
       <SelectField label={t("Sector")} value={filters.sectorId ?? ""} onChange={(e) => set({ sectorId: e.target.value || undefined })}
         options={[{ value: "", label: t("All sectors") }, ...sectors.filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
       <SelectField label={t("Grade")} value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
-      <SelectField label={t("Hold colour")} value={filters.holdColor ?? ""} onChange={(e) => set({ holdColor: (e.target.value || undefined) as HoldColor | undefined })}
-        options={[{ value: "", label: t("Any holds") }, ...HOLD_COLORS.map((c) => ({ value: c.value, label: holdLabel(c.value) }))]} />
       {session && (
         <SelectField label={t("Your progress")} value={filters.progress ?? ""} onChange={(e) => set({ progress: (e.target.value || undefined) as ProgressFilter | undefined })}
           options={[{ value: "", label: t("All") }, { value: "UNTRIED", label: t("Not tried") }, { value: "PROJECTS", label: t("Projects") }, { value: "COMPLETED", label: t("Completed") }]} />
       )}
-      <SelectField label={t("Rating")} value={filters.minRating ?? ""} onChange={(e) => set({ minRating: e.target.value || undefined })}
-        options={[{ value: "", label: t("Any rating") }, { value: "3", label: t("3+ stars") }, { value: "4", label: t("4+ stars") }]} />
-      <fieldset className="filter-group">
-        <legend className="field__label">{t("Intensity")}</legend>
-        <div className="chips chips--wrap">
-          {INTENSITIES.map((i) => (
-            <button key={i} type="button" className="chip" aria-pressed={!!filters.intensity?.includes(i)} onClick={() => set({ intensity: toggled(filters.intensity, i) })}>
-              <IntensityBars intensity={i} /> {intensityShort(i)}
-            </button>
-          ))}
-        </div>
-      </fieldset>
       <AdvancedSearch filters={filters} set={set} tags={tags} />
     </div>
   );
 }
 
 /**
- * Name and tags, behind a "Advanced search" button: most people filter by sector and grade, so these stay out of the
- * way until asked for. Already in use, they open by themselves.
+ * Name, hold colour, rating, intensity and tags, behind an "Advanced search" button: most people filter by sector and
+ * grade, so these stay out of the way until asked for. Already in use, they open by themselves.
  */
 function AdvancedSearch({ filters, set, tags }: { filters: Filters; set: (patch: Partial<Filters>) => void; tags: GymTag[] }) {
-  const [open, setOpen] = useState(() => !!filters.name || !!filters.tagIds?.length);
+  const [open, setOpen] = useState(() => !!(filters.name || filters.holdColor || filters.minRating || filters.intensity?.length || filters.tagIds?.length));
   const [name, setName] = useState(filters.name ?? "");
   // The list is asked for once typing pauses, not at every letter.
   useEffect(() => {
@@ -86,6 +72,16 @@ function AdvancedSearch({ filters, set, tags }: { filters: Filters; set: (patch:
       {open && (
         <div id="advanced-search" className="advanced-search__body">
           <SearchField label={t("Boulder name")} placeholder={t("e.g. La Fessura")} value={name} onChange={setName} />
+          <div className="boulder-filters">
+            <SelectField label={t("Hold colour")} value={filters.holdColor ?? ""} onChange={(e) => set({ holdColor: (e.target.value || undefined) as HoldColor | undefined })}
+              options={[{ value: "", label: t("Any holds") }, ...HOLD_COLORS.map((c) => ({ value: c.value, label: holdLabel(c.value) }))]} />
+            <SelectField label={t("Rating")} value={filters.minRating ?? ""} onChange={(e) => set({ minRating: e.target.value || undefined })}
+              options={[{ value: "", label: t("Any rating") }, { value: "3", label: t("3+ stars") }, { value: "4", label: t("4+ stars") }]} />
+            {/* One level at a time: the server still takes several, for links made before this was a drop-down. */}
+            <SelectField label={t("Intensity")} value={filters.intensity?.length === 1 ? filters.intensity[0] : ""}
+              onChange={(e) => set({ intensity: e.target.value ? [e.target.value as Intensity] : undefined })}
+              options={[{ value: "", label: t("Any intensity") }, ...INTENSITIES.map((i) => ({ value: i, label: intensityLabel(i) }))]} />
+          </div>
           {tags.length > 0 && (
             <fieldset className="filter-group">
               <legend className="field__label">{t("Tags")}</legend>

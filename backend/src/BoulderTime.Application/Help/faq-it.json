@@ -16,7 +16,7 @@
         },
         {
           "q": "Come vedo i blocchi di un solo settore?",
-          "a": "Nella pagina della palestra apri **Settori**. Se la palestra ha caricato la piantina, tocca il settore sulla\nmappa e poi **Vedi i blocchi**; altrimenti scegli il settore dalla lista.\n\nPuoi anche usare **Filtri** nella scheda Blocchi: settore, grado, colore delle prese, i tuoi progressi e valutazione. In\n**Ricerca avanzata**, dentro i filtri, cerchi un blocco per nome o per tag.",
+          "a": "Nella pagina della palestra apri **Settori**. Se la palestra ha caricato la piantina, tocca il settore sulla\nmappa e poi **Vedi i blocchi**; altrimenti scegli il settore dalla lista.\n\nPuoi anche usare **Filtri** nella scheda Blocchi: settore, grado e i tuoi progressi. In **Ricerca avanzata**, dentro i\nfiltri, trovi il resto: nome del blocco, colore delle prese, valutazione, intensità e tag.",
           "audience": "both"
         },
         {
@@ -72,7 +72,7 @@
         },
         {
           "q": "Cosa sono i tag e l'intensità di un blocco?",
-          "a": "Sono scelti dallo staff della palestra. I **tag** descrivono il blocco con le parole della palestra (per esempio\nPlacca, Dinamico, Resistenza). L'**intensità** dice quanto è faticoso, con tre livelli: poco intenso, intensità media,\nmolto intenso. È indipendente dal grado: un verde può essere tranquillo o sfiancante.\n\nPuoi filtrare i blocchi per entrambi da **Filtri** nella scheda Blocchi. Scegliendo più tag, vedi i blocchi che li\nhanno tutti.",
+          "a": "Sono scelti dallo staff della palestra. I **tag** descrivono il blocco con le parole della palestra (per esempio\nPlacca, Dinamico, Resistenza). L'**intensità** dice quanto è faticoso, con tre livelli: poco intenso, intensità media,\nmolto intenso. È indipendente dal grado: un verde può essere tranquillo o sfiancante.\n\nPuoi filtrare i blocchi per entrambi da **Filtri → Ricerca avanzata** nella scheda Blocchi. Scegliendo più tag, vedi i blocchi che li\nhanno tutti.",
           "audience": "both"
         },
         {

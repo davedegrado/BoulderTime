@@ -53,7 +53,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   useEffect(() => cancel, []);
 
   // Fixed anatomy, so a card never grows with what it happens to hold. On the photo: the grade (bottom left, as on the
-  // boulder's page) with its intensity, the points (bottom right), the climber's own state (top right). Under it: the
+  // boulder's page) with its intensity, the points (bottom right), the climber's own state (top right), the gym's logo in lists that mix gyms (top left). Under it: the
   // name when the boulder has one, the holds, and the sector with how it is rated and how many sent it.
   const name = boulder.name?.trim() || null;
   const sends = boulder.completions ?? 0;
@@ -64,22 +64,27 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
         {boulder.photoUrl
           ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" />
           : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
-        {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
-        {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
+        {/* Top left: the gym's logo where a list mixes gyms, then whether the boulder is still on the wall. */}
+        {(showGym || boulder.status !== "ACTIVE") && (
+          <span className="boulder-card__lead">
+            {showGym && (
+              <span className="boulder-card__gym" title={boulder.gymName}>
+                <GymAvatar name={boulder.gymName} logoUrl={boulder.gymLogoUrl ?? null} size={30} />
+                <span className="sr-only">{t("At {gym}", { gym: boulder.gymName })}</span>
+              </span>
+            )}
+            {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
+            {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
+          </span>
+        )}
         {!selectable && (
-          // Top right: the climber's own state, and the gym's logo where a list mixes gyms.
+          // Top right: the climber's own state.
           <span className="boulder-card__corner">
             {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
             {tries > 0 && (
               <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
                 <RotateCw aria-hidden /><span aria-hidden>{tries}</span>
                 <span className="sr-only">{plural(tries, "{count} try", "{count} tries")}</span>
-              </span>
-            )}
-            {showGym && (
-              <span className="boulder-card__gym" title={boulder.gymName}>
-                <GymAvatar name={boulder.gymName} logoUrl={boulder.gymLogoUrl ?? null} size={30} />
-                <span className="sr-only">{t("At {gym}", { gym: boulder.gymName })}</span>
               </span>
             )}
           </span>
