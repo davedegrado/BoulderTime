@@ -1040,3 +1040,19 @@ of a gym is a choice, not a default. Accounts created before October 2026 keep t
 an account takes it off the leaderboard without touching that setting (the leaderboard leaves out accounts on their
 way out), so changing one's mind within the week gives back exactly what one had. The demo climbers take part, so the
 demo gyms still have a leaderboard.
+
+## ADR-055 · A sector's wall photo, shared by the boulders set on it
+Gyms often photograph a whole wall and set several boulders on it. Each sector can now have **one wall photo**
+(`sectors.PhotoPath`, in the boulder-images bucket under `gyms/{gymId}/sectors/`), uploaded once from
+**Manage → Sectors**. In the boulder editor, **Use the photo of {sector}** sets the boulder on it and goes straight to
+choosing that boulder's card picture; a photo of its own can still be uploaded as before.
+
+The boulder stores the wall's path as its own `PhotoPath`, so every screen reads it as it always did. The file
+belongs to the **sector**: editing or deleting a boulder never deletes a path under `/sectors/`.
+
+**Replacing or removing the wall photo deletes the old file.** New boulders use the new photo; the boulders set on
+the old one are not moved onto it (the new photo may not show them). Before replacing, staff are told how many
+boulders on the wall (and already taken down) are set on it. If they go ahead, those boulders' `PhotoPath` becomes
+empty: they keep their own card picture, the photo shows as the placeholder the app already draws for a boulder with
+no photo, and staff can give them a photo again from the editor (saving without one is allowed for them only). App
+builds already installed handle a null photo the same way, so nothing breaks before they update.

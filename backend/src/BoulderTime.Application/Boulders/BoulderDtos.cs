@@ -44,7 +44,7 @@ public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUr
 public sealed record DeletionImpactDto(int Sends, int Comments, int Videos, bool HasBeta);
 
 public sealed record BoulderDetailDto(
-    Guid Id, Guid GymId, string GymSlug, string GymName, Guid SectorId, string SectorName, string PhotoUrl, string PhotoPath,
+    Guid Id, Guid GymId, string GymSlug, string GymName, Guid SectorId, string SectorName, string? PhotoUrl, string PhotoPath,
     HoldColor HoldColor, IReadOnlyList<BoulderGradeDto> Grades, PersonDto? Setter,
     BoulderStatus Status, DateTimeOffset CreatedAt, DateTimeOffset? RemovedAt, GymRole? ViewerRole,
     RatingSummaryDto Rating, ViewerProgressDto? Viewer, bool IsFollowing,

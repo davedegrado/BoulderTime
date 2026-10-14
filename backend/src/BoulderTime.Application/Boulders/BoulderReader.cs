@@ -29,14 +29,20 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
 
         return boulders.Select(b => new BoulderSummaryDto(
             b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId)?.Name ?? "", b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
-            // A deleted boulder has no photo left to point at, and a signed url for an empty path would 404.
-            b.Status == BoulderStatus.Deleted ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath),
+            // A deleted boulder has no photo left to point at, and a url for an empty path would 404. One that lost its
+            // sector's wall photo still has its own card picture.
+            b.Status == BoulderStatus.Deleted ? null : CardPicture(b),
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
             b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl))
             .ToList();
     }
+
+    private string? CardPicture(Boulder b) =>
+        b.ThumbnailPath is { } thumbnail ? storage.PublicUrl(StorageBuckets.BoulderImages, thumbnail)
+        : b.PhotoPath.Length > 0 ? storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath)
+        : null;
 
     public static readonly RatingSummaryDto NoRatings = new(null, 0);
 

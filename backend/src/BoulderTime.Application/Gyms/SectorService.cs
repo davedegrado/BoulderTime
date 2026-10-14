@@ -1,5 +1,7 @@
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Images;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Gyms;
 using BoulderTime.Domain.Staff;
@@ -7,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Gyms;
 
-public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock)
+public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, IObjectStorage storage)
 {
     /// <summary>Public: active sectors of an active gym. Staff also see inactive sectors (and non-public gyms).</summary>
     public async Task<IReadOnlyList<SectorDto>> ListAsync(Guid gymId, CancellationToken ct = default)
@@ -107,6 +109,88 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
         for (var i = 0; i < ids.Count; i++) sectors.First(s => s.Id == ids[i]).MoveTo(i);
         await db.SaveChangesAsync(ct);
         return sectors.OrderBy(s => s.SortOrder).Select(s => SectorDto.From(s)).ToList();
+    }
+
+    // ---------- Wall photo ----------
+    // One photo of the sector's wall, uploaded once. Staff set each boulder on it and cut that boulder's card picture
+    // out of it, instead of uploading the same wall again for every boulder.
+
+    public async Task<UploadTicket> CreatePhotoUploadAsync(Guid sectorId, ImageUploadRequest r, CancellationToken ct = default)
+    {
+        var sector = await db.Sectors.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
+        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
+        new Validator()
+            .Check(r.ContentType is not null && BoulderService.PhotoTypes.ContainsKey(r.ContentType), "contentType", "Upload a JPEG, PNG or WebP photo.")
+            .Check(r.SizeBytes is > 0 && r.SizeBytes <= BoulderService.MaxPhotoBytes, "sizeBytes", $"Photos must be under {BoulderService.MaxPhotoBytes / 1024 / 1024} MB.")
+            .ThrowIfInvalid();
+        var path = $"{Sector.PhotoPrefix(sector.GymId)}{Guid.NewGuid():N}.{BoulderService.PhotoTypes[r.ContentType!]}";
+        return await storage.CreateUploadTicketAsync(StorageBuckets.BoulderImages, path, r.ContentType!.ToLowerInvariant(), BoulderService.MaxPhotoBytes, ct)
+            with { Resumable = null };
+    }
+
+    /// <summary>What replacing or removing the wall photo would cost, asked before doing it so staff can be warned.</summary>
+    public async Task<SectorPhotoUsageDto> PhotoUsageAsync(Guid sectorId, CancellationToken ct = default)
+    {
+        var sector = await db.Sectors.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
+        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
+        if (sector.PhotoPath is not { } path) return new SectorPhotoUsageDto(0, 0);
+        var counts = await db.Boulders.AsNoTracking().Where(b => b.GymId == sector.GymId && b.PhotoPath == path)
+            .GroupBy(b => b.Status).Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync(ct);
+        return new SectorPhotoUsageDto(
+            counts.Where(c => c.Status == BoulderStatus.Active).Sum(c => c.Count),
+            counts.Where(c => c.Status == BoulderStatus.Removed).Sum(c => c.Count));
+    }
+
+    /// <summary>
+    /// Sets, replaces or (with no path) removes the wall photo. The old file is deleted, so the boulders that were set on
+    /// it lose their photo: they keep their own card picture and show a placeholder where the photo was. The new photo
+    /// is for the boulders set from now on; nobody's boulder is moved onto it.
+    /// </summary>
+    public async Task<SectorDto> SetPhotoAsync(Guid sectorId, SetImageRequest r, CancellationToken ct = default)
+    {
+        var sector = await db.Sectors.FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
+        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
+
+        var path = Input.Trimmed(r.Path);
+        if (path.Length > 0 && path != sector.PhotoPath)
+        {
+            var ok = path.StartsWith(Sector.PhotoPrefix(sector.GymId), StringComparison.Ordinal) && !path.Contains("..") && !path.Contains('\\')
+                     && !await db.Sectors.AnyAsync(s => s.PhotoPath == path, ct)
+                     && await storage.ExistsAsync(StorageBuckets.BoulderImages, path, ct);
+            if (!ok) throw new ValidationException("path", "The photo upload didn't complete. Upload it again.");
+        }
+
+        var previous = sector.SetPhoto(path.Length == 0 ? null : storage.PublicUrl(StorageBuckets.BoulderImages, path), path.Length == 0 ? null : path);
+        if (previous is not null)
+        {
+            var boulders = await db.Boulders.Where(b => b.GymId == sector.GymId && b.PhotoPath == previous).ToListAsync(ct);
+            foreach (var b in boulders) b.LoseSectorPhoto();
+        }
+        await db.SaveChangesAsync(ct);
+        if (previous is not null)
+        {
+            // The sector has already moved on: a file that refuses to go is left for the storage clean-up.
+            try { await storage.DeleteAsync(StorageBuckets.BoulderImages, previous, ct); }
+            catch (Exception) { /* left for the storage clean-up to pick up */ }
+        }
+        return SectorDto.From(sector);
+    }
+
+    /// <summary>
+    /// The wall photo, handed to staff through the API so the app can cut a boulder's card picture out of it on the
+    /// device (the public address doesn't always let the app read the pixels; see BoulderService.PhotoAsync).
+    /// </summary>
+    public async Task<(byte[] Content, string ContentType)> PhotoAsync(Guid sectorId, CancellationToken ct = default)
+    {
+        var sector = await db.Sectors.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
+        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
+        var bytes = sector.PhotoPath is { } path ? await storage.ReadAsync(StorageBuckets.BoulderImages, path, ct) : null;
+        if (bytes is null) throw new NotFoundException("Sector photo", sectorId);
+        var type = Path.GetExtension(sector.PhotoPath!).ToLowerInvariant() switch
+        {
+            ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg",
+        };
+        return (bytes, type);
     }
 
     private static void Validate(string? name, string? description) =>

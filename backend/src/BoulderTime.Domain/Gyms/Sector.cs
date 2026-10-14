@@ -15,6 +15,11 @@ public class Sector : IAuditable
     public string? Description { get; private set; }
     public string? ImageUrl { get; private set; }
     /// <summary>
+    /// The wall photo in the boulder-images bucket (gyms/{gymId}/sectors/…). Boulders set on this wall can use it as
+    /// their own photo, each with its own card picture; the file belongs to the sector, never to a boulder.
+    /// </summary>
+    public string? PhotoPath { get; private set; }
+    /// <summary>
     /// The sector's area on the gym's floor plan, as JSON: its outline and where its label sits, in fractions of the
     /// plan's width and height (0–1), so it fits the plan at any size. Null when it isn't drawn.
     /// </summary>
@@ -39,6 +44,21 @@ public class Sector : IAuditable
     {
         Name = name.Trim();
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    }
+
+    /// <summary>Where the sectors' wall photos live: next to the boulders' photos, in a folder no boulder owns.</summary>
+    public static string PhotoPrefix(Guid gymId) => $"gyms/{gymId}/sectors/";
+
+    /// <summary>Whether a photo path is a sector's wall photo, which boulders only borrow.</summary>
+    public static bool IsSectorPhoto(string? path) => path is not null && path.Contains("/sectors/", StringComparison.Ordinal);
+
+    /// <returns>The replaced storage path, if any, so the old file can be deleted.</returns>
+    public string? SetPhoto(string? url, string? path)
+    {
+        var previous = PhotoPath != path ? PhotoPath : null;
+        ImageUrl = string.IsNullOrWhiteSpace(url) ? null : url.Trim();
+        PhotoPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+        return previous;
     }
 
     public void SetActive(bool active) => IsActive = active;

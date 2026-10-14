@@ -54,6 +54,7 @@ internal sealed class SectorConfiguration : IEntityTypeConfiguration<Sector>
         b.Property(s => s.Name).HasMaxLength(Sector.NameMaxLength).IsRequired();
         b.Property(s => s.Description).HasMaxLength(Sector.DescriptionMaxLength);
         b.Property(s => s.ImageUrl).HasMaxLength(Gym.UrlMaxLength);
+        b.Property(s => s.PhotoPath).HasMaxLength(512);
         b.Property(s => s.MapZone).HasMaxLength(Sector.MapZoneMaxLength);
         b.HasOne<Gym>().WithMany().HasForeignKey(s => s.GymId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(s => new { s.GymId, s.Name }).IsUnique();

@@ -1,4 +1,5 @@
 using BoulderTime.Domain.Common;
+using BoulderTime.Domain.Gyms;
 
 namespace BoulderTime.Domain.Boulders;
 
@@ -26,7 +27,11 @@ public class Boulder : IAuditable
     public Guid Id { get; private set; }
     public Guid GymId { get; private set; }
     public Guid SectorId { get; private set; }
-    /// <summary>Object path in the boulder-images bucket, e.g. gyms/{gymId}/boulders/{guid}.jpg.</summary>
+    /// <summary>
+    /// Object path in the boulder-images bucket, e.g. gyms/{gymId}/boulders/{guid}.jpg — or its sector's wall photo
+    /// (gyms/{gymId}/sectors/…), which the boulder only borrows and never deletes. Empty when there is no photo: a
+    /// deleted boulder, or one whose sector's wall photo was replaced.
+    /// </summary>
     public string PhotoPath { get; private set; } = string.Empty;
     /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
     public string? ThumbnailPath { get; private set; }
@@ -68,7 +73,7 @@ public class Boulder : IAuditable
         var obsolete = new List<string>();
         if (photoPath != PhotoPath)
         {
-            obsolete.Add(PhotoPath);
+            if (OwnsPhoto) obsolete.Add(PhotoPath);
             if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
             ThumbnailPath = thumbnailPath;
         }
@@ -85,6 +90,15 @@ public class Boulder : IAuditable
         SetterUserId = setterUserId;
         return obsolete;
     }
+
+    /// <summary>A photo of its own, as opposed to none or its sector's wall photo, which other boulders use too.</summary>
+    private bool OwnsPhoto => PhotoPath.Length > 0 && !Sector.IsSectorPhoto(PhotoPath);
+
+    /// <summary>
+    /// The sector's wall photo it was using is gone (replaced or removed). The boulder is left without a photo, never
+    /// pointing at a file that no longer exists; its own card picture, cut from that photo, stays.
+    /// </summary>
+    public void LoseSectorPhoto() => PhotoPath = string.Empty;
 
     /// <summary>Blank or spaces only means no name.</summary>
     public void Rename(string? name) => Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
@@ -126,7 +140,7 @@ public class Boulder : IAuditable
     public IReadOnlyList<string> Delete(Guid? byUserId, DateTimeOffset now)
     {
         var obsolete = new List<string>();
-        if (PhotoPath.Length > 0) obsolete.Add(PhotoPath);
+        if (OwnsPhoto) obsolete.Add(PhotoPath);
         if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
         PhotoPath = string.Empty;
         ThumbnailPath = null;
