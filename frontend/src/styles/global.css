@@ -1123,8 +1123,6 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .list__row--panel { display: block; background: var(--bt-surface-2); }
 .sector-photo { display: flex; flex-direction: column; gap: var(--bt-3); }
 .sector-photo__actions { display: flex; flex-wrap: wrap; gap: var(--bt-2); }
-.sector-photo .notice > div { display: flex; flex-direction: column; gap: var(--bt-2); }
-.sector-photo .notice p { margin: 0; }
 .photo-source { display: flex; flex-wrap: wrap; gap: var(--bt-2); margin-top: var(--bt-2); }
 
 /* ---------- Sector map (ADR-044) ---------- */

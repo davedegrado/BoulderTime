@@ -96,7 +96,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             setter = await db.Users.AsNoTracking().Where(u => u.Id == setterId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstOrDefaultAsync(ct);
 
         return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
-            b.PhotoPath.Length == 0 ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
+            storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
             b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
             await CanAddBetaAsync(gym, b.Id, ct),
             b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath),
@@ -173,7 +173,6 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
         if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
         await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
-        if (boulder.PhotoPath.Length == 0) throw new NotFoundException("Boulder photo", boulderId);
         var bytes = await storage.ReadAsync(StorageBuckets.BoulderImages, boulder.PhotoPath, ct) ?? throw new NotFoundException("Boulder photo", boulderId);
         var type = Path.GetExtension(boulder.PhotoPath).ToLowerInvariant() switch
         {
@@ -396,9 +395,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     {
         var v = new Validator();
         var photo = Input.Trimmed(r.PhotoPath);
-        // A boulder that lost its sector's wall photo (replaced since) can still be corrected without a new one.
         v.Check(r.SectorId is not null, "sectorId", "Choose a sector.")
-         .Check(photo.Length > 0 || currentPhotoPath == string.Empty, "photoPath", "Add a photo of the boulder.")
+         .Check(photo.Length > 0, "photoPath", "Add a photo of the boulder.")
          .Check(r.HoldColor is not null && Enum.IsDefined(r.HoldColor.Value), "holdColor", "Choose the hold colour.")
          .ThrowIfInvalid();
 
@@ -409,7 +407,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         {
             if (Domain.Gyms.Sector.IsSectorPhoto(photo))
             {
-                // Set on a sector's wall photo: only the one a sector of this gym has now, never an old one being replaced.
+                // Set on a sector's wall photo: the one a sector of this gym has now. Older walls stay with the
+                // boulders already set on them, but new ones go on the current photo.
                 if (!await db.Sectors.AnyAsync(s => s.GymId == gymId && s.PhotoPath == photo, ct))
                     v.Check(false, "photoPath", "That sector photo has been replaced. Choose the photo again.");
             }

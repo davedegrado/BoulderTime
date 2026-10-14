@@ -28,9 +28,8 @@ public class Boulder : IAuditable
     public Guid GymId { get; private set; }
     public Guid SectorId { get; private set; }
     /// <summary>
-    /// Object path in the boulder-images bucket, e.g. gyms/{gymId}/boulders/{guid}.jpg — or its sector's wall photo
-    /// (gyms/{gymId}/sectors/…), which the boulder only borrows and never deletes. Empty when there is no photo: a
-    /// deleted boulder, or one whose sector's wall photo was replaced.
+    /// Object path in the boulder-images bucket, e.g. gyms/{gymId}/boulders/{guid}.jpg — or a sector's wall photo
+    /// (gyms/{gymId}/sectors/…), which the boulder only borrows and never deletes. Empty for a deleted boulder.
     /// </summary>
     public string PhotoPath { get; private set; } = string.Empty;
     /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
@@ -93,12 +92,6 @@ public class Boulder : IAuditable
 
     /// <summary>A photo of its own, as opposed to none or its sector's wall photo, which other boulders use too.</summary>
     private bool OwnsPhoto => PhotoPath.Length > 0 && !Sector.IsSectorPhoto(PhotoPath);
-
-    /// <summary>
-    /// The sector's wall photo it was using is gone (replaced or removed). The boulder is left without a photo, never
-    /// pointing at a file that no longer exists; its own card picture, cut from that photo, stays.
-    /// </summary>
-    public void LoseSectorPhoto() => PhotoPath = string.Empty;
 
     /// <summary>Blank or spaces only means no name.</summary>
     public void Rename(string? name) => Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();

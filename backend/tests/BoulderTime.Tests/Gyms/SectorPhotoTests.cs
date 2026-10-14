@@ -13,9 +13,8 @@ using BoulderTime.Tests.Infrastructure;
 namespace BoulderTime.Tests.Gyms;
 
 /// <summary>
-/// A sector's wall photo, uploaded once and borrowed by the boulders set on it, each with its own card picture. The
-/// file belongs to the sector: no boulder deletes it, and replacing it leaves those boulders without a photo, never
-/// pointing at a file that is gone.
+/// A sector's wall photo, uploaded once and borrowed by the boulders set on it, each with its own card picture. No
+/// boulder deletes it, and replacing it keeps the old file for the boulders already set on it.
 /// </summary>
 [Collection(DatabaseCollection.Name)]
 public sealed class SectorPhotoTests(PostgresFixture postgres) : IAsyncLifetime
@@ -109,61 +108,69 @@ public sealed class SectorPhotoTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Replacing_the_wall_photo_deletes_the_old_one_and_its_boulders_keep_only_their_card_picture()
+    public async Task Replacing_the_wall_photo_keeps_the_old_one_for_the_boulders_already_set_on_it()
     {
         var w = await ClimbingWorld.CreateAsync(_f);
         var oldWall = await UploadWallAsync(w);
         await SetWallAsync(w, oldWall);
-        var thumb = await UploadThumbAsync(w);
-        var withThumb = await BoulderOnAsync(w, oldWall, thumb);
-        var withoutThumb = await BoulderOnAsync(w, oldWall, null);
+        var onTheWall = await BoulderOnAsync(w, oldWall, await UploadThumbAsync(w));
         var taken = await BoulderOnAsync(w, oldWall, null);
         (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders/remove", new { boulderIds = new[] { taken.Id }, notifyFollowers = false })).EnsureSuccessStatusCode();
 
-        // Asked first, so staff can be warned before the boulders lose it.
-        var usage = (await (await w.Staff.Client.GetAsync($"/api/sectors/{w.Sector.Id}/photo/usage")).ReadAsync<SectorPhotoUsageDto>())!;
-        usage.Should().Be(new SectorPhotoUsageDto(2, 1));
-
         var newWall = await UploadWallAsync(w);
-        var sector = await SetWallAsync(w, newWall);
-        sector.PhotoPath.Should().Be(newWall);
-        Stored(oldWall).Should().BeFalse();
+        (await SetWallAsync(w, newWall)).PhotoPath.Should().Be(newWall);
 
-        // No boulder points at the deleted file: the card picture stays where there is one, otherwise a placeholder.
-        var a = (await (await _f.CreateClient().GetAsync($"/api/boulders/{withThumb.Id}")).ReadAsync<BoulderDetailDto>())!;
-        a.PhotoUrl.Should().BeNull();
-        a.PhotoPath.Should().BeEmpty();
-        a.ThumbnailUrl.Should().Contain(Path.GetFileName(thumb));
-        Stored(thumb).Should().BeTrue();
-        var list = (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/boulders")).ReadAsync<PagedResult<BoulderSummaryDto>>())!;
-        list.Items.Single(x => x.Id == withThumb.Id).PhotoUrl.Should().Contain(Path.GetFileName(thumb));
-        list.Items.Single(x => x.Id == withoutThumb.Id).PhotoUrl.Should().BeNull();
-        (await w.Staff.Client.GetAsync($"/api/boulders/{withoutThumb.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Climbers' history and the boulders taken down still show the wall they were set on.
+        Stored(oldWall).Should().BeTrue();
+        foreach (var id in new[] { onTheWall.Id, taken.Id })
+        {
+            var b = (await (await _f.CreateClient().GetAsync($"/api/boulders/{id}")).ReadAsync<BoulderDetailDto>())!;
+            b.PhotoPath.Should().Be(oldWall);
+            (await _f.CreateClient().GetAsync(b.PhotoUrl)).StatusCode.Should().Be(HttpStatusCode.OK);
+        }
 
-        // Such a boulder can still be corrected without a photo, but not set on the old wall again.
-        var fix = new { sectorId = w.Sector.Id, photoPath = "", holdColor = "RED", grades = Array.Empty<object>() };
-        (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{withoutThumb.Id}", fix)).EnsureSuccessStatusCode();
-        (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{withoutThumb.Id}", fix with { photoPath = oldWall })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{withoutThumb.Id}", fix with { photoPath = newWall })).EnsureSuccessStatusCode();
+        // Such a boulder can still be corrected, keeping its wall.
+        (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{onTheWall.Id}", new
+        {
+            sectorId = w.Sector.Id, photoPath = oldWall, holdColor = "RED", grades = Array.Empty<object>(),
+        })).EnsureSuccessStatusCode();
 
-        // A new boulder still needs a photo.
-        (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders", fix)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // New boulders go on the current wall, not the old one.
+        (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders", new
+        {
+            sectorId = w.Sector.Id, photoPath = oldWall, holdColor = "BLUE", grades = Array.Empty<object>(),
+        })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await BoulderOnAsync(w, newWall, null);
     }
 
     [Fact]
-    public async Task Removing_the_wall_photo_works_like_replacing_it()
+    public async Task A_wall_photo_no_boulder_was_set_on_is_deleted_when_replaced_or_removed()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var wrong = await UploadWallAsync(w);
+        await SetWallAsync(w, wrong);
+        var right = await UploadWallAsync(w);
+        await SetWallAsync(w, right);
+        Stored(wrong).Should().BeFalse();
+
+        var sector = await SetWallAsync(w, null);
+        sector.PhotoPath.Should().BeNull();
+        sector.ImageUrl.Should().BeNull();
+        Stored(right).Should().BeFalse();
+        (await w.Staff.Client.GetAsync($"/api/sectors/{w.Sector.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Removing_the_wall_photo_keeps_it_for_the_boulders_set_on_it()
     {
         var w = await ClimbingWorld.CreateAsync(_f);
         var wall = await UploadWallAsync(w);
         await SetWallAsync(w, wall);
         var boulder = await BoulderOnAsync(w, wall, null);
 
-        var sector = await SetWallAsync(w, null);
-        sector.PhotoPath.Should().BeNull();
-        sector.ImageUrl.Should().BeNull();
-        Stored(wall).Should().BeFalse();
-        (await (await _f.CreateClient().GetAsync($"/api/boulders/{boulder.Id}")).ReadAsync<BoulderDetailDto>())!.PhotoUrl.Should().BeNull();
-        (await w.Staff.Client.GetAsync($"/api/sectors/{w.Sector.Id}/photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await SetWallAsync(w, null)).PhotoPath.Should().BeNull();
+        Stored(wall).Should().BeTrue();
+        (await (await _f.CreateClient().GetAsync($"/api/boulders/{boulder.Id}")).ReadAsync<BoulderDetailDto>())!.PhotoPath.Should().Be(wall);
     }
 
     [Fact]

@@ -85,12 +85,6 @@ public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Descrip
             s.PhotoPath);
 }
 
-/// <summary>
-/// The boulders set on a sector's wall photo, which would lose it if it were replaced or removed: the ones on the wall,
-/// and the ones already taken down that climbers still see in their history.
-/// </summary>
-public sealed record SectorPhotoUsageDto(int OnTheWall, int Removed);
-
 /// <summary>The outline to draw, or no points to take the sector off the plan. Without a label, it goes in the middle.</summary>
 public sealed record SetSectorZoneRequest(IReadOnlyList<MapPoint>? Points, MapPoint? Label, bool? HideLabel = null);
 

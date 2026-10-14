@@ -6,15 +6,9 @@ import { prepareImage } from "@/features/boulders/imageResize";
 
 /**
  * A sector's wall photo: uploaded once, then every boulder set on that wall uses it as its photo and cuts its own
- * card picture out of it. Replacing or removing it deletes the old file, and the boulders set on it lose their photo
- * (they keep their card picture).
+ * card picture out of it. Replacing or removing it only changes what new boulders use: the boulders already set on
+ * the old photo keep it.
  */
-
-/** The boulders that would lose their photo if the wall photo were replaced or removed now. */
-export interface SectorPhotoUsage { onTheWall: number; removed: number }
-
-export const fetchSectorPhotoUsage = (sectorId: string): Promise<SectorPhotoUsage> =>
-  api.get<SectorPhotoUsage>(`/api/sectors/${sectorId}/photo/usage`);
 
 /** The wall photo through the API, so the device may read its pixels to cut a card picture out of it. */
 export const fetchSectorPhoto = (sectorId: string): Promise<Blob> => api.blob(`/api/sectors/${sectorId}/photo`);
@@ -32,10 +26,6 @@ export function useSetSectorPhoto(gymId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ sectorId, path }: { sectorId: string; path: string | null }) => api.put<Sector>(`/api/sectors/${sectorId}/photo`, { path }),
-    onSuccess: () => Promise.all([
-      qc.invalidateQueries({ queryKey: gymKeys.sectors(gymId) }),
-      // The boulders set on the old photo have just lost it.
-      qc.invalidateQueries({ queryKey: ["boulders"] }),
-    ]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: gymKeys.sectors(gymId) }),
   });
 }

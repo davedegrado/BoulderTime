@@ -79,8 +79,6 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   // The photo the boulder will be saved with: one just picked, the wall just chosen, or the one it has.
   const photoPath = file ? null : wall?.path ?? initial?.photoPath ?? null;
   const wallOffer = sector?.photoPath && sector.imageUrl && photoPath !== sector.photoPath ? sector : null;
-  // Its sector's wall photo was replaced since: it has no photo until staff give it one.
-  const lostPhoto = !!initial && !file && !wall && !initial.photoPath;
   // What the chosen grade is worth: the first of the gym's scales it is graded in, as the leaderboard counts it.
   const gradePoints = useMemo(() => {
     for (const system of activeSystems) {
@@ -186,7 +184,6 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
         <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={pickFile} />
-        {lostPhoto && <p className="field__hint">{t("The sector photo this boulder was set on has been replaced. Give it a photo again.")}</p>}
         {wallOffer && (
           <div className="photo-source">
             <Button type="button" variant="secondary" icon={<Mountain aria-hidden />} onClick={chooseWall}>{t("Use the photo of {name}", { name: wallOffer.name })}</Button>

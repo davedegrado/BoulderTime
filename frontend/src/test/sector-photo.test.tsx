@@ -46,44 +46,24 @@ const upload = async (file: File) => userEvent.upload(screen.getByTestId("image-
 const photoWrite = () => calls.find((c) => c.method === "PUT" && c.path === "/api/sectors/s1/photo");
 
 describe("A sector's wall photo", () => {
-  it("is uploaded straight away when the sector has none yet", async () => {
+  it("is uploaded and set when the sector has none yet", async () => {
     renderAt("/x", "/x", <SectorPhotoPanel sector={sector()} gymId="g1" />);
 
     expect(screen.getByRole("button", { name: "Upload photo" })).toBeInTheDocument();
     await upload(photo());
 
     await waitFor(() => expect(photoWrite()?.body).toEqual({ path: ticket.path }));
-    // Nothing used it before, so there was nobody to ask about.
-    expect(calls.some((c) => c.path.endsWith("/photo/usage"))).toBe(false);
   });
 
-  it("warns before replacing a photo boulders are still set on, and does nothing on cancel", async () => {
-    reply("GET", "/api/sectors/s1/photo/usage", { onTheWall: 3, removed: 1 });
+  it("is replaced without fuss: the boulders already set keep the photo they have", async () => {
     renderAt("/x", "/x", <SectorPhotoPanel sector={withWall()} gymId="g1" />);
 
+    expect(screen.getByText(/the boulders already set keep the photo they have/)).toBeInTheDocument();
     await upload(photo());
-    expect(await screen.findByText("3 boulders on the wall are set on this photo.")).toBeInTheDocument();
-    expect(screen.getByText(/lose the photo, which shows as a placeholder/)).toBeInTheDocument();
-    expect(calls.some((c) => c.path === "/api/sectors/s1/photo-uploads")).toBe(false);
-
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.queryByText(/set on this photo/)).not.toBeInTheDocument();
-    expect(photoWrite()).toBeUndefined();
-  });
-
-  it("replaces it once staff confirm, warning ignored", async () => {
-    reply("GET", "/api/sectors/s1/photo/usage", { onTheWall: 1, removed: 0 });
-    renderAt("/x", "/x", <SectorPhotoPanel sector={withWall()} gymId="g1" />);
-
-    await upload(photo());
-    expect(await screen.findByText("1 boulder on the wall is set on this photo.")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Replace anyway" }));
-
     await waitFor(() => expect(photoWrite()?.body).toEqual({ path: ticket.path }));
   });
 
-  it("removes it without asking when no boulder uses it", async () => {
-    reply("GET", "/api/sectors/s1/photo/usage", { onTheWall: 0, removed: 0 });
+  it("can be removed", async () => {
     renderAt("/x", "/x", <SectorPhotoPanel sector={withWall()} gymId="g1" />);
 
     await userEvent.click(screen.getByRole("button", { name: "Remove" }));

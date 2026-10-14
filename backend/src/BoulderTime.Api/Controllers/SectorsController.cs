@@ -26,7 +26,7 @@ public sealed class SectorsController(SectorService sectors) : ControllerBase
     public Task<UploadTicket> PhotoUpload(Guid sectorId, [FromBody] ImageUploadRequest request, CancellationToken ct) =>
         sectors.CreatePhotoUploadAsync(sectorId, request, ct);
 
-    /// <summary>Sets, replaces or (no path) removes the wall photo. Boulders set on the old one lose it.</summary>
+    /// <summary>Sets, replaces or (no path) removes the wall photo. Boulders already set on the old one keep it.</summary>
     [HttpPut("{sectorId:guid}/photo")]
     public Task<SectorDto> SetPhoto(Guid sectorId, [FromBody] SetImageRequest request, CancellationToken ct) =>
         sectors.SetPhotoAsync(sectorId, request, ct);
@@ -37,7 +37,4 @@ public sealed class SectorsController(SectorService sectors) : ControllerBase
         var (content, contentType) = await sectors.PhotoAsync(sectorId, ct);
         return File(content, contentType);
     }
-
-    [HttpGet("{sectorId:guid}/photo/usage")]
-    public Task<SectorPhotoUsageDto> PhotoUsage(Guid sectorId, CancellationToken ct) => sectors.PhotoUsageAsync(sectorId, ct);
 }

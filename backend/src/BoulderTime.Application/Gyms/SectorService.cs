@@ -128,23 +128,10 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
             with { Resumable = null };
     }
 
-    /// <summary>What replacing or removing the wall photo would cost, asked before doing it so staff can be warned.</summary>
-    public async Task<SectorPhotoUsageDto> PhotoUsageAsync(Guid sectorId, CancellationToken ct = default)
-    {
-        var sector = await db.Sectors.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sectorId, ct) ?? throw new NotFoundException("Sector", sectorId);
-        await access.RequireRoleAsync(sector.GymId, GymRole.Staff, ct);
-        if (sector.PhotoPath is not { } path) return new SectorPhotoUsageDto(0, 0);
-        var counts = await db.Boulders.AsNoTracking().Where(b => b.GymId == sector.GymId && b.PhotoPath == path)
-            .GroupBy(b => b.Status).Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync(ct);
-        return new SectorPhotoUsageDto(
-            counts.Where(c => c.Status == BoulderStatus.Active).Sum(c => c.Count),
-            counts.Where(c => c.Status == BoulderStatus.Removed).Sum(c => c.Count));
-    }
-
     /// <summary>
-    /// Sets, replaces or (with no path) removes the wall photo. The old file is deleted, so the boulders that were set on
-    /// it lose their photo: they keep their own card picture and show a placeholder where the photo was. The new photo
-    /// is for the boulders set from now on; nobody's boulder is moved onto it.
+    /// Sets, replaces or (with no path) removes the wall photo. New boulders go on the new photo; the boulders already
+    /// set on the old one keep it, because climbers' history and the boulders taken down still show it. So the old file
+    /// stays — unless no boulder was ever set on it (a wrong photo replaced straight away), and then it goes.
     /// </summary>
     public async Task<SectorDto> SetPhotoAsync(Guid sectorId, SetImageRequest r, CancellationToken ct = default)
     {
@@ -161,13 +148,8 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
         }
 
         var previous = sector.SetPhoto(path.Length == 0 ? null : storage.PublicUrl(StorageBuckets.BoulderImages, path), path.Length == 0 ? null : path);
-        if (previous is not null)
-        {
-            var boulders = await db.Boulders.Where(b => b.GymId == sector.GymId && b.PhotoPath == previous).ToListAsync(ct);
-            foreach (var b in boulders) b.LoseSectorPhoto();
-        }
         await db.SaveChangesAsync(ct);
-        if (previous is not null)
+        if (previous is not null && !await db.Boulders.AnyAsync(b => b.PhotoPath == previous, ct))
         {
             // The sector has already moved on: a file that refuses to go is left for the storage clean-up.
             try { await storage.DeleteAsync(StorageBuckets.BoulderImages, previous, ct); }

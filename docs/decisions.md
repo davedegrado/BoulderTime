@@ -1050,9 +1050,7 @@ choosing that boulder's card picture; a photo of its own can still be uploaded a
 The boulder stores the wall's path as its own `PhotoPath`, so every screen reads it as it always did. The file
 belongs to the **sector**: editing or deleting a boulder never deletes a path under `/sectors/`.
 
-**Replacing or removing the wall photo deletes the old file.** New boulders use the new photo; the boulders set on
-the old one are not moved onto it (the new photo may not show them). Before replacing, staff are told how many
-boulders on the wall (and already taken down) are set on it. If they go ahead, those boulders' `PhotoPath` becomes
-empty: they keep their own card picture, the photo shows as the placeholder the app already draws for a boulder with
-no photo, and staff can give them a photo again from the editor (saving without one is allowed for them only). App
-builds already installed handle a null photo the same way, so nothing breaks before they update.
+**Replacing or removing the wall photo never takes it away from the boulders set on it.** New boulders go on the
+new photo; the boulders already set on the old one (on the wall, taken down, in climbers' history and public
+profiles) keep pointing at it, so the old file stays. It is deleted only if no boulder was ever set on it (a wrong
+photo replaced straight away). A new boulder can only be set on a sector's current photo.
