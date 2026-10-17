@@ -39,7 +39,7 @@ const grades = [
 const boulder = (id: string, over: object = {}) => ({ id, gymId: "g1", gymName: "Crimp Factory", rating: { average: null, count: 0 }, viewer: null, sectorId: "s1", sectorName: "Cave", photoUrl: `/img/${id}.jpg`, holdColor: "BLUE", grades, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, ...over });
 const page = (items: unknown[]) => ({ items, page: 1, pageSize: 24, total: items.length, hasMore: false });
 
-beforeEach(() => { routes.clear(); calls.length = 0; });
+beforeEach(() => { routes.clear(); calls.length = 0; sessionStorage.clear(); });
 
 describe("Boulder list (climber)", () => {
   it("shows the colour GRADE and the physical HOLDS as separate, labelled facts", async () => {
@@ -92,6 +92,22 @@ describe("Boulder list (climber)", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Remove filter Cave" }));
     expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the filters after opening a boulder and coming back", async () => {
+    reply("GET", "/api/gyms/crimp", gym);
+    reply("GET", "/api/gyms/g1/sectors", sectors);
+    reply("GET", "/api/gyms/g1/grade-systems", systems);
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1")]));
+    const first = renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
+    first.unmount();
+
+    calls.length = 0;
+    renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
+    expect(await screen.findByRole("button", { name: "Remove filter Cave" })).toBeInTheDocument();
+    await waitFor(() => expect(calls.some((c) => c.path.includes("sectorId=s1"))).toBe(true));
   });
 });
 

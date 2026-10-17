@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckSquare, History, Mountain, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
-import { useBoulders, useRemoveBoulders, useRestoreBoulder, type BoulderFilters, type RemoveResult } from "@/features/boulders/api";
+import { useBoulders, useRemoveBoulders, useRestoreBoulder, type RemoveResult } from "@/features/boulders/api";
 import { useSectors } from "@/features/gyms/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
+import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -19,7 +20,7 @@ import { atLeast } from "@/features/staff/roles";
 
 export function ManageBoulders() {
   const { gym } = useManagedGym();
-  const [filters, setFilters] = useState<BoulderFilters>({ status: "ACTIVE" });
+  const [filters, setFilters] = useRememberedFilters(`bt:manage-boulder-filters:${gym.id}`, () => ({ status: "ACTIVE" }));
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastRemoval, setLastRemoval] = useState<RemoveResult | null>(null);
