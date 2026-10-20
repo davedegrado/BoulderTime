@@ -1074,3 +1074,28 @@ Built for full backward compatibility: one new nullable column, no field added, 
 The "no points" is `points: null`, which the installed apps already show as no points; the label rides on the
 sector name rather than the boulder's own name, which the editor would save back. Personal history and profile
 statistics are unchanged, and so is "Completed by N people".
+
+## ADR-057 · Boulder lists sorted and shown as rows; holds highlighted on the device; back that goes back
+**Sorting** is done by the API, because lists arrive a page at a time: `GET /api/gyms/{id}/boulders` takes an optional
+`sort` (`SECTOR`, `POINTS`, `GRADE`, `SET`, `REMOVED`) and `order` (`ASC`, `DESC`). Without `sort` the list keeps its
+old order (newest first; taken down: last taken down first), which is what app builds already installed get. Points
+and grade follow the gym's scales (never alphabetical), boulders missing the value come last either way, and ties
+are settled by sector order then newest, so paging is stable. There is no sort by hold colour. The apps default to
+sector. "Date set" is also the retrace date, because a retrace is a new boulder.
+
+**Cards or rows**, a per-device preference. A row has five fixed columns — picture, grade, sector, holds (the word and
+a dot of the stored hold colour, ringed so white and yellow show), points — the same in every row; a missing value
+leaves its place empty and long text is cut with an ellipsis. The name is not in rows. Cards keep an (empty) name
+line so every card lays out alike. Sort and filters are kept per list for the tab, like the filters already were.
+
+**Highlight the holds** runs on the device (canvas, no library, no service): a wall photo of any sector, or the photo
+just picked, is reduced for painting; an automatic first guess finds the hold colour (HSV ranges per hold colour,
+specks dropped, holes closed); staff correct it with a keep-colour / turn-grey brush, undo and back-to-automatic.
+The result is made again at full size from the untouched photo and becomes the boulder's own photo through the
+existing upload when the form is saved. Wall photos are never changed. The mask is not stored: editing again starts
+from the wall photo. Mixed holds can't be found by colour and are painted by hand; white, grey and black holds are
+told apart by brightness only, so on a white wall white holds need painting.
+
+**Back** returns to where the screen was opened from (`useGoBack`): history back when there is an in-app entry
+behind, otherwise the screen's natural parent, replacing the entry. Scroll positions are kept per history entry and
+restored when going back, including into a list still drawing. The section headers of Manage keep their "up" links.
