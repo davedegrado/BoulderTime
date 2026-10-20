@@ -81,10 +81,23 @@ public enum ProgressFilter { All, Untried, Projects, Completed }
 /// <param name="TagIds">Boulders carrying ALL of these tags (each one narrows, like every other filter).</param>
 /// <param name="Intensities">Boulders with ANY of these intensities; boulders without one are left out.</param>
 /// <param name="Name">Boulders whose name contains this text, whatever the case (boulders without a name never match).</param>
+/// <param name="Sort">How to order the list. None: newest set first (taken down: last taken down first), as always.</param>
+/// <param name="Order">Reverses a sort; each sort has its own natural direction when none is given.</param>
 public sealed record BoulderQuery(
     BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
     ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize,
-    IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null, string? Name = null);
+    IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null, string? Name = null,
+    BoulderSort? Sort = null, SortDirection? Order = null);
+
+/// <summary>
+/// Orders a gym's boulder list. Sector follows the gym's own order of its sectors; points are what a send scores;
+/// grade follows the gym's scales (never alphabetical: 6A+ comes before 6B); set is the day it went on the wall (a
+/// retrace is a new boulder, so it is also the retrace day); removed is the day it came off (taken-down list only).
+/// Boulders missing the value (ungraded, no points) always come last. Ties: sector order, then newest set first.
+/// </summary>
+public enum BoulderSort { Sector, Points, Grade, Set, Removed }
+
+public enum SortDirection { Asc, Desc }
 
 /// <param name="NotifyFollowers">Send one "sector retraced" notification per affected sector to its followers.</param>
 public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool? NotifyFollowers = false);
