@@ -1441,3 +1441,30 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 /* The back arrows are buttons now (they go back, they don't open a page): no button chrome. */
 button.boulder-page__back, button.manage-head__back { padding: 0; border: 0; font: inherit; cursor: pointer; }
 button.manage-head__back { background: transparent; }
+
+/* ---------- Highlight the holds (full screen, like the card picture cropper) ---------- */
+.highlighter__spacer { width: 48px; height: 48px; }
+.highlighter__setup { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--bt-4); width: 100%; max-width: 560px; margin: 0 auto; padding: var(--bt-4); box-sizing: border-box; }
+.highlighter__field { display: flex; flex-direction: column; gap: var(--bt-2); font-size: var(--bt-text-sm); font-weight: 600; }
+.highlighter__field select { min-height: 44px; padding: 0 var(--bt-3); border: 1.5px solid rgb(255 255 255 / 0.25); border-radius: var(--bt-radius-md); background: #1c1c1c; color: #fff; font: inherit; }
+.highlighter__colors { display: flex; flex-wrap: wrap; gap: 6px; }
+.highlighter__color { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.highlighter__color[aria-checked="true"] { box-shadow: 0 0 0 3px var(--bt-orange); }
+.highlighter__color:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.highlighter__swatch { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.45); }
+.highlighter__error { margin: 0; padding: var(--bt-3); border-radius: var(--bt-radius-md); background: rgb(217 58 43 / 0.2); color: #ffd2cc; font-size: var(--bt-text-sm); }
+.highlighter__stage { position: relative; padding: var(--bt-2); }
+.highlighter__canvas { display: block; max-width: 100%; max-height: 100%; touch-action: none; border-radius: var(--bt-radius-sm); background: #222; cursor: crosshair; }
+.highlighter__busy { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / 0.55); font-weight: 700; }
+.highlighter__controls { gap: var(--bt-2); }
+.highlighter__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bt-2); }
+.highlighter__modes { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--bt-radius-pill); background: rgb(255 255 255 / 0.1); }
+.highlighter__mode, .highlighter__tool { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--bt-3); border: 0; border-radius: var(--bt-radius-pill); background: transparent; color: #fff; font: inherit; font-size: var(--bt-text-sm); font-weight: 600; cursor: pointer; }
+.highlighter__tool { background: rgb(255 255 255 / 0.1); }
+.highlighter__mode svg, .highlighter__tool svg { width: 18px; height: 18px; }
+.highlighter__mode[aria-checked="true"], .highlighter__tool.is-on { background: var(--bt-orange); color: var(--bt-charcoal); }
+.highlighter__tool:disabled { opacity: 0.45; cursor: default; }
+.highlighter__size { display: flex; align-items: center; gap: var(--bt-3); font-size: var(--bt-text-sm); }
+.highlighter__size span { flex: none; }
+.highlighter__recolor summary { cursor: pointer; font-size: var(--bt-text-sm); color: rgb(255 255 255 / 0.8); padding: var(--bt-1) 0; }
+.highlighter__recolor .highlighter__colors { margin-top: var(--bt-2); }

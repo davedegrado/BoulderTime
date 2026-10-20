@@ -55,7 +55,7 @@ export interface CropRect { x: number; y: number; width: number; height: number 
  * photo's own pixels, as the picture is shown (EXIF orientation applied).
  */
 export async function cropImage(source: Blob, rect: CropRect, { width = 600, height = 480, quality = 0.8 } = {}): Promise<Blob> {
-  const picture = await decode(source);
+  const picture = await decodeImage(source);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -70,7 +70,7 @@ export async function cropImage(source: Blob, rect: CropRect, { width = 600, hei
  * Decodes a picture for drawing. createImageBitmap where the device has it; otherwise (older WebViews, or options it
  * doesn't know) a plain image element from a local address, which the browser lets the app read just the same.
  */
-async function decode(source: Blob): Promise<{ image: CanvasImageSource; release: () => void }> {
+export async function decodeImage(source: Blob): Promise<{ image: CanvasImageSource; release: () => void }> {
   if (typeof createImageBitmap === "function") {
     try {
       const bitmap = await createImageBitmap(source, { imageOrientation: "from-image" });

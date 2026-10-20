@@ -82,6 +82,24 @@ describe("Setting a boulder on its sector's wall photo", () => {
     reply("POST", "/api/gyms/g1/boulders", (body?: unknown) => ({ id: "b1", ...(body as object) }));
   }
 
+  it("offers to highlight the holds on the wall photos, and says what to do when there are none", async () => {
+    setup();
+    renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Highlight the holds" }));
+    expect(screen.getByRole("dialog", { name: "Highlight the holds" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Photo of the wall" })).toHaveValue("sector:s1");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("explains that a wall photo is needed when no sector has one", async () => {
+    setup();
+    reply("GET", "/api/gyms/g1/sectors", [sector()]);
+    renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    expect(await screen.findByText(/No photo of the wall yet/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Highlight the holds" })).not.toBeInTheDocument();
+  });
+
   it("offers the wall once the sector is chosen, opens the card picture choice, and saves the wall's path", async () => {
     setup();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);

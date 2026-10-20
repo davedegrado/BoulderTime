@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useGoBack } from "@/lib/navigation";
-import { ArrowLeft, Camera, Check, Crop, ImagePlus, Mountain, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Check, Crop, ImagePlus, Mountain, Plus, Save, Trash2, Wand2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { fetchSectorPhoto } from "@/features/gyms/sectorPhoto";
@@ -21,6 +21,7 @@ import { dataLabel } from "@/i18n/data";
 import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 import { BetaEditor } from "@/features/community/BetaEditor";
 import { ThumbnailCropper } from "@/features/boulders/ThumbnailCropper";
+import { HoldHighlighter, type HighlightSource } from "@/features/boulders/HoldHighlighter";
 import { cropImage, type CropRect } from "@/features/boulders/imageResize";
 import { INTENSITIES, IntensityBars, intensityShort, type Intensity } from "@/features/boulders/intensity";
 import { useCreateTag, useGymTags } from "@/features/boulders/tags";
@@ -72,6 +73,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [cropping, setCropping] = useState(false);
   // The sector's wall photo, when staff set the boulder on it instead of uploading a photo of its own.
   const [wall, setWall] = useState<{ sectorId: string; path: string } | null>(null);
+  const [highlighting, setHighlighting] = useState(false);
+  // The photo staff picked themselves, kept apart from a highlighted result made from it.
+  const [picked, setPicked] = useState<File | null>(null);
 
   useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb.url); }, [thumb]);
@@ -82,6 +86,22 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   // The photo the boulder will be saved with: one just picked, the wall just chosen, or the one it has.
   const photoPath = file ? null : wall?.path ?? initial?.photoPath ?? null;
   const wallOffer = sector?.photoPath && sector.imageUrl && photoPath !== sector.photoPath ? sector : null;
+  // Photos the holds can be highlighted on: the gym's wall photos (this boulder's sector first), and the photo just
+  // picked. Never the boulder's saved photo: it may already be a highlighted one, and filtering it again would wear it.
+  const highlightSources: HighlightSource[] = [
+    ...(sectors.data ?? []).filter((s) => s.photoPath && s.imageUrl)
+      .sort((a, b) => Number(b.id === sectorId) - Number(a.id === sectorId))
+      .map((s) => ({ id: `sector:${s.id}`, label: t("Wall of {name}", { name: s.name }), load: () => fetchSectorPhoto(s.id) })),
+    ...(picked ? [{ id: "picked", label: t("The photo you just picked"), load: async () => picked as Blob }] : []),
+  ];
+
+  /** The highlighted photo becomes the boulder's own photo, as if staff had picked it; the wall photo stays as it is. */
+  function applyHighlighted(photo: Blob, color: HoldColor) {
+    setHighlighting(false);
+    pickFile(new File([photo], "holds.jpg", { type: "image/jpeg" }), { highlighted: true });
+    if (!holdColor) setHoldColor(color);
+  }
+
   // What the chosen grade is worth: the first of the gym's scales it is graded in, as the leaderboard counts it.
   const gradePoints = useMemo(() => {
     for (const system of activeSystems) {
@@ -91,8 +111,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     return null;
   }, [activeSystems, grades]);
 
-  function pickFile(f: File | undefined) {
+  function pickFile(f: File | undefined, { highlighted = false } = {}) {
     if (!f) return;
+    if (!highlighted) setPicked(f);
     setFile(f);
     setWall(null);
     setPreview(URL.createObjectURL(f));
@@ -187,7 +208,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           )}
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
-        <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={pickFile} />
+        <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={(f) => pickFile(f)} />
         {wallOffer && (
           <div className="photo-source">
             <Button type="button" variant="secondary" icon={<Mountain aria-hidden />} onClick={chooseWall}>{t("Use the photo of {name}", { name: wallOffer.name })}</Button>
@@ -196,6 +217,25 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         {wall && !thumb && <p className="field__hint">{t("Every boulder of this sector shares this photo: choose the part that shows this one.")}</p>}
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
+
+      {/* Highlight the holds: the holds of this boulder in colour, the rest of the wall in black and white. */}
+      <section className="editor__section" aria-labelledby="highlight-label">
+        <p id="highlight-label" className="field__label">{t("Highlight the holds")}</p>
+        {highlightSources.length > 0 ? (
+          <>
+            <p className="field__hint">{t("Optional. From a photo of the wall, keep this boulder's holds in colour and turn the rest black and white; the result becomes this boulder's photo when you save.")}</p>
+            <Button type="button" variant="secondary" icon={<Wand2 aria-hidden />} onClick={() => setHighlighting(true)}>{t("Highlight the holds")}</Button>
+          </>
+        ) : (
+          <>
+            <p className="field__hint">{t("No photo of the wall yet. Add one to the sector in Sectors, or take or choose a photo here first.")}</p>
+            <Button type="button" variant="secondary" icon={<Camera aria-hidden />} onClick={() => fileInput.current?.open()}>{t("Take or choose a photo")}</Button>
+          </>
+        )}
+      </section>
+      {highlighting && (
+        <HoldHighlighter sources={highlightSources} initialColor={holdColor} onCancel={() => setHighlighting(false)} onDone={applyHighlighted} />
+      )}
 
       {/* Card picture: which part of the photo the boulder's cards show */}
       {preview && (
