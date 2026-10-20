@@ -1385,3 +1385,59 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .announcement__hide { width: 32px; height: 32px; min-height: 32px; margin: -6px -8px -6px 0; color: var(--bt-ink-3); }
 .announcement__hide svg { width: 18px; height: 18px; }
 
+
+/* ---------- Boulder lists: sort, cards or rows ---------- */
+.boulders-toolbar--view { justify-content: space-between; }
+.sort-control { display: inline-flex; align-items: center; gap: var(--bt-2); min-width: 0; }
+.sort-control .chip-select { min-width: 0; }
+.sort-control .chip-select select { max-width: 100%; }
+.sort-control .icon-btn--outlined { width: 40px; height: 40px; flex: none; }
+.sort-control .icon-btn--outlined svg { width: 18px; height: 18px; }
+.sort-control .icon-btn--outlined.is-on { border-color: var(--bt-orange); background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+.view-toggle { display: inline-flex; flex: none; padding: 3px; gap: 2px; border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); }
+.view-toggle__option { display: grid; place-items: center; width: 36px; height: 32px; padding: 0; border: 0; border-radius: var(--bt-radius-pill); background: transparent; color: var(--bt-ink-2); cursor: pointer; }
+.view-toggle__option svg { width: 18px; height: 18px; }
+.view-toggle__option[aria-checked="true"] { background: var(--bt-surface-2); color: var(--bt-ink); box-shadow: inset 0 0 0 1px var(--bt-line); }
+.view-toggle__option:focus-visible { outline: 2px solid var(--bt-orange); outline-offset: 1px; }
+
+/* Cards: every card has the same places, a name line included, and long text never pushes the others about. */
+.boulder-card__name:empty::before { content: "\00a0"; }
+.boulder-card__foot { min-width: 0; }
+.boulder-card__sector { min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Rows: one fixed grid of five columns, the same in every row whatever the boulder has. */
+.boulder-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.boulder-row {
+  --row-cols: 48px 4.5rem minmax(0, 1fr) 4.75rem 3.75rem;
+  display: grid; grid-template-columns: var(--row-cols); align-items: center; column-gap: var(--bt-3);
+  width: 100%; height: 64px; padding: 8px var(--bt-3) 8px 8px; box-sizing: border-box;
+  background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md);
+  color: inherit; text-decoration: none; text-align: left; font: inherit; cursor: pointer;
+}
+.boulder-row:hover { box-shadow: var(--bt-shadow-raised); }
+.boulder-row:focus-visible { outline: 2px solid var(--bt-orange); outline-offset: 2px; }
+.boulder-row--selected { border-color: var(--bt-orange); box-shadow: 0 0 0 2px var(--bt-orange); }
+.boulder-row > * { min-width: 0; }
+.boulder-row__thumb { position: relative; display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden; border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); color: var(--bt-ink-3); }
+.boulder-row__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.boulder-row__thumb > svg { width: 20px; height: 20px; }
+.boulder-row__check { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(26 26 26 / 0.35); color: transparent; }
+.boulder-row__check svg { width: 22px; height: 22px; stroke-width: 3; }
+.boulder-row__check.is-on { background: rgb(26 26 26 / 0.55); color: var(--bt-orange); }
+.boulder-row__grade { display: flex; overflow: hidden; }
+.boulder-row__grade .grade { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.boulder-row__none, .boulder-row__points:empty { color: var(--bt-ink-3); }
+.boulder-row__sector { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.boulder-row__holds { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-ink-2); white-space: nowrap; }
+.boulder-row__holds-label { overflow: hidden; text-overflow: ellipsis; }
+/* Light holds (white, yellow) still show on a light row: every dot has the same thin ring. */
+.boulder-row__dot { flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.28); }
+.boulder-row__points { justify-self: end; font-size: var(--bt-text-xs); font-weight: 800; white-space: nowrap; color: var(--bt-ink); }
+.boulder-rows__actions { display: flex; flex-wrap: wrap; gap: var(--bt-2); margin-top: 6px; }
+@media (max-width: 380px) {
+  .boulder-row { --row-cols: 40px 3.5rem minmax(0, 1fr) 3.75rem 2.75rem; height: 56px; column-gap: var(--bt-2); padding-right: var(--bt-2); }
+  .boulder-row__thumb { width: 40px; height: 40px; }
+}
+/* The back arrows are buttons now (they go back, they don't open a page): no button chrome. */
+button.boulder-page__back, button.manage-head__back { padding: 0; border: 0; font: inherit; cursor: pointer; }
+button.manage-head__back { background: transparent; }

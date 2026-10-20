@@ -104,7 +104,8 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
         </span>
       </div>
       <div className="boulder-card__body">
-        {name && <p className="boulder-card__name">{name}</p>}
+        {/* Always there, empty when the boulder has no name, so every card puts the holds and sector in the same place. */}
+        <p className="boulder-card__name" aria-hidden={name ? undefined : true}>{name}</p>
         <div className="boulder-card__holds"><HoldBadge color={boulder.holdColor} compact /></div>
         <div className="boulder-card__foot">
           <p className="boulder-card__sector">{boulder.sectorName}</p>

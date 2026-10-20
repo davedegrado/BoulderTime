@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
-import { Link } from "react-router-dom";
 import { ArrowLeft, Check, ImagePlus, Map as MapIcon, RotateCcw, Save, Trash2, Undo2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors, useSetSectorZone, type MapPoint, type Sector } from "@/features/gyms/api";
@@ -11,6 +10,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { errorMessage } from "@/lib/apiError";
+import { useGoBack } from "@/lib/navigation";
 import { t } from "@/i18n/i18n";
 
 interface Draft { points: MapPoint[]; closed: boolean; label: MapPoint | null; showLabel: boolean; dirty: boolean }
@@ -28,6 +28,7 @@ export function ManageSectorMap() {
   const sectors = useSectors(gym.id);
   const setPlan = useSetFloorPlan(gym);
   const toast = useToast();
+  const goBack = useGoBack();
   const fileInput = useRef<MediaInputHandle>(null);
   const plan = floorPlanOf(gym);
 
@@ -39,7 +40,7 @@ export function ManageSectorMap() {
   return (
     <div className="stack">
       <div className="editor__head">
-        <Link to={`/manage/${gym.slug}/sectors`} className="manage-head__back" aria-label={t("Back to sectors")}><ArrowLeft aria-hidden /></Link>
+        <button type="button" className="manage-head__back" aria-label={t("Back")} onClick={() => goBack(`/manage/${gym.slug}/sectors`)}><ArrowLeft aria-hidden /></button>
         <h2 className="section__title">{t("Sector map")}</h2>
       </div>
       <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={upload} />

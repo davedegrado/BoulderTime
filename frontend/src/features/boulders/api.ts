@@ -8,6 +8,7 @@ import type { HoldColor } from "@/features/boulders/holdColors";
 import { prepareImage } from "@/features/boulders/imageResize";
 import { t } from "@/i18n/i18n";
 import type { Intensity } from "@/features/boulders/intensity";
+import type { BoulderSort } from "@/features/boulders/listView";
 
 export type BoulderStatus = "ACTIVE" | "REMOVED" | "DELETED";
 /** The two a list can be asked for. A deleted boulder is in no list, so asking for it is an error, not a filter. */
@@ -83,20 +84,25 @@ export interface RemoveResult { removed: number; sectors: { sectorId: string; se
 export interface UploadTicket { bucket: string; path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; expiresAt: string }
 
 export const boulderKeys = {
-  list: (gymId: string, f: BoulderFilters) => ["boulders", gymId, "list", f] as const,
+  list: (gymId: string, f: BoulderFilters, sort?: BoulderSort) => ["boulders", gymId, "list", f, sort ?? null] as const,
   detail: (id: string) => ["boulders", "detail", id] as const,
 };
 
 const PAGE_SIZE = 24;
 
-export function useBoulders(gymId: string | undefined, filters: BoulderFilters) {
+/** `sort`: how the server orders the list; without one it keeps its old order (newest first). */
+export function useBoulders(gymId: string | undefined, filters: BoulderFilters, sort?: BoulderSort) {
   return useInfiniteQuery({
-    queryKey: boulderKeys.list(gymId ?? "", filters),
+    queryKey: boulderKeys.list(gymId ?? "", filters, sort),
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({ page: String(pageParam), pageSize: String(PAGE_SIZE) });
       for (const [k, v] of Object.entries(filters)) {
         if (Array.isArray(v)) for (const item of v) params.append(k === "tagIds" ? "tagId" : k, item);
         else if (v) params.set(k, v);
+      }
+      if (sort) {
+        params.set("sort", sort.sort);
+        if (sort.order) params.set("order", sort.order);
       }
       return api.get<PagedResult<BoulderSummary>>(`/api/gyms/${gymId}/boulders?${params}`, { signal });
     },

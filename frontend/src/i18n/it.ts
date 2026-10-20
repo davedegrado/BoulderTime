@@ -1088,6 +1088,14 @@ export const it: Record<string, string> = {
   "The part you chose. It is saved with the boulder.": "La parte che hai scelto. Viene salvata con il blocco.",
   "This is what the cards show. Choose another part of the photo if the boulder doesn't stand out.": "È quello che mostrano le card. Scegli un'altra parte della foto se il blocco non si vede bene.",
   "Couldn't prepare the card picture. Try again.": "Non è stato possibile preparare la miniatura. Riprova.",
+  // Boulder lists: sort, cards or rows
+  "Sort by": "Ordina per",
+  "Date set": "Data di tracciatura",
+  "Date taken down": "Data di rimozione",
+  "Reverse the order": "Inverti l'ordine",
+  "Show as": "Mostra come",
+  "Cards": "Card",
+  "Holds": "Prese",
   // Sector wall photo, shared by the boulders set on it
   "Photo of {name}": "Foto di {name}",
   "Upload photo": "Carica foto",

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useGoBack } from "@/lib/navigation";
 import { ArrowLeft, Camera, Check, Crop, ImagePlus, Mountain, Plus, Save, Trash2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
@@ -40,6 +41,8 @@ type Stage = "idle" | "processing" | "uploading" | "saving";
 function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["data"] }) {
   const { gym } = useManagedGym();
   const navigate = useNavigate();
+  const goBack = useGoBack();
+  const listPath = `/manage/${gym.slug}/boulders`;
   const toast = useToast();
   const sectors = useSectors(gym.id);
   const systems = useGradeSystems(gym.id);
@@ -149,7 +152,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         await create.mutateAsync(input);
         toast.success(t("Boulder added"));
       }
-      navigate(`/manage/${gym.slug}/boulders`);
+      // Back where the editor was opened from (the list as it was left, or the boulder's page).
+      goBack(listPath);
     } catch (err) {
       if (err instanceof ApiError && err.isValidation) {
         setErrors(Object.fromEntries(Object.keys(err.fieldErrors).map((k) => [k === "photopath" ? "photoPath" : k === "sectorid" ? "sectorId" : k === "holdcolor" ? "holdColor" : k === "setteruserid" ? "setterUserId" : k, err.fieldErrors[k]![0]!])));
@@ -169,7 +173,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   return (
     <form className="editor" onSubmit={onSubmit} noValidate>
       <div className="editor__head">
-        <Link to={`/manage/${gym.slug}/boulders`} className="manage-head__back" aria-label={t("Back to boulders")}><ArrowLeft aria-hidden /></Link>
+        <button type="button" className="manage-head__back" aria-label={t("Back")} onClick={() => goBack(listPath)}><ArrowLeft aria-hidden /></button>
         <h2 className="section__title">{initial ? t("Edit boulder") : t("New boulder")}</h2>
       </div>
       {initial && <p className="field__hint">{t("Fix mistakes here. If the boulder was retraced, remove it and add a new one instead, so climbers' history stays accurate.")}</p>}
@@ -312,7 +316,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           <p className="field__hint">{t("It leaves the wall but stays in climbers' history. Nobody is notified — for a whole retrace, select the boulders from the list instead.")}</p>
           <ConfirmButton variant="danger" icon={<Trash2 aria-hidden />} confirmLabel={t("Tap again to remove")} loading={remove.isPending}
             onConfirm={() => remove.mutate({ boulderIds: [initial.id], notifyFollowers: false }, {
-              onSuccess: () => { toast.success(t("Boulder removed")); navigate(`/manage/${gym.slug}/boulders`); },
+              // Replacing the editor, so going back from the list doesn't reopen a boulder that is gone from the wall.
+              onSuccess: () => { toast.success(t("Boulder removed")); navigate(listPath, { replace: true }); },
               onError: (e) => toast.error(errorMessage(e)),
             })}>
             {t("Remove")}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bell, BellRing, History, Maximize2, Pencil } from "lucide-react";
+import { useGoBack } from "@/lib/navigation";
 import { useBoulder } from "@/features/boulders/api";
 import { useGym, useSectors } from "@/features/gyms/api";
 import { floorPlanOf, SectorMap } from "@/features/gyms/SectorMap";
@@ -35,6 +36,7 @@ export function BoulderPage() {
   const { session } = useAuth();
   const follow = useFollowBoulder(id ?? "");
   const [viewing, setViewing] = useState(false);
+  const goBack = useGoBack();
 
   if (boulder.isPending) return <LoadingState label={t("Loading boulder")} />;
   if (boulder.isError) return boulder.error instanceof ApiError && boulder.error.isNotFound ? <NotFoundPage /> : <ErrorState error={boulder.error} onRetry={() => boulder.refetch()} />;
@@ -53,7 +55,9 @@ export function BoulderPage() {
             <img src={b.photoUrl} alt={photoAlt} />
           </button>
         )}
-        <Link to={`/gyms/${b.gymSlug}`} className="boulder-page__back" aria-label={t("Back to {name}", { name: b.gymName })}><ArrowLeft aria-hidden /></Link>
+        {/* Back to wherever the boulder was opened from (a profile, a filtered list, the notifications); the gym only
+            when the app was opened right here. */}
+        <button type="button" className="boulder-page__back" aria-label={t("Back")} onClick={() => goBack(`/gyms/${b.gymSlug}`)}><ArrowLeft aria-hidden /></button>
         {b.photoUrl && (
           <button type="button" className="boulder-page__enlarge" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
             <Maximize2 aria-hidden />

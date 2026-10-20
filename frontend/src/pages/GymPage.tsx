@@ -14,6 +14,7 @@ import { useGradeSystems } from "@/features/grading/api";
 import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
+import { BoulderRow, SortControl, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
@@ -120,10 +121,12 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
     (kept) => !initialSectorId || kept.sectorId === initialSectorId);
   const [showFilters, setShowFilters] = useState(false);
   const showingRemoved = filters.status === "REMOVED";
+  const [sort, setSort] = useRememberedSort(`bt:boulder-sort:${gymId}`);
+  const [view, setView] = useBoulderView();
   const sectors = useSectors(gymId);
   const systems = useGradeSystems(gymId);
   const tags = useGymTags(gymId);
-  const boulders = useBoulders(gymId, filters);
+  const boulders = useBoulders(gymId, filters, sortFor(sort, showingRemoved));
   const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
   const total = boulders.data?.pages[0]?.total ?? 0;
   // Status is a tab, not a filter: an empty "taken down" list means nothing has come off the wall, not that the
@@ -142,6 +145,10 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
           <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
         </div>
       </div>
+      <div className="boulders-toolbar boulders-toolbar--view">
+        <SortControl value={sort} onChange={setSort} removed={showingRemoved} />
+        <ViewToggle value={view} onChange={setView} />
+      </div>
       <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
@@ -152,7 +159,9 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
             action={filtered ? <Button variant="secondary" onClick={() => setFilters({ status: filters.status })}>{translate("Clear filters")}</Button> : undefined} />
         ) : (
           <>
-            <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>
+            {view === "list"
+              ? <ul className="boulder-rows">{items.map((b) => <li key={b.id}><BoulderRow boulder={b} /></li>)}</ul>
+              : <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>}
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{translate("Show more")}</Button>}
           </>
         )}

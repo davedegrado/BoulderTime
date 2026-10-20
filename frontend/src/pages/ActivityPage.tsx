@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Mountain } from "lucide-react";
 import { useCurrentUser } from "@/features/users/api";
 import { useHistory, useProfile, type HistoryFilter } from "@/features/climbing/api";
@@ -19,7 +19,11 @@ export function ActivityPage() {
 /** Stats, highest grades, weekly activity and full history. Used for your own Activity and for public profiles. */
 export function ClimbingActivity({ userId, title, header }: { userId: string; title?: string; header?: ReactNode }) {
   const profile = useProfile(userId);
-  const [filter, setFilter] = useState<HistoryFilter>("ALL");
+  // In the address, so coming back from a boulder of the history finds the same choice (and the same place in it).
+  const [params, setParams] = useSearchParams();
+  const asked = params.get("history") as HistoryFilter | null;
+  const filter: HistoryFilter = asked === "COMPLETED" || asked === "PROJECTS" ? asked : "ALL";
+  const setFilter = (f: HistoryFilter) => setParams((p) => { const n = new URLSearchParams(p); if (f === "ALL") n.delete("history"); else n.set("history", f); return n; }, { replace: true });
   const history = useHistory(userId, filter);
 
   if (profile.isPending) return <LoadingState label={t("Loading activity")} />;

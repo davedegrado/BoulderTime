@@ -1,0 +1,118 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowDownUp, Check, ChevronDown, LayoutGrid, List, MountainSnow } from "lucide-react";
+import type { BoulderSummary } from "@/features/boulders/api";
+import { GradeBadge } from "@/features/boulders/BoulderBits";
+import { holdColorInfo, holdColorName } from "@/features/boulders/holdColors";
+import { dataLabel } from "@/i18n/data";
+import { plural, t } from "@/i18n/i18n";
+
+/** How a gym's boulder list is ordered. The server does the ordering, because the list comes a page at a time. */
+export type BoulderSortKey = "SECTOR" | "POINTS" | "GRADE" | "SET" | "REMOVED";
+export type SortDirection = "ASC" | "DESC";
+export interface BoulderSort { sort: BoulderSortKey; order?: SortDirection }
+
+export const DEFAULT_SORT: BoulderSort = { sort: "SECTOR" };
+
+/** Each sort's natural direction: sectors in the gym's order, most points first, easiest first, newest first. */
+const NATURAL: Record<BoulderSortKey, SortDirection> = { SECTOR: "ASC", POINTS: "DESC", GRADE: "ASC", SET: "DESC", REMOVED: "DESC" };
+const SORTS: BoulderSortKey[] = ["SECTOR", "POINTS", "GRADE", "SET", "REMOVED"];
+const SORT_LABEL: Record<BoulderSortKey, string> = { SECTOR: "Sector", POINTS: "Points", GRADE: "Grade", SET: "Date set", REMOVED: "Date taken down" };
+
+/** "Taken down" only means something on the list of boulders that came off the wall. */
+export const sortFor = (sort: BoulderSort, removed: boolean): BoulderSort => (sort.sort === "REMOVED" && !removed ? DEFAULT_SORT : sort);
+
+const readJson = <T,>(storage: () => Storage, key: string): T | null => {
+  try { return JSON.parse(storage().getItem(key) ?? "null") as T | null; } catch { return null; }
+};
+const writeJson = (storage: () => Storage, key: string, value: unknown) => {
+  try { storage().setItem(key, JSON.stringify(value)); } catch { /* storage full or disabled: the choice just isn't kept */ }
+};
+
+/** The sort of one list, kept for the browser tab like its filters: open a boulder, come back, same order. */
+export function useRememberedSort(key: string) {
+  const [sort, setSort] = useState<BoulderSort>(() => {
+    const kept = readJson<BoulderSort>(() => sessionStorage, key);
+    return kept && SORTS.includes(kept.sort) ? kept : DEFAULT_SORT;
+  });
+  useEffect(() => writeJson(() => sessionStorage, key, sort), [key, sort]);
+  return [sort, setSort] as const;
+}
+
+export type BoulderView = "grid" | "list";
+const VIEW_KEY = "bt:boulder-view";
+
+/** Cards or rows: a preference of the person, kept on this device for every gym. */
+export function useBoulderView() {
+  const [view, setView] = useState<BoulderView>(() => (readJson<BoulderView>(() => localStorage, VIEW_KEY) === "list" ? "list" : "grid"));
+  useEffect(() => writeJson(() => localStorage, VIEW_KEY, view), [view]);
+  return [view, setView] as const;
+}
+
+/** The sort as a compact drop-down, and a button that turns the order round. */
+export function SortControl({ value, onChange, removed }: { value: BoulderSort; onChange: (s: BoulderSort) => void; removed: boolean }) {
+  const current = sortFor(value, removed);
+  const reversed = (current.order ?? NATURAL[current.sort]) !== NATURAL[current.sort];
+  return (
+    <div className="sort-control">
+      <label className="chip-select">
+        <span className="sr-only">{t("Sort by")}</span>
+        <select value={current.sort} onChange={(e) => onChange({ sort: e.target.value as BoulderSortKey })}>
+          {SORTS.filter((s) => s !== "REMOVED" || removed).map((s) => <option key={s} value={s}>{t(SORT_LABEL[s])}</option>)}
+        </select>
+        <ChevronDown aria-hidden />
+      </label>
+      <button type="button" className={`icon-btn icon-btn--outlined icon-btn--sm ${reversed ? "is-on" : ""}`} aria-pressed={reversed}
+        aria-label={t("Reverse the order")} title={t("Reverse the order")}
+        onClick={() => onChange({ sort: current.sort, order: reversed ? undefined : (NATURAL[current.sort] === "ASC" ? "DESC" : "ASC") })}>
+        <ArrowDownUp aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+export function ViewToggle({ value, onChange }: { value: BoulderView; onChange: (v: BoulderView) => void }) {
+  return (
+    <div className="view-toggle" role="radiogroup" aria-label={t("Show as")}>
+      <button type="button" role="radio" aria-checked={value === "grid"} className="view-toggle__option" onClick={() => onChange("grid")}
+        aria-label={t("Cards")} title={t("Cards")}><LayoutGrid aria-hidden /></button>
+      <button type="button" role="radio" aria-checked={value === "list"} className="view-toggle__option" onClick={() => onChange("list")}
+        aria-label={t("List")} title={t("List")}><List aria-hidden /></button>
+    </div>
+  );
+}
+
+/**
+ * One boulder as a row of a compact list: the same five places in every row, whatever the boulder has — picture,
+ * grade, sector, holds, points. A missing value leaves its place empty rather than moving the others, and long text
+ * is cut short, never wrapped. The name is left out: this list is for scanning, the card and the page have it.
+ */
+export function BoulderRow({ boulder, to, selectable, selected, onToggle }: {
+  boulder: BoulderSummary; to?: string; selectable?: boolean; selected?: boolean; onToggle?: () => void;
+}) {
+  const primary = boulder.grades[0];
+  const holds = holdColorInfo(boulder.holdColor);
+  const label = [primary ? dataLabel(primary.label) : t("Ungraded"), boulder.sectorName, t("{colour} holds", { colour: holdColorName(boulder.holdColor) }),
+    boulder.points != null ? plural(boulder.points, "Worth {count} point", "Worth {count} points") : null].filter(Boolean).join(", ");
+  const cells = (
+    <>
+      <span className="boulder-row__thumb">
+        {boulder.photoUrl ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" /> : <MountainSnow aria-hidden />}
+        {selectable && <span className={`boulder-row__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
+      </span>
+      <span className="boulder-row__grade">
+        {primary ? <GradeBadge grade={primary} size="sm" /> : <span className="boulder-row__none" aria-hidden>–</span>}
+      </span>
+      <span className="boulder-row__sector">{boulder.sectorName}</span>
+      <span className="boulder-row__holds">
+        <span className="boulder-row__holds-label" aria-hidden>{t("Holds")}</span>
+        <span className="boulder-row__dot" style={{ background: holds.hex }} title={holdColorName(boulder.holdColor)} aria-hidden />
+      </span>
+      <span className="boulder-row__points" aria-hidden>{boulder.points != null ? t("+{points} pt", { points: boulder.points }) : "–"}</span>
+    </>
+  );
+  if (selectable) {
+    return <button type="button" className={`boulder-row ${selected ? "boulder-row--selected" : ""}`} aria-pressed={selected} aria-label={label} onClick={onToggle}>{cells}</button>;
+  }
+  return <Link to={to ?? `/boulders/${boulder.id}`} className="boulder-row" aria-label={label}>{cells}</Link>;
+}

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useGoBack } from "@/lib/navigation";
 import { ArrowLeft, X } from "lucide-react";
 import { useFollowSetting, useMyFollows, useNotificationSettings, useUpdateNotificationSettings, type NotificationSettings } from "@/features/notifications/api";
 import { Toggle } from "@/features/notifications/NotificationBits";
@@ -120,12 +121,13 @@ export function NotificationSettingsPage() {
   const follows = useMyFollows();
   const follow = useFollowSetting();
   const toast = useToast();
+  const goBack = useGoBack();
   const onError = (e: unknown) => toast.error(errorMessage(e));
 
   return (
     <div className="page page--narrow">
       <header className="editor__head">
-        <Link to="/notifications" className="manage-head__back" aria-label={t("Back to notifications")}><ArrowLeft aria-hidden /></Link>
+        <button type="button" className="manage-head__back" aria-label={t("Back")} onClick={() => goBack("/notifications")}><ArrowLeft aria-hidden /></button>
         <h1 className="page__title">{t("Notification settings")}</h1>
       </header>
 

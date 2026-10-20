@@ -9,6 +9,7 @@ import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
+import { BoulderRow, SortControl, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -26,10 +27,12 @@ export function ManageBoulders() {
   const [lastRemoval, setLastRemoval] = useState<RemoveResult | null>(null);
   const [notifyFollowers, setNotifyFollowers] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useRememberedSort(`bt:manage-boulder-sort:${gym.id}`);
+  const [view, setView] = useBoulderView();
   const sectors = useSectors(gym.id);
   const systems = useGradeSystems(gym.id);
   const tags = useGymTags(gym.id);
-  const boulders = useBoulders(gym.id, filters);
+  const boulders = useBoulders(gym.id, filters, sortFor(sort, filters.status === "REMOVED"));
   const remove = useRemoveBoulders(gym.id);
   const restore = useRestoreBoulder();
   const toast = useToast();
@@ -100,6 +103,10 @@ export function ManageBoulders() {
       {!removedView && !selecting && !noSetup && (
         <Link to={`/manage/${gym.slug}/boulders/new`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
+      <div className="boulders-toolbar boulders-toolbar--view">
+        <SortControl value={sort} onChange={setSort} removed={removedView} />
+        <ViewToggle value={view} onChange={setView} />
+      </div>
       <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
@@ -107,22 +114,43 @@ export function ManageBoulders() {
         : items.length === 0 ? <EmptyState icon={<Mountain />} title={removedView ? t("No removed boulders") : t("No boulders on the wall")} />
         : (
           <>
-            <div className="boulder-grid">
-              {items.map((b) => removedView ? (
-                <div key={b.id} className="boulder-grid__item">
-                  <BoulderCard boulder={b} />
-                  <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
-                    onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
-                    {t("Restore")}
-                  </Button>
-                  {atLeast(gym.viewerRole, "ADMIN") && <DeleteBoulderButton boulderId={b.id} />}
-                </div>
-              ) : (
-                <BoulderCard key={b.id} boulder={b} to={`/manage/${gym.slug}/boulders/${b.id}/edit`}
-                  selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)}
-                  onLongPress={() => { setSelecting(true); setSelected(new Set([b.id])); }} />
-              ))}
-            </div>
+            {view === "list" ? (
+              <ul className="boulder-rows">
+                {items.map((b) => (
+                  <li key={b.id}>
+                    <BoulderRow boulder={b} to={removedView ? undefined : `/manage/${gym.slug}/boulders/${b.id}/edit`}
+                      selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)} />
+                    {/* Taken down: every row carries the same two actions, so the rows stay alike. */}
+                    {removedView && (
+                      <div className="boulder-rows__actions">
+                        <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
+                          onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
+                          {t("Restore")}
+                        </Button>
+                        {atLeast(gym.viewerRole, "ADMIN") && <DeleteBoulderButton boulderId={b.id} />}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="boulder-grid">
+                {items.map((b) => removedView ? (
+                  <div key={b.id} className="boulder-grid__item">
+                    <BoulderCard boulder={b} />
+                    <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
+                      onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
+                      {t("Restore")}
+                    </Button>
+                    {atLeast(gym.viewerRole, "ADMIN") && <DeleteBoulderButton boulderId={b.id} />}
+                  </div>
+                ) : (
+                  <BoulderCard key={b.id} boulder={b} to={`/manage/${gym.slug}/boulders/${b.id}/edit`}
+                    selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)}
+                    onLongPress={() => { setSelecting(true); setSelected(new Set([b.id])); }} />
+                ))}
+              </div>
+            )}
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{t("Show more")}</Button>}
           </>
         )}
