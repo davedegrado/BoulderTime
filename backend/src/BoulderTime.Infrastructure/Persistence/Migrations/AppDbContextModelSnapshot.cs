@@ -29,6 +29,10 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("BetaTestAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("beta_test_at");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
