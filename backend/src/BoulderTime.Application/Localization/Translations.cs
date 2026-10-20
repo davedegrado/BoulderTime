@@ -135,6 +135,7 @@ public static partial class Translations
         ("Thumbnails must be JPEG or WebP.", "Le miniature devono essere JPEG o WebP."),
         ("The photo upload didn't complete. Upload it again.", "Il caricamento della foto non è andato a buon fine. Riprova."),
         ("Type the gym's slug to confirm.", "Scrivi lo slug della palestra per confermare."),
+        ("That sector photo has been replaced. Choose the photo again.", "La foto di quel settore è stata sostituita. Scegli di nuovo la foto."),
         ("The image upload didn't complete. Upload it again.", "Il caricamento dell'immagine non è andato a buon fine. Riprova."),
         ("The video upload didn't complete. Upload it again.", "Il caricamento del video non è andato a buon fine. Riprova."),
         ("The thumbnail upload didn't complete. Upload the video again.", "Il caricamento della miniatura non è andato a buon fine. Ricarica il video."),

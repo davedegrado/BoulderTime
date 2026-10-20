@@ -1562,6 +1562,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(60)")
                         .HasColumnName("name");
 
+                    b.Property<string>("PhotoPath")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("photo_path");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");

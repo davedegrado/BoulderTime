@@ -16,7 +16,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
     public const long MaxThumbnailBytes = 512 * 1024;
-    private static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
+    internal static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp",
     };
@@ -405,9 +405,19 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
 
         if (photo != currentPhotoPath)
         {
-            var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
-            if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
-                v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+            if (Domain.Gyms.Sector.IsSectorPhoto(photo))
+            {
+                // Set on a sector's wall photo: the one a sector of this gym has now. Older walls stay with the
+                // boulders already set on them, but new ones go on the current photo.
+                if (!await db.Sectors.AnyAsync(s => s.GymId == gymId && s.PhotoPath == photo, ct))
+                    v.Check(false, "photoPath", "That sector photo has been replaced. Choose the photo again.");
+            }
+            else
+            {
+                var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
+                if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
+                    v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+            }
         }
 
         // The small picture for the cards: made on the device, from the whole photo or from the part staff chose.

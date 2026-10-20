@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowUp, Check, ChevronRight, Eye, EyeOff, Layers, Map as MapIcon, Pencil, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, ChevronRight, Eye, EyeOff, Layers, Map as MapIcon, Pencil, Plus, X } from "lucide-react";
 import { floorPlanOf } from "@/features/gyms/SectorMap";
+import { SectorPhotoPanel } from "@/features/gyms/SectorPhotoPanel";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useCreateSector, useReorderSectors, useSectors, useUpdateSector, type Sector } from "@/features/gyms/api";
 import { TextField } from "@/components/TextField";
@@ -79,6 +80,7 @@ function SectorRow({ sector, gymId, first, last, onUp, onDown, reordering }: Row
   const update = useUpdateSector(gymId);
   const toast = useToast();
   const [editing, setEditing] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [name, setName] = useState(sector.name);
 
   function save(e: FormEvent) {
@@ -103,25 +105,32 @@ function SectorRow({ sector, gymId, first, last, onUp, onDown, reordering }: Row
   }
 
   return (
-    <li className={`list__row ${sector.isActive ? "" : "list__row--muted"}`}>
-      <div className="reorder">
-        <button type="button" className="icon-btn" onClick={onUp} disabled={first || reordering} aria-label={t("Move {name} up", { name: sector.name })}><ArrowUp aria-hidden /></button>
-        <button type="button" className="icon-btn" onClick={onDown} disabled={last || reordering} aria-label={t("Move {name} down", { name: sector.name })}><ArrowDown aria-hidden /></button>
-      </div>
-      <div className="list__main">
-        <p className="list__title">{sector.name}</p>
-        {!sector.isActive && <Badge>{t("Hidden")}</Badge>}
-      </div>
-      <button type="button" className="icon-btn" onClick={() => setEditing(true)} aria-label={t("Rename {name}", { name: sector.name })}><Pencil aria-hidden /></button>
-      <button
-        type="button"
-        className="icon-btn"
-        disabled={update.isPending}
-        onClick={() => update.mutate({ id: sector.id, isActive: !sector.isActive }, { onError: (err) => toast.error(errorMessage(err)) })}
-        aria-label={sector.isActive ? t("Hide {name}", { name: sector.name }) : t("Show {name}", { name: sector.name })}
-      >
-        {sector.isActive ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
-      </button>
-    </li>
+    <>
+      <li className={`list__row ${sector.isActive ? "" : "list__row--muted"}`}>
+        <div className="reorder">
+          <button type="button" className="icon-btn" onClick={onUp} disabled={first || reordering} aria-label={t("Move {name} up", { name: sector.name })}><ArrowUp aria-hidden /></button>
+          <button type="button" className="icon-btn" onClick={onDown} disabled={last || reordering} aria-label={t("Move {name} down", { name: sector.name })}><ArrowDown aria-hidden /></button>
+        </div>
+        <div className="list__main">
+          <p className="list__title">{sector.name}</p>
+          {!sector.isActive && <Badge>{t("Hidden")}</Badge>}
+        </div>
+        <button type="button" className="icon-btn" onClick={() => setPhotoOpen((o) => !o)} aria-expanded={photoOpen}
+          aria-label={t("Photo of {name}", { name: sector.name })}>
+          {sector.imageUrl ? <img className="sector-row__photo" src={sector.imageUrl} alt="" /> : <Camera aria-hidden />}
+        </button>
+        <button type="button" className="icon-btn" onClick={() => setEditing(true)} aria-label={t("Rename {name}", { name: sector.name })}><Pencil aria-hidden /></button>
+        <button
+          type="button"
+          className="icon-btn"
+          disabled={update.isPending}
+          onClick={() => update.mutate({ id: sector.id, isActive: !sector.isActive }, { onError: (err) => toast.error(errorMessage(err)) })}
+          aria-label={sector.isActive ? t("Hide {name}", { name: sector.name }) : t("Show {name}", { name: sector.name })}
+        >
+          {sector.isActive ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+        </button>
+      </li>
+      {photoOpen && <li className="list__row list__row--panel"><SectorPhotoPanel sector={sector} gymId={gymId} /></li>}
+    </>
   );
 }

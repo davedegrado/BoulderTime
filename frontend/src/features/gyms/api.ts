@@ -52,7 +52,10 @@ export interface Sector {
   gymId: string;
   name: string;
   description: string | null;
+  /** The wall photo boulders of this sector can be set on; null when there is none. */
   imageUrl: string | null;
+  /** The wall photo's storage path, which a boulder set on it saves as its own photo path. */
+  photoPath?: string | null;
   sortOrder: number;
   isActive: boolean;
   isFollowing: boolean;

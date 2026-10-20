@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Camera, Check, Crop, ImagePlus, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Check, Crop, ImagePlus, Mountain, Plus, Save, Trash2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
+import { fetchSectorPhoto } from "@/features/gyms/sectorPhoto";
 import { useGradeSystems } from "@/features/grading/api";
 import { useStaff } from "@/features/staff/api";
 import { fetchBoulderPhoto, uploadBoulderPhoto, uploadBoulderThumbnail, useBoulder, useCreateBoulder, useRemoveBoulders, useUpdateBoulder, type SaveBoulderInput } from "@/features/boulders/api";
@@ -66,12 +67,18 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   // The part of the photo the cards show, when staff chose one; otherwise the cards show the whole photo.
   const [thumb, setThumb] = useState<{ blob: Blob; url: string } | null>(null);
   const [cropping, setCropping] = useState(false);
+  // The sector's wall photo, when staff set the boulder on it instead of uploading a photo of its own.
+  const [wall, setWall] = useState<{ sectorId: string; path: string } | null>(null);
 
   useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb.url); }, [thumb]);
 
   const activeSystems = useMemo(() => (systems.data ?? []).filter((s) => s.isActive), [systems.data]);
   const activeSectors = (sectors.data ?? []).filter((s) => s.isActive || s.id === initial?.sectorId);
+  const sector = activeSectors.find((s) => s.id === sectorId);
+  // The photo the boulder will be saved with: one just picked, the wall just chosen, or the one it has.
+  const photoPath = file ? null : wall?.path ?? initial?.photoPath ?? null;
+  const wallOffer = sector?.photoPath && sector.imageUrl && photoPath !== sector.photoPath ? sector : null;
   // What the chosen grade is worth: the first of the gym's scales it is graded in, as the leaderboard counts it.
   const gradePoints = useMemo(() => {
     for (const system of activeSystems) {
@@ -84,16 +91,28 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   function pickFile(f: File | undefined) {
     if (!f) return;
     setFile(f);
+    setWall(null);
     setPreview(URL.createObjectURL(f));
     setThumb(null); // a new photo starts again from the whole picture
     setErrors((e) => ({ ...e, photoPath: "" }));
   }
 
+  /** Sets the boulder on its sector's wall photo, and goes straight to choosing its part for the cards. */
+  function chooseWall() {
+    if (!wallOffer) return;
+    setFile(null);
+    setWall({ sectorId: wallOffer.id, path: wallOffer.photoPath! });
+    setPreview(wallOffer.imageUrl);
+    setThumb(null);
+    setErrors((e) => ({ ...e, photoPath: "" }));
+    setCropping(true);
+  }
+
   async function applyCrop(rect: CropRect) {
     setCropping(false);
     try {
-      // The photo just picked, or the saved one, fetched again to cut the part out on this device.
-      const source = file ?? await fetchBoulderPhoto(initial!.id);
+      // The photo just picked, the wall chosen, or the saved one, fetched again to cut the part out on this device.
+      const source = file ?? (wall ? await fetchSectorPhoto(wall.sectorId) : await fetchBoulderPhoto(initial!.id));
       const blob = await cropImage(source, rect);
       setThumb({ blob, url: URL.createObjectURL(blob) });
     } catch (err) {
@@ -106,7 +125,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const local: Record<string, string> = {};
-    if (!file && !initial) local.photoPath = t("Add a photo of the boulder.");
+    if (!file && !wall && !initial) local.photoPath = t("Add a photo of the boulder.");
     if (!sectorId) local.sectorId = t("Choose a sector.");
     if (!holdColor) local.holdColor = t("Choose the hold colour.");
     if (points !== null && !(Number.isInteger(points) && points >= 1 && points <= 1000)) local.points = t("Points go from 1 to {max}.", { max: 1000 });
@@ -116,7 +135,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     try {
       const uploaded = file
         ? await uploadBoulderPhoto(gym.id, file, setStage, thumb?.blob)
-        : { path: initial!.photoPath, thumbnailPath: thumb ? (setStage("uploading"), await uploadBoulderThumbnail(gym.id, thumb.blob)) : null };
+        : { path: wall?.path ?? initial!.photoPath, thumbnailPath: thumb ? (setStage("uploading"), await uploadBoulderThumbnail(gym.id, thumb.blob)) : null };
       setStage("saving");
       const input: SaveBoulderInput = {
         sectorId, photoPath: uploaded.path, thumbnailPath: uploaded.thumbnailPath, holdColor: holdColor as HoldColor, setterUserId: setterUserId || null,
@@ -165,6 +184,12 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
         <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={pickFile} />
+        {wallOffer && (
+          <div className="photo-source">
+            <Button type="button" variant="secondary" icon={<Mountain aria-hidden />} onClick={chooseWall}>{t("Use the photo of {name}", { name: wallOffer.name })}</Button>
+          </div>
+        )}
+        {wall && !thumb && <p className="field__hint">{t("Every boulder of this sector shares this photo: choose the part that shows this one.")}</p>}
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
 
@@ -174,7 +199,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           <p id="thumb-label" className="field__label">{t("Card picture")}</p>
           <div className="thumb-choice">
             <div className="thumb-choice__preview">
-              <img src={thumb?.url ?? (file ? preview : initial?.thumbnailUrl ?? preview)} alt={t("What the cards show")} />
+              <img src={thumb?.url ?? (file || wall ? preview : initial?.thumbnailUrl ?? preview)} alt={t("What the cards show")} />
             </div>
             <div className="thumb-choice__text">
               <p className="field__hint">{thumb ? t("The part you chose. It is saved with the boulder.") : t("This is what the cards show. Choose another part of the photo if the boulder doesn't stand out.")}</p>

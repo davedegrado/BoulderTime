@@ -80,7 +80,7 @@ export interface SaveBoulderInput {
 
 export interface RemoveResult { removed: number; sectors: { sectorId: string; sectorName: string; removed: number }[] }
 
-interface UploadTicket { bucket: string; path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; expiresAt: string }
+export interface UploadTicket { bucket: string; path: string; uploadUrl: string; method: string; headers: Record<string, string>; maxBytes: number; expiresAt: string }
 
 export const boulderKeys = {
   list: (gymId: string, f: BoulderFilters) => ["boulders", gymId, "list", f] as const,
@@ -115,7 +115,7 @@ export function useBoulder(id: string | undefined) {
   });
 }
 
-async function putToTicket(ticket: UploadTicket, blob: Blob) {
+export async function putToTicket(ticket: UploadTicket, blob: Blob) {
   let res: Response;
   try {
     res = await fetch(ticket.uploadUrl, { method: ticket.method, headers: ticket.headers, body: blob });

@@ -1041,6 +1041,20 @@ an account takes it off the leaderboard without touching that setting (the leade
 way out), so changing one's mind within the week gives back exactly what one had. The demo climbers take part, so the
 demo gyms still have a leaderboard.
 
+## ADR-055 · A sector's wall photo, shared by the boulders set on it
+Gyms often photograph a whole wall and set several boulders on it. Each sector can now have **one wall photo**
+(`sectors.PhotoPath`, in the boulder-images bucket under `gyms/{gymId}/sectors/`), uploaded once from
+**Manage → Sectors**. In the boulder editor, **Use the photo of {sector}** sets the boulder on it and goes straight to
+choosing that boulder's card picture; a photo of its own can still be uploaded as before.
+
+The boulder stores the wall's path as its own `PhotoPath`, so every screen reads it as it always did. The file
+belongs to the **sector**: editing or deleting a boulder never deletes a path under `/sectors/`.
+
+**Replacing or removing the wall photo never takes it away from the boulders set on it.** New boulders go on the
+new photo; the boulders already set on the old one (on the wall, taken down, in climbers' history and public
+profiles) keep pointing at it, so the old file stays. It is deleted only if no boulder was ever set on it (a wrong
+photo replaced straight away). A new boulder can only be set on a sector's current photo.
+
 ## ADR-056 · Closing a gym's trial period: trial boulders
 A gym often tries BoulderTime before launching it. On launch day a platform administrator calls
 `POST /api/admin/gyms/{id}/beta-test` with `{ "gymSlug": "<the gym's slug>" }`. Every boulder of the gym **off the

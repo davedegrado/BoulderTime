@@ -9,10 +9,11 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { ApiError } from "@/lib/apiError";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { gymStatusLabel } from "@/lib/format";
-import { useBoulders, type BoulderFilters } from "@/features/boulders/api";
+import { useBoulders } from "@/features/boulders/api";
 import { useGradeSystems } from "@/features/grading/api";
 import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
+import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
 import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
@@ -114,7 +115,9 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
 }
 
 function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorId?: string | null }) {
-  const [filters, setFilters] = useState<BoulderFilters>(() => (initialSectorId ? { sectorId: initialSectorId } : {}));
+  // A "?sector=…" link asks for that sector: filters kept from before only count when they're on the same one.
+  const [filters, setFilters] = useRememberedFilters(`bt:boulder-filters:${gymId}`, () => (initialSectorId ? { sectorId: initialSectorId } : {}),
+    (kept) => !initialSectorId || kept.sectorId === initialSectorId);
   const [showFilters, setShowFilters] = useState(false);
   const showingRemoved = filters.status === "REMOVED";
   const sectors = useSectors(gymId);
