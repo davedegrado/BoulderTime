@@ -66,7 +66,8 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var viewerId = currentUser.UserId;
         var sends = await db.BoulderAttempts.AsNoTracking()
             .Where(a => a.Completed && (from == null || a.CompletedAt >= from))
-            .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { a.UserId, a.BoulderId, a.CompletedAt, b.GymId })
+            // The gym's trial boulders count for nobody: neither points, nor completions, nor the highest grade.
+            .Join(db.Boulders.Where(b => b.BetaTestAt == null), a => a.BoulderId, b => b.Id, (a, b) => new { a.UserId, a.BoulderId, a.CompletedAt, b.GymId })
             .Where(x => x.GymId == gymId)
             .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new
             {

@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<InvitationService>();
         services.AddScoped<GymCandidateService>();
         services.AddScoped<AdminService>();
+        services.AddScoped<BetaTestService>();
         services.AddScoped<GradingService>();
         services.AddScoped<BoulderService>();
         services.AddScoped<BoulderReader>();

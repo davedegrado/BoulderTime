@@ -95,7 +95,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (b.SetterUserId is { } setterId)
             setter = await db.Users.AsNoTracking().Where(u => u.Id == setterId).Select(u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl)).FirstOrDefaultAsync(ct);
 
-        return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, sector,
+        return new BoulderDetailDto(b.Id, gym.Id, gym.Slug, gym.Name, b.SectorId, BoulderReader.SectorLabel(sector, b),
             storage.PublicUrl(StorageBuckets.BoulderImages, b.PhotoPath), b.PhotoPath, b.HoldColor, grades, setter,
             b.Status, b.CreatedAt, b.RemovedAt, role, rating, viewer, following, gym.CommunityVideosEnabled,
             await CanAddBetaAsync(gym, b.Id, ct),

@@ -28,7 +28,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var scales = await points.ForGymsAsync(gymIds, ct);
 
         return boulders.Select(b => new BoulderSummaryDto(
-            b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId)?.Name ?? "", b.SectorId, sectors.GetValueOrDefault(b.SectorId, ""),
+            b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId)?.Name ?? "", b.SectorId, SectorLabel(sectors.GetValueOrDefault(b.SectorId, ""), b),
             // A deleted boulder has no photo left to point at, and a signed url for an empty path would 404.
             b.Status == BoulderStatus.Deleted ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath ?? b.PhotoPath),
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
@@ -40,9 +40,22 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
 
     public static readonly RatingSummaryDto NoRatings = new(null, 0);
 
-    /// <summary>The same number the leaderboard adds up for a send of this boulder.</summary>
+    /// <summary>
+    /// The same number the leaderboard adds up for a send of this boulder. None for a trial boulder: it scores nothing,
+    /// and the apps already show no points for a boulder that scores none.
+    /// </summary>
     public static int? PointsOf(IReadOnlyDictionary<Guid, Leaderboards.GymScales> scales, Boulder b, IReadOnlyList<BoulderGradeDto> grades) =>
-        scales.GetValueOrDefault(b.GymId, Leaderboards.GymScales.Empty).PointsOf(b.PointsOverride, grades.Select(g => (g.GradeSystemId, g.GradeValueId)));
+        b.BetaTestAt is not null ? null
+        : scales.GetValueOrDefault(b.GymId, Leaderboards.GymScales.Empty).PointsOf(b.PointsOverride, grades.Select(g => (g.GradeSystemId, g.GradeValueId)));
+
+    /// <summary>
+    /// The sector's name as the boulder's cards, page and history show it: a trial boulder says so next to it. Carried by
+    /// the sector name, not the boulder's own name, because the editor saves the name it was given back and would store
+    /// the label; the sector is saved by its id.
+    /// </summary>
+    public static string SectorLabel(string sectorName, Boulder b) => b.BetaTestAt is null ? sectorName : $"{sectorName} · {BetaTestLabel}";
+
+    public const string BetaTestLabel = "Betatest";
 
     public async Task<Dictionary<Guid, IReadOnlyList<BoulderGradeDto>>> GradesAsync(List<Guid> boulderIds, CancellationToken ct)
     {

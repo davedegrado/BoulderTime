@@ -5,8 +5,10 @@ using BoulderTime.Application.Gyms;
 using BoulderTime.Application.Staff;
 using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Gyms;
+using BoulderTime.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BoulderTime.Api.Controllers;
 
@@ -15,7 +17,7 @@ namespace BoulderTime.Api.Controllers;
 [Route("api/admin")]
 [Authorize]
 [Produces("application/json")]
-public sealed class AdminController(AdminService admin, GymCandidateService candidates) : ControllerBase
+public sealed class AdminController(AdminService admin, GymCandidateService candidates, BetaTestService betaTest) : ControllerBase
 {
     [HttpGet("dashboard")]
     public Task<AdminDashboardDto> Dashboard(CancellationToken ct) => admin.GetDashboardAsync(ct);
@@ -31,6 +33,20 @@ public sealed class AdminController(AdminService admin, GymCandidateService cand
     [HttpPut("gyms/{gymId:guid}/status")]
     public Task<GymDetailDto> SetGymStatus(Guid gymId, [FromBody] SetGymStatusRequest request, CancellationToken ct) =>
         admin.SetGymStatusAsync(gymId, request, ct);
+
+    /// <summary>
+    /// Launch day: every boulder of the gym off the wall becomes a trial boulder (kept in history, no points, in no
+    /// leaderboard). Running it again adds the ones taken down since. Not for use after launch: it would also mark the
+    /// gym's ordinary retraces.
+    /// </summary>
+    [HttpPost("gyms/{gymId:guid}/beta-test"), EnableRateLimiting(RateLimiting.WritePolicy)]
+    public Task<BetaTestResultDto> MarkBetaTest(Guid gymId, [FromBody] BetaTestRequest request, CancellationToken ct) =>
+        betaTest.MarkAsync(gymId, request, ct);
+
+    /// <summary>Takes the trial mark off every boulder of the gym.</summary>
+    [HttpPost("gyms/{gymId:guid}/beta-test/undo"), EnableRateLimiting(RateLimiting.WritePolicy)]
+    public Task<BetaTestResultDto> UnmarkBetaTest(Guid gymId, [FromBody] BetaTestRequest request, CancellationToken ct) =>
+        betaTest.UnmarkAsync(gymId, request, ct);
 
     [HttpPost("gyms/{gymId:guid}/owner-invitations")]
     public async Task<ActionResult<GymInvitationDto>> InviteOwner(Guid gymId, [FromBody] InviteOwnerRequest request, CancellationToken ct) =>

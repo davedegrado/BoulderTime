@@ -47,6 +47,11 @@ public class Boulder : IAuditable
     /// <summary>Null for boulders loaded by the system (demo seed, imports).</summary>
     public Guid? CreatedByUserId { get; private set; }
     public DateTimeOffset? RemovedAt { get; private set; }
+    /// <summary>
+    /// Set on the boulders of a gym's trial period, before it launched BoulderTime for real: they stay in the history of
+    /// the climbers who tested it, but score nothing and count in no leaderboard. Null for every ordinary boulder.
+    /// </summary>
+    public DateTimeOffset? BetaTestAt { get; private set; }
     public Guid? RemovedByUserId { get; private set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -108,13 +113,34 @@ public class Boulder : IAuditable
         return true;
     }
 
-    /// <summary>Only a removed boulder comes back. A deleted one has no photo and no content to come back to.</summary>
+    /// <summary>
+    /// Only a removed boulder comes back. A deleted one has no photo and no content to come back to. A trial boulder put
+    /// back on the wall is an ordinary boulder again: only boulders off the wall are trial ones.
+    /// </summary>
     public void Restore()
     {
         if (Status == BoulderStatus.Deleted) throw new InvalidOperationException("A deleted boulder cannot be restored.");
         Status = BoulderStatus.Active;
         RemovedAt = null;
         RemovedByUserId = null;
+        BetaTestAt = null;
+    }
+
+    /// <summary>Marks a boulder off the wall as one of the gym's trial period.</summary>
+    /// <returns>False if it is on the wall, or already marked (so running it again only adds the ones missing).</returns>
+    public bool MarkBetaTest(DateTimeOffset now)
+    {
+        if (Status == BoulderStatus.Active || BetaTestAt is not null) return false;
+        BetaTestAt = now;
+        return true;
+    }
+
+    /// <returns>False if it wasn't marked.</returns>
+    public bool UnmarkBetaTest()
+    {
+        if (BetaTestAt is null) return false;
+        BetaTestAt = null;
+        return true;
     }
 
     /// <summary>

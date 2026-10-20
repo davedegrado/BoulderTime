@@ -1040,3 +1040,23 @@ of a gym is a choice, not a default. Accounts created before October 2026 keep t
 an account takes it off the leaderboard without touching that setting (the leaderboard leaves out accounts on their
 way out), so changing one's mind within the week gives back exactly what one had. The demo climbers take part, so the
 demo gyms still have a leaderboard.
+
+## ADR-056 · Closing a gym's trial period: trial boulders
+A gym often tries BoulderTime before launching it. On launch day a platform administrator calls
+`POST /api/admin/gyms/{id}/beta-test` with `{ "gymSlug": "<the gym's slug>" }`. Every boulder of the gym **off the
+wall** (removed, or deleted since) gets `boulders.BetaTestAt`: it stays in the history of the climbers who tested the
+app, with "Betatest" next to its sector, but scores no points and counts in no leaderboard (points, completed,
+highest). Boulders still on the wall are the gym's real ones and are not touched, so a gym launching with boulders
+already loaded just leaves them up.
+
+Running it again marks the boulders taken down since (staff who forgot some take them down, then it runs again) and
+leaves the others as they are. It is for launch day only: later it would also mark the gym's ordinary retraces.
+`POST …/beta-test/undo` takes every mark off. A trial boulder put back on the wall is an ordinary one again.
+
+Only platform administrators can call either (the platform-admin flag is checked in the database on every call), the
+slug must match the gym, writes are rate-limited and every run is logged with who ran it and how many boulders changed.
+
+Built for full backward compatibility: one new nullable column, no field added, removed or retyped in any response.
+The "no points" is `points: null`, which the installed apps already show as no points; the label rides on the
+sector name rather than the boulder's own name, which the editor would save back. Personal history and profile
+statistics are unchanged, and so is "Completed by N people".
