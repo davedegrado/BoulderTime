@@ -229,10 +229,11 @@ jobs:
             out/*-dSYMs.zip
           retention-days: 14
 
-      # Only main goes to App Store Connect. From there it is TestFlight: internal testers get it once Apple has
-      # processed it; releasing to everyone stays a deliberate step in App Store Connect.
+      # Only main and release branches (release/*, run by hand to test the next version before it reaches the website)
+      # go to App Store Connect. From there it is TestFlight: internal testers get it once Apple has processed it;
+      # releasing to everyone stays a deliberate step in App Store Connect.
       - name: Hand the app to App Store Connect (TestFlight)
-        if: env.HAS_IOS_SIGNING == 'true' && env.HAS_APP_STORE_KEY == 'true' && github.ref == 'refs/heads/main'
+        if: env.HAS_IOS_SIGNING == 'true' && env.HAS_APP_STORE_KEY == 'true' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))
         env:
           API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
