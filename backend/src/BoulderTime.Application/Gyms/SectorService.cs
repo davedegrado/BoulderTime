@@ -149,7 +149,8 @@ public sealed class SectorService(IAppDbContext db, GymAccess access, ICurrentUs
 
         var previous = sector.SetPhoto(path.Length == 0 ? null : storage.PublicUrl(StorageBuckets.BoulderImages, path), path.Length == 0 ? null : path);
         await db.SaveChangesAsync(ct);
-        if (previous is not null && !await db.Boulders.AnyAsync(b => b.PhotoPath == previous, ct))
+        // Boulders set on it, or highlighted from it (staff may go on editing those), keep it.
+        if (previous is not null && !await db.Boulders.AnyAsync(b => b.PhotoPath == previous || b.HighlightSourcePath == previous, ct))
         {
             // The sector has already moved on: a file that refuses to go is left for the storage clean-up.
             try { await storage.DeleteAsync(StorageBuckets.BoulderImages, previous, ct); }

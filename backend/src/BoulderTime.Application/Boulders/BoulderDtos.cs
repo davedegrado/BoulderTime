@@ -62,7 +62,9 @@ public sealed record BoulderDetailDto(
     /// <summary>What completing it scores: <see cref="PointsOverride"/> when staff set one, else its grade's points.</summary>
     int? Points = null,
     /// <summary>The points staff set on this boulder by hand, shown to its gym's staff only; null when it follows its grade.</summary>
-    int? PointsOverride = null);
+    int? PointsOverride = null,
+    /// <summary>What its highlighted photo was made from, for its gym's staff to go on editing; null otherwise.</summary>
+    BoulderHighlightDto? Highlight = null);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
@@ -71,9 +73,20 @@ public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 /// <param name="TagIds">The gym's tags for this boulder. Null leaves the tags as they are (older apps don't send them); empty clears them.</param>
 /// <param name="Name">Optional name. Null leaves it as it is (older apps don't send it); empty removes it.</param>
 /// <param name="Points">Points set by hand for this boulder. Null leaves them as they are, 0 goes back to the grade's, 1–1000 sets them.</param>
+/// <param name="Highlight">
+/// What a highlighted photo was made from, sent with it. Null keeps what the boulder has while its photo stays the same;
+/// a new photo without one leaves the boulder with no highlight to go back to.
+/// </param>
 public sealed record SaveBoulderRequest(
     Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null,
-    BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null, string? Name = null, int? Points = null);
+    BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null, string? Name = null, int? Points = null,
+    BoulderHighlightDto? Highlight = null);
+
+/// <summary>
+/// "Highlight the holds" as it was left: the original photo (a sector's wall photo or one uploaded for it), the mask
+/// PNG, and the choices (hold colour, outline) as a small JSON object the app reads back.
+/// </summary>
+public sealed record BoulderHighlightDto(string? SourcePath, string? MaskPath, string? Settings);
 
 /// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
 public enum ProgressFilter { All, Untried, Projects, Completed }
@@ -106,4 +119,5 @@ public sealed record RemoveBouldersRequest(IReadOnlyList<Guid>? BoulderIds, bool
 public sealed record RemoveBouldersResult(int Removed, IReadOnlyList<SectorRemovalDto> Sectors);
 public sealed record SectorRemovalDto(Guid SectorId, string SectorName, int Removed);
 
-public sealed record PhotoUploadRequest(string? ContentType, long? SizeBytes, bool? Thumbnail = false);
+/// <param name="Mask">The mask of a highlighted photo: a PNG, stored next to the boulder's photo.</param>
+public sealed record PhotoUploadRequest(string? ContentType, long? SizeBytes, bool? Thumbnail = false, bool? Mask = false);

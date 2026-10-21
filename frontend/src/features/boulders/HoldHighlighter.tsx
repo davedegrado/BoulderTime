@@ -30,7 +30,7 @@ const OUTLINE_COLORS = [
 ] as const;
 type OutlineColor = (typeof OUTLINE_COLORS)[number]["key"];
 type OutlineLevel = 1 | 2 | 3;
-interface OutlineChoice { on: boolean; color: OutlineColor; level: OutlineLevel }
+export interface OutlineChoice { on: boolean; color: OutlineColor; level: OutlineLevel }
 const OUTLINE_DEFAULT: OutlineChoice = { on: true, color: "red", level: 2 };
 const OUTLINE_KEY = "bt:hold-outline";
 
@@ -47,11 +47,64 @@ function readOutline(): OutlineChoice {
   } catch { return OUTLINE_DEFAULT; }
 }
 
+/**
+ * A highlight saved with a boulder, to go on from where it was left: the original photo and the mask, fetched when
+ * needed, and the choices that were made.
+ */
+export interface HighlightResume { load: () => Promise<{ source: Blob; mask: Blob }>; color: HoldColor; outline: OutlineChoice | null }
+
+/** What is handed back with the finished picture, to be saved with the boulder: the mask, the choices, the photo used. */
+export interface HighlightResult { mask: Blob; settings: string; sourceId: string | null }
+
+/** The choices saved with a highlight, as the small JSON object the API keeps. */
+export const highlightSettings = (color: HoldColor, outline: OutlineChoice) => JSON.stringify({ color, outline });
+
+/** Reads them back; anything unexpected (an older or damaged value) gives null, and the editor starts afresh. */
+export function readHighlightSettings(json: string | null | undefined): { color: HoldColor; outline: OutlineChoice } | null {
+  try {
+    const v = JSON.parse(json ?? "null") as { color?: unknown; outline?: Partial<OutlineChoice> } | null;
+    if (!v || !HOLD_COLORS.some((c) => c.value === v.color)) return null;
+    const o = v.outline ?? {};
+    return {
+      color: v.color as HoldColor,
+      outline: {
+        on: typeof o.on === "boolean" ? o.on : OUTLINE_DEFAULT.on,
+        color: OUTLINE_COLORS.some((c) => c.key === o.color) ? o.color! : OUTLINE_DEFAULT.color,
+        level: o.level === 1 || o.level === 2 || o.level === 3 ? o.level : OUTLINE_DEFAULT.level,
+      },
+    };
+  } catch { return null; }
+}
+
 type Phase = { name: "setup" } | { name: "working" } | { name: "edit" } | { name: "saving" } | { name: "error"; message: string };
 type Tool = "add" | "remove" | "move";
 
 const sizeOf = (image: CanvasImageSource) =>
   "naturalWidth" in image ? { w: image.naturalWidth, h: image.naturalHeight } : { w: (image as ImageBitmap).width, h: (image as ImageBitmap).height };
+
+/** Draws a decoded picture into a new canvas of exactly this size, and reads its pixels (a saved mask onto its photo). */
+function pixelsAt(image: CanvasImageSource, width: number, height: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error(t("This device can't edit pictures."));
+  ctx.drawImage(image, 0, 0, width, height);
+  return ctx.getImageData(0, 0, width, height);
+}
+
+/** The mask as a black and white PNG at the photo's size: white keeps colour. Lossless, so it comes back exactly. */
+async function maskToPng(mask: Uint8Array, width: number, height: number): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error(t("This device can't edit pictures."));
+  const img = ctx.createImageData(width, height);
+  for (let p = 0, i = 0; p < mask.length; p++, i += 4) { img.data[i] = img.data[i + 1] = img.data[i + 2] = mask[p]!; img.data[i + 3] = 255; }
+  ctx.putImageData(img, 0, 0);
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/png"));
+}
 
 /** Draws a decoded picture into a new canvas no larger than `side` on its longest edge, and reads its pixels. */
 function pixelsOf(image: CanvasImageSource, side: number) {
@@ -73,17 +126,23 @@ function pixelsOf(image: CanvasImageSource, side: number) {
  * original. Two fingers zoom and move the photo (one finger paints), so small holds on a photo of a whole sector can
  * be painted precisely. The result becomes the boulder's photo only when the form is saved; cancelling leaves the
  * form as it was.
+ *
+ * With `resume` (the boulder was highlighted before) it opens straight on the photo, mask, colour and outline as they
+ * were left, not on a new automatic guess.
  */
-export function HoldHighlighter({ sources, initialSourceId, initialColor, onCancel, onDone }: {
+export function HoldHighlighter({ sources, initialSourceId, initialColor, resume, onCancel, onDone }: {
   sources: HighlightSource[];
   initialSourceId?: string;
   initialColor: HoldColor | "";
+  resume?: HighlightResume;
   onCancel: () => void;
-  onDone: (photo: Blob, color: HoldColor) => void;
+  onDone: (photo: Blob, color: HoldColor, result: HighlightResult) => void;
 }) {
   const [sourceId, setSourceId] = useState(initialSourceId ?? sources[0]?.id ?? "");
   const [color, setColor] = useState<HoldColor | "">(initialColor);
-  const [phase, setPhase] = useState<Phase>({ name: "setup" });
+  const [phase, setPhase] = useState<Phase>(resume ? { name: "working" } : { name: "setup" });
+  // Going on from a saved highlight: its photo stays the one it was made from (null source id when handed back).
+  const resumed = useRef(false);
   const [tool, setTool] = useState<Tool>("add");
   const [brush, setBrush] = useState(BRUSH_DEFAULT);
   const [showOriginal, setShowOriginal] = useState(false);
@@ -189,7 +248,41 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     try { localStorage.setItem(OUTLINE_KEY, JSON.stringify(outline)); } catch { /* not kept: the default next time */ }
   }, [outline]);
 
+  /** Opens the saved highlight: its photo, its mask exactly as it was left, its colour and outline. */
+  useEffect(() => {
+    if (!resume) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { source, mask } = await resume.load();
+        const picture = await decodeImage(source);
+        const { ctx, data } = pixelsOf(picture.image, WORK_SIDE);
+        picture.release();
+        const saved = await decodeImage(mask);
+        const maskPixels = pixelsAt(saved.image, data.width, data.height);
+        saved.release();
+        const m = new Uint8Array(data.width * data.height);
+        for (let p = 0; p < m.length; p++) m[p] = maskPixels.data[p * 4]! >= 128 ? 255 : 0;
+        if (cancelled) return;
+        // The automatic guess, for "Automatic result" only: what opens is what was saved.
+        const auto = detectHolds(data.data, data.width, data.height, resume.color);
+        work.current = { blob: source, src: data, out: ctx.createImageData(data.width, data.height), mask: m, auto, undo: [], color: resume.color };
+        resumed.current = true;
+        setColor(resume.color);
+        if (resume.outline) setOutline(resume.outline);
+        setUndoCount(0);
+        setView({ scale: 1, x: 0, y: 0 });
+        setPhase({ name: "edit" });
+      } catch {
+        if (!cancelled) setPhase({ name: "error", message: t("The holds highlighted before couldn't be opened. Start again from a photo of the wall.") });
+      }
+    })();
+    return () => { cancelled = true; };
+    // Once, when the editor opens.
+  }, []);
+
   async function generate() {
+    resumed.current = false;
     const source = sources.find((s) => s.id === sourceId);
     if (!source || !color) return;
     setPhase({ name: "working" });
@@ -368,7 +461,9 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
       ctx.putImageData(out, 0, 0);
       const blob = await new Promise<Blob>((resolve, reject) =>
         full.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/jpeg", 0.86));
-      onDone(blob, color);
+      // Kept with the boulder so the next edit starts from here: the mask as it is now, the colour, the outline.
+      const mask = await maskToPng(w.mask, w.src.width, w.src.height);
+      onDone(blob, color, { mask, settings: highlightSettings(color, outlineRef.current), sourceId: resumed.current ? null : sourceId });
     } catch (e) {
       setPhase({ name: "error", message: e instanceof Error && e.message ? e.message : t("Couldn't prepare the picture. Try again.") });
     }

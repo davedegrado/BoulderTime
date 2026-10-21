@@ -62,6 +62,22 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
         return File(content, contentType);
     }
 
+    /// <summary>The original photo a highlighted photo was made from (staff), to go on editing it.</summary>
+    [HttpGet("api/boulders/{boulderId:guid}/highlight/source"), Authorize]
+    public async Task<IActionResult> HighlightSource(Guid boulderId, CancellationToken ct)
+    {
+        var (content, contentType) = await boulders.HighlightFileAsync(boulderId, mask: false, ct);
+        return File(content, contentType);
+    }
+
+    /// <summary>The mask of a highlighted photo (staff): white where the holds keep their colour.</summary>
+    [HttpGet("api/boulders/{boulderId:guid}/highlight/mask"), Authorize]
+    public async Task<IActionResult> HighlightMask(Guid boulderId, CancellationToken ct)
+    {
+        var (content, contentType) = await boulders.HighlightFileAsync(boulderId, mask: true, ct);
+        return File(content, contentType);
+    }
+
     [HttpPut("api/boulders/{boulderId:guid}"), Authorize]
     public Task<BoulderDetailDto> Update(Guid boulderId, [FromBody] SaveBoulderRequest request, CancellationToken ct) =>
         boulders.UpdateAsync(boulderId, request, ct);

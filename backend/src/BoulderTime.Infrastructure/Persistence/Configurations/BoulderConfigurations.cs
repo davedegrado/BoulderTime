@@ -56,6 +56,9 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.PhotoPath).HasMaxLength(512).IsRequired();
+        b.Property(x => x.HighlightSourcePath).HasMaxLength(512);
+        b.Property(x => x.HighlightMaskPath).HasMaxLength(512);
+        b.Property(x => x.HighlightSettings).HasMaxLength(Boulder.HighlightSettingsMaxLength);
         b.Property(x => x.ThumbnailPath).HasMaxLength(512);
         b.Property(x => x.Name).HasMaxLength(Boulder.NameMaxLength);
         b.Property(x => x.HoldColor).HasConversion<string>().HasMaxLength(16).IsRequired();

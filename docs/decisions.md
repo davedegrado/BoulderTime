@@ -1107,3 +1107,14 @@ drawn — a Euclidean distance transform of the selection, the line lying just o
 and a thin light or dark edge for contrast — and never kept apart from the mask, so brushing in or out moves it at
 once and it can't double up. While painting only the stroke's box (widened by the outline's reach) is redrawn. The
 saved picture carries the outline as shown; the outline choice is remembered on the device, the mask is not stored.
+
+**Going on from a highlight, and an optional card picture (ADR-057, continued).** A highlighted photo is saved with
+what it was made from, so the next edit opens where it was left (not on a new automatic guess): three nullable
+columns on `boulders` — `highlight_source_path` (the wall photo, which the boulder only borrows, or an original
+uploaded for it), `highlight_mask_path` (a black and white PNG next to the photo, at the photo's size) and
+`highlight_settings` (hold colour and outline, JSON). Staff receive them on the boulder; `GET
+/api/boulders/{id}/highlight/source|mask` hands the files to them. A save with a highlight replaces the old one (old
+mask and own original deleted); a new photo without one clears it (an older app, a photo picked instead); deleting
+the boulder deletes them. A wall photo a boulder was highlighted from is kept when the sector gets a new one. Older
+apps never send a highlight and see no change. The card picture is optional: with no part chosen it is a small
+picture of the whole photo (also for a wall photo), and "Use the whole photo" goes back to it after a part was cut out.

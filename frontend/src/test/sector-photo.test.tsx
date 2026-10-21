@@ -17,7 +17,7 @@ vi.mock("@/lib/api", () => {
     if (!handler) throw new Error(`No mock for ${method} ${path}`);
     return handler(body);
   };
-  return { api: { get: call("GET"), post: call("POST"), put: call("PUT"), patch: call("PATCH"), delete: call("DELETE") } };
+  return { api: { get: call("GET"), post: call("POST"), put: call("PUT"), patch: call("PATCH"), delete: call("DELETE"), blob: call("BLOB") } };
 });
 
 import { SectorPhotoPanel } from "@/features/gyms/SectorPhotoPanel";
@@ -92,6 +92,34 @@ describe("Setting a boulder on its sector's wall photo", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("offers to go on from the holds highlighted before, and keeps them when only other things change", async () => {
+    setup();
+    const settings = JSON.stringify({ color: "YELLOW", outline: { on: true, color: "red", level: 2 } });
+    reply("GET", "/api/boulders/b1", {
+      id: "b1", gymId: "g1", gymName: "Crimp Factory", gymSlug: "crimp", sectorId: "s1", sectorName: "Cave", photoUrl: "/img/b1.jpg", photoPath: "gyms/g1/boulders/b1.jpg",
+      thumbnailUrl: "/img/b1.thumb.jpg", holdColor: "YELLOW", grades: [], setter: null, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null,
+      viewerRole: "STAFF", rating: { average: null, count: 0 }, viewer: null, isFollowing: false, communityVideosEnabled: false, canAddOfficialBeta: true,
+      highlight: { sourcePath: wallPath, maskPath: "gyms/g1/boulders/m.mask.png", settings },
+    });
+    reply("GET", "/api/boulders/b1/beta", null);
+    reply("GET", "/api/settings/videos", { uploadsEnabled: true, maxUploadMegabytes: 50 });
+    reply("PUT", "/api/boulders/b1", (body?: unknown) => body);
+    renderAt("/manage/crimp/boulders/b1/edit", "/manage/:slug", <ManageLayout />, <Route path="boulders/:boulderId/edit" element={<BoulderEditorPage />} />);
+
+    expect(await screen.findByRole("button", { name: "Edit the highlighted holds" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start again from a photo" })).toBeInTheDocument();
+    // A cut-out card picture can go back to the whole photo.
+    expect(screen.getByRole("button", { name: "Use the whole photo" })).toBeInTheDocument();
+
+    // Only the name changes: the photo and its highlight stay as they are (nothing sent replaces them).
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "La Fessura");
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")).toBeDefined());
+    const sent = calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")!.body as Record<string, unknown>;
+    expect(sent.photoPath).toBe("gyms/g1/boulders/b1.jpg");
+    expect(sent).not.toHaveProperty("highlight");
+  });
+
   it("explains that a wall photo is needed when no sector has one", async () => {
     setup();
     reply("GET", "/api/gyms/g1/sectors", [sector()]);
@@ -100,8 +128,10 @@ describe("Setting a boulder on its sector's wall photo", () => {
     expect(screen.queryByRole("button", { name: "Highlight the holds" })).not.toBeInTheDocument();
   });
 
-  it("offers the wall once the sector is chosen, opens the card picture choice, and saves the wall's path", async () => {
+  it("offers the wall once the sector is chosen, leaves the card picture optional, and saves the wall's path with a small picture of it", async () => {
     setup();
+    reply("BLOB", "/api/sectors/s1/photo", new Blob(["wall"], { type: "image/jpeg" }));
+    reply("POST", "/api/gyms/g1/boulder-photos", { ...ticket, path: "gyms/g1/boulders/whole.thumb.jpg" });
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
 
     const sectorSelect = await screen.findByRole("combobox", { name: "Sector *" });
@@ -109,9 +139,9 @@ describe("Setting a boulder on its sector's wall photo", () => {
     await userEvent.selectOptions(sectorSelect, "s1");
     await userEvent.click(screen.getByRole("button", { name: "Use the photo of Cave" }));
 
-    // Straight to choosing this boulder's part of the wall.
-    expect(screen.getByRole("heading", { name: "Card picture" })).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]!);
+    // The card picture is optional: nothing opens by itself, and the cards will show the whole photo.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText(/without it the cards show the whole photo/)).toBeInTheDocument();
     // Already set on it: nothing more to offer.
     expect(screen.queryByRole("button", { name: "Use the photo of Cave" })).not.toBeInTheDocument();
 
@@ -121,8 +151,9 @@ describe("Setting a boulder on its sector's wall photo", () => {
     await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")).toBeDefined());
     const saved = calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")!.body as { photoPath: string; thumbnailPath: string | null };
     expect(saved.photoPath).toBe(wallPath);
-    expect(saved.thumbnailPath).toBeNull();
-    // No photo of its own was uploaded.
-    expect(calls.some((c) => c.path === "/api/gyms/g1/boulder-photos")).toBe(false);
+    // A small picture of the whole wall for the lists, not the 1600 px photo; no photo of its own uploaded.
+    expect(saved.thumbnailPath).toBe("gyms/g1/boulders/whole.thumb.jpg");
+    const uploads = calls.filter((c) => c.path === "/api/gyms/g1/boulder-photos").map((c) => c.body as { thumbnail?: boolean });
+    expect(uploads).toEqual([expect.objectContaining({ thumbnail: true })]);
   });
 });

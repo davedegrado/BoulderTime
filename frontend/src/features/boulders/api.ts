@@ -53,7 +53,12 @@ export interface BoulderDetail extends BoulderSummary {
   thumbnailUrl?: string | null;
   /** Points staff set on this boulder by hand; only staff receive it. Null: it scores as its grade does. */
   pointsOverride?: number | null;
+  /** What its highlighted photo was made from, so staff go on from where they left it; only staff receive it. */
+  highlight?: BoulderHighlight | null;
 }
+
+/** "Highlight the holds" as it was saved: the original photo, the mask PNG, and the choices as JSON. */
+export interface BoulderHighlight { sourcePath: string; maskPath: string; settings: string }
 
 /** What deleting a boulder would take with it. `sends` is what it would NOT take. */
 export interface DeletionImpact { sends: number; comments: number; videos: number; hasBeta: boolean }
@@ -77,6 +82,8 @@ export interface SaveBoulderInput {
   name: string;
   /** Points set by hand; 0 goes back to the grade's. */
   points: number;
+  /** Sent with a highlighted photo; left out keeps what the boulder has while its photo stays the same. */
+  highlight?: BoulderHighlight | null;
 }
 
 export interface RemoveResult { removed: number; sectors: { sectorId: string; sectorName: string; removed: number }[] }
@@ -136,6 +143,30 @@ export async function putToTicket(ticket: UploadTicket, blob: Blob) {
  * read its pixels to cut the card picture out, and the storage's own answer doesn't always allow that.
  */
 export const fetchBoulderPhoto = (boulderId: string): Promise<Blob> => api.blob(`/api/boulders/${boulderId}/photo`);
+
+/** The original photo and the mask of a saved highlight, to go on editing it on the device. */
+export async function fetchHighlight(boulderId: string): Promise<{ source: Blob; mask: Blob }> {
+  const [source, mask] = await Promise.all([api.blob(`/api/boulders/${boulderId}/highlight/source`), api.blob(`/api/boulders/${boulderId}/highlight/mask`)]);
+  return { source, mask };
+}
+
+/** Uploads the mask of a highlighted photo (a PNG). Returns its storage path. */
+export async function uploadHighlightMask(gymId: string, mask: Blob): Promise<string> {
+  const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: "image/png", sizeBytes: mask.size, mask: true });
+  await putToTicket(ticket, mask);
+  return ticket.path;
+}
+
+/** Uploads a photo as it is prepared for boulders, with no card picture: the original a highlight was made from. */
+export async function uploadOriginalPhoto(gymId: string, file: Blob): Promise<string> {
+  const blob = await prepareImage(file);
+  const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: blob.type || file.type, sizeBytes: blob.size });
+  await putToTicket(ticket, blob);
+  return ticket.path;
+}
+
+/** A card picture of the whole photo, small enough for lists: what the cards show when staff don't choose a part. */
+export const wholeThumbnail = (photo: Blob) => prepareImage(photo, { maxSide: 480, quality: 0.75, force: true });
 
 /** Uploads a card picture already made on the device (the part of the photo staff chose). */
 export async function uploadBoulderThumbnail(gymId: string, thumb: Blob): Promise<string> {

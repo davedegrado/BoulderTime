@@ -56,6 +56,16 @@ public class Boulder : IAuditable
     /// the climbers who tested it, but score nothing and count in no leaderboard. Null for every ordinary boulder.
     /// </summary>
     public DateTimeOffset? BetaTestAt { get; private set; }
+    /// <summary>
+    /// "Highlight the holds", kept so staff can go on from where they left it: the photo the holds were highlighted on
+    /// (a sector's wall photo, which the boulder only borrows, or an original of its own), the mask of what keeps its
+    /// colour (a PNG next to the boulder's photo), and the choices made (hold colour, outline) as JSON. All null when the
+    /// boulder's photo isn't a highlighted one. The photo itself is the finished picture.
+    /// </summary>
+    public string? HighlightSourcePath { get; private set; }
+    public string? HighlightMaskPath { get; private set; }
+    public string? HighlightSettings { get; private set; }
+    public const int HighlightSettingsMaxLength = 500;
     public Guid? RemovedByUserId { get; private set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -92,6 +102,22 @@ public class Boulder : IAuditable
         PhotoPath = photoPath;
         HoldColor = holdColor;
         SetterUserId = setterUserId;
+        return obsolete;
+    }
+
+    /// <summary>
+    /// Sets, replaces or (all null) clears what the highlighted photo was made from.
+    /// </summary>
+    /// <returns>Storage paths no longer used: the old mask, and the old original when it was the boulder's own.</returns>
+    public IReadOnlyList<string> SetHighlight(string? sourcePath, string? maskPath, string? settings)
+    {
+        var obsolete = new List<string>();
+        if (HighlightMaskPath is not null && HighlightMaskPath != maskPath) obsolete.Add(HighlightMaskPath);
+        if (HighlightSourcePath is not null && HighlightSourcePath != sourcePath && !Sector.IsSectorPhoto(HighlightSourcePath))
+            obsolete.Add(HighlightSourcePath);
+        HighlightSourcePath = sourcePath;
+        HighlightMaskPath = maskPath;
+        HighlightSettings = settings;
         return obsolete;
     }
 
@@ -161,6 +187,7 @@ public class Boulder : IAuditable
         var obsolete = new List<string>();
         if (OwnsPhoto) obsolete.Add(PhotoPath);
         if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
+        obsolete.AddRange(SetHighlight(null, null, null));
         PhotoPath = string.Empty;
         ThumbnailPath = null;
         Status = BoulderStatus.Deleted;
