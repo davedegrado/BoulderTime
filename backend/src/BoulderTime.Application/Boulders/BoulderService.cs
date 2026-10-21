@@ -16,6 +16,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
     public const long MaxThumbnailBytes = 512 * 1024;
+    public const long MaxMaskBytes = 2 * 1024 * 1024;
     internal static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp",
@@ -182,7 +183,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             await CanAddBetaAsync(gym, b.Id, ct),
             b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath),
             b.Intensity, tags, completions,
-            b.Name, BoulderReader.PointsOf(scales, b, grades), role is null ? null : b.PointsOverride);
+            b.Name, BoulderReader.PointsOf(scales, b, grades), role is null ? null : b.PointsOverride,
+            role is null || b.HighlightMaskPath is null ? null : new BoulderHighlightDto(b.HighlightSourcePath, b.HighlightMaskPath, b.HighlightSettings));
     }
 
     /// <summary>
@@ -208,6 +210,15 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     {
         await access.RequireRoleAsync(gymId, GymRole.Staff, ct);
         var thumbnail = r.Thumbnail == true;
+        if (r.Mask == true)
+        {
+            new Validator()
+                .Check(string.Equals(r.ContentType, "image/png", StringComparison.OrdinalIgnoreCase), "contentType", "The highlight mask must be a PNG.")
+                .Check(r.SizeBytes is > 0 && r.SizeBytes <= MaxMaskBytes, "sizeBytes", $"The highlight mask must be under {MaxMaskBytes / 1024 / 1024} MB.")
+                .ThrowIfInvalid();
+            var maskPath = $"{PhotoPrefix(gymId)}{Guid.NewGuid():N}.mask.png";
+            return await storage.CreateUploadTicketAsync(StorageBuckets.BoulderImages, maskPath, "image/png", MaxMaskBytes, ct) with { Resumable = null };
+        }
         var max = thumbnail ? MaxThumbnailBytes : MaxPhotoBytes;
         new Validator()
             .Check(r.ContentType is not null && PhotoTypes.ContainsKey(r.ContentType), "contentType", "Upload a JPEG, PNG or WebP photo.")
@@ -227,6 +238,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
 
         var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity);
         valid.ApplyNameAndPoints(boulder);
+        if (valid.Highlight is { } h) boulder.SetHighlight(h.SourcePath, h.MaskPath, h.Settings);
         db.Boulders.Add(boulder);
         foreach (var tagId in valid.TagIds ?? []) db.BoulderTags.Add(BoulderTag.Create(boulder.Id, tagId));
         foreach (var (systemId, valueId) in valid.Grades)
@@ -272,14 +284,19 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         // regrade. Only a grade it doesn't already have has to be one in use.
         var currentValueIds = await db.BoulderGrades.AsNoTracking().Where(g => g.BoulderId == boulderId && g.Source == GradeSource.Staff)
             .Select(g => g.GradeValueId).ToListAsync(ct);
-        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, currentValueIds, ct);
+        var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, currentValueIds, ct, boulder);
         var userId = currentUser.RequireUserId();
 
         var changes = new List<Localization.NotificationTexts.BoulderChange>();
         if (boulder.SectorId != valid.SectorId) changes.Add(Localization.NotificationTexts.BoulderChange.Sector);
         if (boulder.HoldColor != valid.HoldColor) changes.Add(Localization.NotificationTexts.BoulderChange.HoldColor);
         if (boulder.PhotoPath != valid.PhotoPath) changes.Add(Localization.NotificationTexts.BoulderChange.Photo);
-        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity);
+        var photoChanged = boulder.PhotoPath != valid.PhotoPath;
+        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity).ToList();
+        // A highlight sent replaces the one there was; a new photo without one (an older app, a photo picked instead)
+        // leaves nothing to go back to.
+        if (valid.Highlight is { } highlight) obsolete.AddRange(boulder.SetHighlight(highlight.SourcePath, highlight.MaskPath, highlight.Settings));
+        else if (photoChanged) obsolete.AddRange(boulder.SetHighlight(null, null, null));
         // Naming a boulder or setting its points is not news for its followers either.
         valid.ApplyNameAndPoints(boulder);
         if (valid.TagIds is { } tagIds)
@@ -461,7 +478,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     // ---------- Helpers ----------
 
     private sealed record ValidBoulder(Guid SectorId, string PhotoPath, string? ThumbnailPath, HoldColor HoldColor, Guid? SetterUserId,
-        HashSet<(Guid SystemId, Guid ValueId)> Grades, BoulderIntensity? Intensity, IReadOnlyList<Guid>? TagIds, string? Name, int? Points)
+        HashSet<(Guid SystemId, Guid ValueId)> Grades, BoulderIntensity? Intensity, IReadOnlyList<Guid>? TagIds, string? Name, int? Points,
+        BoulderHighlightDto? Highlight)
     {
         /// <summary>Null name or points: what the boulder has stays (older apps don't send them).</summary>
         public void ApplyNameAndPoints(Boulder boulder)
@@ -472,7 +490,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     }
 
     private async Task<ValidBoulder> ValidateAsync(Guid gymId, SaveBoulderRequest r, string? currentPhotoPath, string? currentThumbnailPath,
-        IReadOnlyCollection<Guid> currentValueIds, CancellationToken ct)
+        IReadOnlyCollection<Guid> currentValueIds, CancellationToken ct, Boulder? current = null)
     {
         var v = new Validator();
         var photo = Input.Trimmed(r.PhotoPath);
@@ -495,7 +513,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             }
             else
             {
-                var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
+                var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.") && !photo.Contains(".mask.");
                 if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
                     v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
             }
@@ -552,10 +570,59 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
          .Check(name is null || !Community.ContentFilter.IsObjectionable(name), "name", Community.ContentFilter.Message)
          .Check(r.Points is null or (>= 0 and <= Boulder.MaxPoints), "points", $"Points go from 1 to {Boulder.MaxPoints}.");
 
+        // The highlight: files this gym has (already the boulder's, or just uploaded), and a small JSON object of choices.
+        BoulderHighlightDto? highlight = null;
+        if (r.Highlight is { } h)
+        {
+            var source = Input.Trimmed(h.SourcePath);
+            var mask = Input.Trimmed(h.MaskPath);
+            var settings = h.Settings?.Trim();
+            var ok = await HighlightFileOkAsync(gymId, source, current?.HighlightSourcePath, isMask: false, ct)
+                     && await HighlightFileOkAsync(gymId, mask, current?.HighlightMaskPath, isMask: true, ct)
+                     && settings is { Length: > 1 and <= Boulder.HighlightSettingsMaxLength } && IsJsonObject(settings);
+            if (ok) highlight = new BoulderHighlightDto(source, mask, settings);
+            else v.Check(false, "highlight", "The highlighted holds couldn't be saved. Highlight them again.");
+        }
+
         v.ThrowIfInvalid();
         // When the photo is unchanged, the domain keeps the existing thumbnail.
         return new ValidBoulder(r.SectorId!.Value, photo, thumbnail, r.HoldColor!.Value, r.SetterUserId,
-            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet(), r.Intensity, tagIds, name, r.Points);
+            choices.Select(c => (c.GradeSystemId!.Value, c.GradeValueId!.Value)).ToHashSet(), r.Intensity, tagIds, name, r.Points, highlight);
+    }
+
+    /// <summary>
+    /// A highlight's original (a wall photo of this gym's sectors, or a photo uploaded for the boulder) or its mask:
+    /// the one the boulder already has, or a file just uploaded to this gym's folders.
+    /// </summary>
+    private async Task<bool> HighlightFileOkAsync(Guid gymId, string path, string? currentPath, bool isMask, CancellationToken ct)
+    {
+        if (path.Length == 0 || path.Contains("..") || path.Contains('\\') || path.Contains(".thumb.")) return false;
+        if (path == currentPath) return true;
+        var prefix = !isMask && Domain.Gyms.Sector.IsSectorPhoto(path) ? Domain.Gyms.Sector.PhotoPrefix(gymId) : PhotoPrefix(gymId);
+        if (!path.StartsWith(prefix, StringComparison.Ordinal) || path.Contains(".mask.") != isMask) return false;
+        return await storage.ExistsAsync(StorageBuckets.BoulderImages, path, ct);
+    }
+
+    private static bool IsJsonObject(string text)
+    {
+        try { using var doc = System.Text.Json.JsonDocument.Parse(text); return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object; }
+        catch (System.Text.Json.JsonException) { return false; }
+    }
+
+    /// <summary>
+    /// The highlight's original photo or its mask, handed to the gym's staff through the API so the app can go on
+    /// editing it (reading the pixels of a public address isn't always allowed).
+    /// </summary>
+    public async Task<(byte[] Content, string ContentType)> HighlightFileAsync(Guid boulderId, bool mask, CancellationToken ct = default)
+    {
+        var boulder = await db.Boulders.AsNoTracking().FirstOrDefaultAsync(b => b.Id == boulderId, ct) ?? throw new NotFoundException("Boulder", boulderId);
+        if (boulder.Status == BoulderStatus.Deleted) throw new NotFoundException("Boulder", boulderId);
+        await access.RequireRoleAsync(boulder.GymId, GymRole.Staff, ct);
+        var path = mask ? boulder.HighlightMaskPath : boulder.HighlightSourcePath;
+        var bytes = path is null ? null : await storage.ReadAsync(StorageBuckets.BoulderImages, path, ct);
+        if (bytes is null) throw new NotFoundException("Highlight", boulderId);
+        var type = Path.GetExtension(path!).ToLowerInvariant() switch { ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg" };
+        return (bytes, type);
     }
 
 }

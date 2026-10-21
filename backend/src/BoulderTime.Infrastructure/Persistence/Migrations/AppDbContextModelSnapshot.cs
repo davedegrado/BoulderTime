@@ -45,6 +45,21 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("gym_id");
 
+                    b.Property<string>("HighlightMaskPath")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("highlight_mask_path");
+
+                    b.Property<string>("HighlightSettings")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("highlight_settings");
+
+                    b.Property<string>("HighlightSourcePath")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("highlight_source_path");
+
                     b.Property<string>("HoldColor")
                         .IsRequired()
                         .HasMaxLength(16)
