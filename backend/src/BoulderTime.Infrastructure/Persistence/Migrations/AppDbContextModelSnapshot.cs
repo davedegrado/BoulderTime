@@ -245,6 +245,77 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("gym_tags", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.PhotoRecompression", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<Guid?>("ByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("by_user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("File")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("file");
+
+                    b.Property<DateTimeOffset?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finalized_at");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<long>("NewBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("new_bytes");
+
+                    b.Property<string>("NewPath")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("new_path");
+
+                    b.Property<long>("OldBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("old_bytes");
+
+                    b.Property<string>("OldPath")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("old_path");
+
+                    b.Property<DateTimeOffset?>("RolledBackAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rolled_back_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_photo_recompressions");
+
+                    b.HasIndex("BoulderId")
+                        .HasDatabaseName("ix_photo_recompressions_boulder_id");
+
+                    b.HasIndex("ByUserId")
+                        .HasDatabaseName("ix_photo_recompressions_by_user_id");
+
+                    b.HasIndex("GymId", "CreatedAt")
+                        .HasDatabaseName("ix_photo_recompressions_gym_id_created_at");
+
+                    b.ToTable("photo_recompressions", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2386,6 +2457,29 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_gym_tags_gyms_gym_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Boulders.PhotoRecompression", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_recompressions_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("ByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_photo_recompressions_users_by_user_id");
+
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_photo_recompressions_gyms_gym_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Candidates.GymCandidate", b =>

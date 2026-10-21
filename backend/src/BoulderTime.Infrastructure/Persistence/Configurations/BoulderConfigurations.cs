@@ -75,6 +75,25 @@ internal sealed class BoulderConfiguration : IEntityTypeConfiguration<Boulder>
     }
 }
 
+internal sealed class PhotoRecompressionConfiguration : IEntityTypeConfiguration<PhotoRecompression>
+{
+    public void Configure(EntityTypeBuilder<PhotoRecompression> b)
+    {
+        b.ToTable("photo_recompressions");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.File).HasConversion<string>().HasMaxLength(16).IsRequired();
+        b.Property(x => x.OldPath).HasMaxLength(512).IsRequired();
+        b.Property(x => x.NewPath).HasMaxLength(512).IsRequired();
+        b.Ignore(x => x.IsOpen);
+        b.HasOne<Gym>().WithMany().HasForeignKey(x => x.GymId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.ByUserId).OnDelete(DeleteBehavior.SetNull);
+        b.HasIndex(x => new { x.GymId, x.CreatedAt });
+        b.HasIndex(x => x.BoulderId);
+    }
+}
+
 internal sealed class GymTagConfiguration : IEntityTypeConfiguration<GymTag>
 {
     public void Configure(EntityTypeBuilder<GymTag> b)

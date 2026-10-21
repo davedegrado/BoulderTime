@@ -35,6 +35,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<GradeSystem> GradeSystems => Set<GradeSystem>();
     public DbSet<GradeValue> GradeValues => Set<GradeValue>();
     public DbSet<Boulder> Boulders => Set<Boulder>();
+    public DbSet<PhotoRecompression> PhotoRecompressions => Set<PhotoRecompression>();
     public DbSet<BoulderGrade> BoulderGrades => Set<BoulderGrade>();
     public DbSet<GymTag> GymTags => Set<GymTag>();
     public DbSet<BoulderTag> BoulderTags => Set<BoulderTag>();

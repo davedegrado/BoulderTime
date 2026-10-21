@@ -28,6 +28,7 @@ public interface IAppDbContext
     DbSet<GradeSystem> GradeSystems { get; }
     DbSet<GradeValue> GradeValues { get; }
     DbSet<Boulder> Boulders { get; }
+    DbSet<PhotoRecompression> PhotoRecompressions { get; }
     DbSet<BoulderGrade> BoulderGrades { get; }
     DbSet<GymTag> GymTags { get; }
     DbSet<BoulderTag> BoulderTags { get; }
