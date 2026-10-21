@@ -56,6 +56,39 @@ describe("Highlighting the holds", () => {
     expect(cave.load).toHaveBeenCalledTimes(1);
   });
 
+  it("outlines the selected holds, follows the switch and the colour, and saves the outline without touching the selection", async () => {
+    localStorage.clear();
+    const onDone = vi.fn();
+    render(<HoldHighlighter sources={[wallOf("Cave")]} initialColor="YELLOW" onCancel={() => {}} onDone={onDone} />);
+    await userEvent.click(screen.getByRole("button", { name: "Show the preview" }));
+    await screen.findByRole("radio", { name: "Keep colour" });
+    // Just outside the yellow half (x 0–19): the red line; inside, the hold's own colour.
+    const px = (x: number, y = 10) => Array.from(drawn!.slice((y * W + x) * 4, (y * W + x) * 4 + 3));
+    await waitFor(() => expect(px(20)[0]).toBeGreaterThan(180));
+    expect(px(20)[1]).toBeLessThan(80);
+    expect(px(5)).toEqual([245, 200, 0]);
+
+    const toggle = screen.getByRole("button", { name: "Outline" });
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(toggle);
+    const off = px(20);
+    expect(off[0]).toBe(off[2]); // grey again: the line is gone
+    expect(px(5)).toEqual([245, 200, 0]); // and the selection is as it was
+    await userEvent.click(toggle);
+
+    await userEvent.click(screen.getByText("Outline colour and width"));
+    await userEvent.click(screen.getByRole("radio", { name: "White line" }));
+    await waitFor(() => expect(px(20)).toEqual([255, 255, 255]));
+    await userEvent.click(screen.getByRole("radio", { name: "Thick" }));
+    expect(JSON.parse(localStorage.getItem("bt:hold-outline")!)).toEqual({ on: true, color: "white", level: 3 });
+
+    // The saved picture carries the outline too.
+    await userEvent.click(screen.getAllByRole("button", { name: "Use this photo" })[0]!);
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(px(20)).toEqual([255, 255, 255]);
+    expect(px(5)).toEqual([245, 200, 0]);
+  });
+
   it("says when a photo can't be opened and lets staff try again", async () => {
     render(<HoldHighlighter sources={[wallOf("Cave", "image/heic")]} initialColor="RED" onCancel={() => {}} onDone={() => {}} />);
     await userEvent.click(screen.getByRole("button", { name: "Show the preview" }));

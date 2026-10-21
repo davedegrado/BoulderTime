@@ -1099,3 +1099,11 @@ told apart by brightness only, so on a white wall white holds need painting.
 **Back** returns to where the screen was opened from (`useGoBack`): history back when there is an in-app entry
 behind, otherwise the screen's natural parent, replacing the entry. Scroll positions are kept per history entry and
 restored when going back, including into a list still drawing. The section headers of Manage keep their "up" links.
+
+**Outline (ADR-057, continued).** The highlighted holds get a line around them (red by default; yellow, white,
+black, blue or green; thin, medium or thick, relative to the photo's size; switchable), so white holds on a light
+wall and black holds on a dark one can be told at a glance. It is derived from the mask every time the picture is
+drawn — a Euclidean distance transform of the selection, the line lying just outside it with a softened outer side
+and a thin light or dark edge for contrast — and never kept apart from the mask, so brushing in or out moves it at
+once and it can't double up. While painting only the stroke's box (widened by the outline's reach) is redrawn. The
+saved picture carries the outline as shown; the outline choice is remembered on the device, the mask is not stored.

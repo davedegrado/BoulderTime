@@ -209,3 +209,102 @@ export function composeArea(src: Uint8ClampedArray, width: number, mask: Uint8Ar
     }
   }
 }
+
+// ---- Outline: a line around the selected holds, derived from the mask every time it is drawn ----
+
+/** Colour of the outline and its width in photo pixels. */
+export interface OutlineStyle { rgb: [number, number, number]; width: number }
+
+/**
+ * How far the outline reaches outside the selection: the line, the thin contrasting edge beyond it, and the pixel
+ * where the edge fades out.
+ */
+export const outlineReach = (width: number) => width + haloOf(width) + 1;
+const haloOf = (width: number) => Math.max(1, Math.round(width / 3));
+
+/** The thin edge drawn just outside the line: light around a dark line, dark around a light one, so it shows on any wall. */
+const haloFor = ([r, g, b]: [number, number, number]): [number, number, number] =>
+  (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? [17, 17, 17] : [255, 255, 255];
+
+/** Squared Euclidean distance transform along one line (Felzenszwalb & Huttenlocher), in place on `f`. */
+function edt1d(f: Float64Array, n: number, v: Int32Array, z: Float64Array, d: Float64Array) {
+  let k = 0;
+  v[0] = 0;
+  z[0] = -Infinity;
+  z[1] = Infinity;
+  for (let q = 1; q < n; q++) {
+    let s = (f[q]! + q * q - (f[v[k]!]! + v[k]! * v[k]!)) / (2 * q - 2 * v[k]!);
+    while (s <= z[k]!) {
+      k--;
+      s = (f[q]! + q * q - (f[v[k]!]! + v[k]! * v[k]!)) / (2 * q - 2 * v[k]!);
+    }
+    k++;
+    v[k] = q;
+    z[k] = s;
+    z[k + 1] = Infinity;
+  }
+  k = 0;
+  for (let q = 0; q < n; q++) {
+    while (z[k + 1]! < q) k++;
+    d[q] = (q - v[k]!) * (q - v[k]!) + f[v[k]!]!;
+  }
+  for (let q = 0; q < n; q++) f[q] = d[q]!;
+}
+
+/**
+ * Draws the outline over `out` in one rectangle, after `out` has just been made again from the photo and the mask
+ * (never over a picture already outlined, so it can't thicken or double up). The line lies outside the selection,
+ * hugging it at the given width, its outer side softened over a pixel; beyond it a thin contrasting edge. The distance
+ * to the selection is measured on a region larger than the rectangle by the outline's reach, so a rectangle drawn
+ * after a brush stroke comes out exactly as the whole picture would.
+ */
+export function outlineArea(out: Uint8ClampedArray, width: number, height: number, mask: Uint8Array,
+  x0: number, y0: number, x1: number, y1: number, style: OutlineStyle) {
+  const w = Math.max(1, style.width), halo = haloOf(w), reach = outlineReach(w);
+  // The outline only exists within its reach of the selection: work out where the selection is first, and measure
+  // distances only around it. Same picture, a fraction of the work when the holds fill part of the photo.
+  let bx0 = width, by0 = height, bx1 = -1, by1 = -1;
+  for (let y = Math.max(0, y0 - reach); y < Math.min(height, y1 + reach); y++)
+    for (let x = Math.max(0, x0 - reach); x < Math.min(width, x1 + reach); x++)
+      if (mask[y * width + x]! >= 128) { if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y; }
+  if (bx1 < 0) return;
+  x0 = Math.max(x0, bx0 - reach); y0 = Math.max(y0, by0 - reach); x1 = Math.min(x1, bx1 + reach + 1); y1 = Math.min(y1, by1 + reach + 1);
+  if (x1 <= x0 || y1 <= y0) return;
+  const rx0 = Math.max(0, x0 - reach), ry0 = Math.max(0, y0 - reach), rx1 = Math.min(width, x1 + reach), ry1 = Math.min(height, y1 + reach);
+  const rw = rx1 - rx0, rh = ry1 - ry0;
+  const BIG = 1e12;
+  const f = new Float32Array(rw * rh);
+  for (let y = 0; y < rh; y++)
+    for (let x = 0; x < rw; x++) f[y * rw + x] = mask[(ry0 + y) * width + rx0 + x]! >= 128 ? 0 : BIG;
+  const n = Math.max(rw, rh);
+  const line = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1), d = new Float64Array(n);
+  for (let x = 0; x < rw; x++) {
+    for (let y = 0; y < rh; y++) line[y] = f[y * rw + x]!;
+    edt1d(line, rh, v, z, d);
+    for (let y = 0; y < rh; y++) f[y * rw + x] = line[y]!;
+  }
+  for (let y = 0; y < rh; y++) {
+    for (let x = 0; x < rw; x++) line[x] = f[y * rw + x]!;
+    edt1d(line, rw, v, z, d);
+    for (let x = 0; x < rw; x++) f[y * rw + x] = line[x]!;
+  }
+  const [lr, lg, lb] = style.rgb, [hr, hg, hb] = haloFor(style.rgb);
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const dist2 = f[(y - ry0) * rw + (x - rx0)]!;
+      if (dist2 === 0 || dist2 >= (reach + 1) * (reach + 1)) continue;
+      const dist = Math.sqrt(dist2);
+      const onLine = Math.min(1, Math.max(0, w + 0.5 - dist));
+      const onEdge = Math.min(1, Math.max(0, w + halo + 0.5 - dist)) - onLine;
+      if (onLine <= 0 && onEdge <= 0) continue;
+      const i = (y * width + x) * 4, keep = 1 - onLine - onEdge;
+      out[i] = out[i]! * keep + lr * onLine + hr * onEdge;
+      out[i + 1] = out[i + 1]! * keep + lg * onLine + hg * onEdge;
+      out[i + 2] = out[i + 2]! * keep + lb * onLine + hb * onEdge;
+    }
+  }
+}
+
+/** Outline width in photo pixels for a level (thin, medium, thick), relative to the photo so the saved picture looks the same at any size. */
+export const outlineWidth = (level: 1 | 2 | 3, width: number, height: number) =>
+  Math.max(2, Math.round(Math.max(width, height) * ({ 1: 0.0025, 2: 0.004, 3: 0.0065 } as const)[level]));

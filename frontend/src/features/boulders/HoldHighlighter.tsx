@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
-import { Check, Eraser, Eye, Hand, Maximize, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
-import { canDetect, compose, composeArea, detectHolds, featherMask, paintStroke } from "@/features/boulders/holdHighlight";
+import { canDetect, compose, composeArea, detectHolds, featherMask, outlineArea, outlineReach, outlineWidth, paintStroke, type OutlineStyle } from "@/features/boulders/holdHighlight";
 import { decodeImage } from "@/features/boulders/imageResize";
 import { clampView, fitted, fitView, MAX_ZOOM, pan, pinch, zoomAt, type Point, type Size, type View } from "@/features/boulders/zoomView";
 import { Button } from "@/components/Button";
@@ -18,6 +18,34 @@ const WORK_SIDE = 1600;
 const UNDO_LIMIT = 12;
 /** Brush diameter in screen pixels: the same size under the finger whatever the zoom, so zooming in paints finer. */
 const BRUSH_MIN = 6, BRUSH_MAX = 64, BRUSH_DEFAULT = 22;
+
+/** Colours for the outline: red first (it shows on white and on black walls alike), then a few for walls where it doesn't. */
+const OUTLINE_COLORS = [
+  { key: "red", hex: "#E0201B", rgb: [224, 32, 27], label: "Red line" },
+  { key: "yellow", hex: "#FFD400", rgb: [255, 212, 0], label: "Yellow line" },
+  { key: "white", hex: "#FFFFFF", rgb: [255, 255, 255], label: "White line" },
+  { key: "black", hex: "#111111", rgb: [17, 17, 17], label: "Black line" },
+  { key: "blue", hex: "#1E6BFF", rgb: [30, 107, 255], label: "Blue line" },
+  { key: "green", hex: "#19C44B", rgb: [25, 196, 75], label: "Green line" },
+] as const;
+type OutlineColor = (typeof OUTLINE_COLORS)[number]["key"];
+type OutlineLevel = 1 | 2 | 3;
+interface OutlineChoice { on: boolean; color: OutlineColor; level: OutlineLevel }
+const OUTLINE_DEFAULT: OutlineChoice = { on: true, color: "red", level: 2 };
+const OUTLINE_KEY = "bt:hold-outline";
+
+/** The outline as last chosen on this device: staff tend to keep the same look for a whole wall. */
+function readOutline(): OutlineChoice {
+  try {
+    const kept = JSON.parse(localStorage.getItem(OUTLINE_KEY) ?? "null") as Partial<OutlineChoice> | null;
+    if (!kept) return OUTLINE_DEFAULT;
+    return {
+      on: typeof kept.on === "boolean" ? kept.on : OUTLINE_DEFAULT.on,
+      color: OUTLINE_COLORS.some((c) => c.key === kept.color) ? kept.color! : OUTLINE_DEFAULT.color,
+      level: kept.level === 1 || kept.level === 2 || kept.level === 3 ? kept.level : OUTLINE_DEFAULT.level,
+    };
+  } catch { return OUTLINE_DEFAULT; }
+}
 
 type Phase = { name: "setup" } | { name: "working" } | { name: "edit" } | { name: "saving" } | { name: "error"; message: string };
 type Tool = "add" | "remove" | "move";
@@ -63,11 +91,14 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
   const [view, setView] = useState<View>({ scale: 1, x: 0, y: 0 });
   const [base, setBase] = useState<Size>({ w: 0, h: 0 });
   const [ring, setRing] = useState<Point | null>(null);
+  const [outline, setOutline] = useState<OutlineChoice>(readOutline);
 
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const work = useRef<{ blob: Blob; src: ImageData; out: ImageData; mask: Uint8Array; auto: Uint8Array; undo: Uint8Array[]; color: HoldColor } | null>(null);
   const showOriginalRef = useRef(false);
+  const outlineRef = useRef(outline);
+  outlineRef.current = outline;
   const viewRef = useRef(view);
   viewRef.current = view;
   // Photos already fetched, so changing the colour or trying again doesn't download the same wall twice.
@@ -108,25 +139,55 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     return () => observer?.disconnect();
   }, [phase.name]);
 
-  /** Redraws everything: after the guess, an undo, a new colour, the original/result switch. */
+  /** The outline as chosen, sized for a picture of this size; null when it is switched off. */
+  const outlineStyle = (width: number, height: number): OutlineStyle | null => {
+    const o = outlineRef.current;
+    if (!o.on) return null;
+    const c = OUTLINE_COLORS.find((x) => x.key === o.color) ?? OUTLINE_COLORS[0];
+    return { rgb: [...c.rgb] as [number, number, number], width: outlineWidth(o.level, width, height) };
+  };
+
+  /**
+   * Makes the picture again over a rectangle, from the untouched photo and the mask, then draws the outline the mask
+   * gives there. The mask is the only truth: the outline is never kept apart from it, so it can't drift from the
+   * selection, and never drawn over a picture already outlined.
+   */
+  function render(w: NonNullable<typeof work.current>, x0: number, y0: number, x1: number, y1: number) {
+    composeArea(w.src.data, w.src.width, w.mask, w.out.data, x0, y0, x1, y1);
+    const style = outlineStyle(w.src.width, w.src.height);
+    if (style) outlineArea(w.out.data, w.src.width, w.src.height, w.mask, x0, y0, x1, y1, style);
+  }
+  /** Redraws everything: after the guess, an undo, a new colour, the original/result switch, a new outline. */
   function drawAll() {
     const w = work.current, el = canvas.current;
     const ctx = el?.getContext("2d");
     if (!w || !el || !ctx) return;
     if (el.width !== w.src.width || el.height !== w.src.height) { el.width = w.src.width; el.height = w.src.height; }
     if (showOriginalRef.current) { ctx.putImageData(w.src, 0, 0); return; }
-    composeArea(w.src.data, w.src.width, w.mask, w.out.data, 0, 0, w.src.width, w.src.height);
+    render(w, 0, 0, w.src.width, w.src.height);
     ctx.putImageData(w.out, 0, 0);
   }
-  /** Redraws only what the brush has touched since the last frame. */
+  /**
+   * Redraws only what the brush has touched since the last frame — widened by the outline's reach, since a stroke moves
+   * the outline around it too (added to, or taken away from, the selection).
+   */
   function drawDirty() {
     const w = work.current, d = dirty.current, ctx = canvas.current?.getContext("2d");
     dirty.current = null;
     if (!w || !d || !ctx || showOriginalRef.current) return;
-    composeArea(w.src.data, w.src.width, w.mask, w.out.data, d.x0, d.y0, d.x1, d.y1);
-    ctx.putImageData(w.out, 0, 0, d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0);
+    const style = outlineStyle(w.src.width, w.src.height);
+    const reach = style ? outlineReach(style.width) : 0;
+    const x0 = Math.max(0, d.x0 - reach), y0 = Math.max(0, d.y0 - reach);
+    const x1 = Math.min(w.src.width, d.x1 + reach), y1 = Math.min(w.src.height, d.y1 + reach);
+    render(w, x0, y0, x1, y1);
+    ctx.putImageData(w.out, 0, 0, x0, y0, x1 - x0, y1 - y0);
   }
   useEffect(() => { showOriginalRef.current = showOriginal; drawAll(); }, [showOriginal, phase.name]);
+  // A new colour, width or switching it off only redraws: the selection stays as it is.
+  useEffect(() => {
+    drawAll();
+    try { localStorage.setItem(OUTLINE_KEY, JSON.stringify(outline)); } catch { /* not kept: the default next time */ }
+  }, [outline]);
 
   async function generate() {
     const source = sources.find((s) => s.id === sourceId);
@@ -299,6 +360,11 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
       picture.release();
       const out = ctx.createImageData(full.width, full.height);
       compose(data.data, full.width, full.height, featherMask(w.mask, w.src.width, w.src.height, 1), w.src.width, w.src.height, out.data);
+      // The outline goes into the saved picture as it is shown, from the same mask. Both are made from the photo at the
+      // same size, so the mask lies on the picture pixel for pixel.
+      const style = outlineStyle(full.width, full.height);
+      if (style && full.width === w.src.width && full.height === w.src.height)
+        outlineArea(out.data, full.width, full.height, w.mask, 0, 0, full.width, full.height, style);
       ctx.putImageData(out, 0, 0);
       const blob = await new Promise<Blob>((resolve, reject) =>
         full.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/jpeg", 0.86));
@@ -383,9 +449,15 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
                   <Hand aria-hidden />
                 </button>
               </div>
-              <button type="button" className={`highlighter__tool ${showOriginal ? "is-on" : ""}`} aria-pressed={showOriginal} onClick={() => setShowOriginal((v) => !v)}>
-                <Eye aria-hidden /> {t("Original")}
-              </button>
+              <div className="highlighter__pair">
+                <button type="button" className={`highlighter__tool ${showOriginal ? "is-on" : ""}`} aria-pressed={showOriginal} onClick={() => setShowOriginal((v) => !v)}>
+                  <Eye aria-hidden /> {t("Original")}
+                </button>
+                <button type="button" className={`highlighter__tool ${outline.on ? "is-on" : ""}`} aria-pressed={outline.on}
+                  onClick={() => setOutline((o) => ({ ...o, on: !o.on }))}>
+                  <CircleDashed aria-hidden /> {t("Outline")}
+                </button>
+              </div>
             </div>
             <label className="cropper__zoom highlighter__size">
               <span>{t("Brush size")}</span>
@@ -396,6 +468,25 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
               <button type="button" className="highlighter__tool" onClick={undo} disabled={undoCount === 0}><Undo2 aria-hidden /> {t("Undo")}</button>
               <button type="button" className="highlighter__tool" onClick={backToAutomatic}><RotateCcw aria-hidden /> {t("Automatic result")}</button>
             </div>
+            <details className="highlighter__recolor">
+              <summary>{t("Outline colour and width")}</summary>
+              <div className="highlighter__outline">
+                <div className="highlighter__colors" role="radiogroup" aria-label={t("Outline colour")}>
+                  {OUTLINE_COLORS.map((c) => (
+                    <button key={c.key} type="button" role="radio" aria-checked={outline.color === c.key} className="highlighter__color"
+                      disabled={!outline.on} onClick={() => setOutline((o) => ({ ...o, color: c.key }))} aria-label={t(c.label)} title={t(c.label)}>
+                      <span className="highlighter__swatch" style={{ background: c.hex }} aria-hidden />
+                    </button>
+                  ))}
+                </div>
+                <div className="highlighter__modes" role="radiogroup" aria-label={t("Outline width")}>
+                  {([[1, "Thin"], [2, "Medium"], [3, "Thick"]] as const).map(([level, label]) => (
+                    <button key={level} type="button" role="radio" aria-checked={outline.level === level} className="highlighter__mode"
+                      disabled={!outline.on} onClick={() => setOutline((o) => ({ ...o, level }))}>{t(label)}</button>
+                  ))}
+                </div>
+              </div>
+            </details>
             <details className="highlighter__recolor">
               <summary>{t("Another colour")}</summary>
               {colorPicker(detectAgain)}

@@ -1479,3 +1479,6 @@ button.manage-head__back { background: transparent; }
 .highlighter__size span { flex: none; }
 .highlighter__recolor summary { cursor: pointer; font-size: var(--bt-text-sm); color: rgb(255 255 255 / 0.8); padding: var(--bt-1) 0; }
 .highlighter__recolor .highlighter__colors { margin-top: var(--bt-2); }
+.highlighter__pair { display: inline-flex; gap: 6px; }
+.highlighter__outline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bt-2); margin-top: var(--bt-2); }
+.highlighter__color:disabled, .highlighter__mode:disabled { opacity: 0.4; cursor: default; }
