@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<GymCandidateService>();
         services.AddScoped<AdminService>();
         services.AddScoped<BetaTestService>();
+        services.AddScoped<PhotoRecompressionService>();
         services.AddScoped<GradingService>();
         services.AddScoped<BoulderService>();
         services.AddScoped<BoulderReader>();

@@ -121,6 +121,24 @@ public class Boulder : IAuditable
         return obsolete;
     }
 
+    /// <summary>
+    /// Puts a lighter copy of one of the boulder's files in place of the file it has now: the same picture, encoded
+    /// again. Only its own photo (not a wall photo, nor the original a highlight goes on from) and its card picture.
+    /// </summary>
+    /// <returns>False when the boulder no longer has <paramref name="from"/> there.</returns>
+    public bool SwapFile(PhotoFile file, string from, string to)
+    {
+        if (file == PhotoFile.Photo)
+        {
+            if (PhotoPath != from || !OwnsPhoto || PhotoPath == HighlightSourcePath) return false;
+            PhotoPath = to;
+            return true;
+        }
+        if (ThumbnailPath != from) return false;
+        ThumbnailPath = to;
+        return true;
+    }
+
     /// <summary>A photo of its own, as opposed to none or its sector's wall photo, which other boulders use too.</summary>
     private bool OwnsPhoto => PhotoPath.Length > 0 && !Sector.IsSectorPhoto(PhotoPath);
 
