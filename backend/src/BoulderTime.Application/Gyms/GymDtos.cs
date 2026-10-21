@@ -75,11 +75,14 @@ public sealed record MapZoneDto(IReadOnlyList<MapPoint> Points, MapPoint Label, 
 
 /// <param name="ActiveBoulders">Boulders on the wall in this sector.</param>
 /// <param name="NewThisWeek">Of those, the ones set in the last seven days.</param>
+/// <param name="ImageUrl">The sector's wall photo; null when it has none.</param>
+/// <param name="PhotoPath">The wall photo's storage path, which staff give a boulder to set it on that photo.</param>
 public sealed record SectorDto(Guid Id, Guid GymId, string Name, string? Description, string? ImageUrl, int SortOrder, bool IsActive, bool IsFollowing = false,
-    MapZoneDto? Zone = null, int ActiveBoulders = 0, int NewThisWeek = 0)
+    MapZoneDto? Zone = null, int ActiveBoulders = 0, int NewThisWeek = 0, string? PhotoPath = null)
 {
     public static SectorDto From(Sector s, bool isFollowing = false, int activeBoulders = 0, int newThisWeek = 0) =>
-        new(s.Id, s.GymId, s.Name, s.Description, s.ImageUrl, s.SortOrder, s.IsActive, isFollowing, MapZoneDto.FromJson(s.MapZone), activeBoulders, newThisWeek);
+        new(s.Id, s.GymId, s.Name, s.Description, s.ImageUrl, s.SortOrder, s.IsActive, isFollowing, MapZoneDto.FromJson(s.MapZone), activeBoulders, newThisWeek,
+            s.PhotoPath);
 }
 
 /// <summary>The outline to draw, or no points to take the sector off the plan. Without a label, it goes in the middle.</summary>

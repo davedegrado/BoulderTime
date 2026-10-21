@@ -16,7 +16,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
     public const long MaxThumbnailBytes = 512 * 1024;
-    private static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
+    internal static readonly Dictionary<string, string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["image/jpeg"] = "jpg", ["image/png"] = "png", ["image/webp"] = "webp",
     };
@@ -72,9 +72,90 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         }
 
         var total = await query.CountAsync(ct);
-        var boulders = await (status == BoulderStatus.Removed ? query.OrderByDescending(b => b.RemovedAt) : query.OrderByDescending(b => b.CreatedAt))
-            .Skip((page - 1) * size).Take(size).ToListAsync(ct);
+        List<Boulder> boulders;
+        if (q.Sort is { } sort)
+        {
+            var ids = await SortedPageAsync(gymId, query, status, sort, q.Order, page, size, ct);
+            var loaded = await db.Boulders.AsNoTracking().Where(b => ids.Contains(b.Id)).ToDictionaryAsync(b => b.Id, ct);
+            boulders = ids.Where(loaded.ContainsKey).Select(id => loaded[id]).ToList();
+        }
+        else
+        {
+            // No sort asked for (apps from before sorting existed): the order they have always had.
+            boulders = await (status == BoulderStatus.Removed ? query.OrderByDescending(b => b.RemovedAt) : query.OrderByDescending(b => b.CreatedAt))
+                .Skip((page - 1) * size).Take(size).ToListAsync(ct);
+        }
         return new PagedResult<BoulderSummaryDto>(await reader.SummariesAsync(boulders, ct), page, size, total);
+    }
+
+    /// <summary>
+    /// One page of the filtered list in the order asked for. Points and grades are worked out from the gym's scales,
+    /// not stored, so the order is decided here over the gym's matching boulders (a few hundred at most) — light rows
+    /// only — and just the page asked for is loaded in full.
+    /// </summary>
+    private async Task<List<Guid>> SortedPageAsync(Guid gymId, IQueryable<Boulder> query, BoulderStatus status, BoulderSort sort, SortDirection? order,
+        int page, int size, CancellationToken ct)
+    {
+        if (sort == BoulderSort.Removed && status != BoulderStatus.Removed) sort = BoulderSort.Set;
+        // Each sort's natural direction: sectors in the gym's order, most points first, easiest grade first, newest first.
+        var desc = order is { } o ? o == SortDirection.Desc : sort is BoulderSort.Points or BoulderSort.Set or BoulderSort.Removed;
+
+        var rows = await query.Select(b => new { b.Id, b.SectorId, b.CreatedAt, b.RemovedAt, b.PointsOverride, b.BetaTestAt }).ToListAsync(ct);
+        var sectorOrder = await db.Sectors.AsNoTracking().Where(s => s.GymId == gymId)
+            .Select(s => new { s.Id, s.SortOrder, s.Name }).ToDictionaryAsync(s => s.Id, ct);
+        (int Order, string Name) SectorKey(Guid id) => sectorOrder.TryGetValue(id, out var s) ? (s.SortOrder, s.Name) : (int.MaxValue, "");
+
+        Dictionary<Guid, List<(Guid SystemId, Guid ValueId)>> grades = [];
+        Leaderboards.GymScales scales = Leaderboards.GymScales.Empty;
+        Dictionary<Guid, int> ranks = [];
+        if (sort is BoulderSort.Points or BoulderSort.Grade)
+        {
+            var ids = rows.Select(r => r.Id).ToList();
+            grades = (await db.BoulderGrades.AsNoTracking().Where(g => ids.Contains(g.BoulderId) && g.Source == GradeSource.Staff)
+                    .Select(g => new { g.BoulderId, g.GradeSystemId, g.GradeValueId }).ToListAsync(ct))
+                .GroupBy(g => g.BoulderId).ToDictionary(g => g.Key, g => g.Select(x => (x.GradeSystemId, x.GradeValueId)).ToList());
+            scales = await points.ForGymAsync(gymId, ct);
+            var systemIds = scales.SystemOrder.ToList();
+            ranks = await db.GradeValues.AsNoTracking().Where(v => systemIds.Contains(v.GradeSystemId)).ToDictionaryAsync(v => v.Id, v => v.Rank, ct);
+        }
+        int? PointsKey(Guid id, int? pointsOverride, DateTimeOffset? betaTest) =>
+            betaTest is not null ? null : scales.PointsOf(pointsOverride, grades.GetValueOrDefault(id, []));
+        // The first of the gym's scales the boulder is graded in, then its place on that scale.
+        (int System, int Rank)? GradeKey(Guid id)
+        {
+            var mine = grades.GetValueOrDefault(id, []);
+            for (var i = 0; i < scales.SystemOrder.Count; i++)
+                foreach (var (systemId, valueId) in mine)
+                    if (systemId == scales.SystemOrder[i] && ranks.TryGetValue(valueId, out var rank)) return (i, rank);
+            return null;
+        }
+
+        var keyed = rows.Select(r => new
+        {
+            r.Id, Sector = SectorKey(r.SectorId), r.CreatedAt, r.RemovedAt,
+            Points = sort == BoulderSort.Points ? PointsKey(r.Id, r.PointsOverride, r.BetaTestAt) : null,
+            Grade = sort == BoulderSort.Grade ? GradeKey(r.Id) : null,
+        }).ToList();
+
+        var ordered = sort switch
+        {
+            BoulderSort.Sector => desc
+                ? keyed.OrderByDescending(r => r.Sector.Order).ThenByDescending(r => r.Sector.Name, StringComparer.CurrentCultureIgnoreCase)
+                : keyed.OrderBy(r => r.Sector.Order).ThenBy(r => r.Sector.Name, StringComparer.CurrentCultureIgnoreCase),
+            BoulderSort.Points => desc
+                ? keyed.OrderBy(r => r.Points is null).ThenByDescending(r => r.Points)
+                : keyed.OrderBy(r => r.Points is null).ThenBy(r => r.Points),
+            BoulderSort.Grade => desc
+                ? keyed.OrderBy(r => r.Grade is null).ThenByDescending(r => r.Grade?.System).ThenByDescending(r => r.Grade?.Rank)
+                : keyed.OrderBy(r => r.Grade is null).ThenBy(r => r.Grade?.System).ThenBy(r => r.Grade?.Rank),
+            BoulderSort.Removed => desc ? keyed.OrderByDescending(r => r.RemovedAt) : keyed.OrderBy(r => r.RemovedAt),
+            _ => desc ? keyed.OrderByDescending(r => r.CreatedAt) : keyed.OrderBy(r => r.CreatedAt),
+        };
+        // Ties settled the same way every time, so paging never shows a boulder twice or skips one.
+        if (sort != BoulderSort.Sector)
+            ordered = ordered.ThenBy(r => r.Sector.Order).ThenBy(r => r.Sector.Name, StringComparer.CurrentCultureIgnoreCase);
+        return ordered.ThenByDescending(r => r.CreatedAt).ThenBy(r => r.Id)
+            .Skip((page - 1) * size).Take(size).Select(r => r.Id).ToList();
     }
 
     public async Task<BoulderDetailDto> GetAsync(Guid boulderId, CancellationToken ct = default)
@@ -405,9 +486,19 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
 
         if (photo != currentPhotoPath)
         {
-            var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
-            if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
-                v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+            if (Domain.Gyms.Sector.IsSectorPhoto(photo))
+            {
+                // Set on a sector's wall photo: the one a sector of this gym has now. Older walls stay with the
+                // boulders already set on them, but new ones go on the current photo.
+                if (!await db.Sectors.AnyAsync(s => s.GymId == gymId && s.PhotoPath == photo, ct))
+                    v.Check(false, "photoPath", "That sector photo has been replaced. Choose the photo again.");
+            }
+            else
+            {
+                var wellFormed = photo.StartsWith(PhotoPrefix(gymId), StringComparison.Ordinal) && !photo.Contains("..") && !photo.Contains('\\') && !photo.Contains(".thumb.");
+                if (!wellFormed || !await storage.ExistsAsync(StorageBuckets.BoulderImages, photo, ct))
+                    v.Check(false, "photoPath", "The photo upload didn't complete. Upload it again.");
+            }
         }
 
         // The small picture for the cards: made on the device, from the whole photo or from the part staff chose.
