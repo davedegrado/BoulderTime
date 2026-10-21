@@ -1456,8 +1456,16 @@ button.manage-head__back { background: transparent; }
 .highlighter__color:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .highlighter__swatch { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.45); }
 .highlighter__error { margin: 0; padding: var(--bt-3); border-radius: var(--bt-radius-md); background: rgb(217 58 43 / 0.2); color: #ffd2cc; font-size: var(--bt-text-sm); }
-.highlighter__stage { position: relative; padding: var(--bt-2); }
-.highlighter__canvas { display: block; max-width: 100%; max-height: 100%; touch-action: none; border-radius: var(--bt-radius-sm); background: #222; cursor: crosshair; }
+/* The photo's box: nothing in it scrolls or zooms the page; the photo inside is moved and enlarged by a transform. */
+.highlighter__stage { position: relative; flex: 1; min-height: 0; margin: var(--bt-2); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: var(--bt-radius-sm); background: #161616; cursor: crosshair; }
+.highlighter__stage.is-move { cursor: grab; }
+.highlighter__canvas { position: absolute; left: 0; top: 0; display: block; max-width: none; transform-origin: 0 0; image-rendering: auto; pointer-events: none; }
+.highlighter__ring { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), inset 0 0 0 1px rgb(0 0 0 / 0.6); pointer-events: none; }
+.highlighter__zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.highlighter__zoom button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: rgb(26 26 26 / 0.75); color: #fff; cursor: pointer; }
+.highlighter__zoom button:disabled { opacity: 0.4; cursor: default; }
+.highlighter__zoom svg { width: 20px; height: 20px; }
+.highlighter__dot { flex: none; border-radius: 50%; background: #fff; max-width: 40px; max-height: 40px; }
 .highlighter__busy { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / 0.55); font-weight: 700; }
 .highlighter__controls { gap: var(--bt-2); }
 .highlighter__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bt-2); }

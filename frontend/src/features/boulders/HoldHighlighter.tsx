@@ -1,20 +1,26 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { Check, Eraser, Eye, Paintbrush, RotateCcw, Undo2, Wand2, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import { Check, Eraser, Eye, Hand, Maximize, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
-import { canDetect, compose, detectHolds, featherMask, paintStroke } from "@/features/boulders/holdHighlight";
+import { canDetect, compose, composeArea, detectHolds, featherMask, paintStroke } from "@/features/boulders/holdHighlight";
 import { decodeImage } from "@/features/boulders/imageResize";
+import { clampView, fitted, fitView, MAX_ZOOM, pan, pinch, zoomAt, type Point, type Size, type View } from "@/features/boulders/zoomView";
 import { Button } from "@/components/Button";
 import { t } from "@/i18n/i18n";
 
 /** A photo the holds can be highlighted on: a sector's wall, or the photo just picked for the boulder. */
 export interface HighlightSource { id: string; label: string; load: () => Promise<Blob> }
 
-/** Painting happens on a reduced copy (quick to redraw under a finger); the result is made at full size. */
-const PREVIEW_SIDE = 1024;
-const RESULT_SIDE = 1600;
-const UNDO_LIMIT = 20;
+/**
+ * Painted at the size the result is saved at: zoomed in on a small hold, the edge painted is the edge saved, not a
+ * blurred enlargement of a smaller copy. Wall photos are stored at 1600 px at most, so this is the photo as it is.
+ */
+const WORK_SIDE = 1600;
+const UNDO_LIMIT = 12;
+/** Brush diameter in screen pixels: the same size under the finger whatever the zoom, so zooming in paints finer. */
+const BRUSH_MIN = 6, BRUSH_MAX = 64, BRUSH_DEFAULT = 22;
 
 type Phase = { name: "setup" } | { name: "working" } | { name: "edit" } | { name: "saving" } | { name: "error"; message: string };
+type Tool = "add" | "remove" | "move";
 
 const sizeOf = (image: CanvasImageSource) =>
   "naturalWidth" in image ? { w: image.naturalWidth, h: image.naturalHeight } : { w: (image as ImageBitmap).width, h: (image as ImageBitmap).height };
@@ -36,7 +42,9 @@ function pixelsOf(image: CanvasImageSource, side: number) {
  * "Highlight the holds": staff pick a photo of the wall and the holds' colour; the holds of that colour stay in colour
  * and the rest turns grey. The automatic part is a first guess — the same colour on the wall may be another boulder's —
  * so staff then paint colour in or out with a brush, with undo, back to the automatic guess, and a look at the
- * original. The result becomes the boulder's photo only when the form is saved; cancelling leaves the form as it was.
+ * original. Two fingers zoom and move the photo (one finger paints), so small holds on a photo of a whole sector can
+ * be painted precisely. The result becomes the boulder's photo only when the form is saved; cancelling leaves the
+ * form as it was.
  */
 export function HoldHighlighter({ sources, initialSourceId, initialColor, onCancel, onDone }: {
   sources: HighlightSource[];
@@ -48,18 +56,32 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
   const [sourceId, setSourceId] = useState(initialSourceId ?? sources[0]?.id ?? "");
   const [color, setColor] = useState<HoldColor | "">(initialColor);
   const [phase, setPhase] = useState<Phase>({ name: "setup" });
-  const [mode, setMode] = useState<"add" | "remove">("add");
-  const [brush, setBrush] = useState(3);
+  const [tool, setTool] = useState<Tool>("add");
+  const [brush, setBrush] = useState(BRUSH_DEFAULT);
   const [showOriginal, setShowOriginal] = useState(false);
   const [undoCount, setUndoCount] = useState(0);
+  const [view, setView] = useState<View>({ scale: 1, x: 0, y: 0 });
+  const [base, setBase] = useState<Size>({ w: 0, h: 0 });
+  const [ring, setRing] = useState<Point | null>(null);
 
+  const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const work = useRef<{ blob: Blob; src: ImageData; mask: Uint8Array; auto: Uint8Array; undo: Uint8Array[]; color: HoldColor } | null>(null);
-  const stroke = useRef<{ x: number; y: number } | null>(null);
-  const frame = useRef(0);
+  const work = useRef<{ blob: Blob; src: ImageData; out: ImageData; mask: Uint8Array; auto: Uint8Array; undo: Uint8Array[]; color: HoldColor } | null>(null);
   const showOriginalRef = useRef(false);
+  const viewRef = useRef(view);
+  viewRef.current = view;
   // Photos already fetched, so changing the colour or trying again doesn't download the same wall twice.
   const fetched = useRef(new Map<string, Blob>());
+  // Fingers (or the mouse) on the photo, and what they are doing.
+  const pointers = useRef(new Map<number, Point>());
+  const gesture = useRef<
+    | { kind: "paint"; last: Point }
+    | { kind: "pan"; last: Point }
+    | { kind: "pinch"; start: { view: View; mid: Point; spread: number } }
+    | null
+  >(null);
+  const frame = useRef(0);
+  const dirty = useRef<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
@@ -67,19 +89,44 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     return () => { window.removeEventListener("keydown", onKey); window.cancelAnimationFrame(frame.current); };
   }, [onCancel]);
 
-  /** Redraws the preview from the untouched photo and the mask (edges softened once a stroke is finished). */
-  function draw(soft = true) {
+  const boxSize = (): Size => ({ w: box.current?.clientWidth ?? 0, h: box.current?.clientHeight ?? 0 });
+
+  /** Fits the photo in the box, and again whenever the box changes size (the phone turns). */
+  useLayoutEffect(() => {
+    if (phase.name !== "edit" && phase.name !== "saving") return;
+    const fit = () => {
+      const w = work.current;
+      const size = boxSize();
+      if (!w || !size.w || !size.h) return;
+      const b = fitted({ w: w.src.width, h: w.src.height }, size);
+      setBase(b);
+      setView((v) => (v.scale === 1 ? fitView(b, size) : clampView(v, b, size)));
+    };
+    fit();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
+    if (box.current) observer?.observe(box.current);
+    return () => observer?.disconnect();
+  }, [phase.name]);
+
+  /** Redraws everything: after the guess, an undo, a new colour, the original/result switch. */
+  function drawAll() {
     const w = work.current, el = canvas.current;
     const ctx = el?.getContext("2d");
     if (!w || !el || !ctx) return;
-    if (el.width !== w.src.width) { el.width = w.src.width; el.height = w.src.height; }
+    if (el.width !== w.src.width || el.height !== w.src.height) { el.width = w.src.width; el.height = w.src.height; }
     if (showOriginalRef.current) { ctx.putImageData(w.src, 0, 0); return; }
-    const out = ctx.createImageData(w.src.width, w.src.height);
-    compose(w.src.data, w.src.width, w.src.height, soft ? featherMask(w.mask, w.src.width, w.src.height, 1) : w.mask, w.src.width, w.src.height, out.data);
-    ctx.putImageData(out, 0, 0);
+    composeArea(w.src.data, w.src.width, w.mask, w.out.data, 0, 0, w.src.width, w.src.height);
+    ctx.putImageData(w.out, 0, 0);
   }
-  // The canvas appears with the editing phase, and the original/result switch redraws it.
-  useEffect(() => { showOriginalRef.current = showOriginal; draw(); }, [showOriginal, phase.name]);
+  /** Redraws only what the brush has touched since the last frame. */
+  function drawDirty() {
+    const w = work.current, d = dirty.current, ctx = canvas.current?.getContext("2d");
+    dirty.current = null;
+    if (!w || !d || !ctx || showOriginalRef.current) return;
+    composeArea(w.src.data, w.src.width, w.mask, w.out.data, d.x0, d.y0, d.x1, d.y1);
+    ctx.putImageData(w.out, 0, 0, d.x0, d.y0, d.x1 - d.x0, d.y1 - d.y0);
+  }
+  useEffect(() => { showOriginalRef.current = showOriginal; drawAll(); }, [showOriginal, phase.name]);
 
   async function generate() {
     const source = sources.find((s) => s.id === sourceId);
@@ -91,12 +138,13 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
       const blob = fetched.current.get(sourceId) ?? await source.load();
       fetched.current.set(sourceId, blob);
       const picture = await decodeImage(blob).catch(() => { throw new Error(t("This photo can't be opened here. Use a JPEG, PNG or WebP photo.")); });
-      const { data } = pixelsOf(picture.image, PREVIEW_SIDE);
+      const { ctx, data } = pixelsOf(picture.image, WORK_SIDE);
       picture.release();
       const auto = detectHolds(data.data, data.width, data.height, color);
-      work.current = { blob, src: data, mask: auto.slice(), auto, undo: [], color };
+      work.current = { blob, src: data, out: ctx.createImageData(data.width, data.height), mask: auto.slice(), auto, undo: [], color };
       setUndoCount(0);
       setShowOriginal(false);
+      setView({ scale: 1, x: 0, y: 0 });
       setPhase({ name: "edit" });
     } catch (e) {
       setPhase({ name: "error", message: e instanceof Error && e.message ? e.message : t("Couldn't prepare the picture. Try again.") });
@@ -111,38 +159,107 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     setUndoCount(w.undo.length);
   }
 
-  function toImage(e: PointerEvent<HTMLCanvasElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const w = work.current!;
-    return { x: ((e.clientX - rect.left) / rect.width) * w.src.width, y: ((e.clientY - rect.top) / rect.height) * w.src.height };
-  }
-  const radius = () => (Math.max(work.current!.src.width, work.current!.src.height) * brush) / 100 / 2;
+  // ---- Painting, zooming and moving ----
 
-  function onPointerDown(e: PointerEvent<HTMLCanvasElement>) {
-    if (!work.current || showOriginal) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+  const inBox = (e: PointerEvent | WheelEvent): Point => {
+    const r = box.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  /** A point of the box to a pixel of the photo, through the current zoom. */
+  const toImage = (p: Point): Point => {
+    const w = work.current!, v = viewRef.current;
+    const k = w.src.width / base.w;
+    return { x: ((p.x - v.x) / v.scale) * k, y: ((p.y - v.y) / v.scale) * k };
+  };
+  /** The brush's radius in photo pixels: its size on screen, through the zoom. */
+  const radius = () => (brush / 2) * (work.current!.src.width / (base.w * viewRef.current.scale));
+
+  function paint(from: Point, to: Point) {
+    const w = work.current!;
+    const r = radius();
+    paintStroke(w.mask, w.src.width, w.src.height, from, to, r, tool === "add" ? 255 : 0);
+    const x0 = Math.max(0, Math.floor(Math.min(from.x, to.x) - r - 1)), x1 = Math.min(w.src.width, Math.ceil(Math.max(from.x, to.x) + r + 1));
+    const y0 = Math.max(0, Math.floor(Math.min(from.y, to.y) - r - 1)), y1 = Math.min(w.src.height, Math.ceil(Math.max(from.y, to.y) + r + 1));
+    const d = dirty.current;
+    dirty.current = d ? { x0: Math.min(d.x0, x0), y0: Math.min(d.y0, y0), x1: Math.max(d.x1, x1), y1: Math.max(d.y1, y1) } : { x0, y0, x1, y1 };
+    window.cancelAnimationFrame(frame.current);
+    frame.current = window.requestAnimationFrame(drawDirty);
+  }
+
+  const twoFingers = () => {
+    const [a, b] = [...pointers.current.values()];
+    return { mid: { x: (a!.x + b!.x) / 2, y: (a!.y + b!.y) / 2 }, spread: Math.hypot(a!.x - b!.x, a!.y - b!.y) };
+  };
+
+  function onPointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (!work.current || phase.name !== "edit") return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const p = inBox(e);
+    pointers.current.set(e.pointerId, p);
+    if (pointers.current.size === 2) {
+      // The second finger turns a stroke just begun into a pinch: the stroke is taken back.
+      if (gesture.current?.kind === "paint") undo();
+      const { mid, spread } = twoFingers();
+      gesture.current = { kind: "pinch", start: { view: viewRef.current, mid, spread } };
+      setRing(null);
+      return;
+    }
+    if (pointers.current.size > 2) return;
+    if (tool === "move" || showOriginal) { gesture.current = { kind: "pan", last: p }; return; }
     remember();
-    const p = toImage(e);
-    stroke.current = p;
-    const w = work.current;
-    paintStroke(w.mask, w.src.width, w.src.height, p, p, radius(), mode === "add" ? 255 : 0);
-    draw(false);
+    const ip = toImage(p);
+    gesture.current = { kind: "paint", last: ip };
+    paint(ip, ip);
+    setRing(p);
   }
-  function onPointerMove(e: PointerEvent<HTMLCanvasElement>) {
-    const w = work.current, from = stroke.current;
-    if (!w || !from) return;
-    const p = toImage(e);
-    paintStroke(w.mask, w.src.width, w.src.height, from, p, radius(), mode === "add" ? 255 : 0);
-    stroke.current = p;
-    window.cancelAnimationFrame(frame.current);
-    frame.current = window.requestAnimationFrame(() => draw(false));
+
+  function onPointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (!work.current) return;
+    const p = inBox(e);
+    if (e.pointerType === "mouse" && !pointers.current.size) { setRing(tool === "move" || showOriginal ? null : p); return; }
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, p);
+    const g = gesture.current;
+    if (!g) return;
+    if (g.kind === "pinch" && pointers.current.size >= 2) {
+      const { mid, spread } = twoFingers();
+      setView(pinch(g.start, mid, spread, base, boxSize()));
+    } else if (g.kind === "pan") {
+      setView((v) => pan(v, p.x - g.last.x, p.y - g.last.y, base, boxSize()));
+      g.last = p;
+    } else if (g.kind === "paint") {
+      const ip = toImage(p);
+      paint(g.last, ip);
+      g.last = ip;
+      setRing(p);
+    }
   }
-  function onPointerUp() {
-    if (!stroke.current) return;
-    stroke.current = null;
-    window.cancelAnimationFrame(frame.current);
-    draw();
+
+  function onPointerUp(e: PointerEvent<HTMLDivElement>) {
+    pointers.current.delete(e.pointerId);
+    if (gesture.current?.kind === "pinch" && pointers.current.size === 1) {
+      // One finger left after a pinch: it moves the photo rather than painting by surprise.
+      const [last] = [...pointers.current.values()];
+      gesture.current = { kind: "pan", last: last! };
+      return;
+    }
+    if (pointers.current.size === 0) {
+      gesture.current = null;
+      if (e.pointerType !== "mouse") setRing(null);
+    }
   }
+
+  function onWheel(e: WheelEvent<HTMLDivElement>) {
+    if (!work.current) return;
+    setView((v) => zoomAt(v, v.scale * Math.pow(1.0015, -e.deltaY), inBox(e), base, boxSize()));
+  }
+  const zoomBy = (factor: number) => {
+    const size = boxSize();
+    setView((v) => zoomAt(v, v.scale * factor, { x: size.w / 2, y: size.h / 2 }, base, size));
+  };
+  const fitAll = () => setView(fitView(base, boxSize()));
+
+  // ---- Undo, automatic result, colour ----
 
   function undo() {
     const w = work.current;
@@ -150,14 +267,14 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     if (!w || !previous) return;
     w.mask = previous;
     setUndoCount(w.undo.length);
-    draw();
+    drawAll();
   }
   function backToAutomatic() {
     const w = work.current;
     if (!w) return;
     remember();
     w.mask = w.auto.slice();
-    draw();
+    drawAll();
   }
   /** Another colour: a new automatic guess, which can be undone like a stroke. */
   function detectAgain(next: HoldColor) {
@@ -168,7 +285,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     w.auto = detectHolds(w.src.data, w.src.width, w.src.height, next);
     w.mask = w.auto.slice();
     w.color = next;
-    draw();
+    drawAll();
   }
 
   async function confirm() {
@@ -178,7 +295,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
     await new Promise((r) => window.setTimeout(r, 30));
     try {
       const picture = await decodeImage(w.blob);
-      const { canvas: full, ctx, data } = pixelsOf(picture.image, RESULT_SIDE);
+      const { canvas: full, ctx, data } = pixelsOf(picture.image, WORK_SIDE);
       picture.release();
       const out = ctx.createImageData(full.width, full.height);
       compose(data.data, full.width, full.height, featherMask(w.mask, w.src.width, w.src.height, 1), w.src.width, w.src.height, out.data);
@@ -236,20 +353,34 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
 
       {editing && (
         <>
-          <div className="cropper__stage highlighter__stage">
-            <canvas ref={canvas} className={`highlighter__canvas ${showOriginal ? "" : `is-${mode}`}`}
-              aria-label={t("Paint over the photo to keep colour or turn it grey")}
-              onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} />
+          <div ref={box} className={`highlighter__stage is-${showOriginal ? "move" : tool}`}
+            aria-label={t("Paint over the photo to keep colour or turn it grey. Two fingers zoom and move it.")}
+            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+            onPointerLeave={(e) => { if (e.pointerType === "mouse" && !pointers.current.size) setRing(null); }} onWheel={onWheel}>
+            <canvas ref={canvas} className="highlighter__canvas"
+              style={{ width: base.w || undefined, height: base.h || undefined, transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
+            {ring && <span className="highlighter__ring" aria-hidden style={{ left: ring.x, top: ring.y, width: brush, height: brush }} />}
+            {/* Kept out of the painting: a tap on these must not leave a dab under them. */}
+            <div className="highlighter__zoom" role="group" aria-label={t("Zoom")} onPointerDown={(e) => e.stopPropagation()}>
+              <button type="button" onClick={() => zoomBy(1.6)} disabled={view.scale >= MAX_ZOOM} aria-label={t("Zoom in")}><ZoomIn aria-hidden /></button>
+              <button type="button" onClick={() => zoomBy(1 / 1.6)} disabled={view.scale <= 1} aria-label={t("Zoom out")}><ZoomOut aria-hidden /></button>
+              <button type="button" onClick={fitAll} disabled={view.scale <= 1} aria-label={t("Whole photo")}><Maximize aria-hidden /></button>
+            </div>
             {phase.name === "saving" && <div className="highlighter__busy" role="status">{t("Preparing photo…")}</div>}
           </div>
           <div className="cropper__controls highlighter__controls">
+            <p className="cropper__hint">{t("One finger paints, two fingers zoom and move the photo.")}</p>
             <div className="highlighter__row">
               <div className="highlighter__modes" role="radiogroup" aria-label={t("Brush")}>
-                <button type="button" role="radio" aria-checked={mode === "add"} className="highlighter__mode" onClick={() => setMode("add")}>
+                <button type="button" role="radio" aria-checked={tool === "add"} className="highlighter__mode" onClick={() => setTool("add")}>
                   <Paintbrush aria-hidden /> {t("Keep colour")}
                 </button>
-                <button type="button" role="radio" aria-checked={mode === "remove"} className="highlighter__mode" onClick={() => setMode("remove")}>
+                <button type="button" role="radio" aria-checked={tool === "remove"} className="highlighter__mode" onClick={() => setTool("remove")}>
                   <Eraser aria-hidden /> {t("Turn grey")}
+                </button>
+                <button type="button" role="radio" aria-checked={tool === "move"} className="highlighter__mode" onClick={() => setTool("move")}
+                  aria-label={t("Move")} title={t("Move")}>
+                  <Hand aria-hidden />
                 </button>
               </div>
               <button type="button" className={`highlighter__tool ${showOriginal ? "is-on" : ""}`} aria-pressed={showOriginal} onClick={() => setShowOriginal((v) => !v)}>
@@ -258,7 +389,8 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, onCanc
             </div>
             <label className="cropper__zoom highlighter__size">
               <span>{t("Brush size")}</span>
-              <input type="range" min={1} max={10} step={0.5} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
+              <input type="range" min={BRUSH_MIN} max={BRUSH_MAX} step={1} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
+              <span className="highlighter__dot" aria-hidden style={{ width: brush, height: brush }} />
             </label>
             <div className="highlighter__row">
               <button type="button" className="highlighter__tool" onClick={undo} disabled={undoCount === 0}><Undo2 aria-hidden /> {t("Undo")}</button>

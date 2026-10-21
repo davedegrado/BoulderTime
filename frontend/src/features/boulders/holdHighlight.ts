@@ -191,3 +191,21 @@ export function compose(src: Uint8ClampedArray, width: number, height: number, m
     }
   }
 }
+
+/**
+ * The result over one rectangle only (mask and photo the same size): what a brush stroke changed, redrawn without
+ * going over the whole photo, so painting stays smooth on a phone at full resolution.
+ */
+export function composeArea(src: Uint8ClampedArray, width: number, mask: Uint8Array, out: Uint8ClampedArray, x0: number, y0: number, x1: number, y1: number) {
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0, i = (y * width + x0) * 4; x < x1; x++, i += 4) {
+      const a = mask[y * width + x]! / 255;
+      const r = src[i]!, g = src[i + 1]!, b = src[i + 2]!;
+      const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+      out[i] = grey + (r - grey) * a;
+      out[i + 1] = grey + (g - grey) * a;
+      out[i + 2] = grey + (b - grey) * a;
+      out[i + 3] = src[i + 3]!;
+    }
+  }
+}
