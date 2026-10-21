@@ -1118,3 +1118,26 @@ mask and own original deleted); a new photo without one clears it (an older app,
 the boulder deletes them. A wall photo a boulder was highlighted from is kept when the sector gets a new one. Older
 apps never send a highlight and see no change. The card picture is optional: with no part chosen it is a small
 picture of the whole photo (also for a wall photo), and "Use the whole photo" goes back to it after a part was cut out.
+
+## ADR-058 · Lighter boulder pictures, and making the existing ones lighter
+
+**Context.** Photos taken with an iPhone came out of the device at about 680 KB (1600 px, JPEG 0.82), card pictures at
+about 100 KB (600×480, 0.8) and highlighted photos at about 540 KB (1600 px, 0.86): a boulder cost 0.7–1.4 MB of
+storage, and a list of 24 cards over 2 MB of download. The server has no image library, and every app reads the
+pictures by plain public URL, so a lighter picture has to be a lighter file of the same kind.
+
+**Decision.** From 1.1 the app stores a boulder's photo and its highlighted picture at 1280 px, JPEG 0.7, always
+encoded again (a small but heavy file no longer goes up as it is); the original a highlight is made from at 1280 px,
+0.8; card pictures at 480×384 (or 480 px for the whole photo), 0.7. The highlight is still worked out at 1600 px and
+its mask kept at that size; only the saved picture is scaled down. Wall photos, avatars, logos, floor plans and
+announcement pictures are unchanged. Measured on real phone photos: about half the bytes (photo −52%, highlighted
+−58%, card picture −49%), still JPEG, so every app and the website show them as before.
+
+Existing pictures are made lighter by a platform administrator, gym by gym, from Admin → Gyms → "Lighter pictures":
+the device reads each of the boulders' own photos and card pictures through the API (`GET
+/api/admin/gyms/{id}/lighter-pictures/{boulderId}/{PHOTO|THUMBNAIL}`), encodes it as above, uploads the copy and swaps
+it in (`POST …/lighter-pictures`), refused when it saves nothing or the boulder changed meanwhile. Every swap is
+recorded in `photo_recompressions` and the old file is kept, so `POST …/lighter-pictures/undo` puts the whole gym back
+(pictures staff changed since keep theirs). `POST …/lighter-pictures/confirm` deletes the old files, never one still
+in use; it can't be undone. Both take the gym's slug typed again. Wall photos and highlight originals are left alone
+(shared, and the original must keep matching its mask).

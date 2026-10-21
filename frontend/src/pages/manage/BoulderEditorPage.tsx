@@ -22,7 +22,7 @@ import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 import { BetaEditor } from "@/features/community/BetaEditor";
 import { ThumbnailCropper } from "@/features/boulders/ThumbnailCropper";
 import { HoldHighlighter, readHighlightSettings, type HighlightResult, type HighlightResume, type HighlightSource } from "@/features/boulders/HoldHighlighter";
-import { cropImage, type CropRect } from "@/features/boulders/imageResize";
+import { CARD_PICTURE, cropImage, type CropRect } from "@/features/boulders/imageResize";
 import { INTENSITIES, IntensityBars, intensityShort, type Intensity } from "@/features/boulders/intensity";
 import { useCreateTag, useGymTags } from "@/features/boulders/tags";
 
@@ -187,7 +187,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     try {
       // The photo just picked, the wall chosen, or the saved one, fetched again to cut the part out on this device.
       const source = file ?? (wall ? await fetchSectorPhoto(wall.sectorId) : await fetchBoulderPhoto(initial!.id));
-      const blob = await cropImage(source, rect);
+      const blob = await cropImage(source, rect, CARD_PICTURE);
       setThumb({ blob, url: URL.createObjectURL(blob) });
     } catch (err) {
       // The reason travels along: this is a staff tool, and "why" is what they'll be asked when they report it.

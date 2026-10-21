@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 // jsdom draws nothing: the photo is a 40×20 picture whose left half is yellow and right half is the grey wall, and the
 // canvas keeps pixels in memory so the real detection and composition run on them.
 vi.mock("@/features/boulders/imageResize", () => ({
+  BOULDER_PHOTO: { maxSide: 1280, quality: 0.7, force: true },
   decodeImage: vi.fn(async (blob: Blob) => {
     if (blob.type === "image/heic") throw new Error("unsupported");
     return { image: { naturalWidth: 40, naturalHeight: 20, kind: blob.type }, release: () => {} };

@@ -5,7 +5,7 @@ import type { PagedResult } from "@/lib/paging";
 import type { GymRole } from "@/lib/format";
 import type { GradeSystemType } from "@/features/grading/api";
 import type { HoldColor } from "@/features/boulders/holdColors";
-import { prepareImage } from "@/features/boulders/imageResize";
+import { HIGHLIGHT_SOURCE, WHOLE_CARD_PICTURE, prepareBoulderPhoto, prepareImage } from "@/features/boulders/imageResize";
 import { t } from "@/i18n/i18n";
 import type { Intensity } from "@/features/boulders/intensity";
 import type { BoulderSort } from "@/features/boulders/listView";
@@ -159,14 +159,14 @@ export async function uploadHighlightMask(gymId: string, mask: Blob): Promise<st
 
 /** Uploads a photo as it is prepared for boulders, with no card picture: the original a highlight was made from. */
 export async function uploadOriginalPhoto(gymId: string, file: Blob): Promise<string> {
-  const blob = await prepareImage(file);
+  const blob = await prepareImage(file, HIGHLIGHT_SOURCE);
   const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: blob.type || file.type, sizeBytes: blob.size });
   await putToTicket(ticket, blob);
   return ticket.path;
 }
 
 /** A card picture of the whole photo, small enough for lists: what the cards show when staff don't choose a part. */
-export const wholeThumbnail = (photo: Blob) => prepareImage(photo, { maxSide: 480, quality: 0.75, force: true });
+export const wholeThumbnail = (photo: Blob) => prepareImage(photo, WHOLE_CARD_PICTURE);
 
 /** Uploads a card picture already made on the device (the part of the photo staff chose). */
 export async function uploadBoulderThumbnail(gymId: string, thumb: Blob): Promise<string> {
@@ -176,13 +176,13 @@ export async function uploadBoulderThumbnail(gymId: string, thumb: Blob): Promis
 }
 
 /**
- * Prepares the full photo (≤1600 px) and a list thumbnail (≤480 px) on the device and uploads both. With a
+ * Prepares the full photo (≤1280 px) and a list thumbnail (≤480 px) on the device and uploads both. With a
  * thumbnail given (the part of the photo staff chose), that one is uploaded instead of a reduced whole photo.
  * The thumbnail is best-effort: if it fails, the boulder still saves with the full photo.
  */
 export async function uploadBoulderPhoto(gymId: string, file: File, onStage?: (stage: "processing" | "uploading") => void, chosenThumbnail?: Blob | null): Promise<{ path: string; thumbnailPath: string | null }> {
   onStage?.("processing");
-  const blob = await prepareImage(file);
+  const blob = await prepareBoulderPhoto(file);
   const contentType = blob.type || file.type;
   const ticket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType, sizeBytes: blob.size });
 
@@ -191,7 +191,7 @@ export async function uploadBoulderPhoto(gymId: string, file: File, onStage?: (s
 
   let thumbnailPath: string | null = null;
   try {
-    const thumb = chosenThumbnail ?? await prepareImage(file, { maxSide: 480, quality: 0.75, force: true });
+    const thumb = chosenThumbnail ?? await prepareImage(file, WHOLE_CARD_PICTURE);
     if (thumb.type === "image/jpeg" && thumb.size <= 512 * 1024) {
       const thumbTicket = await api.post<UploadTicket>(`/api/gyms/${gymId}/boulder-photos`, { contentType: "image/jpeg", sizeBytes: thumb.size, thumbnail: true });
       await putToTicket(thumbTicket, thumb);

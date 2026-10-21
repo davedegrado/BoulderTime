@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type W
 import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { canDetect, compose, composeArea, detectHolds, featherMask, outlineArea, outlineReach, outlineWidth, paintStroke, type OutlineStyle } from "@/features/boulders/holdHighlight";
-import { decodeImage } from "@/features/boulders/imageResize";
+import { BOULDER_PHOTO, decodeImage } from "@/features/boulders/imageResize";
 import { clampView, fitted, fitView, MAX_ZOOM, pan, pinch, zoomAt, type Point, type Size, type View } from "@/features/boulders/zoomView";
 import { Button } from "@/components/Button";
 import { t } from "@/i18n/i18n";
@@ -107,6 +107,20 @@ async function maskToPng(mask: Uint8Array, width: number, height: number): Promi
 }
 
 /** Draws a decoded picture into a new canvas no larger than `side` on its longest edge, and reads its pixels. */
+/** The canvas itself when it is no larger than `side`, otherwise a copy scaled down to it. */
+function scaledTo(canvas: HTMLCanvasElement, side: number): HTMLCanvasElement {
+  const scale = side / Math.max(canvas.width, canvas.height);
+  if (scale >= 1) return canvas;
+  const small = document.createElement("canvas");
+  small.width = Math.max(1, Math.round(canvas.width * scale));
+  small.height = Math.max(1, Math.round(canvas.height * scale));
+  const ctx = small.getContext("2d");
+  if (!ctx) return canvas;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(canvas, 0, 0, small.width, small.height);
+  return small;
+}
+
 function pixelsOf(image: CanvasImageSource, side: number) {
   const { w, h } = sizeOf(image);
   const scale = Math.min(1, side / Math.max(w, h));
@@ -459,8 +473,10 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
       if (style && full.width === w.src.width && full.height === w.src.height)
         outlineArea(out.data, full.width, full.height, w.mask, 0, 0, full.width, full.height, style);
       ctx.putImageData(out, 0, 0);
+      // Stored like any boulder photo: smaller than the working size the mask is kept at.
+      const saved = scaledTo(full, BOULDER_PHOTO.maxSide);
       const blob = await new Promise<Blob>((resolve, reject) =>
-        full.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/jpeg", 0.86));
+        saved.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/jpeg", BOULDER_PHOTO.quality));
       // Kept with the boulder so the next edit starts from here: the mask as it is now, the colour, the outline.
       const mask = await maskToPng(w.mask, w.src.width, w.src.height);
       onDone(blob, color, { mask, settings: highlightSettings(color, outlineRef.current), sourceId: resumed.current ? null : sourceId });

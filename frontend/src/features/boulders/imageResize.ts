@@ -45,8 +45,22 @@ export async function prepareImage(file: Blob, { maxSide = 1600, quality = 0.82,
   );
 }
 
-/** Kept for existing callers: full-size boulder photo. */
-export const prepareBoulderPhoto = (file: Blob) => prepareImage(file);
+/**
+ * How a boulder's pictures are stored. Phone photos are large and every climber downloads them, so they are kept just
+ * sharp enough to tell the holds apart: about half what they weighed at 1600 px. Always encoded again, so a small
+ * but heavy file (a screenshot, an edited photo) doesn't go up as it is. Wall photos, avatars and the rest keep the
+ * defaults of {@link prepareImage}.
+ */
+export const BOULDER_PHOTO = { maxSide: 1280, quality: 0.7, force: true } as const;
+/** The original a highlight is made from and goes on from: a little finer, as the hold colours are read from it. */
+export const HIGHLIGHT_SOURCE = { maxSide: 1280, quality: 0.8, force: true } as const;
+/** The card picture cut out of the photo by staff. */
+export const CARD_PICTURE = { width: 480, height: 384, quality: 0.7 } as const;
+/** The card picture of the whole photo, when staff don't choose a part. */
+export const WHOLE_CARD_PICTURE = { maxSide: 480, quality: 0.7, force: true } as const;
+
+/** A boulder's photo, prepared as it is stored. */
+export const prepareBoulderPhoto = (file: Blob) => prepareImage(file, BOULDER_PHOTO);
 
 export interface CropRect { x: number; y: number; width: number; height: number }
 
