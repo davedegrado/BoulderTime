@@ -1085,8 +1085,8 @@ sector. "Date set" is also the retrace date, because a retrace is a new boulder.
 
 **Cards or rows**, a per-device preference. A row has five fixed columns — picture, grade, sector, holds (the word and
 a dot of the stored hold colour, ringed so white and yellow show), points — the same in every row; a missing value
-leaves its place empty and long text is cut with an ellipsis. The name is not in rows. Cards keep an (empty) name
-line so every card lays out alike. Sort and filters are kept per list for the tab, like the filters already were.
+leaves its place empty and long text is cut with an ellipsis. The name is not in rows. Cards show a name line only
+when the boulder has a name: gyms that don't name boulders get no empty space. Sort and filters are kept per list for the tab, like the filters already were.
 
 **Highlight the holds** runs on the device (canvas, no library, no service): a wall photo of any sector, or the photo
 just picked, is reduced for painting; an automatic first guess finds the hold colour (HSV ranges per hold colour,

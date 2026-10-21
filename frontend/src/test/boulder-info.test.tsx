@@ -56,12 +56,11 @@ describe("A boulder's intensity, tags and sends", () => {
     expect(screen.getByText("Worth 64 points")).toBeInTheDocument();
   });
 
-  it("keeps the name line empty for a boulder without a name, so every card is laid out alike, and never puts the sector there", () => {
+  it("has a name line only for a boulder with a name, and never puts the sector there instead", () => {
     const { container, rerender } = render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ name: "La Fessura" })} /></MemoryRouter>);
     expect(container.querySelector(".boulder-card__name")!.textContent).toBe("La Fessura");
     rerender(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><BoulderCard boulder={boulder({ name: null })} /></MemoryRouter>);
-    expect(container.querySelector(".boulder-card__name")!.textContent).toBe("");
-    expect(container.querySelector(".boulder-card__name")).toHaveAttribute("aria-hidden", "true");
+    expect(container.querySelector(".boulder-card__name")).toBeNull();
     expect(container.querySelector(".boulder-card__sector")).not.toBeNull();
   });
 

@@ -1400,8 +1400,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .view-toggle__option[aria-checked="true"] { background: var(--bt-surface-2); color: var(--bt-ink); box-shadow: inset 0 0 0 1px var(--bt-line); }
 .view-toggle__option:focus-visible { outline: 2px solid var(--bt-orange); outline-offset: 1px; }
 
-/* Cards: every card has the same places, a name line included, and long text never pushes the others about. */
-.boulder-card__name:empty::before { content: "\00a0"; }
+/* Cards: long text never pushes the others about. */
 .boulder-card__foot { min-width: 0; }
 .boulder-card__sector { min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
