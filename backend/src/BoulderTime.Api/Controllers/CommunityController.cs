@@ -47,6 +47,13 @@ public sealed class CommunityController(CommentService comments, GradeSuggestion
     [HttpGet("api/boulders/{boulderId:guid}/grade-consensus"), AllowAnonymous]
     public Task<GradeConsensusDto> Consensus(Guid boulderId, CancellationToken ct) => grades.GetAsync(boulderId, ct);
 
+    /// <summary>The climber's vote on how intense the boulder is (low, medium, high), next to the grade.</summary>
+    [HttpPut("api/boulders/{boulderId:guid}/intensity-vote"), Authorize]
+    public Task<GradeConsensusDto> VoteIntensity(Guid boulderId, [FromBody] VoteIntensityRequest request, CancellationToken ct) => grades.VoteIntensityAsync(boulderId, request, ct);
+
+    [HttpDelete("api/boulders/{boulderId:guid}/intensity-vote"), Authorize]
+    public Task<GradeConsensusDto> WithdrawIntensity(Guid boulderId, CancellationToken ct) => grades.WithdrawIntensityAsync(boulderId, ct);
+
     [HttpPut("api/boulders/{boulderId:guid}/grade-suggestions"), Authorize]
     public Task<GradeConsensusDto> Suggest(Guid boulderId, [FromBody] SuggestGradeRequest request, CancellationToken ct) => grades.SuggestAsync(boulderId, request, ct);
 

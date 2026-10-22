@@ -1490,3 +1490,6 @@ button.manage-head__back { background: transparent; }
 .update-banner > svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--bt-orange-ink); }
 .update-banner p { flex: 1; margin: 0; font-size: var(--bt-text-sm); font-weight: 600; }
 .update-banner__action { min-height: 36px; padding: 0 var(--bt-4); font-size: var(--bt-text-sm); }
+
+/* The community's intensity, under the community grade (same card). */
+.community-intensity { border-top: 1px solid var(--bt-line); padding-top: var(--bt-4); }

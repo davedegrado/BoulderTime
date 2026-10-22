@@ -57,7 +57,12 @@
         },
         {
           "q": "Come propongo un grado diverso da quello ufficiale?",
-          "a": "Nella sezione **Grado della community** scegli il tuo grado. Puoi farlo dopo aver registrato almeno un\ntentativo, e puoi votare in ogni scala: quelle della palestra e anche quelle che la palestra non usa (es. scala V).\n\n- Un voto per scala: se lo cambi, sostituisce il precedente.\n- **Nessuna proposta** ritira il voto.\n- **Più votato** mostra il grado scelto dalla maggioranza; **Vedi i voti** mostra come si distribuiscono.\n\nIl grado ufficiale lo decide la palestra e non cambia con i voti.",
+          "a": "Nella sezione **Grado e intensità della community** scegli il tuo grado. Puoi farlo dopo aver registrato almeno un\ntentativo, e puoi votare in ogni scala: quelle della palestra e anche quelle che la palestra non usa (es. scala V).\n\n- Un voto per scala: se lo cambi, sostituisce il precedente.\n- **Nessuna proposta** ritira il voto.\n- **Più votato** mostra il grado scelto dalla maggioranza; **Vedi i voti** mostra come si distribuiscono.\n\nIl grado ufficiale lo decide la palestra e non cambia con i voti.",
+          "audience": "both"
+        },
+        {
+          "q": "Come voto l'intensità di un blocco?",
+          "a": "Nella sezione **Grado e intensità della community**, sotto il grado, scegli **La tua intensità**: poco intenso,\nintensità media o molto intenso. Come per il grado, serve almeno un tentativo registrato.\n\n- Un voto per blocco: se lo cambi, sostituisce il precedente; **Nessuna proposta** lo ritira.\n- **Più votata** mostra l'intensità scelta dalla maggioranza, accanto a quella indicata dalla palestra.\n\nL'intensità ufficiale la decide la palestra e non cambia con i voti.",
           "audience": "both"
         },
         {

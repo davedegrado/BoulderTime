@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { useConsensus, useSuggestGrade, type ConsensusBucket, type SystemConsensus } from "@/features/community/api";
+import { useConsensus, useSuggestGrade, useVoteIntensity, type ConsensusBucket, type IntensityConsensus, type SystemConsensus } from "@/features/community/api";
+import { INTENSITIES, IntensityBadge, intensityLabel } from "@/features/boulders/intensity";
 import { useAuth } from "@/auth/AuthProvider";
 import { SelectField } from "@/components/Fields";
 import { ErrorState, LoadingState } from "@/components/States";
@@ -18,6 +19,9 @@ import { colorGradeLook } from "@/features/boulders/BoulderBits";
  * graded in first, then the gym's other systems, then the standard scales the gym doesn't use (anyone may still vote
  * in those). Always in view for each: the official grade, the most voted one ("9 of 16") and the climber's own vote;
  * the distribution opens on request.
+ *
+ * Below the grades, the same for how intense the boulder is (low, medium, high), when the server sends it: the
+ * intensity set by the gym, the most voted one and the climber's own vote.
  */
 export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   const consensus = useConsensus(boulderId);
@@ -27,7 +31,8 @@ export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
   if (consensus.isPending) return <LoadingState label={t("Loading community grade")} />;
   if (consensus.isError) return <ErrorState error={consensus.error} onRetry={() => consensus.refetch()} />;
   const data = consensus.data;
-  if (data.systems.length === 0) return null;
+  const intensity = data.intensity ?? null;
+  if (data.systems.length === 0 && !intensity) return null;
   const several = data.systems.length > 1;
 
   function show(index: number) {
@@ -42,7 +47,7 @@ export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
 
   return (
     <section className="section card community-grade" aria-labelledby="community-grade-title">
-      <h2 id="community-grade-title" className="section__title">{t("Community grade")}</h2>
+      <h2 id="community-grade-title" className="section__title">{intensity ? t("Community grade and intensity") : t("Community grade")}</h2>
       <p className="field__hint">{t("What climbers think. The official grade is set by the gym and doesn't change.")}</p>
       {several && (
         <div className="grade-tabs" role="tablist" aria-label={t("Grading systems")}>
@@ -61,7 +66,10 @@ export function CommunityGradeSection({ boulderId }: { boulderId: string }) {
           </div>
         ))}
       </div>
-      {session && !data.viewerCanSuggest && <p className="field__hint">{t("Log an attempt to suggest a grade.")}</p>}
+      {intensity && <IntensityBlock boulderId={boulderId} consensus={intensity} canSuggest={data.viewerCanSuggest} />}
+      {session && !data.viewerCanSuggest && (
+        <p className="field__hint">{intensity ? t("Log an attempt to suggest a grade and the intensity.") : t("Log an attempt to suggest a grade.")}</p>
+      )}
     </section>
   );
 }
@@ -139,6 +147,60 @@ function SystemBlock({ boulderId, system: s, canSuggest, showName }: { boulderId
         <SelectField label={t("Your {system} grade", { system: dataLabel(s.systemName) })} value={s.viewerValueId ?? ""} disabled={suggest.isPending}
           onChange={(e) => suggest.mutate({ gradeSystemId: s.gradeSystemId, gradeValueId: e.target.value || null }, { onError: (err) => toast.error(errorMessage(err)) })}
           options={[{ value: "", label: t("No suggestion") }, ...s.scale.map((v) => ({ value: v.gradeValueId, label: dataLabel(v.label) }))]} />
+      )}
+    </div>
+  );
+}
+
+/** How intense the boulder is, as the gym set it and as climbers vote it. The gym's intensity never changes because of the votes. */
+function IntensityBlock({ boulderId, consensus: c, canSuggest }: { boulderId: string; consensus: IntensityConsensus; canSuggest: boolean }) {
+  const vote = useVoteIntensity(boulderId);
+  const toast = useToast();
+  const max = Math.max(1, ...c.buckets.map((b) => b.votes));
+  const top = c.totalVotes > 0 ? c.buckets.find((b) => b.intensity === c.mostVoted) : undefined;
+  const percent = (votes: number) => (c.totalVotes ? Math.round((votes / c.totalVotes) * 100) : 0);
+
+  return (
+    <div className="consensus community-intensity">
+      <div className="consensus__head">
+        <p className="list__title">{t("Intensity")}</p>
+        <p className="list__sub">{c.totalVotes === 0 ? t("No votes yet") : plural(c.totalVotes, "{count} vote", "{count} votes")}</p>
+      </div>
+      <dl className="consensus__summary">
+        <div className="consensus__fact">
+          <dt>{t("Official")}</dt>
+          <dd>{c.official ? <IntensityBadge intensity={c.official} /> : <span className="consensus__share">—</span>}</dd>
+        </div>
+        <div className="consensus__fact">
+          <dt>{t("Most voted intensity")}</dt>
+          <dd>
+            {top
+              ? <><IntensityBadge intensity={top.intensity} /> <span className="consensus__share">{t("{votes} of {total}", { votes: top.votes, total: c.totalVotes })}</span></>
+              : <span className="consensus__share">—</span>}
+          </dd>
+        </div>
+      </dl>
+      {c.totalVotes > 0 && (
+        <details className="consensus__details">
+          <summary className="consensus__toggle">
+            {t("See the votes")} <ChevronDown aria-hidden />
+          </summary>
+          <ul className="consensus__bars" aria-label={t("Votes for the intensity")}>
+            {c.buckets.map((b) => (
+              <li key={b.intensity} className={`consensus__row ${b.intensity === c.mostVoted ? "is-consensus" : ""}`}
+                aria-label={t("{grade}: {votes} of {total}", { grade: intensityLabel(b.intensity), votes: b.votes, total: c.totalVotes })}>
+                <span className="consensus__label">{intensityLabel(b.intensity)}</span>
+                <span className="consensus__track"><span className="consensus__fill" style={{ width: `${(b.votes / max) * 100}%` }} /></span>
+                <span className="consensus__count">{b.votes} <small>{percent(b.votes)}%</small></span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      {canSuggest && (
+        <SelectField label={t("Your intensity")} value={c.viewer ?? ""} disabled={vote.isPending}
+          onChange={(e) => vote.mutate((e.target.value || null) as IntensityConsensus["viewer"], { onError: (err) => toast.error(errorMessage(err)) })}
+          options={[{ value: "", label: t("No suggestion") }, ...INTENSITIES.map((i) => ({ value: i, label: intensityLabel(i) }))]} />
       )}
     </div>
   );

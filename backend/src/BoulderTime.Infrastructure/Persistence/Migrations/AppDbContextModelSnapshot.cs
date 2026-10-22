@@ -799,6 +799,47 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("grade_suggestions", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Community.IntensityVote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Intensity")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("intensity");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_intensity_votes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_intensity_votes_user_id");
+
+                    b.HasIndex("BoulderId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_intensity_votes_boulder_id_user_id");
+
+                    b.ToTable("intensity_votes", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Community.Report", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2705,6 +2746,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_grade_suggestions_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Community.IntensityVote", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_intensity_votes_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_intensity_votes_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Community.Report", b =>

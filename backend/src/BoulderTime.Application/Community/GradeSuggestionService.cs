@@ -1,6 +1,7 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Common;
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Community;
 using BoulderTime.Domain.Grading;
 using Microsoft.EntityFrameworkCore;
@@ -16,9 +17,21 @@ public sealed record SystemConsensusDto(
     Guid? ConsensusValueId, Guid? OfficialValueId, Guid? ViewerValueId, IReadOnlyList<ConsensusBucketDto> Buckets,
     IReadOnlyList<ConsensusBucketDto> Scale, bool UsedByGym);
 
-public sealed record GradeConsensusDto(bool ViewerCanSuggest, IReadOnlyList<SystemConsensusDto> Systems);
+public sealed record IntensityBucketDto(BoulderIntensity Intensity, int Votes);
+
+/// <summary>
+/// What climbers think of how intense the boulder is, beside the intensity staff set (<paramref name="Official"/>),
+/// which never changes because of it. <paramref name="Buckets"/> holds the three levels, low to high, voted or not.
+/// </summary>
+public sealed record IntensityConsensusDto(BoulderIntensity? Official, BoulderIntensity? MostVoted, BoulderIntensity? Viewer, int TotalVotes,
+    IReadOnlyList<IntensityBucketDto> Buckets);
+
+/// <param name="Intensity">Added later: apps that don't know it simply don't read it.</param>
+public sealed record GradeConsensusDto(bool ViewerCanSuggest, IReadOnlyList<SystemConsensusDto> Systems, IntensityConsensusDto? Intensity = null);
 
 public sealed record SuggestGradeRequest(Guid? GradeSystemId, Guid? GradeValueId);
+
+public sealed record VoteIntensityRequest(BoulderIntensity? Intensity);
 
 /// <summary>
 /// How suggestions become a "community grade". Isolated so the rule can change without touching the service:
@@ -37,6 +50,22 @@ public static class GradeConsensus
         var ranks = voted.SelectMany(b => Enumerable.Repeat(b.Rank, b.Votes)).OrderBy(r => r).ToList();
         var median = ranks[(ranks.Count - 1) / 2];
         return top.OrderBy(b => Math.Abs(b.Rank - median)).ThenBy(b => b.Rank).First().GradeValueId;
+    }
+}
+
+/// <summary>The most voted intensity, with the same rule as the grade: ties go toward the median vote, then the lower one.</summary>
+public static class IntensityConsensus
+{
+    public static BoulderIntensity? Pick(IReadOnlyList<IntensityBucketDto> buckets)
+    {
+        var voted = buckets.Where(b => b.Votes > 0).ToList();
+        if (voted.Count == 0) return null;
+        var max = voted.Max(b => b.Votes);
+        var top = voted.Where(b => b.Votes == max).ToList();
+        if (top.Count == 1) return top[0].Intensity;
+        var levels = voted.SelectMany(b => Enumerable.Repeat((int)b.Intensity, b.Votes)).OrderBy(l => l).ToList();
+        var median = levels[(levels.Count - 1) / 2];
+        return top.OrderBy(b => Math.Abs((int)b.Intensity - median)).ThenBy(b => b.Intensity).First().Intensity;
     }
 }
 
@@ -73,7 +102,47 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
                 s.GymId is not null);
         }).ToList();
 
-        return new GradeConsensusDto(await CanSuggestAsync(boulderId, ct), result);
+        return new GradeConsensusDto(await CanSuggestAsync(boulderId, ct), result, await IntensityOfAsync(scope.Boulder, ct));
+    }
+
+    /// <summary>Votes, or changes the vote, on how intense the boulder is. Like a grade: only after trying it.</summary>
+    public async Task<GradeConsensusDto> VoteIntensityAsync(Guid boulderId, VoteIntensityRequest r, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        await boulders.RequireVisibleAsync(boulderId, ct);
+        if (!await CanSuggestAsync(boulderId, ct)) throw new ForbiddenException("Try the boulder before suggesting its intensity.", "attempt_required");
+        if (r.Intensity is not { } intensity || !Enum.IsDefined(intensity)) throw new ValidationException("intensity", "Choose low, medium or high intensity.");
+
+        var existing = await db.IntensityVotes.FirstOrDefaultAsync(v => v.BoulderId == boulderId && v.UserId == userId, ct);
+        if (existing is null) db.IntensityVotes.Add(IntensityVote.Create(boulderId, userId, intensity));
+        else existing.Change(intensity);
+        try { await db.SaveChangesAsync(ct); }
+        catch (UniqueConstraintViolationException) { throw new ConflictException("You already suggested an intensity for this boulder.", "suggestion_exists"); }
+        return await GetAsync(boulderId, ct);
+    }
+
+    public async Task<GradeConsensusDto> WithdrawIntensityAsync(Guid boulderId, CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var existing = await db.IntensityVotes.FirstOrDefaultAsync(v => v.BoulderId == boulderId && v.UserId == userId, ct);
+        if (existing is not null)
+        {
+            db.IntensityVotes.Remove(existing);
+            await db.SaveChangesAsync(ct);
+        }
+        return await GetAsync(boulderId, ct);
+    }
+
+    private async Task<IntensityConsensusDto> IntensityOfAsync(Domain.Boulders.Boulder boulder, CancellationToken ct)
+    {
+        var votes = await db.IntensityVotes.AsNoTracking().Where(v => v.BoulderId == boulder.Id)
+            .GroupBy(v => v.Intensity).Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+        var mine = currentUser.UserId is { } uid
+            ? await db.IntensityVotes.AsNoTracking().Where(v => v.BoulderId == boulder.Id && v.UserId == uid).Select(v => (BoulderIntensity?)v.Intensity).FirstOrDefaultAsync(ct)
+            : null;
+        var buckets = Enum.GetValues<BoulderIntensity>().Select(i => new IntensityBucketDto(i, votes.GetValueOrDefault(i))).ToList();
+        return new IntensityConsensusDto(boulder.Intensity, IntensityConsensus.Pick(buckets), mine, buckets.Sum(b => b.Votes), buckets);
     }
 
     public async Task<GradeConsensusDto> SuggestAsync(Guid boulderId, SuggestGradeRequest r, CancellationToken ct = default)

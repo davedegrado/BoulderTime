@@ -1280,4 +1280,9 @@ export const it: Record<string, string> = {
   "This boulder's photo": "La foto di questo blocco",
   "iOS · App Store": "iOS · App Store",
   "Android · Google Play": "Android · Google Play",
+  "Community grade and intensity": "Grado e intensità della community",
+  "Log an attempt to suggest a grade and the intensity.": "Registra un tentativo per proporre grado e intensità.",
+  "Most voted intensity": "Più votata",
+  "Votes for the intensity": "Voti per l'intensità",
+  "Your intensity": "La tua intensità",
 };

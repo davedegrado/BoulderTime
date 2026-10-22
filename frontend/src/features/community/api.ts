@@ -6,6 +6,7 @@ import { ApiError, defaultMessage } from "@/lib/apiError";
 import type { PagedResult } from "@/lib/paging";
 import type { BoulderSummary } from "@/features/boulders/api";
 import type { GradeSystemType } from "@/features/grading/api";
+import type { Intensity } from "@/features/boulders/intensity";
 import { apiOrigin } from "@/config/env";
 
 export interface Person { userId: string; displayName: string; avatarUrl: string | null }
@@ -23,7 +24,12 @@ export interface SystemConsensus {
   /** False for a standard scale the gym doesn't use: anyone may vote in it, but it has no official grade. */
   usedByGym: boolean;
 }
-export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemConsensus[] }
+/** What climbers think of how intense the boulder is, beside the gym's own intensity. Absent from older servers. */
+export interface IntensityConsensus {
+  official: Intensity | null; mostVoted: Intensity | null; viewer: Intensity | null; totalVotes: number;
+  buckets: { intensity: Intensity; votes: number }[];
+}
+export interface GradeConsensus { viewerCanSuggest: boolean; systems: SystemConsensus[]; intensity?: IntensityConsensus | null }
 
 export type VideoStatus = "PENDING" | "APPROVED" | "REJECTED";
 /** `videoUrl` is empty and `externalUrl` set when the beta is a link to a video published elsewhere. */
@@ -203,6 +209,18 @@ export function useSuggestGrade(boulderId: string) {
       gradeValueId
         ? api.put<GradeConsensus>(`/api/boulders/${boulderId}/grade-suggestions`, { gradeSystemId, gradeValueId })
         : api.delete<GradeConsensus>(`/api/boulders/${boulderId}/grade-suggestions/${gradeSystemId}`),
+    onSuccess: (data) => qc.setQueryData(communityKeys.consensus(boulderId), data),
+  });
+}
+
+/** Votes how intense the boulder is, or (null) takes the vote back. */
+export function useVoteIntensity(boulderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (intensity: Intensity | null) =>
+      intensity
+        ? api.put<GradeConsensus>(`/api/boulders/${boulderId}/intensity-vote`, { intensity })
+        : api.delete<GradeConsensus>(`/api/boulders/${boulderId}/intensity-vote`),
     onSuccess: (data) => qc.setQueryData(communityKeys.consensus(boulderId), data),
   });
 }

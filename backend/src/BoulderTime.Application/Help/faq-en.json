@@ -57,7 +57,12 @@
         },
         {
           "q": "How do I suggest a different grade?",
-          "a": "In **Community grade** pick your grade. You can once you have logged at least one attempt, and you can vote\nin every scale: the gym's own and also those the gym doesn't use (e.g. V-scale).\n\n- One vote per scale: changing it replaces the old one.\n- **No suggestion** withdraws your vote.\n- **Most voted** shows the grade most people chose; **See the votes** shows how they spread.\n\nThe official grade is the gym's and votes never change it.",
+          "a": "In **Community grade and intensity** pick your grade. You can once you have logged at least one attempt, and you can vote\nin every scale: the gym's own and also those the gym doesn't use (e.g. V-scale).\n\n- One vote per scale: changing it replaces the old one.\n- **No suggestion** withdraws your vote.\n- **Most voted** shows the grade most people chose; **See the votes** shows how they spread.\n\nThe official grade is the gym's and votes never change it.",
+          "audience": "both"
+        },
+        {
+          "q": "How do I vote a boulder's intensity?",
+          "a": "In **Community grade and intensity**, under the grade, choose **Your intensity**: low, medium or high\nintensity. As for the grade, you need at least one logged attempt.\n\n- One vote per boulder: changing it replaces the old one; **No suggestion** withdraws it.\n- **Most voted intensity** shows the one most people chose, next to the gym's own.\n\nThe official intensity is the gym's and votes never change it.",
           "audience": "both"
         },
         {

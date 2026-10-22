@@ -144,6 +144,57 @@ describe("Community grade", () => {
   });
 });
 
+describe("Community intensity", () => {
+  const withIntensity = (viewerCanSuggest: boolean, viewer: string | null = null) => ({
+    viewerCanSuggest,
+    systems: [],
+    intensity: {
+      official: "MEDIUM", mostVoted: "HIGH", viewer, totalVotes: 4,
+      buckets: [{ intensity: "LOW", votes: 1 }, { intensity: "MEDIUM", votes: 0 }, { intensity: "HIGH", votes: 3 }],
+    },
+  });
+
+  it("shows the gym's intensity next to the most voted one, and the votes on request", async () => {
+    reply("GET", "/api/boulders/b1/grade-consensus", withIntensity(false));
+    renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
+
+    expect(await screen.findByRole("heading", { name: "Community grade and intensity" })).toBeInTheDocument();
+    const summary = screen.getByText("Most voted intensity").closest("dl")!;
+    expect(within(summary).getByText("Official").nextElementSibling).toHaveTextContent("Medium intensity");
+    expect(within(summary).getByText("Most voted intensity").nextElementSibling).toHaveTextContent("High intensity 3 of 4");
+    await userEvent.click(screen.getByText("See the votes"));
+    expect(screen.getByRole("listitem", { name: "High intensity: 3 of 4" })).toHaveTextContent("75%");
+    expect(screen.getByText("Log an attempt to suggest a grade and the intensity.")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("lets climbers who tried it vote the intensity, and take the vote back", async () => {
+    reply("GET", "/api/boulders/b1/grade-consensus", withIntensity(true, "HIGH"));
+    reply("PUT", "/api/boulders/b1/intensity-vote", withIntensity(true, "LOW"));
+    reply("DELETE", "/api/boulders/b1/intensity-vote", withIntensity(true, null));
+    renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
+
+    const mine = await screen.findByRole("combobox", { name: "Your intensity" });
+    expect(mine).toHaveValue("HIGH");
+    await userEvent.selectOptions(mine, "LOW");
+    await waitFor(() => expect(calls.find((c) => c.method === "PUT")?.body).toEqual({ intensity: "LOW" }));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Your intensity" })).toHaveValue("LOW"));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Your intensity" }), "");
+    await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/boulders/b1/intensity-vote")).toBe(true));
+  });
+
+  it("shows only the grade, as before, when the server doesn't send the intensity", async () => {
+    reply("GET", "/api/boulders/b1/grade-consensus", {
+      viewerCanSuggest: true,
+      systems: [{ gradeSystemId: "font", systemName: "Fontainebleau", systemType: "FONTAINEBLEAU", totalVotes: 0, consensusValueId: null,
+        officialValueId: null, viewerValueId: null, buckets: [], scale: [{ gradeValueId: "v6a", label: "6A", rank: 5, colorHex: null, votes: 0 }] }],
+    });
+    renderAt("/b", "/b", <CommunityGradeSection boulderId="b1" />);
+    expect(await screen.findByRole("heading", { name: "Community grade" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Your intensity" })).not.toBeInTheDocument();
+  });
+});
+
 describe("Community grade, several systems", () => {
   const sys = (id: string, name: string, type: string, usedByGym: boolean, official: string | null) => ({
     gradeSystemId: id, systemName: name, systemType: type, totalVotes: 1, consensusValueId: `${id}-1`, officialValueId: official, viewerValueId: null,

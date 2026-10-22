@@ -1163,3 +1163,12 @@ showed that deploys can be paused for days), and platform administrators change 
 than minimum, store page only on apps.apple.com or play.google.com over https). Both start at 1.0.0, the version on the
 stores, so nobody is asked to update when this ships. The order is always: publish on the store, check it can be
 downloaded, then raise that platform's minimum (docs/mobile.md).
+
+## ADR-060 · Climbers vote the intensity too
+
+Next to the community grade, climbers who logged an attempt vote how intense a boulder is (low, medium, high): one vote
+per climber per boulder (`intensity_votes`, unique on boulder and user), changed or withdrawn like a grade
+(`PUT`/`DELETE /api/boulders/{id}/intensity-vote`). The most voted intensity follows the grade's rule (ties toward the
+median vote, then the lower level) and never changes the intensity staff set. It travels inside the grade consensus as
+an added `intensity` field: apps that don't know it ignore it, and the new app shows nothing extra against an older
+server. Erasing an account erases its votes.
