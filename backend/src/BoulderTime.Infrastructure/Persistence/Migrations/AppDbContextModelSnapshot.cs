@@ -23,6 +23,61 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BoulderTime.Domain.Apps.AppVersionPolicy", b =>
+                {
+                    b.Property<string>("Platform")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<string>("MinimumVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("minimum_version");
+
+                    b.Property<string>("RecommendedVersion")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("recommended_version");
+
+                    b.Property<string>("StoreUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("store_url");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Platform")
+                        .HasName("pk_app_version_policies");
+
+                    b.HasIndex("UpdatedByUserId")
+                        .HasDatabaseName("ix_app_version_policies_updated_by_user_id");
+
+                    b.ToTable("app_version_policies", "bouldertime");
+
+                    b.HasData(
+                        new
+                        {
+                            Platform = "Ios",
+                            MinimumVersion = "1.0.0",
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        },
+                        new
+                        {
+                            Platform = "Android",
+                            MinimumVersion = "1.0.0",
+                            StoreUrl = "https://play.google.com/store/apps/details?id=com.bouldertime.app",
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        });
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2365,6 +2420,15 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasFilter("status = 'Pending'");
 
                     b.ToTable("user_reports", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Apps.AppVersionPolicy", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_app_version_policies_users_updated_by_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>

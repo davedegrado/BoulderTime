@@ -7,6 +7,9 @@ import { startStatusBar } from "@/lib/theme";
  */
 export const isNativeApp = (): boolean => Capacitor.isNativePlatform();
 
+/** The store app's own details and lifecycle (version, coming back to the front), loaded only inside the apps. */
+export const loadAppPlugin = () => import("@capacitor/app").then((m) => m.App);
+
 /**
  * Links that leave the app (email confirmations, password resets) must point at the website, not at the app's own
  * internal address: inside the app `window.location.origin` is https://localhost (Android) or capacitor://localhost

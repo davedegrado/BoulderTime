@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/Toast";
 import { ApiError } from "@/lib/apiError";
 import { router } from "@/app/router";
 import { I18nProvider } from "@/i18n/i18n";
+import { AppVersionGate } from "@/features/appVersion/AppVersionGate";
 
 /**
  * An account suspended while the app is open finds out on its next request: the API answers account_suspended, and
@@ -48,7 +49,10 @@ export function App() {
         <AuthProvider>
           <ToastProvider>
             <LanguageFromProfile />
-            <RouterProvider router={router} future={{ v7_startTransition: true }} />
+            {/* In the store apps only: an app too old for the API asks to be updated before anything else (ADR-059). */}
+            <AppVersionGate>
+              <RouterProvider router={router} future={{ v7_startTransition: true }} />
+            </AppVersionGate>
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

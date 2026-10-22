@@ -82,9 +82,12 @@ describe("Setting a boulder on its sector's wall photo", () => {
     reply("POST", "/api/gyms/g1/boulders", (body?: unknown) => ({ id: "b1", ...(body as object) }));
   }
 
-  it("offers to highlight the holds on the wall photos, and says what to do when there are none", async () => {
+  it("offers to highlight the holds on the wall photo of the boulder's sector, and says what to do when there are none", async () => {
     setup();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    // No sector yet: no wall to offer.
+    expect(await screen.findByText(/No photo of the wall yet/)).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector *" }), "s1");
     await userEvent.click(await screen.findByRole("button", { name: "Highlight the holds" }));
     expect(screen.getByRole("dialog", { name: "Highlight the holds" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Photo of the wall" })).toHaveValue("sector:s1");
@@ -118,6 +121,25 @@ describe("Setting a boulder on its sector's wall photo", () => {
     const sent = calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")!.body as Record<string, unknown>;
     expect(sent.photoPath).toBe("gyms/g1/boulders/b1.jpg");
     expect(sent).not.toHaveProperty("highlight");
+  });
+
+  it("highlights a boulder of a sector without a wall photo on its own photo, never on another sector's wall", async () => {
+    setup();
+    // Only Cave has a wall photo; the boulder is in Slab, with a photo of its own.
+    reply("GET", "/api/gyms/g1/sectors", [withWall(), sector({ id: "s2", name: "Slab", sortOrder: 1 })]);
+    reply("GET", "/api/boulders/b2", {
+      id: "b2", gymId: "g1", gymName: "Crimp Factory", gymSlug: "crimp", sectorId: "s2", sectorName: "Slab", photoUrl: "/img/b2.jpg", photoPath: "gyms/g1/boulders/b2.jpg",
+      thumbnailUrl: null, holdColor: "BLUE", grades: [], setter: null, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null,
+      viewerRole: "STAFF", rating: { average: null, count: 0 }, viewer: null, isFollowing: false, communityVideosEnabled: false, canAddOfficialBeta: true, highlight: null,
+    });
+    reply("GET", "/api/boulders/b2/beta", null);
+    reply("GET", "/api/settings/videos", { uploadsEnabled: true, maxUploadMegabytes: 50 });
+    renderAt("/manage/crimp/boulders/b2/edit", "/manage/:slug", <ManageLayout />, <Route path="boulders/:boulderId/edit" element={<BoulderEditorPage />} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Highlight the holds" }));
+    const photos = screen.getByRole("combobox", { name: "Photo of the wall" });
+    expect(photos).toHaveValue("current");
+    expect([...(photos as HTMLSelectElement).options].map((o) => o.textContent)).toEqual(["This boulder's photo"]);
   });
 
   it("explains that a wall photo is needed when no sector has one", async () => {

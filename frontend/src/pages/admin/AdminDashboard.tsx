@@ -4,6 +4,7 @@ import { useAdminDashboard } from "@/features/admin/api";
 import { ErrorState, LoadingState } from "@/components/States";
 import { t } from "@/i18n/i18n";
 import { ReviewDemoCard } from "@/features/admin/ReviewDemoCard";
+import { AppVersionsCard } from "@/features/admin/AppVersionsCard";
 
 export function AdminDashboard() {
   const dash = useAdminDashboard();
@@ -44,6 +45,7 @@ export function AdminDashboard() {
           <span className="stat__label">{t("Users")}</span>
         </Link>
       </div>
+      <AppVersionsCard />
       <ReviewDemoCard />
     </div>
   );

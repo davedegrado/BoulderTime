@@ -1141,3 +1141,25 @@ recorded in `photo_recompressions` and the old file is kept, so `POST …/lighte
 (pictures staff changed since keep theirs). `POST …/lighter-pictures/confirm` deletes the old files, never one still
 in use; it can't be undone. Both take the gym's slug typed again. Wall photos and highlight originals are left alone
 (shared, and the original must keep matching its mask).
+
+## ADR-059 · The store apps can be asked to update: minimum version in the database
+
+**Context.** After the Railway security incident (October 2026) the website and the apps move from the old public
+Supabase key (`eyJ…`) to the new `sb_publishable_…` one, and then the old keys are switched off. Installed apps carry
+their key in the build, and had no way of telling people to update: switching the old keys off would leave them broken
+without a word.
+
+**Decision.** From 1.1 the store apps (never the website) ask `GET /api/app-version` — public, no sign-in, cached for
+60 seconds by the server and by HTTP caches — for the minimum and recommended version of their platform, at start and
+whenever they come back to the front, and compare it with their own (`App.getInfo()`), part by part as numbers. Below
+the minimum only an update screen is shown, with a button to the store; below the recommended version a banner that can
+be closed. Anything that goes wrong (no answer within 6 seconds, an error, a version that can't be read) lets the app
+carry on: the check fails open, so a problem with the API never locks everyone out.
+
+The values live in the database (`app_version_policies`, one row per platform: minimum, recommended, store page), not
+in environment variables: raising the minimum is an operational step that must not wait for a deploy (the incident
+showed that deploys can be paused for days), and platform administrators change it from the admin dashboard
+(`PUT /api/admin/app-versions/{ios|android}`, validated: versions of the form 1, 1.2 or 1.2.3, recommended not older
+than minimum, store page only on apps.apple.com or play.google.com over https). Both start at 1.0.0, the version on the
+stores, so nobody is asked to update when this ships. The order is always: publish on the store, check it can be
+downloaded, then raise that platform's minimum (docs/mobile.md).

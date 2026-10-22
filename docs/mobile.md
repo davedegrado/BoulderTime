@@ -41,6 +41,51 @@ values Cloudflare uses for the website:
 `frontend/package.json` `version` is the version people see (`1.0.0` since the first store release; it must match the version being prepared in App Store Connect). The build number is the GitHub Actions run
 number, so every build is higher than the previous one without editing a file.
 
+### Asking people to update (minimum version, ADR-059)
+
+From 1.1 the store apps ask `GET /api/app-version` which versions may still be used, when they start and whenever
+they come back to the front, and compare it with their own (`App.getInfo()`, i.e. the `version` above):
+
+- **below the minimum**: a screen "Aggiorna l'app per continuare" with a button to the App Store or Google Play, and
+  nothing else of the app;
+- **below the recommended version** (optional): a banner that can be closed, once per recommended version;
+- **otherwise, or if the API doesn't answer** (no network, the API down, an error, 6 seconds without an answer): the
+  app carries on as usual. A problem on our side never locks anyone out.
+
+The website never asks: it is always the latest. Versions installed before 1.1 have no check and can't be asked.
+
+The values are in the database (table `bouldertime.app_version_policies`, one row per platform, `IOS` and `ANDROID`),
+not in Railway's variables, so they change **without publishing the API again**. They start at **1.0.0** on both
+platforms, so nobody is asked to update when this goes live. Where to change them:
+
+1. **Admin → Dashboard → App versions** (platform administrators): minimum, recommended and store page, separately for
+   iOS and Android. The change is read by the apps within a minute (the answer is cached for 60 seconds).
+2. Or, before the admin page is on the website, the Supabase **SQL Editor**:
+
+       update bouldertime.app_version_policies
+          set minimum_version = '1.1.0', updated_at = now()
+        where platform = 'IOS';
+
+   (`recommended_version` and `store_url` the same way; a version is `1`, `1.2` or `1.2.3`, compared as numbers, so
+   1.10.0 is newer than 1.9.0.)
+
+**In this order, and never the other way round:**
+
+1. Publish the new version on that store (App Store review passed and released; Google Play rolled out in production).
+2. Wait until it is actually available to download: open the store page on a phone and check it offers the new
+   version. Store rollouts can take hours.
+3. Only then raise the minimum **for that platform**. iOS and Android are released at different times: raise each when
+   its own store has the version. Raising it before means the people below it are asked to update to a version they
+   can't download yet.
+
+The store page: Android is preset to `https://play.google.com/store/apps/details?id=com.bouldertime.app`. **iOS has
+none yet**: set the App Store address (`https://apps.apple.com/app/id…`, from App Store Connect → the app → App
+Information → Apple ID) before raising the iOS minimum; until then the button opens a search for BoulderTime on the App
+Store.
+
+A local Android build without CI reports version `0.1.0` (the default in `android/app/build.gradle`): with a minimum
+above that it shows the update screen. Builds from GitHub Actions carry the real version.
+
 ## Photos and videos
 
 Every upload goes through `components/MediaInput.tsx`. In a browser it is a plain file field, which already offers

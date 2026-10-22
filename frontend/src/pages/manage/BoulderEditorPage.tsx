@@ -86,6 +86,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [pendingHighlight, setPendingHighlight] = useState<PendingHighlight | null>(null);
   // The photo staff picked themselves, kept apart from a highlighted result made from it.
   const [picked, setPicked] = useState<File | null>(null);
+  // The boulder's own photo, once loaded to highlight the holds on it.
+  const currentBlob = useRef<Blob | null>(null);
 
   useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb.url); }, [thumb]);
@@ -96,13 +98,15 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   // The photo the boulder will be saved with: one just picked, the wall just chosen, or the one it has.
   const photoPath = file ? null : wall?.path ?? initial?.photoPath ?? null;
   const wallOffer = sector?.photoPath && sector.imageUrl && photoPath !== sector.photoPath ? sector : null;
-  // Photos the holds can be highlighted on: the gym's wall photos (this boulder's sector first), and the photo just
-  // picked. Never the boulder's saved photo: it may already be a highlighted one, and filtering it again would wear it.
+  // Photos the holds can be highlighted on, all of this boulder: the photo just picked, the photo it has (unless it is
+  // already a highlighted one, which filtering again would wear, or is its sector's wall photo, offered next anyway)
+  // and the wall photo of its own sector. Never another sector's wall: that is a different wall.
+  const ownSector = (sectors.data ?? []).find((s) => s.id === sectorId && s.photoPath && s.imageUrl);
+  const currentPhoto = initial && !file && !wall && !initial.highlight && initial.photoPath && initial.photoPath !== ownSector?.photoPath ? initial : null;
   const highlightSources: HighlightSource[] = [
-    ...(sectors.data ?? []).filter((s) => s.photoPath && s.imageUrl)
-      .sort((a, b) => Number(b.id === sectorId) - Number(a.id === sectorId))
-      .map((s) => ({ id: `sector:${s.id}`, label: t("Wall of {name}", { name: s.name }), load: () => fetchSectorPhoto(s.id) })),
     ...(picked ? [{ id: "picked", label: t("The photo you just picked"), load: async () => picked as Blob }] : []),
+    ...(currentPhoto ? [{ id: "current", label: t("This boulder's photo"), load: async () => (currentBlob.current = await fetchBoulderPhoto(currentPhoto.id)) }] : []),
+    ...(ownSector ? [{ id: `sector:${ownSector.id}`, label: t("Wall of {name}", { name: ownSector.name }), load: () => fetchSectorPhoto(ownSector.id) }] : []),
   ];
 
   // Going on from where the holds were left: the highlight made in this editor, or the one saved with the boulder
@@ -130,6 +134,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     const wallSector = result.sourceId?.startsWith("sector:") ? (sectors.data ?? []).find((x) => `sector:${x.id}` === result.sourceId) : undefined;
     const origin: HighlightOrigin | null = wallSector?.photoPath ? { kind: "wall", sectorId: wallSector.id, path: wallSector.photoPath }
       : result.sourceId === "picked" && picked ? { kind: "picked", file: picked }
+      // The boulder's own photo: kept as the original of the highlight, as if staff had picked it again.
+      : result.sourceId === "current" && currentBlob.current ? { kind: "picked", file: new File([currentBlob.current], "original.jpg", { type: currentBlob.current.type || "image/jpeg" }) }
       : pendingHighlight ? pendingHighlight.origin
       : initial?.highlight ? { kind: "kept", path: initial.highlight.sourcePath }
       : null;

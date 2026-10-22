@@ -1481,3 +1481,12 @@ button.manage-head__back { background: transparent; }
 .highlighter__pair { display: inline-flex; gap: 6px; }
 .highlighter__outline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bt-2); margin-top: var(--bt-2); }
 .highlighter__color:disabled, .highlighter__mode:disabled { opacity: 0.4; cursor: default; }
+
+/* App version check (ADR-059): the request to update, which replaces the whole app, and the gentler suggestion. */
+.update-required { min-height: 100dvh; display: grid; place-items: center; padding: max(var(--bt-6), env(safe-area-inset-top)) var(--bt-4) max(var(--bt-6), env(safe-area-inset-bottom)); background: var(--bt-light); }
+.update-required__card { width: 100%; max-width: 30rem; align-items: center; text-align: center; }
+.update-required__card img { border-radius: 14px; }
+.update-banner { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-2) var(--bt-2) var(--bt-2) var(--bt-4); padding-top: max(var(--bt-2), env(safe-area-inset-top)); background: var(--bt-orange-tint); color: var(--bt-ink); }
+.update-banner > svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--bt-orange-ink); }
+.update-banner p { flex: 1; margin: 0; font-size: var(--bt-text-sm); font-weight: 600; }
+.update-banner__action { min-height: 36px; padding: 0 var(--bt-4); font-size: var(--bt-text-sm); }
