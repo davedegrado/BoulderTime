@@ -6,7 +6,9 @@ import { GymAvatar } from "@/components/GymAvatar";
 import { formatDate } from "@/lib/format";
 import { t } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
-import { Ban } from "lucide-react";
+import { ArrowLeft, Ban } from "lucide-react";
+import { useGoBack } from "@/lib/navigation";
+import { ErrorState, LoadingState } from "@/components/States";
 import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
 import { ReportPersonAction } from "@/features/users/ReportPersonAction";
@@ -15,10 +17,19 @@ export function UserProfilePage() {
   const { id } = useParams();
   const { session } = useAuth();
   const profile = useProfile(id);
+  const goBack = useGoBack();
   const p = profile.data;
 
-  const header = p && (
+  // Back to where the profile was opened from (a boulder's "completed by", a leaderboard, a comment); Home when it was
+  // opened directly.
+  const back = <button type="button" className="manage-head__back" aria-label={t("Back")} onClick={() => goBack("/")}><ArrowLeft aria-hidden /></button>;
+  // Never stuck: the way back is there while the profile loads, and if it can't be loaded.
+  if (profile.isPending) return <div className="page">{back}<LoadingState label={t("Loading activity")} /></div>;
+  if (!p) return <div className="page">{back}<ErrorState error={profile.error} onRetry={() => profile.refetch()} /></div>;
+
+  const header = (
     <header className="stack">
+      {back}
       <div className="profile-head">
         <EnlargeableAvatar name={p.displayName} url={p.avatarUrl} size={72} />
         <div>

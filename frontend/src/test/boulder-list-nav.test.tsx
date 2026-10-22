@@ -23,6 +23,7 @@ vi.mock("@/lib/api", () => {
 
 import { GymPage } from "@/pages/GymPage";
 import { BoulderPage } from "@/pages/BoulderPage";
+import { UserProfilePage } from "@/pages/UserProfilePage";
 
 const gym = { id: "g1", slug: "crimp", name: "Crimp Factory", city: "Milano", logoUrl: null, coverImageUrl: null, status: "ACTIVE", description: null, address: null, website: null, email: null, phone: null, createdAt: "2026-01-01T00:00:00Z", viewerRole: null };
 const sectors = [{ id: "s1", gymId: "g1", name: "Cave", description: null, imageUrl: null, sortOrder: 0, isActive: true }];
@@ -126,3 +127,63 @@ describe("Back from a boulder", () => {
     expect(router.state.historyAction).toBe("REPLACE");
   });
 });
+
+describe("Back from a person's profile", () => {
+  beforeEach(() => {
+    reply("GET", "/api/users/u2/profile", {
+      id: "u2", displayName: "Anna Verdi", avatarUrl: null, memberSince: "2026-09-01T00:00:00Z", isMe: false, isBlocked: false,
+      stats: { completed: 3, projects: 1, completedThisMonth: 2, totalAttempts: 9 }, highestGrades: [], weekly: [], followedGyms: [],
+      recentCompletions: [], staffDistinctions: [], favoriteSector: null,
+    });
+    reply("GET", "/api/users/u2/history", { items: [], page: 1, pageSize: 20, total: 0, hasMore: false });
+  });
+
+  it("returns to the boulder whose climbers it was opened from", async () => {
+    const router = createMemoryRouter([
+      { path: "/boulders/:id", element: <div><h1>The boulder</h1><Link to="/users/u2">Anna</Link></div> },
+      { path: "/users/:id", element: <UserProfilePage /> },
+      { path: "/", element: <h1>Home</h1> },
+    ], { initialEntries: ["/boulders/b1"] });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
+
+    await userEvent.click(await screen.findByRole("link", { name: "Anna" }));
+    expect(await screen.findByRole("heading", { name: "Anna Verdi" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(await screen.findByRole("heading", { name: "The boulder" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/boulders/b1");
+  });
+
+  it("is there even when the profile can't be loaded", async () => {
+    reply("GET", "/api/users/u2/profile", () => { throw new Error("offline"); });
+    const router = createMemoryRouter([{ path: "/users/:id", element: <UserProfilePage /> }, { path: "/", element: <h1>Home</h1> }], { initialEntries: ["/users/u2"] });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
+    await userEvent.click(await screen.findByRole("button", { name: "Back" }));
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+  });
+
+  it("works while the profile is still loading", async () => {
+    reply("GET", "/api/users/u2/profile", () => new Promise(() => {}));
+    const router = createMemoryRouter([{ path: "/users/:id", element: <UserProfilePage /> }, { path: "/", element: <h1>Home</h1> }], { initialEntries: ["/users/u2"] });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
+    await userEvent.click(await screen.findByRole("button", { name: "Back" }));
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+  });
+
+  it("goes Home when the profile was opened directly", async () => {
+    const router = createMemoryRouter([
+      { path: "/users/:id", element: <UserProfilePage /> },
+      { path: "/", element: <h1>Home</h1> },
+    ], { initialEntries: ["/users/u2"] });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
+
+    expect(await screen.findByRole("heading", { name: "Anna Verdi" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/");
+  });
+});
+
