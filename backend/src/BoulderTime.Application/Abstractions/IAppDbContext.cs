@@ -54,6 +54,7 @@ public interface IAppDbContext
     DbSet<LeaderboardReport> LeaderboardReports { get; }
     DbSet<PushSubscription> PushSubscriptions { get; }
     DbSet<UserBlock> UserBlocks { get; }
+    DbSet<Friendship> Friendships { get; }
     DbSet<UserReport> UserReports { get; }
     DbSet<SuspendedEmail> SuspendedEmails { get; }
 

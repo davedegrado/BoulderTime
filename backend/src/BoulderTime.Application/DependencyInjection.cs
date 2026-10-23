@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<AdminService>();
         services.AddScoped<BetaTestService>();
         services.AddScoped<Users.ProfileSettingsService>();
+        services.AddScoped<Users.ProfileAccess>();
+        services.AddScoped<Users.FriendshipService>();
         services.AddSingleton<Apps.AppVersionCache>();
         services.AddScoped<Apps.AppVersionService>();
         services.AddScoped<PhotoRecompressionService>();

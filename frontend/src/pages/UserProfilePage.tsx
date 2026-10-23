@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Ban, Copy, Flag, LayoutList, Lock, MapPin, Pencil, Share2, ShieldCheck, Undo2 } from "lucide-react";
+import { Ban, Copy, Flag, LayoutList, Lock, MapPin, Pencil, Share2, ShieldCheck, Undo2, UserMinus } from "lucide-react";
 import { DEFAULT_PROFILE_SECTIONS, useProfile, type Profile, type ProfileSection } from "@/features/climbing/api";
 import { CompactHistoryRow, HighestGrades, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
@@ -20,10 +20,13 @@ import { t } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
+import { FriendButton, FriendsTab, supportsFriends } from "@/features/users/Friends";
+import { useFriendAction } from "@/features/users/friends";
+import { errorMessage } from "@/lib/apiError";
 import { ReportPersonAction } from "@/features/users/ReportPersonAction";
 
 type Panel = "customize" | "privacy" | "block" | "report" | null;
-type Tab = "overview" | "activity" | "gyms";
+type Tab = "overview" | "activity" | "gyms" | "friends";
 
 /**
  * A person's profile (ADR-061, ADR-062): a header transparent over a plain cover until the page scrolls, who they are,
@@ -56,6 +59,7 @@ export function UserProfilePage() {
           <EnlargeableAvatar name={p.displayName} url={p.avatarUrl} size={84} />
           <h1 ref={name} className="page__title person-hero__name">{p.displayName}</h1>
           <p className="person-hero__meta">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
+          <FriendButton profile={p} />
           {!p.contentHidden && <StaffDistinctions distinctions={p.staffDistinctions} />}
           {p.isMe && p.isPrivate && <p className="person-hero__private"><Lock aria-hidden /> {t("Private profile: others see only your name and photo.")}</p>}
           {p.isBlocked && (
@@ -94,6 +98,7 @@ export function UserProfilePage() {
 function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; canArrange: boolean; onOpen: (panel: Panel) => void }) {
   const { session } = useAuth();
   const toast = useToast();
+  const friendship = useFriendAction(p.id);
   const url = shareUrl(`/users/${p.id}`);
   const said = (r: "shared" | "copied" | "failed") =>
     r === "copied" ? toast.success(t("Link copied")) : r === "failed" ? toast.error(t("Couldn't copy the link")) : undefined;
@@ -114,6 +119,10 @@ function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; can
           p.isBlocked
             ? { label: t("Unblock"), icon: <Undo2 aria-hidden />, onSelect: () => onOpen("block") }
             : { label: t("Block"), icon: <Ban aria-hidden />, onSelect: () => onOpen("block"), danger: true },
+          ...(p.friendship === "FRIENDS" ? [{
+            label: t("Remove from friends"), icon: <UserMinus aria-hidden />, danger: true,
+            onSelect: () => friendship.mutate("remove", { onSuccess: () => toast.success(t("Removed from friends")), onError: (e) => toast.error(errorMessage(e)) }),
+          }] : []),
           { label: t("Report {name}", { name: p.displayName }), icon: <Flag aria-hidden />, onSelect: () => onOpen("report"), danger: true },
         ] : []),
       ];
@@ -128,11 +137,12 @@ function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; can
 function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profile; sections: ProfileSection[]; onCustomize?: () => void }) {
   const [params, setParams] = useSearchParams();
   const shown = (key: ProfileSection["key"]) => sections.some((s) => s.key === key && s.visible);
-  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") ? ["gyms" as const] : [])];
+  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") ? ["gyms" as const] : []),
+    ...(supportsFriends(p) ? ["friends" as const] : [])];
   const asked = params.get("tab") as Tab | null;
   const tab: Tab = asked && tabs.includes(asked) ? asked : "overview";
   const setTab = (next: Tab) => setParams((q) => { const n = new URLSearchParams(q); if (next === "overview") n.delete("tab"); else n.set("tab", next); return n; }, { replace: true });
-  const label: Record<Tab, string> = { overview: t("Overview"), activity: t("Activity"), gyms: t("Gyms") };
+  const label: Record<Tab, string> = { overview: t("Overview"), activity: t("Activity"), gyms: t("Gyms"), friends: t("Friends") };
 
   // Only sections with something to show: nothing invented, no empty boxes.
   const blocks = sections.filter((s) => s.visible).map((s) => {
@@ -169,6 +179,7 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
       )}
       <div className="page__pad profile-tab">
         {tab === "activity" ? <HistorySection userId={p.id} isMe={p.isMe} titled={false} compact />
+          : tab === "friends" ? <FriendsTab profile={p} />
           : tab === "gyms" ? (p.followedGyms.length > 0
             ? <GymChips profile={p} />
             : <EmptyState icon={<MapPin />} title={p.isMe ? t("You don't follow any gym yet") : t("No gyms followed yet")} />)

@@ -30,7 +30,14 @@ export interface Profile {
   contentHidden?: boolean;
   /** The sections the person chose to show, in their order. Absent from older servers: then the default. */
   sections?: ProfileSection[] | null;
+  /**
+   * Your friendship with this person (ADR-063). Null on your own profile and when signed out; absent from servers
+   * without friends, and then the app offers none.
+   */
+  friendship?: FriendshipState | null;
 }
+
+export type FriendshipState = "NONE" | "OUTGOING" | "INCOMING" | "FRIENDS";
 
 export type ProfileSectionKey = "stats" | "favoriteSector" | "gyms" | "weekly" | "highestGrades" | "history";
 export interface ProfileSection { key: ProfileSectionKey; visible: boolean }

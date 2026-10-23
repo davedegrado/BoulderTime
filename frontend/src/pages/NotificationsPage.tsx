@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { BellOff, CheckCheck, Settings } from "lucide-react";
+import { BellOff, CheckCheck, ChevronRight, Settings, UserPlus } from "lucide-react";
 import { useMarkRead, useNotifications, type AppNotification } from "@/features/notifications/api";
 import { notificationIcon, relativeTime } from "@/features/notifications/NotificationBits";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
-import { t } from "@/i18n/i18n";
+import { useFriendRequests } from "@/features/users/friends";
+import { useCurrentUser } from "@/features/users/api";
+import { plural, t } from "@/i18n/i18n";
 
 export function NotificationsPage() {
   const list = useNotifications();
@@ -30,6 +32,8 @@ export function NotificationsPage() {
         <h1 className="page__title">{t("Notifications")}</h1>
         <Link to="/notifications/settings" className="icon-link" aria-label={t("Notification settings")}><Settings aria-hidden /></Link>
       </header>
+
+      <FriendRequestsLink />
 
       {unread > 0 && (
         <Button variant="ghost" className="mark-all" icon={<CheckCheck aria-hidden />} onClick={() => markRead.mutate("all")} loading={markRead.isPending && markRead.variables === "all"}>
@@ -68,5 +72,23 @@ export function NotificationsPage() {
         ))}
       {list.hasNextPage && <Button variant="secondary" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("Older notifications")}</Button>}
     </div>
+  );
+}
+
+/**
+ * Friend requests are not notifications of the feed (apps already installed would not know how to show them, ADR-063):
+ * a line of their own, there only when someone asked, leading to the requests on your profile.
+ */
+function FriendRequestsLink() {
+  const requests = useFriendRequests();
+  const me = useCurrentUser();
+  const count = requests.data?.length ?? 0;
+  if (count === 0 || !me.data) return null;
+  return (
+    <Link to={`/users/${me.data.id}?tab=friends`} className="card friend-requests-link">
+      <span className="friend-requests-link__icon" aria-hidden><UserPlus /></span>
+      <span className="friend-requests-link__text">{plural(count, "1 friend request", "{count} friend requests")}</span>
+      <ChevronRight className="list__chevron" aria-hidden />
+    </Link>
   );
 }

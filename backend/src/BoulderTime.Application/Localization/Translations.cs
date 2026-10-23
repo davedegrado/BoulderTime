@@ -255,6 +255,10 @@ public static partial class Translations
         ("Type your email address exactly to confirm.", "Per confermare, scrivi esattamente il tuo indirizzo email."),
         ("You are the only owner of a gym. Make someone else an owner first, or write to support@bouldertime.com.", "Sei l'unico proprietario di una palestra. Nomina prima un altro proprietario, oppure scrivi a support@bouldertime.com."),
         ("You can't block yourself.", "Non puoi bloccare te stesso."),
+        ("You can't add yourself as a friend.", "Non puoi aggiungere te stesso agli amici."),
+        ("Unblock this person to add them as a friend.", "Sblocca questa persona per aggiungerla agli amici."),
+        ("You've sent a lot of friend requests today. Try again tomorrow.", "Oggi hai inviato molte richieste di amicizia. Riprova domani."),
+        ("Friend request was not found.", "Richiesta di amicizia non trovata."),
         ("Keep the note under {0} characters.", "La nota deve restare sotto i {0} caratteri."),
     ];
 

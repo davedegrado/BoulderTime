@@ -1220,3 +1220,26 @@ profile"; who may see them is still the privacy alone. No new storage or field: 
 and a saved arrangement keeps its choice. The overview's sections are a heading and their content, without a box each;
 the recent activity and the Activity tab use shorter rows (picture, grade, name and points; holds, sector and gym;
 date and attempts) in one list. The history elsewhere (Home, "Your climbing") keeps its rows.
+
+## ADR-063 · Friends
+
+Climbers can be friends: one asks from the other's profile ("Add friend"), the other accepts or declines; either can
+cancel a request or end the friendship later. Asking someone who already asked you means yes, and asking twice
+changes nothing. One row per pair in `friendships` (the two people in a fixed order under a unique index, who asked,
+pending or accepted); declining, cancelling and ending delete it, so there is no record of who said no. Additive only:
+a new table, new endpoints (`POST /api/users/{id}/friend-request`, `POST …/friend-request/accept`,
+`DELETE /api/users/{id}/friendship`, `GET /api/users/me/friend-requests`, `GET /api/users/{id}/friends`), and an added
+`friendship` field on the profile (none, outgoing, incoming, friends; null on one's own profile and signed out) that
+older apps don't read. Signed in only; sending has the write rate limit and at most 30 requests a day.
+
+An accepted friend sees the content of a private profile — decided in one place, `ProfileAccess`, for the profile, the
+history and the list of friends; a pending request is never enough, and ending the friendship closes it again at once.
+Leaderboards and the other lists are unchanged: they follow the leaderboard setting alone. A person's friends are shown
+to whoever, signed in, may see that profile's content.
+
+Blocking ends a friendship or a request between the two and is never revealed by one: a request to someone who blocked
+you looks sent like any other, and they never see it while the block lasts. Erasing an account erases its friendships.
+
+Requests received are not notifications of the feed: the apps already installed draw each notification from a fixed
+list of types and would fail on a new one. They have a line of their own at the top of Notifications and a place in the
+"Friends" tab of one's own profile; the new app shows nothing of friends against a server without them.
