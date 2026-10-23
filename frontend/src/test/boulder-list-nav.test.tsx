@@ -56,6 +56,8 @@ describe("The gym's boulder list", () => {
     await screen.findAllByRole("link", { name: /grade 6A/i });
     expect(boulderCalls()[0]).toContain("sort=SECTOR");
 
+    // The order is one compact button on the toolbar row; it opens the same choice as before.
+    await userEvent.click(screen.getByRole("button", { name: "Sort: Sector" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort by" }), "POINTS");
     await waitFor(() => expect(boulderCalls().at(-1)).toContain("sort=POINTS"));
     expect(boulderCalls().at(-1)).not.toContain("order=");
@@ -70,6 +72,7 @@ describe("The gym's boulder list", () => {
     setup();
     const { container } = renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
     await screen.findAllByRole("link", { name: /grade 6A/i });
+    await userEvent.click(screen.getByRole("button", { name: "Sort: Sector" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort by" }), "GRADE");
     await userEvent.click(screen.getByRole("radio", { name: "List" }));
 

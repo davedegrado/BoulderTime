@@ -24,7 +24,18 @@ export interface Profile {
   isBlocked: boolean;
   /** Where they completed the most boulders; null before the first send. */
   favoriteSector?: FavoriteSector | null;
+  /** The person keeps the content of their profile private (ADR-061). Absent from older servers. */
+  isPrivate?: boolean;
+  /** Private and not for this viewer: statistics, history and gyms come empty, only name and photo are real. */
+  contentHidden?: boolean;
+  /** The sections the person chose to show, in their order. Absent from older servers: then the default. */
+  sections?: ProfileSection[] | null;
 }
+
+export type ProfileSectionKey = "stats" | "favoriteSector" | "gyms" | "weekly" | "highestGrades" | "history";
+export interface ProfileSection { key: ProfileSectionKey; visible: boolean }
+export const DEFAULT_PROFILE_SECTIONS: ProfileSection[] =
+  (["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"] as ProfileSectionKey[]).map((key) => ({ key, visible: true }));
 
 /** The sector with the most completed boulders, with the gym's plan and its outline when the gym drew them. */
 export interface FavoriteSector {

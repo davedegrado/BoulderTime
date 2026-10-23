@@ -1172,3 +1172,30 @@ per climber per boulder (`intensity_votes`, unique on boulder and user), changed
 median vote, then the lower level) and never changes the intensity staff set. It travels inside the grade consensus as
 an added `intensity` field: apps that don't know it ignore it, and the new app shows nothing extra against an older
 server. Erasing an account erases its votes.
+
+## ADR-061 · Private profiles, separate from the leaderboards; profiles arranged by their owner
+
+Two independent choices. **Privacy** (`users.profile_visibility`, the existing column, now `PUBLIC` or `PRIVATE`; set by
+`PUT /api/users/me/profile-privacy {private}`): a private profile still opens, with name and photo, but the server
+sends its statistics, grades, weeks, gyms, recent sends, staff distinctions and history to its owner only — enforced
+in `ActivityService.CanSeeContent`, the one place where accepted friends will be added once friendships exist. The
+**leaderboards** keep their own opt-in (`leaderboard_opt_out`, unchanged): they and the "completed by" list no longer
+look at the profile's privacy, so all four combinations hold (a private profile in the leaderboards shows there its
+name, photo and the row's numbers only). Every existing account is public, so nothing changes for anyone until they
+choose.
+
+Compatibility: the profile keeps its shape. To someone who may not see it, the content arrives zeroed and empty
+(older apps show an empty profile rather than an error), the history is an empty page (not a 404), and the added fields
+`isPrivate`, `contentHidden` and `sections` are ignored by older apps. `GET /api/users/me` adds `profilePrivate`.
+
+**Arrangement** (`users.profile_sections`, nullable, additive migration): which of the sections stats, favourite
+sector, gyms, last weeks, highest grades and history the profile shows, and in what order, saved with the account
+(`GET`/`PUT`/`DELETE /api/users/me/profile-sections`; `DELETE` goes back to the default). Unknown or repeated keys are
+refused; a stored arrangement is read leniently (unknown keys dropped, missing ones appended visible), so sections
+added later appear for everyone. Hiding a section only leaves it off the page, it is not privacy. Against an older
+server the app shows the default arrangement and offers no customisation.
+
+Pages opened from elsewhere (a gym, a person) have a compact header: back to where they were opened from, Home when
+opened directly; the logo, smaller; a menu of the page's actions (share, copy link; manage for the gym's staff; block
+and report for a person; edit, customise, privacy for one's own). Reporting a gym isn't offered: there is nothing to
+receive such a report yet.

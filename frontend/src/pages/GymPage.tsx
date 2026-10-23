@@ -1,6 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ExternalLink, Globe, Layers, Mail, MapPin, Maximize2, Phone, Settings2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Copy, ExternalLink, Globe, Layers, Mail, MapPin, Maximize2, Phone, Settings2, Share2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { DetailHeader } from "@/components/DetailHeader";
+import { ActionMenu, type ActionMenuItem } from "@/components/ActionMenu";
+import { useToast } from "@/components/Toast";
+import { copyText, shareLink, shareUrl } from "@/lib/share";
 import { useGym, useSectors, type GymDetail, type Sector } from "@/features/gyms/api";
 import { floorPlanOf, SectorMap, type FloorPlan } from "@/features/gyms/SectorMap";
 import { GymAvatar } from "@/components/GymAvatar";
@@ -14,8 +18,8 @@ import { useGradeSystems } from "@/features/grading/api";
 import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
-import { BoulderRow, SortControl, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { BoulderRow, SortMenu, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
+import { activeFilters, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
@@ -49,6 +53,7 @@ export function GymPage() {
   const g = gym.data;
   return (
     <div className="page page--flush gym-page">
+      <DetailHeader menu={<GymMenu gym={g} />} />
       <header className="gym-hero">
         <div className="gym-hero__cover" style={g.coverImageUrl ? { backgroundImage: `url(${g.coverImageUrl})` } : undefined} />
         <div className="gym-hero__body">
@@ -57,11 +62,6 @@ export function GymPage() {
             <GymAvatar name={g.name} logoUrl={g.logoUrl} size={72} />
             <div className="gym-hero__actions">
               <GymFollowControls gym={g} />
-              {g.viewerRole && (
-                <Link to={`/manage/${g.slug}`} className="icon-btn icon-btn--outlined" aria-label={translate("Manage")} title={translate("Manage")}>
-                  <Settings2 aria-hidden />
-                </Link>
-              )}
             </div>
           </div>
           <div className="gym-hero__text">
@@ -84,6 +84,20 @@ export function GymPage() {
       </div>
     </div>
   );
+}
+
+/** Share, copy the link and, for the gym's own staff, manage it. Follow and favourite keep their own buttons. */
+function GymMenu({ gym }: { gym: GymDetail }) {
+  const toast = useToast();
+  const url = shareUrl(`/gyms/${gym.slug}`);
+  const said = (r: "shared" | "copied" | "failed") =>
+    r === "copied" ? toast.success(translate("Link copied")) : r === "failed" ? toast.error(translate("Couldn't copy the link")) : undefined;
+  const items: ActionMenuItem[] = [
+    { label: translate("Share gym"), icon: <Share2 aria-hidden />, onSelect: () => void shareLink(gym.name, url).then(said) },
+    { label: translate("Copy link"), icon: <Copy aria-hidden />, onSelect: () => void copyText(url).then((ok) => said(ok ? "copied" : "failed")) },
+    ...(gym.viewerRole ? [{ kind: "link" as const, label: translate("Manage gym"), icon: <Settings2 aria-hidden />, to: `/manage/${gym.slug}` }] : []),
+  ];
+  return <ActionMenu items={items} />;
 }
 
 function GymFollowControls({ gym }: { gym: GymDetail }) {
@@ -138,18 +152,14 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
   return (
     <div className="stack">
       {/* A boulder you sent is part of your history long after it comes off the wall, so climbers can look back. */}
-      <div className="boulders-toolbar">
+      {/* One row on a phone: how many, the filters (where "taken down" now lives too), the order and the view. */}
+      <div className="boulders-toolbar boulders-toolbar--one">
         <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, showingRemoved) : null}</span>
-        <div className="boulders-toolbar__end">
-          <BoulderStatusSelect removed={showingRemoved} onChange={(removed) => setFilters({ ...filters, status: removed ? "REMOVED" : undefined })} />
-          <FiltersToggle open={showFilters} count={active.length} onToggle={() => setShowFilters((v) => !v)} />
-        </div>
-      </div>
-      <div className="boulders-toolbar boulders-toolbar--view">
-        <SortControl value={sort} onChange={setSort} removed={showingRemoved} />
+        <FiltersToggle open={showFilters} count={active.length + (showingRemoved ? 1 : 0)} onToggle={() => setShowFilters((v) => !v)} />
+        <SortMenu value={sort} onChange={setSort} removed={showingRemoved} />
         <ViewToggle value={view} onChange={setView} />
       </div>
-      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} withStatus />
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (

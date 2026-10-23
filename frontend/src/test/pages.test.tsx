@@ -73,7 +73,9 @@ describe("Gym page", () => {
     reply("GET", "/api/gyms/g1/boulders", { items: [], page: 1, pageSize: 24, total: 0, hasMore: false });
     renderAt("/gyms/crimp-factory", "/gyms/:slug", <GymPage />);
 
-    expect(await screen.findByRole("link", { name: /manage/i })).toHaveAttribute("href", "/manage/crimp-factory");
+    // Manage sits in the page's "…" menu, for the gym's staff only.
+    await userEvent.click(await screen.findByRole("button", { name: "More actions" }));
+    expect(screen.getByRole("menuitem", { name: "Manage gym" })).toHaveAttribute("href", "/manage/crimp-factory");
     expect(screen.getByText(/only staff can see this/i)).toBeInTheDocument();
     expect(await screen.findByText("No boulders on the wall yet")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Sectors" }));

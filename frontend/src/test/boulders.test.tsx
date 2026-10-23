@@ -66,7 +66,7 @@ describe("Boulder list (climber)", () => {
     expect(screen.getByRole("combobox", { name: "Intensity" })).toBeInTheDocument();
   });
 
-  it("switches between boulders on the wall and taken down from one compact drop-down", async () => {
+  it("switches between boulders on the wall and taken down inside the filters, with the controls on one row", async () => {
     reply("GET", "/api/gyms/crimp", gym);
     reply("GET", "/api/gyms/g1/sectors", sectors);
     reply("GET", "/api/gyms/g1/grade-systems", systems);
@@ -74,8 +74,18 @@ describe("Boulder list (climber)", () => {
     renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
 
     expect(await screen.findByText("2 on the wall")).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Boulder status" }), "REMOVED");
+    // One row: the count, the filters, the order and the view; on the wall / taken down lives in the filters.
+    const row = screen.getByText("2 on the wall").closest(".boulders-toolbar")!;
+    expect(within(row as HTMLElement).getByRole("button", { name: "Filters" })).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByRole("button", { name: /^Sort: / })).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByRole("radiogroup", { name: "Show as" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Boulder status" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Taken down" }));
     await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
+    // It shows as one filter in use, so the reader knows the list isn't the usual one.
+    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
   });
 
   it("shows the filters in use as chips that remove them", async () => {

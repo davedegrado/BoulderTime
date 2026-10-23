@@ -1493,3 +1493,74 @@ button.manage-head__back { background: transparent; }
 
 /* The community's intensity, under the community grade (same card). */
 .community-intensity { border-top: 1px solid var(--bt-line); padding-top: var(--bt-4); }
+
+/* ---------- Detail pages: a gym, a person (ADR-061) ---------- */
+/* On a phone the logo bar gives way to the page's compact header: back, a smaller logo, the page's "…" menu. */
+@media (max-width: 959px) {
+  .shell--detail .topbar { display: none; }
+}
+.detail-header {
+  position: sticky; top: 0; z-index: 20;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: var(--bt-2);
+  height: calc(52px + var(--bt-safe-top)); padding: var(--bt-safe-top) var(--bt-2) 0;
+  background: var(--bt-chrome); backdrop-filter: blur(12px); border-bottom: 1px solid var(--bt-line);
+}
+.detail-header__back { color: var(--bt-ink); }
+.detail-header__logo { justify-self: center; display: inline-flex; }
+.detail-header__end { justify-self: end; display: flex; }
+@media (min-width: 960px) {
+  /* Beside the sidebar there is no logo bar to replace: the header is just the row of back and menu. */
+  .detail-header { position: static; height: auto; padding: 0 0 var(--bt-3); background: none; backdrop-filter: none; border: 0; }
+  .detail-header__logo { visibility: hidden; }
+}
+.round-btn { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; padding: 0; border: 1.5px solid var(--bt-line); border-radius: 50%; background: var(--bt-surface); color: var(--bt-ink); cursor: pointer; font: inherit; }
+.round-btn svg { width: 20px; height: 20px; }
+.round-btn:hover { background: var(--bt-surface-2); }
+.detail-header .round-btn { border-color: transparent; background: transparent; }
+
+/* A person's page: a plain cover in the brand's colours (no personal covers yet), the photo over it, then the name. */
+.person-hero__cover { position: relative; height: 84px; background: var(--bt-charcoal); overflow: hidden; }
+.person-hero__cover::after { content: ""; position: absolute; right: 12%; top: -20%; width: 30px; height: 150%; background: var(--bt-orange); transform: skewX(-18deg); border-radius: 8px; opacity: 0.9; }
+.person-hero__body { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 0 var(--bt-4); }
+.person-hero__body > :first-child { margin-top: -42px; position: relative; z-index: 1; border-radius: 50%; box-shadow: 0 0 0 4px var(--bt-light); }
+.person-hero__name { margin-top: var(--bt-2); }
+.person-hero__meta { margin: 0; color: var(--bt-ink-2); font-size: var(--bt-text-sm); }
+.person-hero__private { display: inline-flex; align-items: center; gap: 6px; margin: var(--bt-1) 0 0; color: var(--bt-ink-2); font-size: var(--bt-text-sm); font-weight: 600; }
+.person-hero__private svg { width: 16px; height: 16px; }
+.person-page .tabs { margin-top: var(--bt-2); }
+.section__head { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-2); }
+.profile-panel { margin-top: var(--bt-3); }
+.section-order { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--bt-1); }
+.section-order__row { display: flex; align-items: center; gap: var(--bt-2); }
+.section-order__row .toggle-row { flex: 1; min-width: 0; }
+.section-order__moves { display: flex; flex-direction: column; }
+.choice-list { display: flex; flex-direction: column; gap: var(--bt-2); }
+.choice { display: flex; align-items: center; gap: var(--bt-3); width: 100%; padding: var(--bt-3) var(--bt-4); border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-md); background: var(--bt-surface); color: var(--bt-ink); font: inherit; text-align: left; cursor: pointer; }
+.choice > svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--bt-ink-2); }
+.choice__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.choice__mark { width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--bt-line); border-radius: 50%; }
+.choice[aria-checked="true"] { border-color: var(--bt-orange); }
+.choice[aria-checked="true"] .choice__mark { border-color: var(--bt-orange); background: radial-gradient(var(--bt-orange) 45%, transparent 50%); }
+
+.action-menu { position: relative; }
+.action-menu__list {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 220px;
+  display: flex; flex-direction: column; padding: var(--bt-1);
+  background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); box-shadow: var(--bt-shadow-raised);
+}
+.action-menu__item { display: flex; align-items: center; gap: var(--bt-3); min-height: 44px; padding: 0 var(--bt-3); border: 0; border-radius: var(--bt-radius-sm); background: none; color: var(--bt-ink); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.action-menu__item svg { width: 18px; height: 18px; color: var(--bt-ink-2); }
+.action-menu__item:hover, .action-menu__item:focus-visible { background: var(--bt-surface-2); }
+.action-menu__item.is-danger, .action-menu__item.is-danger svg { color: var(--bt-danger); }
+
+/* One-row toolbar of the gym's boulders: the count takes what is left and gives way first on narrow phones. */
+.boulders-toolbar--one { justify-content: flex-start; flex-wrap: nowrap; }
+.boulders-toolbar--one .boulders-toolbar__count { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.boulders-toolbar--one .filter-toggle { flex-shrink: 0; }
+.sort-menu { position: relative; flex-shrink: 0; }
+.sort-menu__panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; padding: var(--bt-2); background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); box-shadow: var(--bt-shadow-raised); }
+.sort-menu__panel .sort-control { flex-wrap: nowrap; }
+.segmented { display: flex; padding: 3px; margin-bottom: var(--bt-3); border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); }
+.segmented__option { flex: 1; min-height: 38px; border: 0; border-radius: var(--bt-radius-pill); background: none; color: var(--bt-ink-2); font: inherit; font-weight: 600; font-size: var(--bt-text-sm); cursor: pointer; }
+.segmented__option[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: var(--bt-shadow-raised); }
+.filter-panel__reset { margin-top: var(--bt-2); }

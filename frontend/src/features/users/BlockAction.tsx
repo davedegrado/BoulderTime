@@ -11,10 +11,15 @@ import { t } from "@/i18n/i18n";
  * told, and it is undone from the same button. Reporting, which asks the gym to act on a piece of content, is a
  * different thing and lives next to the content.
  */
-export function BlockAction({ userId, displayName, isBlocked }: { userId: string; displayName: string; isBlocked: boolean }) {
+export function BlockAction({ userId, displayName, isBlocked, startConfirming = false, onClose }: {
+  userId: string; displayName: string; isBlocked: boolean;
+  /** Opened from a menu: the confirmation shows at once, and finishing or cancelling tells the page. */
+  startConfirming?: boolean; onClose?: () => void;
+}) {
   const block = useBlockPerson();
   const toast = useToast();
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirmingState] = useState(startConfirming);
+  const setConfirming = (v: boolean) => { setConfirmingState(v); if (!v) onClose?.(); };
 
   const apply = (blocked: boolean) =>
     block.mutate({ userId, blocked }, {

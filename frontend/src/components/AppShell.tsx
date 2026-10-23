@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
+import { NavLink, Outlet, Link, useLocation, useMatch } from "react-router-dom";
 import { Home, Compass, Activity, Bell, UserRound, LogIn, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -36,6 +36,10 @@ export function AppShell() {
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
+  // A gym's page and a person's page carry their own compact header (back and "…" over the cover): no logo bar on top.
+  const gymPage = useMatch("/gyms/:slug");
+  const personPage = useMatch("/users/:id");
+  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage);
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
   const onLegalPage = ["/privacy", "/termini", "/terms", "/delete-account"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
@@ -50,7 +54,7 @@ export function AppShell() {
   if (mustAccept) return <AcceptLegalPage returning={Boolean(me.data?.acceptedLegalVersion)} />;
 
   return (
-    <div className="shell">
+    <div className={`shell ${detail ? "shell--detail" : ""}`}>
       <a className="skip-link" href="#main">{t("Skip to content")}</a>
 
       <aside className="sidebar" aria-label={t("Primary")}>

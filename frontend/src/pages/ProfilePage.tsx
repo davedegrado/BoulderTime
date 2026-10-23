@@ -19,8 +19,7 @@ import { useSetAvatar } from "@/features/images/api";
 import { LANGUAGES, t, useI18n, type Language } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useProfile } from "@/features/climbing/api";
-import { useLeaderboardVisibility } from "@/features/users/api";
-import { Toggle } from "@/features/notifications/NotificationBits";
+import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { PasswordSection } from "@/features/users/PasswordSection";
 import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
@@ -32,7 +31,6 @@ export function ProfilePage() {
   const update = useUpdateProfile();
   const { language, setLanguage } = useI18n();
   const profile = useProfile(me.data?.id);
-  const visibility = useLeaderboardVisibility();
   // Accounts created with Google have no password of their own; Supabase lists the sign-in methods on the session.
   const providers = (session?.user?.app_metadata?.providers as string[] | undefined) ?? [];
   const hasPassword = providers.length === 0 || providers.includes("email");
@@ -167,24 +165,8 @@ export function ProfilePage() {
       <AppearanceSection />
 
       <section className="section" aria-labelledby="board-title">
-        <h2 id="board-title" className="section__title">{t("Leaderboards")}</h2>
-        <div className="card">
-          {/* Opt-in: off for every new account until the person turns it on. */}
-          <Toggle
-            label={t("Show me in leaderboards and lists")}
-            description={t("You appear in gyms' rankings and by name among the people who completed a boulder. Off, your sends and history stay yours, and nobody sees your name there.")}
-            checked={!user.leaderboardOptOut}
-            disabled={visibility.isPending}
-            onChange={(shown) => visibility.mutate(!shown, {
-              onSuccess: () => toast.success(shown ? t("You appear in leaderboards now") : t("You no longer appear in leaderboards")),
-              onError: (e) => toast.error(errorMessage(e)),
-            })} />
-        </div>
-        {user.leaderboardExcluded && (
-          <p className="notice">
-            {t("You don't appear in leaderboards at the moment. If you think this is a mistake, write to {email}.", { email: SUPPORT_EMAIL })}
-          </p>
-        )}
+        <h2 id="board-title" className="section__title">{t("Privacy and leaderboards")}</h2>
+        <PrivacySettings />
       </section>
 
       <BlockedList />

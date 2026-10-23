@@ -11,8 +11,13 @@ import { t } from "@/i18n/i18n";
  * Reporting a person to BoulderTime, from their profile. Blocking is the reader's own tool; this asks BoulderTime to
  * act, and can end in the account being suspended everywhere. Inline rather than a modal, like the content reports.
  */
-export function ReportPersonAction({ userId, displayName }: { userId: string; displayName: string }) {
-  const [open, setOpen] = useState(false);
+export function ReportPersonAction({ userId, displayName, startOpen = false, onClose }: {
+  userId: string; displayName: string;
+  /** Opened from a menu: the form shows at once, and closing it tells the page. */
+  startOpen?: boolean; onClose?: () => void;
+}) {
+  const [open, setOpenState] = useState(startOpen);
+  const setOpen = (v: boolean) => { setOpenState(v); if (!v) onClose?.(); };
   const [reason, setReason] = useState<PersonReportReason>("HARASSMENT");
   const [description, setDescription] = useState("");
   const report = useReportPerson();

@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
 import type { GymRole } from "@/lib/format";
 import { t } from "@/i18n/i18n";
+import type { ProfileSection } from "@/features/climbing/api";
 
 export interface StaffGym {
   gymId: string;
@@ -35,6 +36,8 @@ export interface CurrentUser {
   isSuspended?: boolean;
   /** Declared being at least 14 (ADR-041); the terms screen asks whoever hasn't. */
   minimumAgeConfirmed?: boolean;
+  /** Only they see the content of their profile (ADR-061). Absent from older servers. */
+  profilePrivate?: boolean;
 }
 
 export interface UpdateProfileInput {
@@ -78,6 +81,30 @@ export function useLeaderboardVisibility() {
   });
 }
 
+
+/** Public or private profile content (ADR-061), independent of the leaderboards. */
+export function useProfilePrivacy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (isPrivate: boolean) => api.put("/api/users/me/profile-privacy", { private: isPrivate }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.me });
+      qc.invalidateQueries({ queryKey: ["climbing", "profile"] });
+      qc.invalidateQueries({ queryKey: ["climbing", "history"] });
+    },
+  });
+}
+
+/** Saves the arrangement of the profile's sections, or (null) goes back to the default one. */
+export function useSaveProfileSections() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sections: ProfileSection[] | null) => sections
+      ? api.put<ProfileSection[]>("/api/users/me/profile-sections", { sections })
+      : api.delete<ProfileSection[]>("/api/users/me/profile-sections"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["climbing", "profile"] }),
+  });
+}
 
 export interface BlockedPerson { userId: string; displayName: string; avatarUrl: string | null; blockedAt: string }
 

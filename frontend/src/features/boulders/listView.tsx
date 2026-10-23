@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDownUp, Check, ChevronDown, LayoutGrid, List, MountainSnow } from "lucide-react";
+import { ArrowDownUp, ArrowUpDown, Check, ChevronDown, LayoutGrid, List, MountainSnow } from "lucide-react";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge } from "@/features/boulders/BoulderBits";
 import { holdColorInfo, holdColorName } from "@/features/boulders/holdColors";
@@ -67,6 +67,35 @@ export function SortControl({ value, onChange, removed }: { value: BoulderSort; 
         onClick={() => onChange({ sort: current.sort, order: reversed ? undefined : (NATURAL[current.sort] === "ASC" ? "DESC" : "ASC") })}>
         <ArrowDownUp aria-hidden />
       </button>
+    </div>
+  );
+}
+
+/**
+ * The sort as one compact button, for a toolbar that has to fit one row on a phone: it opens the same choice as
+ * {@link SortControl} (what to sort by, and the reversed order). The button names the current order for screen readers.
+ */
+export function SortMenu({ value, onChange, removed }: { value: BoulderSort; onChange: (s: BoulderSort) => void; removed: boolean }) {
+  const [open, setOpen] = useState(false);
+  const current = sortFor(value, removed);
+  const label = t("Sort: {by}", { by: t(SORT_LABEL[current.sort]) });
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+  return (
+    <div className="sort-menu">
+      <button type="button" className={`icon-btn icon-btn--outlined icon-btn--sm ${open ? "is-on" : ""}`} aria-label={label} title={label}
+        aria-expanded={open} aria-controls="boulder-sort" onClick={() => setOpen((v) => !v)}>
+        <ArrowUpDown aria-hidden />
+      </button>
+      {open && (
+        <div className="sort-menu__panel" id="boulder-sort">
+          <SortControl value={value} onChange={onChange} removed={removed} />
+        </div>
+      )}
     </div>
   );
 }

@@ -132,14 +132,28 @@ export function FiltersToggle({ open, count, onToggle }: { open: boolean; count:
   );
 }
 
-/** The filters when opened, then the ones in use as chips that remove them (shown open or closed). */
-export function FiltersPanel({ open, filters, onChange, sectors, systems, tags = [] }: Props & { open: boolean }) {
+/**
+ * The filters when opened, then the ones in use as chips that remove them (shown open or closed). With `withStatus`
+ * the panel also chooses between the boulders on the wall and those taken down, at its top (a view more than a
+ * filter, so "clear" keeps it), and offers to clear the filters.
+ */
+export function FiltersPanel({ open, filters, onChange, sectors, systems, tags = [], withStatus = false }: Props & { open: boolean; withStatus?: boolean }) {
   const active = activeFilters(filters, sectors, systems, tags);
+  const removed = filters.status === "REMOVED";
   return (
     <>
       {open && (
         <div id="boulder-filters" className="filter-panel">
+          {withStatus && (
+            <div className="segmented" role="radiogroup" aria-label={t("Boulder status")}>
+              <button type="button" role="radio" aria-checked={!removed} className="segmented__option" onClick={() => onChange({ ...filters, status: undefined })}>{t("On the wall")}</button>
+              <button type="button" role="radio" aria-checked={removed} className="segmented__option" onClick={() => onChange({ ...filters, status: "REMOVED" })}>{t("Taken down")}</button>
+            </div>
+          )}
           <BoulderFiltersBar filters={filters} onChange={(f) => onChange({ ...f, status: filters.status })} sectors={sectors} systems={systems} tags={tags} />
+          {withStatus && active.length > 0 && (
+            <button type="button" className="text-btn filter-panel__reset" onClick={() => onChange({ status: filters.status })}>{t("Clear filters")}</button>
+          )}
         </div>
       )}
       {active.length > 0 && (

@@ -86,8 +86,15 @@ public class User : IAuditable
 
     public bool IsSuspended => SuspendedAt is not null;
 
-    /// <summary>Profiles are public by default; the field exists so privacy settings can be added without a remodel.</summary>
+    /// <summary>Public by default, as every account before this setting existed (ADR-061).</summary>
     public ProfileVisibility ProfileVisibility { get; private set; } = ProfileVisibility.Public;
+
+    /// <summary>
+    /// Which sections the public profile shows, and in what order, as the person arranged them: a small JSON list of
+    /// {key, visible}. Null means the default arrangement. Hiding a section is presentation, not privacy.
+    /// </summary>
+    public string? ProfileSections { get; private set; }
+    public const int ProfileSectionsMaxLength = 600;
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -131,6 +138,11 @@ public class User : IAuditable
     public void RevokePlatformAdmin() => IsPlatformAdmin = false;
 
     public void SetLeaderboardOptOut(bool optOut) => LeaderboardOptOut = optOut;
+
+    public void SetProfileVisibility(ProfileVisibility visibility) => ProfileVisibility = visibility;
+
+    /// <summary>Null goes back to the default arrangement.</summary>
+    public void SetProfileSections(string? json) => ProfileSections = json;
 
     /// <summary>Records the declaration once; declaring again changes nothing.</summary>
     public void ConfirmMinimumAge(DateTimeOffset now) => MinimumAgeConfirmedAt ??= now;
