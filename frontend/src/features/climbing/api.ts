@@ -35,7 +35,15 @@ export interface Profile {
    * without friends, and then the app offers none.
    */
   friendship?: FriendshipState | null;
+  /**
+   * The gyms where the person completed at least one boulder, latest first (ADR-064). Absent from older servers: then
+   * the app shows the gyms followed, as before.
+   */
+  climbedGyms?: ClimbedGym[];
 }
+
+/** A gym where the person completed boulders: how many distinct ones, the latest, the highest grade per scale. */
+export interface ClimbedGym { gym: GymSummary; completed: number; lastCompletedAt: string | null; highest: HighestGrade[] }
 
 export type FriendshipState = "NONE" | "OUTGOING" | "INCOMING" | "FRIENDS";
 

@@ -9,6 +9,8 @@ import { CustomizeProfile, sectionLabel } from "@/features/profile/CustomizeProf
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
 import { GymAvatar } from "@/components/GymAvatar";
+import { ClimbedGymList } from "@/features/profile/ClimbedGyms";
+import type { GymSummary } from "@/features/gyms/api";
 import { DetailHeader } from "@/components/DetailHeader";
 import { ActionMenu, type ActionMenuItem } from "@/components/ActionMenu";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -144,6 +146,9 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
   const setTab = (next: Tab) => setParams((q) => { const n = new URLSearchParams(q); if (next === "overview") n.delete("tab"); else n.set("tab", next); return n; }, { replace: true });
   const label: Record<Tab, string> = { overview: t("Overview"), activity: t("Activity"), gyms: t("Gyms"), friends: t("Friends") };
 
+  // Where they climbed (ADR-064); the gyms followed only against an older server that doesn't say.
+  const gyms = p.climbedGyms ? p.climbedGyms.map((c) => c.gym) : p.followedGyms;
+
   // Only sections with something to show: nothing invented, no empty boxes.
   const blocks = sections.filter((s) => s.visible).map((s) => {
     switch (s.key) {
@@ -155,8 +160,8 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
       case "highestGrades": return p.highestGrades.length > 0
         ? <Block key={s.key} id="highest" title={t("Highest grades")}><HighestGrades grades={p.highestGrades} /></Block>
         : null;
-      case "gyms": return p.followedGyms.length > 0
-        ? <Block key={s.key} id="gyms" title={sectionLabel("gyms")}><GymChips profile={p} /></Block>
+      case "gyms": return gyms.length > 0
+        ? <Block key={s.key} id="gyms" title={sectionLabel("gyms")}><GymChips gyms={gyms} /></Block>
         : null;
       case "history": return p.recentCompletions.length > 0
         ? (
@@ -180,9 +185,7 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
       <div className="page__pad profile-tab">
         {tab === "activity" ? <HistorySection userId={p.id} isMe={p.isMe} titled={false} compact />
           : tab === "friends" ? <FriendsTab profile={p} />
-          : tab === "gyms" ? (p.followedGyms.length > 0
-            ? <GymChips profile={p} />
-            : <EmptyState icon={<MapPin />} title={p.isMe ? t("You don't follow any gym yet") : t("No gyms followed yet")} />)
+          : tab === "gyms" ? <GymsTab profile={p} />
           : blocks.length > 0 ? <div className="profile-overview">{blocks}</div>
           : <EmptyState icon={<LayoutList />} title={p.isMe ? t("Nothing to show yet") : t("No activity yet")}
               action={onCustomize ? <Button variant="secondary" onClick={onCustomize}>{t("Customise profile")}</Button> : undefined} />}
@@ -215,10 +218,27 @@ function StatsRow({ stats }: { stats: Profile["stats"] }) {
   );
 }
 
-function GymChips({ profile: p }: { profile: Profile }) {
+/**
+ * The "Gyms" tab: where the person completed at least one boulder (ADR-064) — following a gym is not enough, and it is
+ * never shown in its place. Against an older server, which doesn't say where they climbed, the gyms followed, as before.
+ */
+function GymsTab({ profile: p }: { profile: Profile }) {
+  if (!p.climbedGyms) {
+    return p.followedGyms.length > 0
+      ? <GymChips gyms={p.followedGyms} />
+      : <EmptyState icon={<MapPin />} title={p.isMe ? t("You don't follow any gym yet") : t("No gyms followed yet")} />;
+  }
+  if (p.climbedGyms.length === 0) {
+    return <EmptyState icon={<MapPin />} title={p.isMe ? t("No gyms climbed yet") : t("No gyms to show yet")}
+      body={p.isMe ? t("The gyms where you complete at least one boulder appear here.") : t("The gyms where {name} completes at least one boulder appear here.", { name: p.displayName })} />;
+  }
+  return <ClimbedGymList gyms={p.climbedGyms} />;
+}
+
+function GymChips({ gyms }: { gyms: GymSummary[] }) {
   return (
     <div className="gym-chips" aria-label={t("Gyms")}>
-      {p.followedGyms.map((g) => (
+      {gyms.map((g) => (
         <Link key={g.id} to={`/gyms/${g.slug}`} className="gym-chip"><GymAvatar name={g.name} logoUrl={g.logoUrl} size={24} /><span>{g.name}</span></Link>
       ))}
     </div>

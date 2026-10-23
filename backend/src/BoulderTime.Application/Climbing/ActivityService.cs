@@ -26,6 +26,12 @@ public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, Grad
 
 public sealed record WeekActivityDto(DateOnly WeekStart, int Completed);
 
+/// <summary>
+/// A gym where the person completed at least one boulder (ADR-064): how many distinct boulders, when the latest, and
+/// the highest grade in each of that gym's scales — never compared across scales.
+/// </summary>
+public sealed record ClimbedGymDto(GymSummaryDto Gym, int Completed, DateTimeOffset? LastCompletedAt, IReadOnlyList<HighestGradeDto> Highest);
+
 /// <summary>A distinction the person carries because they are staff of that gym — never because they follow it.</summary>
 public sealed record StaffDistinctionDto(Guid GymId, string GymSlug, string GymName, GymRole Role, bool IsFoundingGym, bool IsEarlyPartner);
 
@@ -51,7 +57,12 @@ public sealed record ProfileDto(
     /// The viewer's friendship with this person (ADR-063): none, asked, asked by them, friends. Null for one's own
     /// profile and when signed out. Added later: older apps don't read it.
     /// </summary>
-    Users.FriendshipState? Friendship = null);
+    Users.FriendshipState? Friendship = null,
+    /// <summary>
+    /// The gyms where the person completed at least one boulder, latest first (ADR-064). Following a gym is not enough.
+    /// Empty when the content is hidden. Added later: older apps don't read it.
+    /// </summary>
+    IReadOnlyList<ClimbedGymDto>? ClimbedGyms = null);
 
 /// <summary>
 /// The sector with the most boulders this person completed, each boulder once. With the gym's floor plan and the
@@ -104,7 +115,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             // Only what identifies the person: name and photo. Everything else empty, with the same shape as always.
             return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, false,
                 new ClimbingStatsDto(0, 0, 0, 0), [], [], [], [], [],
-                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections, Friendship: friendship);
+                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections, Friendship: friendship, ClimbedGyms: []);
         }
         var gyms = await db.GymFollows.AsNoTracking().Where(f => f.UserId == userId)
             .Join(db.Gyms, f => f.GymId, g => g.Id, (f, g) => new { f.IsFavorite, g })
@@ -117,7 +128,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections, friendship);
+            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections, friendship, await ClimbedGymsAsync(userId, ct));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)
@@ -221,16 +232,62 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .Join(db.Gyms, x => x.s.GymId, gym => (Guid?)gym.Id, (x, gym) => new { x.v, x.s, GymName = gym.Name })
             .ToListAsync(ct);
 
-        static int TypeOrder(GradeSystemType t) => t switch
-        {
-            GradeSystemType.Fontainebleau => 0, GradeSystemType.VScale => 1, GradeSystemType.Color => 2, _ => 3,
-        };
         return rows
             .GroupBy(x => x.s.Id)
             .Select(g => g.OrderByDescending(x => x.v.Rank).First())
             .OrderBy(x => TypeOrder(x.s.Type)).ThenByDescending(x => x.v.Rank)
             .Take(6)
             .Select(x => new HighestGradeDto(x.s.Id, x.s.Name, x.s.Type, x.GymName, x.v.Label, x.v.Rank, x.v.ColorHex, x.v.ColorHex2))
+            .ToList();
+    }
+
+    private static int TypeOrder(GradeSystemType t) => t switch
+    {
+        GradeSystemType.Fontainebleau => 0, GradeSystemType.VScale => 1, GradeSystemType.Color => 2, _ => 3,
+    };
+
+    /// <summary>
+    /// The gyms where the person completed at least one boulder (ADR-064). A send is a completed attempt row, and there
+    /// is one row per person and boulder, so counting rows counts distinct boulders; attempts and projects don't count.
+    /// The latest send orders them, sends without a date (none are recorded that way today) last. The highest grade
+    /// follows the rule of the profile's highest grades — the staff's grade, by rank within one scale — per gym and
+    /// scale. Only gyms open on BoulderTime, as for the gyms followed.
+    /// </summary>
+    internal async Task<IReadOnlyList<ClimbedGymDto>> ClimbedGymsAsync(Guid userId, CancellationToken ct)
+    {
+        var sends = await db.BoulderAttempts.AsNoTracking()
+            .Where(a => a.UserId == userId && a.Completed)
+            .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { a.BoulderId, a.CompletedAt, b.GymId })
+            .ToListAsync(ct);
+        if (sends.Count == 0) return [];
+        var gymIds = sends.Select(x => x.GymId).Distinct().ToList();
+        var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id) && g.Status == GymStatus.Active).ToListAsync(ct);
+        if (gyms.Count == 0) return [];
+
+        var grades = await db.BoulderAttempts.AsNoTracking()
+            .Where(a => a.UserId == userId && a.Completed)
+            .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { b.Id, b.GymId })
+            .Join(db.BoulderGrades, x => x.Id, g => g.BoulderId, (x, g) => new { x.GymId, g })
+            .Where(x => x.g.Source == GradeSource.Staff)
+            .Join(db.GradeValues, x => x.g.GradeValueId, v => v.Id, (x, v) => new { x.GymId, v })
+            .Join(db.GradeSystems, x => x.v.GradeSystemId, s => s.Id, (x, s) => new { x.GymId, x.v, s })
+            .ToListAsync(ct);
+
+        var early = await partners.ActiveEarlyPartnerIdsAsync(gyms.Select(g => g.Id).ToList(), ct);
+        return gyms
+            .Select(gym =>
+            {
+                var here = sends.Where(x => x.GymId == gym.Id).ToList();
+                var highest = grades.Where(x => x.GymId == gym.Id)
+                    .GroupBy(x => x.s.Id)
+                    .Select(g => g.OrderByDescending(x => x.v.Rank).First())
+                    .OrderBy(x => TypeOrder(x.s.Type)).ThenBy(x => x.s.Name)
+                    .Select(x => new HighestGradeDto(x.s.Id, x.s.Name, x.s.Type, gym.Name, x.v.Label, x.v.Rank, x.v.ColorHex, x.v.ColorHex2))
+                    .ToList();
+                return new ClimbedGymDto(GymSummaryDto.From(gym, early.Contains(gym.Id)), here.Select(x => x.BoulderId).Distinct().Count(),
+                    here.Max(x => x.CompletedAt), highest);
+            })
+            .OrderByDescending(x => x.LastCompletedAt.HasValue).ThenByDescending(x => x.LastCompletedAt).ThenBy(x => x.Gym.Name)
             .ToList();
     }
 

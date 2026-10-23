@@ -1243,3 +1243,18 @@ you looks sent like any other, and they never see it while the block lasts. Eras
 Requests received are not notifications of the feed: the apps already installed draw each notification from a fixed
 list of types and would fail on a new one. They have a line of their own at the top of Notifications and a place in the
 "Friends" tab of one's own profile; the new app shows nothing of friends against a server without them.
+
+## ADR-064 · A person's gyms are where they climbed
+
+The "Gyms" tab of a profile, and the gyms of its overview, list the gyms where the person completed at least one
+boulder; following a gym, trying a boulder or keeping it as a project is not enough, and the gyms followed are never
+shown in their place. Each comes once, with the distinct boulders completed there (a send is a completed attempt row,
+and there is one row per person and boulder, so the rows are the boulders), the date of the latest send, and the
+highest grade in each of that gym's scales — the rule of the profile's highest grades (the staff's grade, by rank
+within one scale), per gym; scales are never compared with each other. Latest send first; a send without a date, which
+nothing records today, would come last rather than get one invented. Only gyms open on BoulderTime, as for the gyms
+followed.
+
+It travels on the profile as an added `climbedGyms` field: no new storage, no new endpoint, empty when the content is
+hidden by the privacy. Older apps don't read it; the new app, against an older server, shows the gyms followed as
+before. The cover isn't used: the cards stay short, the logo (or the initials) identifies the gym.

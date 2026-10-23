@@ -1655,3 +1655,22 @@ button.manage-head__back { background: transparent; }
 .friend-requests-link__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
 .friend-requests-link__icon svg { width: 18px; height: 18px; }
 .friend-requests-link__text { flex: 1; font-weight: 700; }
+
+/* ---------- Gyms where a person climbed (ADR-064) ---------- */
+.climbed-gyms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--bt-2); }
+.climbed-gym {
+  display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-3);
+  background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: var(--bt-radius-lg);
+  color: inherit; text-decoration: none;
+}
+.climbed-gym:active { background: var(--bt-surface-2); }
+.climbed-gym > .gym-avatar { flex-shrink: 0; }
+.climbed-gym__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.climbed-gym__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.climbed-gym__where { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.climbed-gym__where svg { width: 14px; height: 14px; flex-shrink: 0; }
+.climbed-gym__facts { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-2); margin-top: 2px; }
+.climbed-gym__count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--bt-text-sm); font-weight: 700; }
+.climbed-gym__grades { flex-shrink: 0; }
+.climbed-gym__grades-row { display: inline-flex; gap: 4px; }
+.climbed-gym__last { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
