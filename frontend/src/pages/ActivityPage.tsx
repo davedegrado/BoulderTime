@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Mountain } from "lucide-react";
 import { useCurrentUser } from "@/features/users/api";
 import { useHistory, useProfile, type HistoryFilter, type Profile } from "@/features/climbing/api";
-import { HighestGrades, HistoryRow, WeeklyChart } from "@/features/climbing/ClimbingBits";
+import { CompactHistoryRow, HighestGrades, HistoryRow, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -60,7 +60,8 @@ export function StatsGrid({ stats }: { stats: Profile["stats"] }) {
 }
 
 /** The whole history, a page at a time, with its All / Completed / Projects choice kept in the address. */
-export function HistorySection({ userId, isMe, titled = true }: { userId: string; isMe: boolean; titled?: boolean }) {
+/** `compact`: the shorter rows of a person's profile; this page keeps its own. */
+export function HistorySection({ userId, isMe, titled = true, compact = false }: { userId: string; isMe: boolean; titled?: boolean; compact?: boolean }) {
   // In the address, so coming back from a boulder of the history finds the same choice (and the same place in it).
   const [params, setParams] = useSearchParams();
   const asked = params.get("history") as HistoryFilter | null;
@@ -86,7 +87,9 @@ export function HistorySection({ userId, isMe, titled = true }: { userId: string
               action={isMe ? <Link to="/explore" className="btn btn--primary"><span>{t("Find a gym")}</span></Link> : undefined} />
           ) : (
             <>
-              <ul className="history">{items.map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>
+              {compact
+                ? <ul className="hlist">{items.map((i) => <CompactHistoryRow key={i.boulder.id} item={i} />)}</ul>
+                : <ul className="history">{items.map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>}
               {history.hasNextPage && <Button variant="secondary" onClick={() => history.fetchNextPage()} loading={history.isFetchingNextPage}>{t("Show more")}</Button>}
             </>
           )}

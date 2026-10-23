@@ -34,8 +34,9 @@ export interface Profile {
 
 export type ProfileSectionKey = "stats" | "favoriteSector" | "gyms" | "weekly" | "highestGrades" | "history";
 export interface ProfileSection { key: ProfileSectionKey; visible: boolean }
+/** As the server's default: every section on except the statistics, which their owner may choose to show. */
 export const DEFAULT_PROFILE_SECTIONS: ProfileSection[] =
-  (["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"] as ProfileSectionKey[]).map((key) => ({ key, visible: true }));
+  (["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"] as ProfileSectionKey[]).map((key) => ({ key, visible: key !== "stats" }));
 
 /** The sector with the most completed boulders, with the gym's plan and its outline when the gym drew them. */
 export interface FavoriteSector {

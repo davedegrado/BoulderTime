@@ -25,7 +25,8 @@ public sealed class ProfileSectionsTests(PostgresFixture postgres) : IAsyncLifet
         var anna = await _f.UserAsync();
         var mine = (await (await anna.Client.GetAsync("/api/users/me/profile-sections")).ReadAsync<List<ProfileSectionDto>>())!;
         mine.Select(s => s.Key).Should().Equal(DefaultOrder);
-        mine.Should().OnlyContain(s => s.Visible);
+        // Everything on but the statistics: they are shown only by those who choose to.
+        mine.Where(s => s.Visible).Select(s => s.Key).Should().Equal(DefaultOrder.Where(k => k != "stats"));
         var seen = (await (await _f.CreateClient().GetAsync($"/api/users/{anna.Id}/profile")).ReadAsync<ProfileDto>())!;
         seen.Sections!.Select(s => s.Key).Should().Equal(DefaultOrder);
     }
@@ -69,7 +70,10 @@ public sealed class ProfileSectionsTests(PostgresFixture postgres) : IAsyncLifet
     public void A_saved_arrangement_that_cannot_be_read_falls_back_to_the_default()
     {
         ProfileLayout.Read("not json").Select(s => s.Key).Should().Equal(DefaultOrder);
-        ProfileLayout.Read("""[{"key":"weekly","visible":false},{"key":"gone","visible":true}]""").Select(s => s.Key)
-            .Should().Equal("weekly", "stats", "favoriteSector", "gyms", "highestGrades", "history");
+        var read = ProfileLayout.Read("""[{"key":"weekly","visible":false},{"key":"gone","visible":true}]""");
+        read.Select(s => s.Key).Should().Equal("weekly", "stats", "favoriteSector", "gyms", "highestGrades", "history");
+        // The sections it didn't mention come as they are by default.
+        read.Single(s => s.Key == "stats").Visible.Should().BeFalse();
+        read.Single(s => s.Key == "gyms").Visible.Should().BeTrue();
     }
 }

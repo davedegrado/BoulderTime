@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Ban, Copy, Flag, LayoutList, Lock, Pencil, Share2, ShieldCheck, Undo2 } from "lucide-react";
+import { Ban, Copy, Flag, LayoutList, Lock, MapPin, Pencil, Share2, ShieldCheck, Undo2 } from "lucide-react";
 import { DEFAULT_PROFILE_SECTIONS, useProfile, type Profile, type ProfileSection } from "@/features/climbing/api";
-import { HighestGrades, HistoryRow, WeeklyChart } from "@/features/climbing/ClimbingBits";
+import { CompactHistoryRow, HighestGrades, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
-import { HistorySection, StatsGrid } from "@/pages/ActivityPage";
+import { HistorySection } from "@/pages/ActivityPage";
 import { CustomizeProfile, sectionLabel } from "@/features/profile/CustomizeProfile";
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
@@ -26,14 +26,17 @@ type Panel = "customize" | "privacy" | "block" | "report" | null;
 type Tab = "overview" | "activity" | "gyms";
 
 /**
- * A person's profile (ADR-061): compact header over a plain cover, who they are, then their sections in the order they
- * chose. A private profile shows its content only to its owner; others see the name and photo and are told it's
- * private (the server sends nothing more). Back returns where it was opened from, Home when opened directly.
+ * A person's profile (ADR-061, ADR-062): a header transparent over a plain cover until the page scrolls, who they are,
+ * then tabs — the overview with the sections they chose, in their order, the whole activity, the gyms. A private
+ * profile shows its content only to its owner; others see the name and photo and are told it's private (the server
+ * sends nothing more). Back returns where it was opened from, Home when opened directly.
  */
 export function UserProfilePage() {
   const { id } = useParams();
   const profile = useProfile(id);
   const [panel, setPanel] = useState<Panel>(null);
+  const cover = useRef<HTMLDivElement>(null);
+  const name = useRef<HTMLHeadingElement>(null);
   const p = profile.data;
 
   // Never stuck: the way back is there while the profile loads, and if it can't be loaded.
@@ -46,12 +49,12 @@ export function UserProfilePage() {
 
   return (
     <div className="page page--flush person-page">
-      <DetailHeader menu={<ProfileMenu profile={p} canArrange={canArrange} onOpen={setPanel} />} />
+      <DetailHeader menu={<ProfileMenu profile={p} canArrange={canArrange} onOpen={setPanel} />} title={p.displayName} coverRef={cover} titleRef={name} />
       <header className="person-hero">
-        <div className="person-hero__cover" />
+        <div ref={cover} className="person-hero__cover"><span className="detail-cover__scrim" aria-hidden /></div>
         <div className="person-hero__body">
           <EnlargeableAvatar name={p.displayName} url={p.avatarUrl} size={84} />
-          <h1 className="page__title person-hero__name">{p.displayName}</h1>
+          <h1 ref={name} className="page__title person-hero__name">{p.displayName}</h1>
           <p className="person-hero__meta">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
           {!p.contentHidden && <StaffDistinctions distinctions={p.staffDistinctions} />}
           {p.isMe && p.isPrivate && <p className="person-hero__private"><Lock aria-hidden /> {t("Private profile: others see only your name and photo.")}</p>}
@@ -117,38 +120,40 @@ function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; can
   return <ActionMenu items={items} />;
 }
 
-/** The sections the person chose, in their order, with the history and the gyms as tabs of their own. */
+/**
+ * The overview shows the sections the person chose, in their order, each as large as what it holds: a heading and its
+ * content, no box around each. The statistics appear only if the person turned them on. The whole history and the
+ * gyms have tabs of their own.
+ */
 function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profile; sections: ProfileSection[]; onCustomize?: () => void }) {
   const [params, setParams] = useSearchParams();
   const shown = (key: ProfileSection["key"]) => sections.some((s) => s.key === key && s.visible);
-  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") && p.followedGyms.length > 0 ? ["gyms" as const] : [])];
+  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") ? ["gyms" as const] : [])];
   const asked = params.get("tab") as Tab | null;
   const tab: Tab = asked && tabs.includes(asked) ? asked : "overview";
   const setTab = (next: Tab) => setParams((q) => { const n = new URLSearchParams(q); if (next === "overview") n.delete("tab"); else n.set("tab", next); return n; }, { replace: true });
   const label: Record<Tab, string> = { overview: t("Overview"), activity: t("Activity"), gyms: t("Gyms") };
 
   // Only sections with something to show: nothing invented, no empty boxes.
-  const blocks = sections.filter((s) => s.visible && s.key !== "stats").map((s) => {
+  const blocks = sections.filter((s) => s.visible).map((s) => {
     switch (s.key) {
+      case "stats": return <Block key={s.key} id="stats" title={t("Statistics")}><StatsRow stats={p.stats} /></Block>;
       case "favoriteSector": return p.favoriteSector ? <FavoriteSectorCard key={s.key} sector={p.favoriteSector} isMe={p.isMe} /> : null;
       case "weekly": return p.weekly.some((w) => w.completed > 0)
-        ? <section key={s.key} className="section card" aria-labelledby="weekly-title"><h2 id="weekly-title" className="section__title">{t("Last 12 weeks")}</h2><WeeklyChart weeks={p.weekly} /></section>
+        ? <Block key={s.key} id="weekly" title={t("Last 12 weeks")}><WeeklyChart weeks={p.weekly} /></Block>
         : null;
       case "highestGrades": return p.highestGrades.length > 0
-        ? <section key={s.key} className="section card" aria-labelledby="highest-title"><h2 id="highest-title" className="section__title">{t("Highest grades")}</h2><HighestGrades grades={p.highestGrades} /></section>
+        ? <Block key={s.key} id="highest" title={t("Highest grades")}><HighestGrades grades={p.highestGrades} /></Block>
         : null;
       case "gyms": return p.followedGyms.length > 0
-        ? <section key={s.key} className="section card" aria-labelledby="gyms-title"><h2 id="gyms-title" className="section__title">{sectionLabel("gyms")}</h2><GymChips profile={p} /></section>
+        ? <Block key={s.key} id="gyms" title={sectionLabel("gyms")}><GymChips profile={p} /></Block>
         : null;
       case "history": return p.recentCompletions.length > 0
         ? (
-          <section key={s.key} className="section card" aria-labelledby="recent-title">
-            <div className="section__head">
-              <h2 id="recent-title" className="section__title">{t("Recent activity")}</h2>
-              <button type="button" className="text-btn" onClick={() => setTab("activity")}>{t("See all")}</button>
-            </div>
-            <ul className="history">{p.recentCompletions.slice(0, 3).map((i) => <HistoryRow key={i.boulder.id} item={i} />)}</ul>
-          </section>
+          <Block key={s.key} id="recent" title={t("Recent activity")}
+            action={<button type="button" className="text-btn" onClick={() => setTab("activity")}>{t("See all")}</button>}>
+            <ul className="hlist">{p.recentCompletions.slice(0, 3).map((i) => <CompactHistoryRow key={i.boulder.id} item={i} />)}</ul>
+          </Block>
         )
         : null;
       default: return null;
@@ -157,20 +162,45 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
 
   return (
     <>
-      {shown("stats") && <div className="page__pad"><StatsGrid stats={p.stats} /></div>}
       {tabs.length > 1 && (
         <div className="tabs" role="tablist" aria-label={t("Profile sections")}>
           {tabs.map((x) => <button key={x} role="tab" aria-selected={tab === x} className="tabs__tab" onClick={() => setTab(x)}>{label[x]}</button>)}
         </div>
       )}
-      <div className="page__pad stack">
-        {tab === "activity" ? <HistorySection userId={p.id} isMe={p.isMe} titled={false} />
-          : tab === "gyms" ? <GymChips profile={p} />
-          : blocks.length > 0 ? blocks
+      <div className="page__pad profile-tab">
+        {tab === "activity" ? <HistorySection userId={p.id} isMe={p.isMe} titled={false} compact />
+          : tab === "gyms" ? (p.followedGyms.length > 0
+            ? <GymChips profile={p} />
+            : <EmptyState icon={<MapPin />} title={p.isMe ? t("You don't follow any gym yet") : t("No gyms followed yet")} />)
+          : blocks.length > 0 ? <div className="profile-overview">{blocks}</div>
           : <EmptyState icon={<LayoutList />} title={p.isMe ? t("Nothing to show yet") : t("No activity yet")}
               action={onCustomize ? <Button variant="secondary" onClick={onCustomize}>{t("Customise profile")}</Button> : undefined} />}
       </div>
     </>
+  );
+}
+
+function Block({ id, title, action, children }: { id: string; title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="profile-block" aria-labelledby={`${id}-title`}>
+      <div className="profile-block__head">
+        <h2 id={`${id}-title`} className="profile-block__title">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** The four numbers in one row, for those who choose to show them. */
+function StatsRow({ stats }: { stats: Profile["stats"] }) {
+  const items: [number, string][] = [
+    [stats.completed, t("Sends")], [stats.projects, t("Projects")], [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
+  ];
+  return (
+    <dl className="profile-stats">
+      {items.map(([value, name]) => <div key={name} className="profile-stats__item"><dt>{name}</dt><dd>{value}</dd></div>)}
+    </dl>
   );
 }
 

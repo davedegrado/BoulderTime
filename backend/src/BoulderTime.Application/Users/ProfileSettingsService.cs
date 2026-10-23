@@ -21,13 +21,19 @@ public static class ProfileLayout
 {
     public static readonly string[] Keys = ["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"];
 
-    public static IReadOnlyList<ProfileSectionDto> Default { get; } = Keys.Select(k => new ProfileSectionDto(k, true)).ToList();
+    /// <summary>
+    /// The statistics are shown only by those who choose to: every other section is on until its owner turns it off.
+    /// This decides only what the page shows, never who may see it (that is the privacy).
+    /// </summary>
+    public static bool ShownByDefault(string key) => key != "stats";
+
+    public static IReadOnlyList<ProfileSectionDto> Default { get; } = Keys.Select(k => new ProfileSectionDto(k, ShownByDefault(k))).ToList();
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>
-    /// The arrangement to show: the saved one, with unknown keys dropped and sections added later appended, visible,
-    /// so a profile arranged today still shows what comes tomorrow. Anything unreadable gives the default.
+    /// The arrangement to show: the saved one, with unknown keys dropped and sections added later appended as they are
+    /// by default, so a profile arranged today still shows what comes tomorrow. Anything unreadable gives the default.
     /// </summary>
     public static IReadOnlyList<ProfileSectionDto> Read(string? json)
     {
@@ -38,7 +44,7 @@ public static class ProfileLayout
         var result = new List<ProfileSectionDto>();
         foreach (var s in saved ?? [])
             if (s is not null && Keys.Contains(s.Key) && result.All(r => r.Key != s.Key)) result.Add(s);
-        result.AddRange(Keys.Where(k => result.All(r => r.Key != k)).Select(k => new ProfileSectionDto(k, true)));
+        result.AddRange(Keys.Where(k => result.All(r => r.Key != k)).Select(k => new ProfileSectionDto(k, ShownByDefault(k))));
         return result;
     }
 

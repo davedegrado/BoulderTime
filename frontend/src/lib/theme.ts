@@ -74,6 +74,8 @@ function subscribe(listener: () => void) {
  * from then on it follows the theme: dark text on the light theme, light text on the dark one.
  */
 let statusBarReady = false;
+/** A page's header sits transparent over a picture (a gym's or a person's cover): light text while it does. */
+let overCover = false;
 export async function startStatusBar() {
   statusBarReady = true;
   await paintStatusBar(currentTheme());
@@ -83,8 +85,10 @@ async function paintStatusBar(theme: Theme) {
   if (!Capacitor.isNativePlatform()) return;
   try {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
-    // Style names the background the text sits on: Light = dark text, Dark = light text.
-    await StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light });
+    // Style names the background the text sits on: Light = dark text, Dark = light text. Only iOS draws the page
+    // under the status bar; on Android it keeps its own strip in the page colour, so the cover never reaches it.
+    const light = theme === "dark" || (overCover && Capacitor.getPlatform() === "ios");
+    await StatusBar.setStyle({ style: light ? Style.Dark : Style.Light });
     if (Capacitor.getPlatform() === "android") {
       await StatusBar.setOverlaysWebView({ overlay: false });
       await StatusBar.setBackgroundColor({ color: PAGE_COLOUR[theme] });
@@ -92,4 +96,11 @@ async function paintStatusBar(theme: Theme) {
   } catch {
     // A status bar that keeps its look is not worth failing over.
   }
+}
+
+/** While a page's transparent header is over its cover, the status bar's text turns light; back to the theme after. */
+export function setStatusBarOverCover(on: boolean) {
+  if (overCover === on) return;
+  overCover = on;
+  if (statusBarReady) void paintStatusBar(currentTheme());
 }

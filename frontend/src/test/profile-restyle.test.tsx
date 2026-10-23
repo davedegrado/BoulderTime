@@ -26,7 +26,7 @@ import { UserProfilePage } from "@/pages/UserProfilePage";
 import { GymPage } from "@/pages/GymPage";
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 
-const DEFAULT = ["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"].map((key) => ({ key, visible: true }));
+const DEFAULT = ["stats", "favoriteSector", "gyms", "weekly", "highestGrades", "history"].map((key) => ({ key, visible: key !== "stats" }));
 const profile = (over: object = {}) => ({
   id: "u2", displayName: "Anna Verdi", avatarUrl: null, memberSince: "2026-09-01T00:00:00Z", isMe: false, isBlocked: false,
   stats: { completed: 3, projects: 1, completedThisMonth: 2, totalAttempts: 9 }, highestGrades: [], weekly: [],
@@ -42,6 +42,11 @@ function show(element: ReactElement, path: string, at = path, extra: { path: str
   render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
   return router;
 }
+const renderProfile = () => {
+  const router = createMemoryRouter([{ path: "/users/:id", element: <UserProfilePage /> }, { path: "/", element: <h1>Home</h1> }], { initialEntries: ["/users/u2"] });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
+};
 const openMenu = async () => { await userEvent.click(await screen.findByRole("button", { name: "More actions" })); return screen.getByRole("menu"); };
 const menuItems = (menu: HTMLElement) => within(menu).getAllByRole("menuitem").map((i) => i.textContent);
 
@@ -91,6 +96,40 @@ describe("A person's profile", () => {
     expect(screen.queryByText("Sends")).not.toBeInTheDocument();
   });
 
+  it("shows the statistics only to those who chose them, inside the overview and not above the tabs", async () => {
+    reply("GET", "/api/users/u2/profile", profile());
+    const { unmount } = renderProfile();
+    expect(await screen.findByRole("tab", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.queryByText("Sends")).not.toBeInTheDocument();
+    unmount();
+
+    reply("GET", "/api/users/u2/profile", profile({ sections: DEFAULT.map((s) => ({ ...s, visible: true })) }));
+    renderProfile();
+    const stats = await screen.findByRole("region", { name: "Statistics" });
+    expect(within(stats).getByText("Sends")).toBeInTheDocument();
+    // After the tabs, in the overview's own flow.
+    expect(screen.getByRole("tablist").compareDocumentPosition(stats) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("lists the recent activity on short rows, with what identifies each send", async () => {
+    reply("GET", "/api/users/u2/profile", profile({ recentCompletions: [{
+      boulder: { id: "b1", name: "La Fessura", gymId: "g1", gymName: "Crimp Factory", sectorId: "s1", sectorName: "Cave", photoUrl: "/b1.jpg", holdColor: "BLUE", points: 64, status: "ACTIVE",
+        grades: [{ gradeSystemId: "font", systemName: "Fontainebleau", systemType: "FONTAINEBLEAU", gradeValueId: "v6a", label: "6A", rank: 5, colorHex: null }] },
+      completed: true, completedAt: "2026-10-20T10:00:00Z", updatedAt: "2026-10-20T10:00:00Z", attempts: 3,
+    }] }));
+    renderProfile();
+    const recent = await screen.findByRole("region", { name: "Recent activity" });
+    const row = within(recent).getByRole("link");
+    expect(row).toHaveAttribute("href", "/boulders/b1");
+    expect(row).toHaveTextContent("La Fessura");
+    expect(row).toHaveTextContent("+64 pt");
+    expect(row).toHaveTextContent("Cave · Crimp Factory");
+    expect(row).toHaveTextContent("3 attempts");
+    expect(row).toHaveTextContent(/blue/i);
+    await userEvent.click(within(recent).getByRole("button", { name: "See all" }));
+    expect(await screen.findByRole("tab", { name: "Activity", selected: true })).toBeInTheDocument();
+  });
+
   it("is customised by its owner: hide, move, save; and back to the default", async () => {
     reply("GET", "/api/users/u2/profile", profile({ isMe: true }));
     reply("PUT", "/api/users/me/profile-sections", (body: unknown) => (body as { sections: unknown }).sections);
@@ -104,7 +143,8 @@ describe("A person's profile", () => {
     await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
     const sent = (calls.find((c) => c.method === "PUT")!.body as { sections: { key: string; visible: boolean }[] }).sections;
     expect(sent.map((s) => s.key)).toEqual(["stats", "favoriteSector", "gyms", "weekly", "history", "highestGrades"]);
-    expect(sent.find((s) => s.key === "stats")!.visible).toBe(false);
+    // Off by default, so the switch turned them on.
+    expect(sent.find((s) => s.key === "stats")!.visible).toBe(true);
 
     await userEvent.click(within(await openMenu()).getByRole("menuitem", { name: "Customise profile" }));
     await userEvent.click(screen.getByRole("button", { name: "Default" }));
@@ -115,7 +155,9 @@ describe("A person's profile", () => {
     const { sections: _s, isPrivate: _p, contentHidden: _c, ...old } = profile({ isMe: true });
     reply("GET", "/api/users/u2/profile", old);
     show(<UserProfilePage />, "/users/:id", "/users/u2");
-    expect(await screen.findByText("Sends")).toBeInTheDocument();
+    // The default arrangement: the gyms are there, the statistics only for those who choose them.
+    expect(await screen.findByRole("heading", { name: "Gyms" })).toBeInTheDocument();
+    expect(screen.queryByText("Sends")).not.toBeInTheDocument();
     expect(menuItems(await openMenu())).toEqual(["Edit profile", "Share profile"]);
   });
 });

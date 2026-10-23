@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Copy, ExternalLink, Globe, Layers, Mail, MapPin, Maximize2, Phone, Settings2, Share2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { DetailHeader } from "@/components/DetailHeader";
@@ -46,16 +46,25 @@ export function GymPage() {
   const setTab = (t: Tab) => setParams(t === "boulders" ? {} : { tab: t }, { replace: true });
   // "?sector=…" opens the boulders of one sector: from the map, the sector list, or a notification about it.
   const sectorParam = params.get("sector");
+  const cover = useRef<HTMLDivElement>(null);
+  const name = useRef<HTMLHeadingElement>(null);
 
-  if (gym.isPending) return <LoadingState label={translate("Loading gym")} />;
-  if (gym.isError) return gym.error instanceof ApiError && gym.error.isNotFound ? <NotFoundPage /> : <ErrorState error={gym.error} onRetry={() => gym.refetch()} />;
+  // Never stuck: the way back is there while the gym loads, and if it can't be loaded.
+  if (gym.isPending) return <div className="page page--flush gym-page"><DetailHeader /><LoadingState label={translate("Loading gym")} /></div>;
+  if (gym.isError) {
+    return gym.error instanceof ApiError && gym.error.isNotFound
+      ? <NotFoundPage />
+      : <div className="page page--flush gym-page"><DetailHeader /><div className="page__pad"><ErrorState error={gym.error} onRetry={() => gym.refetch()} /></div></div>;
+  }
 
   const g = gym.data;
   return (
     <div className="page page--flush gym-page">
-      <DetailHeader menu={<GymMenu gym={g} />} />
+      <DetailHeader menu={<GymMenu gym={g} />} title={g.name} coverRef={cover} titleRef={name} />
       <header className="gym-hero">
-        <div className="gym-hero__cover" style={g.coverImageUrl ? { backgroundImage: `url(${g.coverImageUrl})` } : undefined} />
+        <div ref={cover} className="gym-hero__cover" style={g.coverImageUrl ? { backgroundImage: `url(${g.coverImageUrl})` } : undefined}>
+          <span className="detail-cover__scrim" aria-hidden />
+        </div>
         <div className="gym-hero__body">
           {/* The logo overlaps the cover; the actions sit level with it, as icons, so the name gets the full width. */}
           <div className="gym-hero__top">
@@ -65,7 +74,7 @@ export function GymPage() {
             </div>
           </div>
           <div className="gym-hero__text">
-            <h1 className="page__title gym-hero__name">{g.name}</h1>
+            <h1 ref={name} className="page__title gym-hero__name">{g.name}</h1>
             <GymBadges isFoundingGym={g.isFoundingGym} isEarlyPartner={g.isEarlyPartner} />
             <p className="gym-hero__meta"><MapPin aria-hidden /> {g.city}{g.followerCount > 0 && ` · ${plural(g.followerCount, "{count} follower", "{count} followers")}`}</p>
             {g.status !== "ACTIVE" && <Badge tone="dark">{gymStatusLabel[g.status]} · {t("only staff can see this")}</Badge>}

@@ -1311,6 +1311,8 @@ export const it: Record<string, string> = {
   "Manage gym": "Gestisci palestra",
   "Copy link": "Copia link",
   "See all": "Mostra tutto",
+  "You don't follow any gym yet": "Non segui ancora nessuna palestra",
+  "No gyms followed yet": "Ancora nessuna palestra seguita",
   "Profile sections": "Sezioni del profilo",
   "Nothing to show yet": "Ancora niente da mostrare",
   "No activity yet": "Ancora nessuna attività",

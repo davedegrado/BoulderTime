@@ -1199,3 +1199,24 @@ Pages opened from elsewhere (a gym, a person) have a compact header: back to whe
 opened directly; the logo, smaller; a menu of the page's actions (share, copy link; manage for the gym's staff; block
 and report for a person; edit, customise, privacy for one's own). Reporting a gym isn't offered: there is nothing to
 receive such a report yet.
+
+## ADR-062 · A gym's and a person's page: header over the cover, tabs right under it, a lighter profile
+
+On a phone, these pages have their own header and no logo: back on the left, the page's menu on the right. At the top
+of the page it is transparent and the cover runs under it (status bar included on iPhone); it turns solid once the
+cover has gone under its bottom edge, and shows the page's name once the page's own heading has too. Both moments are
+measured on the page (IntersectionObserver against the header's measured height), not set in pixels for one phone; the
+header's height never changes, so nothing moves. Light icons on a dark disc and a shade at the top of the cover keep
+the buttons readable on any picture; on iPhone the status bar's text turns light while the header is over the cover
+(Android keeps its own strip in the page colour, so it is left alone). Other pages keep the logo bar.
+
+The tabs used to stick at the logo bar's height (56 px) while these pages' header is 52 px: the 4 px between them let
+the counters and filters show through while scrolling. Both now read one variable, `--bt-sticky-top`, which these pages
+set to their header's height, so the tabs stick exactly under it; the selected tab's marker sits inside the strip.
+
+A person's overview no longer opens with the four statistics. They are one of the profile's sections, off by default
+(`ProfileLayout.ShownByDefault`), so they appear, in the overview, only for those who turn them on in "Customise
+profile"; who may see them is still the privacy alone. No new storage or field: the existing arrangement carries it,
+and a saved arrangement keeps its choice. The overview's sections are a heading and their content, without a box each;
+the recent activity and the Activity tab use shorter rows (picture, grade, name and points; holds, sector and gym;
+date and attempts) in one list. The history elsewhere (Home, "Your climbing") keeps its rows.

@@ -3,6 +3,7 @@ import { Bell, BellRing, Check, MountainSnow, Star } from "lucide-react";
 import type { RatingSummary } from "@/features/boulders/api";
 import type { HighestGrade, HistoryItem, WeekActivity } from "@/features/climbing/api";
 import { ColorGrade, GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
+import { holdColorInfo, holdLabel } from "@/features/boulders/holdColors";
 import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
@@ -79,6 +80,47 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
       {gone
         ? <div className="history-row history-row--gone">{inside}</div>
         : <Link to={`/boulders/${b.id}`} className="history-row">{inside}</Link>}
+    </li>
+  );
+}
+
+/**
+ * The same entry of a history as HistoryRow, on fewer lines, for a person's profile: picture, grade and name first,
+ * the points on the right; then holds, sector and gym; then date and attempts. One list with dividers, no card each.
+ */
+export function CompactHistoryRow({ item }: { item: HistoryItem }) {
+  const b = item.boulder;
+  const gone = b.status === "DELETED";
+  const hold = holdColorInfo(b.holdColor);
+  const inside = (
+    <>
+      {b.photoUrl
+        ? <img className="hrow__thumb" src={b.photoUrl} alt="" loading="lazy" />
+        : <span className="hrow__thumb history-row__thumb--gone" aria-hidden><MountainSnow /></span>}
+      <span className="hrow__main">
+        <span className="hrow__top">
+          {item.completed ? <span className="sent-mark" aria-label={t("Completed")}><Check aria-hidden /></span> : <span className="project-mark">{t("Project")}</span>}
+          <GradeLine grades={b.grades} />
+          {b.name && <span className="hrow__name">{b.name}</span>}
+          {b.points != null && <span className="hrow__points">{t("+{points} pt", { points: b.points })}</span>}
+        </span>
+        <span className="hrow__where">
+          <span className="hrow__swatch" style={{ background: hold.hex }} title={holdLabel(b.holdColor)} aria-hidden />
+          <span className="sr-only">{holdLabel(b.holdColor)}, </span>
+          {b.sectorName} · {b.gymName}
+        </span>
+        <span className="hrow__meta">
+          {item.completed && item.completedAt ? formatDate(item.completedAt) : t("Last tried {date}", { date: formatDate(item.updatedAt) })}
+          {` · ${plural(item.attempts, "{count} attempt", "{count} attempts")}`}
+          {b.status === "REMOVED" && ` · ${t("Boulder removed")}`}
+          {gone && ` · ${t("No longer at the gym")}`}
+        </span>
+      </span>
+    </>
+  );
+  return (
+    <li>
+      {gone ? <div className="hrow hrow--gone">{inside}</div> : <Link to={`/boulders/${b.id}`} className="hrow">{inside}</Link>}
     </li>
   );
 }

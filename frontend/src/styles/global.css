@@ -966,7 +966,11 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
   .gym-page > .tabs { padding-left: var(--bt-10); padding-right: var(--bt-10); }
 }
 /* The tabs stay in reach while scrolling a long list of boulders. */
-.tabs { position: sticky; top: calc(56px + var(--bt-safe-top)); z-index: 15; background: var(--bt-light); margin-top: var(--bt-2); }
+/* They stick right under whatever header the page has: --bt-sticky-top is that header's height (the logo bar's by
+   default, a gym's or a person's own header on their pages), so the two can never drift apart and leave a gap. */
+.tabs { position: sticky; top: var(--bt-sticky-top); z-index: 15; background: var(--bt-light); margin-top: var(--bt-2); }
+/* The marker sits inside the strip: the strip scrolls sideways, so anything below its edge would be cut. */
+.tabs .tabs__tab[aria-selected="true"]::after { bottom: 0; }
 .page.gym-page { gap: 0; }
 .gym-hero { padding-bottom: var(--bt-1); }
 .gym-hero + .tabs + .page__pad { padding-top: var(--bt-4); }
@@ -1494,24 +1498,54 @@ button.manage-head__back { background: transparent; }
 /* The community's intensity, under the community grade (same card). */
 .community-intensity { border-top: 1px solid var(--bt-line); padding-top: var(--bt-4); }
 
-/* ---------- Detail pages: a gym, a person (ADR-061) ---------- */
-/* On a phone the logo bar gives way to the page's compact header: back, a smaller logo, the page's "…" menu. */
+/* ---------- Detail pages: a gym, a person (ADR-061, ADR-062) ---------- */
+/* On a phone the logo bar gives way to the page's own header: back, the page's "…" menu, and its name once scrolled. */
+:root { --bt-sticky-top: calc(56px + var(--bt-safe-top)); --bt-detail-h: calc(52px + var(--bt-safe-top)); }
 @media (max-width: 959px) {
   .shell--detail .topbar { display: none; }
+  .shell--detail { --bt-sticky-top: var(--bt-detail-h); }
 }
 .detail-header {
   position: sticky; top: 0; z-index: 20;
-  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: var(--bt-2);
-  height: calc(52px + var(--bt-safe-top)); padding: var(--bt-safe-top) var(--bt-2) 0;
-  background: var(--bt-chrome); backdrop-filter: blur(12px); border-bottom: 1px solid var(--bt-line);
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: var(--bt-2);
+  height: var(--bt-detail-h); padding: var(--bt-safe-top) var(--bt-2) 0;
+  background: var(--bt-light); border-bottom: 1px solid var(--bt-line);
 }
-.detail-header__back { color: var(--bt-ink); }
-.detail-header__logo { justify-self: center; display: inline-flex; }
+.detail-header__back { color: var(--bt-ink); border-radius: 50%; }
 .detail-header__end { justify-self: end; display: flex; }
+.detail-header__title {
+  justify-self: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 800; font-size: 1.0625rem; color: var(--bt-ink);
+  opacity: 0; transform: translateY(6px); transition: opacity 180ms ease, transform 180ms ease;
+}
+.detail-header.has-title .detail-header__title { opacity: 1; transform: none; }
+.detail-cover__scrim { display: none; }
+@media (max-width: 959px) {
+  /* Over the cover: the header takes no room of its own (the cover starts under it, status bar included) and lets the
+     picture through. Its height never changes, so turning solid moves nothing. */
+  .detail-header--over {
+    margin-bottom: calc(-1 * var(--bt-detail-h));
+    background: transparent; border-bottom-color: transparent;
+    transition: background-color 200ms ease, border-color 200ms ease;
+  }
+  .detail-header--over.is-solid { background: var(--bt-light); border-bottom-color: var(--bt-line); }
+  /* Light icons on a dark disc read on any picture, light or dark. */
+  .detail-header--over:not(.is-solid) .detail-header__back,
+  .detail-header--over:not(.is-solid) .round-btn { background: rgb(0 0 0 / 0.38); color: #fff; border-color: transparent; }
+  .detail-header--over .detail-header__back, .detail-header--over .round-btn { transition: background-color 200ms ease, color 200ms ease; }
+  /* A shade at the top of the cover, under the status bar and the buttons. */
+  .detail-cover__scrim {
+    display: block; position: absolute; inset: 0 0 auto 0; z-index: 1; height: calc(var(--bt-detail-h) + 32px);
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0)); pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-header__title, .detail-header--over, .detail-header--over .detail-header__back, .detail-header--over .round-btn { transition: none; }
+}
 @media (min-width: 960px) {
   /* Beside the sidebar there is no logo bar to replace: the header is just the row of back and menu. */
-  .detail-header { position: static; height: auto; padding: 0 0 var(--bt-3); background: none; backdrop-filter: none; border: 0; }
-  .detail-header__logo { visibility: hidden; }
+  .detail-header { position: static; height: auto; padding: 0 0 var(--bt-3); background: none; border: 0; }
+  .detail-header__title { visibility: hidden; }
 }
 .round-btn { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; padding: 0; border: 1.5px solid var(--bt-line); border-radius: 50%; background: var(--bt-surface); color: var(--bt-ink); cursor: pointer; font: inherit; }
 .round-btn svg { width: 20px; height: 20px; }
@@ -1564,3 +1598,42 @@ button.manage-head__back { background: transparent; }
 .segmented__option { flex: 1; min-height: 38px; border: 0; border-radius: var(--bt-radius-pill); background: none; color: var(--bt-ink-2); font: inherit; font-weight: 600; font-size: var(--bt-text-sm); cursor: pointer; }
 .segmented__option[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: var(--bt-shadow-raised); }
 .filter-panel__reset { margin-top: var(--bt-2); }
+
+/* ---------- A gym's and a person's page on a phone: the cover runs under the header (ADR-062) ---------- */
+@media (max-width: 959px) {
+  .gym-hero__cover { height: calc(var(--bt-detail-h) + 104px); }
+  .person-hero__cover { height: calc(var(--bt-detail-h) + 76px); }
+}
+
+/* The cover is the page's first thing, under the header: nothing above it. The blocks below keep their own spacing. */
+.page.person-page { gap: 0; }
+.person-page > .page__pad { padding-top: var(--bt-4); }
+
+/* ---------- A person's overview: sections as large as what they hold, no box around each (ADR-062) ---------- */
+.profile-tab { padding-top: var(--bt-4); }
+.profile-overview { display: flex; flex-direction: column; }
+.profile-overview > * + * { margin-top: var(--bt-4); padding-top: var(--bt-4); border-top: 1px solid var(--bt-line); }
+.profile-overview .card { padding: 0; background: none; border: 0; border-radius: 0; }
+.profile-overview .section { gap: var(--bt-3); }
+.profile-block { display: flex; flex-direction: column; gap: var(--bt-3); }
+.profile-block__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bt-3); }
+.profile-block__title { margin: 0; font-size: var(--bt-text-lg); font-weight: 700; }
+.profile-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bt-2); margin: 0; }
+.profile-stats__item { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 2px; min-width: 0; }
+.profile-stats dd { margin: 0; font-size: var(--bt-text-xl); font-weight: 800; line-height: 1.1; }
+.profile-stats dt { font-size: var(--bt-text-xs); color: var(--bt-ink-2); line-height: 1.25; }
+
+/* A history on fewer lines: one list, a divider between entries. */
+.hlist { list-style: none; margin: 0; padding: 0; }
+.hlist > li + li { border-top: 1px solid var(--bt-line); }
+.hrow { display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-2) 0; color: inherit; text-decoration: none; }
+.hrow:active { background: var(--bt-surface-2); }
+.hrow--gone { cursor: default; }
+.hrow__thumb { display: grid; place-items: center; width: 48px; height: 60px; flex-shrink: 0; object-fit: cover; overflow: hidden; border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
+.hrow__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hrow__top { display: flex; align-items: center; gap: var(--bt-2); min-width: 0; }
+.hrow__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.hrow__points { margin-left: auto; flex-shrink: 0; white-space: nowrap; font-size: var(--bt-text-xs); font-weight: 800; color: var(--bt-ink-2); }
+.hrow__where { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.hrow__swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18); }
+.hrow__meta { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
