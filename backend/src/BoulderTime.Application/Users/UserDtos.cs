@@ -33,12 +33,15 @@ public sealed record CurrentUserDto(
     /// <summary>BoulderTime suspended this account: the app shows why and offers nothing else (ADR-037).</summary>
     bool IsSuspended = false,
     /// <summary>The person declared being at least 14 (ADR-041).</summary>
-    bool MinimumAgeConfirmed = false)
+    bool MinimumAgeConfirmed = false,
+    /// <summary>Only the person sees the content of their profile (ADR-061). Added later: older apps don't read it.</summary>
+    bool ProfilePrivate = false)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
         new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language,
             u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null,
-            u.AcceptedLegalVersion, LegalAcceptanceService.IsNeeded(u), u.IsSuspended, u.MinimumAgeConfirmed);
+            u.AcceptedLegalVersion, LegalAcceptanceService.IsNeeded(u), u.IsSuspended, u.MinimumAgeConfirmed,
+            u.ProfileVisibility == ProfileVisibility.Private);
 }
 
 public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);

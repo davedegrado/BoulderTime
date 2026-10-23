@@ -2328,6 +2328,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("minimum_age_confirmed_at");
 
+                    b.Property<string>("ProfileSections")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("profile_sections");
+
                     b.Property<string>("ProfileVisibility")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

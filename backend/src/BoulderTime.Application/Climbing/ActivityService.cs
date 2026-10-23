@@ -37,7 +37,16 @@ public sealed record ProfileDto(
     /// <summary>Whether the viewer has blocked this person. Only the viewer ever sees it.</summary>
     bool IsBlocked = false,
     /// <summary>Where they have completed the most boulders; null before the first send.</summary>
-    FavoriteSectorDto? FavoriteSector = null);
+    FavoriteSectorDto? FavoriteSector = null,
+    /// <summary>The person keeps the content of their profile private (ADR-061). Added later: older apps don't read it.</summary>
+    bool IsPrivate = false,
+    /// <summary>
+    /// True when the profile is private and the viewer may not see its content: then statistics, history, gyms and the
+    /// rest come empty (never left out, so older apps still read the answer), and only name and photo are real.
+    /// </summary>
+    bool ContentHidden = false,
+    /// <summary>The sections the person chose to show, in their order (ADR-061). Null from older servers.</summary>
+    IReadOnlyList<Users.ProfileSectionDto>? Sections = null);
 
 /// <summary>
 /// The sector with the most boulders this person completed, each boulder once. With the gym's floor plan and the
@@ -62,8 +71,10 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
     public async Task<PagedResult<ClimbHistoryItemDto>> HistoryAsync(Guid userId, HistoryFilter? filter, int? page, int? pageSize, CancellationToken ct = default)
     {
-        await RequireVisibleProfileAsync(userId, ct);
+        var user = await RequireVisibleProfileAsync(userId, ct);
         var (p, size) = Paging.Normalize(page, pageSize, 20);
+        // A private profile's history is not anyone else's to read: an empty page, as for someone who logged nothing.
+        if (!CanSeeContent(user)) return new PagedResult<ClimbHistoryItemDto>([], p, size, 0);
         var q = db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId);
         q = filter switch
         {
@@ -80,6 +91,15 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
     public async Task<ProfileDto> ProfileAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await RequireVisibleProfileAsync(userId, ct);
+        var isPrivate = user.ProfileVisibility == ProfileVisibility.Private;
+        var sections = Users.ProfileLayout.Read(user.ProfileSections);
+        if (!CanSeeContent(user))
+        {
+            // Only what identifies the person: name and photo. Everything else empty, with the same shape as always.
+            return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, false,
+                new ClimbingStatsDto(0, 0, 0, 0), [], [], [], [], [],
+                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections);
+        }
         var gyms = await db.GymFollows.AsNoTracking().Where(f => f.UserId == userId)
             .Join(db.Gyms, f => f.GymId, g => g.Id, (f, g) => new { f.IsFavorite, g })
             .Where(x => x.g.Status == GymStatus.Active)
@@ -91,7 +111,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct));
+            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections);
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)
@@ -263,11 +283,18 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             gym.FloorPlanUrl, gym.FloorPlanWidth, gym.FloorPlanHeight, MapZoneDto.FromJson(sector.MapZone));
     }
 
+    /// <summary>
+    /// Whether the viewer may see the content of this profile: always when it is public or their own. This is the one
+    /// place that decides it for every answer that carries profile content (ADR-061); accepted friends join here once
+    /// BoulderTime has friends (a pending request will never be enough).
+    /// </summary>
+    private bool CanSeeContent(User user) => user.ProfileVisibility != ProfileVisibility.Private || currentUser.UserId == user.Id;
+
     private async Task<User> RequireVisibleProfileAsync(Guid userId, CancellationToken ct)
     {
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct) ?? throw new NotFoundException("User", userId);
-        // Profiles are public by default; this is where future privacy settings plug in.
-        if (user.ProfileVisibility != ProfileVisibility.Public && currentUser.UserId != userId) throw new NotFoundException("User", userId);
+        // A private profile still opens (from a leaderboard, say): name and photo, and its content only for whoever may
+        // see it (CanSeeContent).
         // A suspended account has no public face (ADR-037).
         if (user.SuspendedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
         // Nor does one waiting to be erased: deleting an account takes it out of the app at once.

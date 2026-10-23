@@ -62,7 +62,8 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var take = Math.Clamp(limit ?? DefaultLimit, 1, 100);
         var from = PeriodStart(p, clock.UtcNow);
 
-        // Completions at this gym in the period, by public profiles (the viewer always sees themself).
+        // Completions at this gym in the period. Who appears is the leaderboard setting alone: a private profile still
+        // appears if its owner chose so, showing only what a leaderboard row shows (ADR-061).
         var viewerId = currentUser.UserId;
         var sends = await db.BoulderAttempts.AsNoTracking()
             .Where(a => a.Completed && (from == null || a.CompletedAt >= from))
@@ -71,13 +72,12 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
             .Where(x => x.GymId == gymId)
             .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new
             {
-                x.UserId, x.BoulderId, x.CompletedAt, u.ProfileVisibility, u.LeaderboardOptOut, u.LeaderboardExcludedAt, u.SuspendedAt,
+                x.UserId, x.BoulderId, x.CompletedAt, u.LeaderboardOptOut, u.LeaderboardExcludedAt, u.SuspendedAt,
                 u.DeletionRequestedAt,
             })
             // Hidden climbers are absent rather than shown with no points: a zero-point row still names them.
             // Accounts waiting to be erased leave the leaderboard the moment the person asks.
             .Where(x => !x.LeaderboardOptOut && x.LeaderboardExcludedAt == null && x.SuspendedAt == null && x.DeletionRequestedAt == null)
-            .Where(x => x.ProfileVisibility == ProfileVisibility.Public || x.UserId == viewerId)
             .Select(x => new { x.UserId, x.BoulderId, x.CompletedAt })
             .ToListAsync(ct);
 
