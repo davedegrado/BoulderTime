@@ -4,6 +4,7 @@ import { ArrowDownUp, ArrowUpDown, Check, ChevronDown, LayoutGrid, List, Mountai
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge } from "@/features/boulders/BoulderBits";
 import { holdColorInfo, holdColorName } from "@/features/boulders/holdColors";
+import { useLongPress } from "@/features/boulders/useLongPress";
 import { dataLabel } from "@/i18n/data";
 import { plural, t } from "@/i18n/i18n";
 
@@ -116,9 +117,11 @@ export function ViewToggle({ value, onChange }: { value: BoulderView; onChange: 
  * grade, sector, holds, points. A missing value leaves its place empty rather than moving the others, and long text
  * is cut short, never wrapped. The name is left out: this list is for scanning, the card and the page have it.
  */
-export function BoulderRow({ boulder, to, selectable, selected, onToggle }: {
-  boulder: BoulderSummary; to?: string; selectable?: boolean; selected?: boolean; onToggle?: () => void;
+/** One boulder on one line. With `onLongPress`, holding it starts selecting, as on the cards. */
+export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLongPress }: {
+  boulder: BoulderSummary; to?: string; selectable?: boolean; selected?: boolean; onToggle?: () => void; onLongPress?: () => void;
 }) {
+  const { pressHandlers, toggleHandlers } = useLongPress(onLongPress, onToggle);
   const primary = boulder.grades[0];
   const holds = holdColorInfo(boulder.holdColor);
   const label = [primary ? dataLabel(primary.label) : t("Ungraded"), boulder.sectorName, t("{colour} holds", { colour: holdColorName(boulder.holdColor) }),
@@ -126,7 +129,7 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle }: {
   const cells = (
     <>
       <span className="boulder-row__thumb">
-        {boulder.photoUrl ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" /> : <MountainSnow aria-hidden />}
+        {boulder.photoUrl ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" draggable={false} /> : <MountainSnow aria-hidden />}
         {selectable && <span className={`boulder-row__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
       </span>
       <span className="boulder-row__grade">
@@ -141,7 +144,10 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle }: {
     </>
   );
   if (selectable) {
-    return <button type="button" className={`boulder-row ${selected ? "boulder-row--selected" : ""}`} aria-pressed={selected} aria-label={label} onClick={onToggle}>{cells}</button>;
+    return (
+      <button type="button" className={`boulder-row boulder-row--pressable ${selected ? "boulder-row--selected" : ""}`} aria-pressed={selected} aria-label={label}
+        {...toggleHandlers}>{cells}</button>
+    );
   }
-  return <Link to={to ?? `/boulders/${boulder.id}`} className="boulder-row" aria-label={label}>{cells}</Link>;
+  return <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-row ${onLongPress ? "boulder-row--pressable" : ""}`} aria-label={label} {...pressHandlers}>{cells}</Link>;
 }

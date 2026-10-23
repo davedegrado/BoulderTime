@@ -1,7 +1,7 @@
-import { useEffect, useRef, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Check, MountainSnow, RotateCw, Users } from "lucide-react";
 import { IntensityBadge } from "@/features/boulders/intensity";
+import { useLongPress } from "@/features/boulders/useLongPress";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
 import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
@@ -28,51 +28,9 @@ interface BoulderCardProps {
   showOwnState?: boolean;
 }
 
-const LONG_PRESS_MS = 450;
-
 /** Image-first card for scanning many boulders: grade and holds are always both visible, and the holds always labelled. */
 export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false, showOwnState = true }: BoulderCardProps) {
-  const timer = useRef<number | null>(null);
-  const fired = useRef(false);
-
-  const cancel = () => { if (timer.current !== null) { window.clearTimeout(timer.current); timer.current = null; } };
-  const start = () => {
-    if (!onLongPress) return;
-    fired.current = false;
-    timer.current = window.setTimeout(() => {
-      fired.current = true;
-      // Whatever the press began to select (a name, a sector) is let go: the press selected the boulder, not text.
-      window.getSelection()?.removeAllRanges();
-      onLongPress();
-    }, LONG_PRESS_MS);
-  };
-  // The hold has already selected the card, so letting the tap through would open the boulder at the same time.
-  const swallowClickAfterHold = (e: MouseEvent) => { if (fired.current) { e.preventDefault(); fired.current = false; } };
-
-  const pressHandlers = onLongPress
-    ? {
-        onPointerDown: start,
-        onPointerUp: cancel,
-        onPointerLeave: cancel,
-        onPointerCancel: cancel,
-        onClick: swallowClickAfterHold,
-        onContextMenu: (e: MouseEvent) => { if (timer.current !== null || fired.current) e.preventDefault(); },
-      }
-    : {};
-
-  useEffect(() => cancel, []);
-
-  // The hold turned this card into a selectable one under the finger: lifting that finger must not toggle it straight
-  // back off. Only that click is ignored; a new press, or the keyboard, toggles as always.
-  const releasing = useRef(false);
-  const toggleHandlers = {
-    onPointerDown: () => { releasing.current = false; fired.current = false; },
-    onPointerUp: () => { if (fired.current) { fired.current = false; releasing.current = true; } },
-    onClick: () => {
-      if (releasing.current || fired.current) { releasing.current = false; fired.current = false; return; }
-      onToggle?.();
-    },
-  };
+  const { pressHandlers, toggleHandlers } = useLongPress(onLongPress, onToggle);
 
   // Fixed anatomy, so a card never grows with what it happens to hold. On the photo: the grade (bottom left, as on the
   // boulder's page) with its intensity, the points (bottom right), the climber's own state (top right), the gym's logo in lists that mix gyms (top left). Under it: the
@@ -154,7 +112,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   }
   return (
     <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${onLongPress ? "boulder-card--pressable" : ""} ${compact ? "boulder-card--compact" : ""}`}
-      draggable={onLongPress ? false : undefined} {...pressHandlers}>
+      {...pressHandlers}>
       {body}
     </Link>
   );

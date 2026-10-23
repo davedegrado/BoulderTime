@@ -120,7 +120,8 @@ export function ManageBoulders() {
                 {items.map((b) => (
                   <li key={b.id}>
                     <BoulderRow boulder={b} to={removedView ? undefined : `/manage/${gym.slug}/boulders/${b.id}/edit`}
-                      selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)} />
+                      selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)}
+                      onLongPress={removedView ? undefined : () => { setSelecting(true); setSelected(new Set([b.id])); }} />
                     {/* Taken down: every row carries the same two actions, so the rows stay alike. */}
                     {removedView && (
                       <div className="boulder-rows__actions">

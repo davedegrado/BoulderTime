@@ -26,6 +26,7 @@ import { BetaSection } from "@/features/community/VideoSections";
 import { BetaEditor } from "@/features/community/BetaEditor";
 import { CommunityGradeSection } from "@/features/community/CommunityGradeSection";
 import { ProgressTracker } from "@/features/climbing/ProgressTracker";
+import { BoulderRow } from "@/features/boulders/listView";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { HistoryRow } from "@/features/climbing/ClimbingBits";
@@ -180,6 +181,51 @@ describe("Removing boulders", () => {
 
   it("still opens the boulder on an ordinary tap", async () => {
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>{grid({ onLongPress: vi.fn() })}</MemoryRouter>);
+    await userEvent.click(screen.getByRole("link"));
+    expect(await screen.findByText("Boulder editor")).toBeInTheDocument();
+  });
+});
+
+describe("Selecting from the list view", () => {
+  it("starts selecting when a row is held down, keeps it selected when the finger lifts, and selects no text", async () => {
+    function Selecting() {
+      const [selecting, setSelecting] = useState(false);
+      const [selected, setSelected] = useState(false);
+      return (
+        <Routes>
+          <Route path="/m" element={<BoulderRow boulder={summary as never} to="/edit/b1" selectable={selecting} selected={selected}
+            onToggle={() => setSelected((v) => !v)} onLongPress={() => { setSelecting(true); setSelected(true); }} />} />
+          <Route path="/edit/b1" element={<p>Boulder editor</p>} />
+        </Routes>
+      );
+    }
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}><Selecting /></MemoryRouter>);
+    const link = screen.getByRole("link");
+    expect(link).toHaveClass("boulder-row--pressable");
+    expect(link).toHaveAttribute("draggable", "false");
+    expect(link.querySelector("img")).toHaveAttribute("draggable", "false");
+    const range = document.createRange();
+    range.selectNodeContents(link);
+    window.getSelection()!.addRange(range);
+
+    await userEvent.pointer([{ keys: "[MouseLeft>]", target: link }]);
+    const row = await screen.findByRole("button", {}, { timeout: 2000 });
+    expect(window.getSelection()!.rangeCount).toBe(0);
+    fireEvent.pointerUp(row);
+    fireEvent.click(row);
+    expect(row).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Boulder editor")).not.toBeInTheDocument();
+    await userEvent.click(row);
+    expect(row).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("still opens the boulder on an ordinary tap", async () => {
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>
+      <Routes>
+        <Route path="/m" element={<BoulderRow boulder={summary as never} to="/edit/b1" onLongPress={vi.fn()} />} />
+        <Route path="/edit/b1" element={<p>Boulder editor</p>} />
+      </Routes>
+    </MemoryRouter>);
     await userEvent.click(screen.getByRole("link"));
     expect(await screen.findByText("Boulder editor")).toBeInTheDocument();
   });
