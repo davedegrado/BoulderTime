@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Check, Clock, UserCheck, UserPlus, Users, X } from "lucide-react";
 import type { Profile } from "@/features/climbing/api";
-import { useFriendAction, useFriendRequests, useFriendsOf, type FriendAction, type FriendPerson } from "@/features/users/friends";
+import { useFriendAction, useFriendRequests, useFriendsOf, type FriendAction, type FriendPerson } from "@/features/users/friendsApi";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";

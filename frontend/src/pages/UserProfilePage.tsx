@@ -21,7 +21,7 @@ import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
 import { FriendButton, FriendsTab, supportsFriends } from "@/features/users/Friends";
-import { useFriendAction } from "@/features/users/friends";
+import { useFriendAction } from "@/features/users/friendsApi";
 import { errorMessage } from "@/lib/apiError";
 import { ReportPersonAction } from "@/features/users/ReportPersonAction";
 

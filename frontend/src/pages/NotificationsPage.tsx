@@ -4,7 +4,7 @@ import { useMarkRead, useNotifications, type AppNotification } from "@/features/
 import { notificationIcon, relativeTime } from "@/features/notifications/NotificationBits";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
-import { useFriendRequests } from "@/features/users/friends";
+import { useFriendRequests } from "@/features/users/friendsApi";
 import { useCurrentUser } from "@/features/users/api";
 import { plural, t } from "@/i18n/i18n";
 
