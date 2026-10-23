@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
@@ -156,7 +156,14 @@ describe("Boulder page", () => {
     expect(enlarge).toHaveLength(2);
     await userEvent.click(enlarge[1]!);
     const viewer = screen.getByRole("dialog");
-    expect(within(viewer).getByRole("img")).toHaveAttribute("src", "/img/b1.jpg");
+    const photo = within(viewer).getByRole("img");
+    expect(photo).toHaveAttribute("src", "/img/b1.jpg");
+    // The viewer zooms once it knows the picture and the screen (jsdom measures nothing, so the test tells it).
+    vi.spyOn(viewer.querySelector(".zoom-stage")!, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 400, height: 800 } as DOMRect);
+    Object.defineProperty(photo, "naturalWidth", { value: 1000 });
+    Object.defineProperty(photo, "naturalHeight", { value: 800 });
+    fireEvent(window, new Event("resize"));
+    fireEvent.load(photo);
     await userEvent.click(within(viewer).getByRole("button", { name: "Zoom in" }));
     expect(within(viewer).getByRole("button", { name: "Zoom out" })).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(within(viewer).getByRole("button", { name: "Close" }));

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Copy, ExternalLink, Globe, Layers, Mail, MapPin, Maximize2, Phone, Settings2, Share2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { DetailHeader } from "@/components/DetailHeader";
+import { usePinchZoom } from "@/features/boulders/usePinchZoom";
 import { ActionMenu, type ActionMenuItem } from "@/components/ActionMenu";
 import { useToast } from "@/components/Toast";
 import { copyText, shareLink, shareUrl } from "@/lib/share";
@@ -299,9 +300,13 @@ function SectorSheet({ sector, signedIn, onClose, onShowBoulders, onToggleFollow
   );
 }
 
-/** The plan full screen, larger and scrollable, for a gym with many small sectors. */
+/**
+ * The plan full screen, for a gym with many small sectors: two fingers zoom it, one finger moves it once enlarged, a
+ * double tap goes in and back out, and so does the button (in steps); a tap on a sector still opens it, a drag never
+ * does. The sectors' names keep their size while the plan grows.
+ */
 function MapViewer({ plan, sectors, onSelect, onClose }: { plan: FloorPlan; sectors: Sector[]; onSelect: (s: Sector) => void; onClose: () => void }) {
-  const [zoom, setZoom] = useState(1);
+  const zoom = usePinchZoom({ w: plan.width, h: plan.height });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -309,16 +314,18 @@ function MapViewer({ plan, sectors, onSelect, onClose }: { plan: FloorPlan; sect
     document.body.style.overflow = "hidden";
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
   }, [onClose]);
+  const atMost = zoom.scale >= 2.95;
   return (
     <div className="photo-viewer map-viewer" role="dialog" aria-modal="true" aria-label={translate("Gym map")}>
       <div className="viewer__top">
-        <button type="button" className="viewer__close" onClick={() => setZoom((z) => (z >= 3 ? 1 : z + 1))} aria-label={zoom >= 3 ? translate("Zoom out") : translate("Zoom in")}>
-          {zoom >= 3 ? <ZoomOut aria-hidden /> : <ZoomIn aria-hidden />}
+        <button type="button" className="viewer__close" onClick={() => zoom.zoomTo(atMost ? 1 : Math.floor(zoom.scale + 0.05) + 1)}
+          aria-label={atMost ? translate("Zoom out") : translate("Zoom in")}>
+          {atMost ? <ZoomOut aria-hidden /> : <ZoomIn aria-hidden />}
         </button>
         <button type="button" className="viewer__close" onClick={onClose} aria-label={translate("Close")}><X aria-hidden /></button>
       </div>
-      <div className="map-viewer__stage">
-        <div className="map-viewer__inner" style={{ width: `${zoom * 100}%` }}>
+      <div ref={zoom.box} className="map-viewer__stage zoom-stage" {...zoom.boxProps}>
+        <div className="zoom-stage__content" style={zoom.contentStyle ? { ...zoom.contentStyle, ["--zoom" as string]: zoom.scale } : { width: "100%" }}>
           <SectorMap plan={plan} sectors={sectors} onSelect={onSelect} />
         </div>
       </div>

@@ -918,10 +918,9 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 
 .photo-viewer { position: fixed; inset: 0; z-index: 110; display: flex; flex-direction: column; background: #0d0d0d; padding: var(--bt-safe-top) 0 var(--bt-safe-bottom); }
 .photo-viewer .viewer__top { justify-content: flex-end; gap: var(--bt-2); }
-.photo-viewer__stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.photo-viewer__stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
-.photo-viewer__stage.is-zoomed { display: block; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
-.photo-viewer__stage.is-zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+.photo-viewer__stage { flex: 1; min-height: 0; }
+.photo-viewer__stage img { cursor: zoom-in; }
+.photo-viewer__stage.is-zoomed img { cursor: grab; }
 
 /* ---------- Official beta card ---------- */
 .beta-card { display: flex; flex-direction: column; gap: var(--bt-2); }
@@ -1158,8 +1157,9 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .sector-sheet__text { margin: 0; color: var(--bt-ink-2); line-height: 1.45; }
 .sector-sheet__actions { display: flex; flex-wrap: wrap; gap: var(--bt-2); margin-top: var(--bt-2); }
 .sector-sheet__actions .btn { flex: 1 1 auto; white-space: nowrap; }
-.map-viewer__stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: flex-start; justify-content: flex-start; padding: var(--bt-3); }
-.map-viewer__inner { margin: auto; flex: none; max-width: none; }
+.map-viewer__stage { flex: 1; min-height: 0; }
+/* The names of the sectors keep their size while the plan grows (--zoom is the plan's zoom). */
+.map-viewer .sector-map__label { scale: calc(1 / var(--zoom, 1)); transform-origin: 0 0; }
 .map-viewer .sector-map { border-radius: var(--bt-radius-sm); }
 .boulder-where { display: flex; flex-direction: column; gap: var(--bt-2); }
 .boulder-where__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bt-2); }
@@ -1674,3 +1674,8 @@ button.manage-head__back { background: transparent; }
 .climbed-gym__grades { flex-shrink: 0; }
 .climbed-gym__grades-row { display: inline-flex; gap: 4px; }
 .climbed-gym__last { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
+
+/* ---------- Pinch to zoom, in the full-screen viewers ---------- */
+/* The box takes every finger (the page itself can't be pinched); what's inside is moved and scaled by usePinchZoom. */
+.zoom-stage { position: relative; overflow: hidden; touch-action: none; overscroll-behavior: contain; }
+.zoom-stage__content { max-width: none; max-height: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; will-change: transform; }
