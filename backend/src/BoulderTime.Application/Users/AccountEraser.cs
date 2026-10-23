@@ -74,6 +74,7 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         db.CommentLikes.RemoveRange(await db.CommentLikes.Where(x => x.UserId == userId).ToListAsync(ct));
         db.Comments.RemoveRange(await db.Comments.Where(x => x.UserId == userId).ToListAsync(ct));
         db.GradeSuggestions.RemoveRange(await db.GradeSuggestions.Where(x => x.UserId == userId).ToListAsync(ct));
+        db.IntensityVotes.RemoveRange(await db.IntensityVotes.Where(x => x.UserId == userId).ToListAsync(ct));
         db.BoulderRatings.RemoveRange(await db.BoulderRatings.Where(x => x.UserId == userId).ToListAsync(ct));
         db.BoulderAttempts.RemoveRange(await db.BoulderAttempts.Where(x => x.UserId == userId).ToListAsync(ct));
         db.GymFollows.RemoveRange(await db.GymFollows.Where(x => x.UserId == userId).ToListAsync(ct));

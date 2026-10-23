@@ -23,6 +23,61 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BoulderTime.Domain.Apps.AppVersionPolicy", b =>
+                {
+                    b.Property<string>("Platform")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<string>("MinimumVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("minimum_version");
+
+                    b.Property<string>("RecommendedVersion")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("recommended_version");
+
+                    b.Property<string>("StoreUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("store_url");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Platform")
+                        .HasName("pk_app_version_policies");
+
+                    b.HasIndex("UpdatedByUserId")
+                        .HasDatabaseName("ix_app_version_policies_updated_by_user_id");
+
+                    b.ToTable("app_version_policies", "bouldertime");
+
+                    b.HasData(
+                        new
+                        {
+                            Platform = "Ios",
+                            MinimumVersion = "1.0.0",
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        },
+                        new
+                        {
+                            Platform = "Android",
+                            MinimumVersion = "1.0.0",
+                            StoreUrl = "https://play.google.com/store/apps/details?id=com.bouldertime.app",
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        });
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -742,6 +797,47 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_grade_suggestions_boulder_id_user_id_grade_system_id");
 
                     b.ToTable("grade_suggestions", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Community.IntensityVote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Intensity")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("intensity");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_intensity_votes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_intensity_votes_user_id");
+
+                    b.HasIndex("BoulderId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_intensity_votes_boulder_id_user_id");
+
+                    b.ToTable("intensity_votes", "bouldertime");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Community.Report", b =>
@@ -2367,6 +2463,15 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("user_reports", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Apps.AppVersionPolicy", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_app_version_policies_users_updated_by_user_id");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
                 {
                     b.HasOne("BoulderTime.Domain.Users.User", null)
@@ -2641,6 +2746,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_grade_suggestions_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Community.IntensityVote", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_intensity_votes_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_intensity_votes_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Community.Report", b =>

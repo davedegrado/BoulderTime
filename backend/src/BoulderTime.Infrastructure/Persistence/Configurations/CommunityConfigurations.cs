@@ -35,6 +35,22 @@ internal sealed class CommentLikeConfiguration : IEntityTypeConfiguration<Commen
     }
 }
 
+internal sealed class IntensityVoteConfiguration : IEntityTypeConfiguration<IntensityVote>
+{
+    public void Configure(EntityTypeBuilder<IntensityVote> b)
+    {
+        b.ToTable("intensity_votes");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Intensity).HasConversion<string>().HasMaxLength(16).IsRequired();
+        b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        // One vote per user per boulder.
+        b.HasIndex(x => new { x.BoulderId, x.UserId }).IsUnique();
+        b.HasIndex(x => x.UserId);
+    }
+}
+
 internal sealed class GradeSuggestionConfiguration : IEntityTypeConfiguration<GradeSuggestion>
 {
     public void Configure(EntityTypeBuilder<GradeSuggestion> b)
