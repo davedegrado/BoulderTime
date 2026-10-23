@@ -1679,3 +1679,9 @@ button.manage-head__back { background: transparent; }
 /* The box takes every finger (the page itself can't be pinched); what's inside is moved and scaled by usePinchZoom. */
 .zoom-stage { position: relative; overflow: hidden; touch-action: none; overscroll-behavior: contain; }
 .zoom-stage__content { max-width: none; max-height: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; will-change: transform; }
+
+/* ---------- Pressing and dragging is not selecting text ---------- */
+/* Where a finger holds or drags — drawing on a photo, cropping it, holding a boulder to select it, tapping through a
+   selection — a long press must not start a text selection, nor iOS's callout. The few fields inside stay editable. */
+.cropper, .zoom-stage, .boulder-card--pressable { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.cropper input, .cropper textarea { -webkit-user-select: auto; user-select: auto; }

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
@@ -134,6 +135,47 @@ describe("Removing boulders", () => {
 
     // The hold already selected it; letting the tap through would open the editor at the same time.
     expect(screen.queryByText("Boulder editor")).not.toBeInTheDocument();
+  });
+
+  it("never turns the hold into a text selection", async () => {
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>{grid({ onLongPress: vi.fn() })}</MemoryRouter>);
+    const card = screen.getByRole("link");
+    // The card can't be selected as text (nor show iOS's callout): its class carries that.
+    expect(card).toHaveClass("boulder-card--pressable");
+    // And whatever the press had begun to select is let go once the hold selects the boulder.
+    const range = document.createRange();
+    range.selectNodeContents(card);
+    window.getSelection()!.addRange(range);
+    await userEvent.pointer([{ keys: "[MouseLeft>]", target: card }]);
+    await waitFor(() => expect(window.getSelection()!.rangeCount).toBe(0), { timeout: 2000 });
+    await userEvent.pointer([{ keys: "[/MouseLeft]", target: card }]);
+  });
+
+  it("keeps the boulder the hold selected when the finger lifts, and toggles on the taps after", async () => {
+    function Selecting() {
+      const [selecting, setSelecting] = useState(false);
+      const [selected, setSelected] = useState(false);
+      return selecting
+        ? <BoulderCard boulder={summary as never} selectable selected={selected} onToggle={() => setSelected((v) => !v)} />
+        : <BoulderCard boulder={summary as never} to="/edit/b1" onLongPress={() => { setSelecting(true); setSelected(true); }} />;
+    }
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}><Selecting /></MemoryRouter>);
+    await userEvent.pointer([{ keys: "[MouseLeft>]", target: screen.getByRole("link") }]);
+    const card = await screen.findByRole("button", {}, { timeout: 2000 });
+    // The same finger lifts over the card that now stands in its place, and the browser sends that card the release and
+    // a click (as Chromium does on a phone): that is not a tap on it.
+    fireEvent.pointerUp(card);
+    fireEvent.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("leaves cards that can't be held as they were", () => {
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/m"]}>{grid({})}</MemoryRouter>);
+    expect(screen.getByRole("link")).not.toHaveClass("boulder-card--pressable");
   });
 
   it("still opens the boulder on an ordinary tap", async () => {

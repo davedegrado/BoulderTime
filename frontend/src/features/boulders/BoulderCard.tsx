@@ -34,7 +34,12 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   const start = () => {
     if (!onLongPress) return;
     fired.current = false;
-    timer.current = window.setTimeout(() => { fired.current = true; onLongPress(); }, LONG_PRESS_MS);
+    timer.current = window.setTimeout(() => {
+      fired.current = true;
+      // Whatever the press began to select (a name, a sector) is let go: the press selected the boulder, not text.
+      window.getSelection()?.removeAllRanges();
+      onLongPress();
+    }, LONG_PRESS_MS);
   };
   // The hold has already selected the card, so letting the tap through would open the boulder at the same time.
   const swallowClickAfterHold = (e: MouseEvent) => { if (fired.current) { e.preventDefault(); fired.current = false; } };
@@ -51,6 +56,18 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
     : {};
 
   useEffect(() => cancel, []);
+
+  // The hold turned this card into a selectable one under the finger: lifting that finger must not toggle it straight
+  // back off. Only that click is ignored; a new press, or the keyboard, toggles as always.
+  const releasing = useRef(false);
+  const toggleHandlers = {
+    onPointerDown: () => { releasing.current = false; fired.current = false; },
+    onPointerUp: () => { if (fired.current) { fired.current = false; releasing.current = true; } },
+    onClick: () => {
+      if (releasing.current || fired.current) { releasing.current = false; fired.current = false; return; }
+      onToggle?.();
+    },
+  };
 
   // Fixed anatomy, so a card never grows with what it happens to hold. On the photo: the grade (bottom left, as on the
   // boulder's page) with its intensity, the points (bottom right), the climber's own state (top right), the gym's logo in lists that mix gyms (top left). Under it: the
@@ -124,11 +141,15 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
 
   if (selectable) {
     return (
-      <button type="button" className={`boulder-card ${selected ? "boulder-card--selected" : ""} ${compact ? "boulder-card--compact" : ""}`} onClick={onToggle} aria-pressed={selected}
+      <button type="button" className={`boulder-card boulder-card--pressable ${selected ? "boulder-card--selected" : ""} ${compact ? "boulder-card--compact" : ""}`} {...toggleHandlers} aria-pressed={selected}
         aria-label={[name, boulder.grades.map((g) => dataLabel(g.label)).join(" ") || t("Ungraded"), boulder.sectorName].filter(Boolean).join(", ")}>
         {body}
       </button>
     );
   }
-  return <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${compact ? "boulder-card--compact" : ""}`} {...pressHandlers}>{body}</Link>;
+  return (
+    <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${onLongPress ? "boulder-card--pressable" : ""} ${compact ? "boulder-card--compact" : ""}`} {...pressHandlers}>
+      {body}
+    </Link>
+  );
 }
