@@ -138,7 +138,7 @@ export function ManageBoulders() {
               <div className="boulder-grid">
                 {items.map((b) => removedView ? (
                   <div key={b.id} className="boulder-grid__item">
-                    <BoulderCard boulder={b} />
+                    <BoulderCard boulder={b} showOwnState={false} />
                     <Button variant="secondary" icon={<RotateCcw aria-hidden />} loading={restore.isPending && restore.variables === b.id}
                       onClick={() => restore.mutate(b.id, { onSuccess: () => toast.success(t("Boulder restored")), onError: (e) => toast.error(errorMessage(e)) })}>
                       {t("Restore")}
@@ -146,7 +146,7 @@ export function ManageBoulders() {
                     {atLeast(gym.viewerRole, "ADMIN") && <DeleteBoulderButton boulderId={b.id} />}
                   </div>
                 ) : (
-                  <BoulderCard key={b.id} boulder={b} to={`/manage/${gym.slug}/boulders/${b.id}/edit`}
+                  <BoulderCard key={b.id} boulder={b} to={`/manage/${gym.slug}/boulders/${b.id}/edit`} showOwnState={false}
                     selectable={selecting} selected={selected.has(b.id)} onToggle={() => toggle(b.id)}
                     onLongPress={() => { setSelecting(true); setSelected(new Set([b.id])); }} />
                 ))}

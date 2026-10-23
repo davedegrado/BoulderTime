@@ -228,6 +228,23 @@ describe("Staff boulder management", () => {
     expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
   });
 
+  it("shows no sent marks of the staff member's own: the only mark on a card is the selection", async () => {
+    setupManage();
+    const sent = { attempts: 2, completed: true, completedAt: "2026-10-01T10:00:00Z" };
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1", { viewer: sent }), boulder("b2", { viewer: sent })]));
+    renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
+
+    // Browsing the list, before any selection: no "you completed this" on the photos.
+    await screen.findByRole("button", { name: "Select" });
+    expect(screen.getAllByRole("link").some((l) => l.classList.contains("boulder-card"))).toBe(true);
+    expect(screen.queryByLabelText("You completed this")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Select" }));
+    const cards = screen.getAllByRole("button", { pressed: false }).filter((b) => b.classList.contains("boulder-card"));
+    await userEvent.click(cards[0]!);
+    expect(document.querySelectorAll(".boulder-card__check.is-on")).toHaveLength(1);
+    expect(document.querySelectorAll(".boulder-card__sent")).toHaveLength(0);
+  });
+
   it("has the gym page's one-row toolbar, plus Select; taken down is among the filters and ends a selection", async () => {
     setupManage();
     reply("GET", "/api/gyms/g1/boulders", page([boulder("b1"), boulder("b2")]));

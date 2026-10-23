@@ -21,12 +21,17 @@ interface BoulderCardProps {
   showGym?: boolean;
   /** A narrow column (the moderation queue): grade, holds and sector only. */
   compact?: boolean;
+  /**
+   * The climber's own state on the photo (sent, tries). Off where staff manage the boulders: there the only mark in
+   * that corner is the selection.
+   */
+  showOwnState?: boolean;
 }
 
 const LONG_PRESS_MS = 450;
 
 /** Image-first card for scanning many boulders: grade and holds are always both visible, and the holds always labelled. */
-export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false }: BoulderCardProps) {
+export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false, showOwnState = true }: BoulderCardProps) {
   const timer = useRef<number | null>(null);
   const fired = useRef(false);
 
@@ -94,7 +99,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
             {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
           </span>
         )}
-        {!selectable && (
+        {!selectable && showOwnState && (
           // Top right: the climber's own state.
           <span className="boulder-card__corner">
             {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
