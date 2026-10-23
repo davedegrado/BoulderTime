@@ -79,7 +79,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
     <>
       <div className="boulder-card__photo">
         {boulder.photoUrl
-          ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" />
+          ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" draggable={false} />
           : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
         {/* Top left: the gym's logo where a list mixes gyms, then whether the boulder is still on the wall. */}
         {(showGym || boulder.status !== "ACTIVE") && (
@@ -148,7 +148,8 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
     );
   }
   return (
-    <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${onLongPress ? "boulder-card--pressable" : ""} ${compact ? "boulder-card--compact" : ""}`} {...pressHandlers}>
+    <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-card ${onLongPress ? "boulder-card--pressable" : ""} ${compact ? "boulder-card--compact" : ""}`}
+      draggable={onLongPress ? false : undefined} {...pressHandlers}>
       {body}
     </Link>
   );

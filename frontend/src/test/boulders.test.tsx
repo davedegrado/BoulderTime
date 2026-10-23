@@ -228,6 +228,34 @@ describe("Staff boulder management", () => {
     expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
   });
 
+  it("has the gym page's one-row toolbar, plus Select; taken down is among the filters and ends a selection", async () => {
+    setupManage();
+    reply("GET", "/api/gyms/g1/boulders", page([boulder("b1"), boulder("b2")]));
+    renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
+
+    await screen.findByRole("button", { name: "Select" });
+    const toolbar = document.querySelector(".boulders-toolbar--one") as HTMLElement;
+    expect(within(toolbar).getByRole("button", { name: "Select" })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: "Filters" })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: /^Sort:/ })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("radiogroup", { name: "Show as" })).toBeInTheDocument();
+    // The status is no longer a menu of its own on the toolbar.
+    expect(screen.queryByRole("combobox", { name: /status/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Select" }));
+    await userEvent.click(screen.getAllByRole("button", { pressed: false }).find((b) => b.classList.contains("boulder-card"))!);
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    // "On the wall" again changes nothing: the selection stays.
+    await userEvent.click(screen.getByRole("radio", { name: "On the wall" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "Taken down" }));
+    await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
+  });
+
   it("requires photo, sector and hold colour before saving, but not a grade", async () => {
     setupManage();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);

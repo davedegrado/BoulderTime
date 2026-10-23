@@ -17,6 +17,9 @@ const config: CapacitorConfig = {
     // origin explicitly too (Cors__AllowedOrigins on Railway). The page draws under the status bar and the home
     // indicator and keeps clear of them with the CSS safe-area insets, as the installed PWA already does.
     contentInset: "never",
+    // A long press on a link (a boulder's card, held to select it) must not lift it into iOS's link preview: in the
+    // app those previews only show the app's own pages, and the press belongs to the page.
+    allowsLinkPreview: false,
   },
   server: { androidScheme: "https" },
   plugins: {

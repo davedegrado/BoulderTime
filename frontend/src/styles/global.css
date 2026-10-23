@@ -1684,4 +1684,6 @@ button.manage-head__back { background: transparent; }
 /* Where a finger holds or drags — drawing on a photo, cropping it, holding a boulder to select it, tapping through a
    selection — a long press must not start a text selection, nor iOS's callout. The few fields inside stay editable. */
 .cropper, .zoom-stage, .boulder-card--pressable { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* Nor lift the card or its picture to drag it somewhere else (WebKit does that on a long press of a link or image). */
+.boulder-card--pressable, .boulder-card--pressable img, .zoom-stage img { -webkit-user-drag: none; }
 .cropper input, .cropper textarea { -webkit-user-select: auto; user-select: auto; }

@@ -9,8 +9,8 @@ import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
-import { BoulderRow, SortControl, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { activeFilters, BoulderStatusSelect, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { BoulderRow, SortMenu, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
+import { activeFilters, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -53,10 +53,11 @@ export function ManageBoulders() {
     });
   }
 
-  function switchView(status: "ACTIVE" | "REMOVED") {
+  /** On the wall or taken down: a different list, so a selection or a removal notice from the other one goes. */
+  function switchView(status: "ACTIVE" | "REMOVED", next = filters) {
     stopSelecting();
     setLastRemoval(null);
-    setFilters({ ...filters, status });
+    setFilters({ ...next, status });
   }
 
   return (
@@ -86,28 +87,28 @@ export function ManageBoulders() {
           </div>} />
       )}
 
-      {/* As on the gym's page: the filters wait behind one button, and the ones in use show as chips. */}
-      <div className="boulders-toolbar">
+      {/* As on the gym's page — how many, the filters (on the wall or taken down among them), the order, the view — with
+          the button to select boulders. */}
+      <div className="boulders-toolbar boulders-toolbar--one">
         <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, removedView) : null}</span>
-        <div className="boulders-toolbar__end">
-          <BoulderStatusSelect removed={removedView} onChange={(removed) => switchView(removed ? "REMOVED" : "ACTIVE")} />
-          {!removedView && !selecting && items.length > 0 && (
-            <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setSelecting(true)} aria-label={t("Select")} title={t("Select")}>
-              <CheckSquare aria-hidden />
-            </button>
-          )}
-          <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []).length} onToggle={() => setShowFilters((v) => !v)} />
-        </div>
+        {!removedView && !selecting && items.length > 0 && (
+          <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setSelecting(true)} aria-label={t("Select")} title={t("Select")}>
+            <CheckSquare aria-hidden />
+          </button>
+        )}
+        <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []).length + (removedView ? 1 : 0)}
+          onToggle={() => setShowFilters((v) => !v)} />
+        <SortMenu value={sort} onChange={setSort} removed={removedView} />
+        <ViewToggle value={view} onChange={setView} />
       </div>
       {/* The one thing staff do most here, always under the thumb, however far down the list. */}
       {!removedView && !selecting && !noSetup && (
         <Link to={`/manage/${gym.slug}/boulders/new`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
-      <div className="boulders-toolbar boulders-toolbar--view">
-        <SortControl value={sort} onChange={setSort} removed={removedView} />
-        <ViewToggle value={view} onChange={setView} />
-      </div>
-      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      <FiltersPanel open={showFilters} filters={filters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} withStatus
+        onChange={(next) => ((next.status === "REMOVED") !== removedView
+          ? switchView(next.status === "REMOVED" ? "REMOVED" : "ACTIVE", next)
+          : setFilters({ ...next, status: filters.status }))} />
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
