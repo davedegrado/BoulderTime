@@ -46,7 +46,12 @@ public sealed record ProfileDto(
     /// </summary>
     bool ContentHidden = false,
     /// <summary>The sections the person chose to show, in their order (ADR-061). Null from older servers.</summary>
-    IReadOnlyList<Users.ProfileSectionDto>? Sections = null);
+    IReadOnlyList<Users.ProfileSectionDto>? Sections = null,
+    /// <summary>
+    /// The viewer's friendship with this person (ADR-063): none, asked, asked by them, friends. Null for one's own
+    /// profile and when signed out. Added later: older apps don't read it.
+    /// </summary>
+    Users.FriendshipState? Friendship = null);
 
 /// <summary>
 /// The sector with the most boulders this person completed, each boulder once. With the gym's floor plan and the
@@ -65,16 +70,16 @@ public sealed record HomeDto(
     IReadOnlyList<Notifications.AnnouncementDto> Updates);
 
 /// <summary>Personal climbing history, statistics, public profiles and the Home screen. All computed on read.</summary>
-public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners, Users.BlockedPeople blocked)
+public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners, Users.BlockedPeople blocked, Users.ProfileAccess access, Users.FriendshipService friends)
 {
     public const int Weeks = 12;
 
     public async Task<PagedResult<ClimbHistoryItemDto>> HistoryAsync(Guid userId, HistoryFilter? filter, int? page, int? pageSize, CancellationToken ct = default)
     {
-        var user = await RequireVisibleProfileAsync(userId, ct);
+        var user = await access.RequireVisibleAsync(userId, ct);
         var (p, size) = Paging.Normalize(page, pageSize, 20);
         // A private profile's history is not anyone else's to read: an empty page, as for someone who logged nothing.
-        if (!CanSeeContent(user)) return new PagedResult<ClimbHistoryItemDto>([], p, size, 0);
+        if (!await access.CanSeeContentAsync(user, ct)) return new PagedResult<ClimbHistoryItemDto>([], p, size, 0);
         var q = db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId);
         q = filter switch
         {
@@ -90,15 +95,16 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
     public async Task<ProfileDto> ProfileAsync(Guid userId, CancellationToken ct = default)
     {
-        var user = await RequireVisibleProfileAsync(userId, ct);
+        var user = await access.RequireVisibleAsync(userId, ct);
         var isPrivate = user.ProfileVisibility == ProfileVisibility.Private;
         var sections = Users.ProfileLayout.Read(user.ProfileSections);
-        if (!CanSeeContent(user))
+        var friendship = await friends.StateWithAsync(userId, ct);
+        if (!await access.CanSeeContentAsync(user, ct))
         {
             // Only what identifies the person: name and photo. Everything else empty, with the same shape as always.
             return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, false,
                 new ClimbingStatsDto(0, 0, 0, 0), [], [], [], [], [],
-                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections);
+                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections, Friendship: friendship);
         }
         var gyms = await db.GymFollows.AsNoTracking().Where(f => f.UserId == userId)
             .Join(db.Gyms, f => f.GymId, g => g.Id, (f, g) => new { f.IsFavorite, g })
@@ -111,7 +117,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections);
+            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections, friendship);
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)
@@ -281,24 +287,5 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == sector.GymId, ct);
         return new FavoriteSectorDto(sector.Id, sector.Name, gym.Id, gym.Name, gym.Slug, top.Count,
             gym.FloorPlanUrl, gym.FloorPlanWidth, gym.FloorPlanHeight, MapZoneDto.FromJson(sector.MapZone));
-    }
-
-    /// <summary>
-    /// Whether the viewer may see the content of this profile: always when it is public or their own. This is the one
-    /// place that decides it for every answer that carries profile content (ADR-061); accepted friends join here once
-    /// BoulderTime has friends (a pending request will never be enough).
-    /// </summary>
-    private bool CanSeeContent(User user) => user.ProfileVisibility != ProfileVisibility.Private || currentUser.UserId == user.Id;
-
-    private async Task<User> RequireVisibleProfileAsync(Guid userId, CancellationToken ct)
-    {
-        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct) ?? throw new NotFoundException("User", userId);
-        // A private profile still opens (from a leaderboard, say): name and photo, and its content only for whoever may
-        // see it (CanSeeContent).
-        // A suspended account has no public face (ADR-037).
-        if (user.SuspendedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
-        // Nor does one waiting to be erased: deleting an account takes it out of the app at once.
-        if (user.DeletionRequestedAt is not null && currentUser.UserId != userId) throw new NotFoundException("User", userId);
-        return user;
     }
 }

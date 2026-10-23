@@ -61,6 +61,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<LeaderboardReport> LeaderboardReports => Set<LeaderboardReport>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<SuspendedEmail> SuspendedEmails => Set<SuspendedEmail>();
 

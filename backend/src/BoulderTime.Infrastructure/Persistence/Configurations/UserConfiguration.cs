@@ -48,6 +48,23 @@ internal sealed class UserBlockConfiguration : IEntityTypeConfiguration<UserBloc
     }
 }
 
+internal sealed class FriendshipConfiguration : IEntityTypeConfiguration<Friendship>
+{
+    public void Configure(EntityTypeBuilder<Friendship> b)
+    {
+        b.ToTable("friendships");
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+        b.Ignore(x => x.AddresseeId);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserLowId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserHighId).OnDelete(DeleteBehavior.Cascade);
+        // One row per pair, whoever asked: two people can't be friends twice, nor ask each other at the same time.
+        b.HasIndex(x => new { x.UserLowId, x.UserHighId }).IsUnique();
+        b.HasIndex(x => x.UserHighId);
+    }
+}
+
 internal sealed class UserReportConfiguration : IEntityTypeConfiguration<UserReport>
 {
     public void Configure(EntityTypeBuilder<UserReport> b)

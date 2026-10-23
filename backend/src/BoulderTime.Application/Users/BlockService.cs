@@ -42,6 +42,9 @@ public sealed class BlockService(IAppDbContext db, ICurrentUser currentUser, ICl
         if (await db.UserBlocks.AnyAsync(b => b.BlockerUserId == userId && b.BlockedUserId == blockedUserId, ct)) return;
 
         db.UserBlocks.Add(UserBlock.Create(userId, blockedUserId, reason, clock.UtcNow));
+        // Blocking ends a friendship or a request between the two, without telling the other (ADR-063).
+        var (low, high) = Friendship.Pair(userId, blockedUserId);
+        db.Friendships.RemoveRange(await db.Friendships.Where(f => f.UserLowId == low && f.UserHighId == high).ToListAsync(ct));
         await db.SaveChangesAsync(ct);
     }
 

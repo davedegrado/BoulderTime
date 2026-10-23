@@ -91,6 +91,7 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         db.LeaderboardReports.RemoveRange(await db.LeaderboardReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));
         db.UserReports.RemoveRange(await db.UserReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));
         db.UserBlocks.RemoveRange(await db.UserBlocks.Where(x => x.BlockerUserId == userId || x.BlockedUserId == userId).ToListAsync(ct));
+        db.Friendships.RemoveRange(await db.Friendships.Where(x => x.UserLowId == userId || x.UserHighId == userId).ToListAsync(ct));
 
         // A suspended account leaving keeps only the fingerprint of its address, so it can't come back clean (ADR-038).
         if (user.IsSuspended)
