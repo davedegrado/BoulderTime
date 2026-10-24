@@ -1320,11 +1320,11 @@ colour's name as text with no constraint on it, so nothing migrates; the enum on
 The store apps already installed know twelve colours and show any other as their first, red. So an app says what it
 understands in a request header, `X-BoulderTime-Capabilities: hold-colors-2` (sent by the app and the website from
 1.1); without it, the server answers as before:
-- light blue is sent as `BLUE` and wood as `BROWN`, the closest colours those apps know, in every answer (one JSON
+- light blue is sent as `BLUE` and wood as `WHITE`, colours those apps know, in every answer (one JSON
   converter for the colour, wherever it appears);
-- filtering by blue finds light blue too, and by brown finds wood: what they see as that colour;
+- filtering by blue finds light blue too, and by white finds wood: what they see as that colour;
 - saving a boulder from such an app (its editor sends back the colour it was shown) keeps light blue or wood when it
-  sends blue or brown; any other colour it picks is a real change.
+  sends blue or white; any other colour it picks is a real change.
 Apps from 1.1 get and send every colour as it is. The list filter reads the colour itself rather than binding it as an
 enum, which would refuse names with an underscore; anything else is refused as before. Outside a request everything
 is understood. Highlighting finds light blue (cyan-side, bright blue) and wood (pale, warm, less saturated than brown)

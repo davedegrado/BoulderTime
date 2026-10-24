@@ -12,7 +12,7 @@ export const HOLD_COLORS: { value: HoldColor; label: string; hex: string }[] = [
   { value: "YELLOW", label: "Yellow", hex: "#F5C400" },
   { value: "GREEN", label: "Green", hex: "#2E9E4F" },
   { value: "BLUE", label: "Blue", hex: "#2F6FDB" },
-  // From 1.1 (ADR-066). The server shows them to older apps as blue and brown, the closest colours they know.
+  // From 1.1 (ADR-066). The server shows them to older apps as blue and white, colours they know.
   { value: "LIGHT_BLUE", label: "Light blue", hex: "#4CC3F0" },
   { value: "PURPLE", label: "Purple", hex: "#8046BE" },
   { value: "PINK", label: "Pink", hex: "#E85EA0" },
