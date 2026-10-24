@@ -51,7 +51,7 @@ public sealed class HoldColorCompatTests(PostgresFixture postgres) : IAsyncLifet
 
     [Theory]
     [InlineData("LIGHT_BLUE", HoldColor.LightBlue, "BLUE")]
-    [InlineData("WOOD", HoldColor.Wood, "BROWN")]
+    [InlineData("WOOD", HoldColor.Wood, "WHITE")]
     public async Task A_new_colour_is_saved_shown_to_new_apps_and_as_the_closest_known_one_to_older_apps(string sent, HoldColor stored, string legacy)
     {
         var w = await ClimbingWorld.CreateAsync(_f);
@@ -125,6 +125,25 @@ public sealed class HoldColorCompatTests(PostgresFixture postgres) : IAsyncLifet
         // Numbers were refused before and still are.
         (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{b.Id}", new { sectorId = w.Sector.Id, photoPath = b.PhotoPath, holdColor = 4, grades = Array.Empty<object>() }))
             .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Wood_is_white_to_older_apps_found_under_white_and_kept_when_they_save_white()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var white = await w.BoulderAsync();
+        var wood = await w.BoulderAsync();
+        var staffApp = NewApp(w.Staff);
+        (await staffApp.PutAsJsonAsync($"/api/boulders/{white.Id}", Edit(w, white, "WHITE"))).EnsureSuccessStatusCode();
+        (await staffApp.PutAsJsonAsync($"/api/boulders/{wood.Id}", Edit(w, wood, "WOOD"))).EnsureSuccessStatusCode();
+        var climber = await _f.UserAsync();
+
+        (await List(climber.Client, w.Gym.Id, "WHITE")).Should().BeEquivalentTo([white.Id, wood.Id]);
+        (await List(climber.Client, w.Gym.Id, "BROWN")).Should().BeEmpty("wood is not brown to anyone");
+        (await List(NewApp(climber), w.Gym.Id, "WOOD")).Should().Equal(wood.Id);
+
+        (await w.Staff.Client.PutAsJsonAsync($"/api/boulders/{wood.Id}", Edit(w, wood, "WHITE"))).EnsureSuccessStatusCode();
+        (await Stored(wood.Id)).Should().Be(HoldColor.Wood);
     }
 
     [Fact]
