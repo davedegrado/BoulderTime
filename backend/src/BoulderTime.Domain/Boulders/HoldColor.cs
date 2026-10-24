@@ -10,7 +10,7 @@ public enum HoldColor
     Red, Orange, Yellow, Green, Blue, Purple, Pink, White, Black, Grey, Brown, Mixed,
     /// <summary>Light blue ("azzurro"), told apart from Blue on the wall. Apps before 1.1 see it as Blue.</summary>
     LightBlue,
-    /// <summary>Wooden holds and volumes. Apps before 1.1 see it as Brown.</summary>
+    /// <summary>Wooden holds and volumes. Apps before 1.1 see it as White.</summary>
     Wood,
 }
 
@@ -25,7 +25,7 @@ public static class HoldColors
     public static HoldColor Legacy(HoldColor color) => color switch
     {
         HoldColor.LightBlue => HoldColor.Blue,
-        HoldColor.Wood => HoldColor.Brown,
+        HoldColor.Wood => HoldColor.White,
         _ => color,
     };
 
@@ -33,13 +33,13 @@ public static class HoldColors
     public static IReadOnlyList<HoldColor> LegacyMatches(HoldColor color) => color switch
     {
         HoldColor.Blue => [HoldColor.Blue, HoldColor.LightBlue],
-        HoldColor.Brown => [HoldColor.Brown, HoldColor.Wood],
+        HoldColor.White => [HoldColor.White, HoldColor.Wood],
         _ => [color],
     };
 
     /// <summary>
     /// The colour to keep when an older app saves a boulder: the one it sent, unless that is only how it saw the stored
-    /// one (a light blue boulder it showed as blue stays light blue).
+    /// one (a light blue boulder it showed as blue stays light blue, a wood one it showed as white stays wood).
     /// </summary>
     public static HoldColor KeepOnLegacySave(HoldColor stored, HoldColor sent) =>
         sent != stored && Legacy(stored) == sent ? stored : sent;

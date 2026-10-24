@@ -7,7 +7,7 @@ namespace BoulderTime.Api.Auth;
 
 /// <summary>
 /// Hold colours in the API, as SCREAMING_SNAKE names like every other enum ("BLUE", "LIGHT_BLUE"). An app that doesn't
-/// say it knows the colours added in 1.1 is sent the closest one it knows instead (light blue as blue, wood as brown):
+/// say it knows the colours added in 1.1 is sent the closest one it knows instead (light blue as blue, wood as white):
 /// the store apps already installed would otherwise show an unknown colour as their first one, red (ADR-066). Reading
 /// takes every colour from every app; numbers are refused, as for the other enums.
 /// </summary>

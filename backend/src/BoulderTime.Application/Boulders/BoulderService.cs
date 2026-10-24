@@ -43,7 +43,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (q.SectorId is { } sectorId) query = query.Where(b => b.SectorId == sectorId);
         if (q.HoldColor is { } hold)
         {
-            // An app that doesn't know every colour sees light blue as blue and wood as brown, so it finds them there too.
+            // An app that doesn't know every colour sees light blue as blue and wood as white, so it finds them there too.
             var holds = client.KnowsAllHoldColors ? [hold] : HoldColors.LegacyMatches(hold).ToList();
             query = query.Where(b => holds.Contains(b.HoldColor));
         }
@@ -292,7 +292,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             .Select(g => g.GradeValueId).ToListAsync(ct);
         var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, currentValueIds, ct, boulder);
         var userId = currentUser.RequireUserId();
-        // An older app was shown light blue as blue and wood as brown: sending that back is not a change of colour.
+        // An older app was shown light blue as blue and wood as white: sending that back is not a change of colour.
         if (!client.KnowsAllHoldColors) valid = valid with { HoldColor = HoldColors.KeepOnLegacySave(boulder.HoldColor, valid.HoldColor) };
 
         var changes = new List<Localization.NotificationTexts.BoulderChange>();
