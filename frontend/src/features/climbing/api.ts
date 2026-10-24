@@ -40,6 +40,10 @@ export interface Profile {
    * the app shows the gyms followed, as before.
    */
   climbedGyms?: ClimbedGym[];
+  /** What the person wrote about themselves; shown on a private profile too. Absent from older servers. */
+  bio?: string | null;
+  /** How many friends, as their list of friends shows them; null when the content is hidden. Absent from older servers. */
+  friendCount?: number | null;
 }
 
 /** A gym where the person completed boulders: how many distinct ones, the latest, the highest grade per scale. */

@@ -17,7 +17,11 @@ export interface AppNotification {
   id: string; type: NotificationType; category: NotificationCategory; title: string; body: string | null; link: string;
   relatedEntityType: string; relatedEntityId: string; count: number; isRead: boolean; createdAt: string;
 }
-export interface NotificationSettings { gymUpdates: boolean; sectorUpdates: boolean; boulderUpdates: boolean; myContent: boolean }
+export interface NotificationSettings {
+  gymUpdates: boolean; sectorUpdates: boolean; boulderUpdates: boolean; myContent: boolean;
+  /** A phone notification when someone asks to be friends (ADR-063). Absent from older servers: then no switch. */
+  friendRequests?: boolean;
+}
 
 export type AnnouncementType = "ANNOUNCEMENT" | "EVENT" | "SCHEDULE_CHANGE" | "MAINTENANCE" | "COMPETITION" | "OTHER";
 const ANNOUNCEMENT_TYPES: Record<AnnouncementType, string> = {

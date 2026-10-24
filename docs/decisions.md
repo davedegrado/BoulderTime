@@ -1244,6 +1244,17 @@ Requests received are not notifications of the feed: the apps already installed 
 list of types and would fail on a new one. They have a line of their own at the top of Notifications and a place in the
 "Friends" tab of one's own profile; the new app shows nothing of friends against a server without them.
 
+A new request also reaches the phone of the person asked, as a push notification only (no feed notification, for the
+reason above), in their language, opening the asker's profile where Accept and Decline are. It has its own switch in
+the notification settings (`friendRequests` on `notification_settings`, on by default, existing rows included), and is
+never sent to someone who blocked the asker. Asking again, or saying yes by asking back, sends nothing new.
+
+On a person's profile the friendship is always buttons of the same size in the same place: Add friend; Cancel request;
+Accept and Decline under "… sent you a friend request"; Friends, which asks before removing. Under the name: how many
+friends (counted as the list of friends shows them; not given when the content is hidden) and a bio of up to 160
+characters that the person writes in Edit profile. The bio says who someone is, like name and photo, so a private
+profile shows it too. Both fields are additive: older apps don't read them, and an app that sends no bio leaves it as it is.
+
 ## ADR-064 · A person's gyms are where they climbed
 
 The "Gyms" tab of a profile, and the gyms of its overview, list the gyms where the person completed at least one

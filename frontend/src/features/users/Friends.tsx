@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { Check, Clock, UserCheck, UserPlus, Users, X } from "lucide-react";
+import { useState } from "react";
+import { Check, UserCheck, UserMinus, UserPlus, UserX, Users, X } from "lucide-react";
 import type { Profile } from "@/features/climbing/api";
 import { useFriendAction, useFriendRequests, useFriendsOf, type FriendAction, type FriendPerson } from "@/features/users/friendsApi";
 import { Avatar } from "@/components/Avatar";
@@ -14,55 +15,77 @@ import { t } from "@/i18n/i18n";
 export const supportsFriends = (p: Profile) => "friendship" in p;
 
 /**
- * The friendship with the person whose profile this is (ADR-063): add, the request sent (with a way to cancel it),
- * their request to accept or decline, or that you are friends — ending it is in the page's menu. Nothing on your own
- * profile, on someone you blocked, or against a server without friends. Signed out, adding asks to sign in first.
- * While a request travels the buttons wait, so nothing is sent twice.
+ * The friendship with the person whose profile this is (ADR-063), always as buttons of the same size in the same
+ * place, so the page doesn't change shape from one state to the next: "Add friend"; once asked, "Cancel request";
+ * their request, "Accept" and "Decline" under a line saying they asked; friends, "Friends", which opens the choice to
+ * remove them. Nothing on your own profile, on someone you blocked, or against a server without friends. Signed out,
+ * adding asks to sign in first. While a request travels the buttons wait, so nothing is sent twice.
  */
 export function FriendButton({ profile: p }: { profile: Profile }) {
   const { session } = useAuth();
   const location = useLocation();
   const action = useFriendAction(p.id);
   const toast = useToast();
+  const [confirmRemove, setConfirmRemove] = useState(false);
   if (p.isMe || p.isBlocked || !supportsFriends(p)) return null;
   if (!session) {
     return (
-      <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className="btn btn--primary friend-btn">
-        <UserPlus aria-hidden /><span>{t("Add friend")}</span>
-      </Link>
+      <div className="friend-actions">
+        <Link to={`/sign-in?next=${encodeURIComponent(location.pathname)}`} className="btn btn--primary">
+          <UserPlus aria-hidden /><span>{t("Add friend")}</span>
+        </Link>
+      </div>
     );
   }
-  const run = (a: FriendAction, done?: string) =>
-    action.mutate(a, { onSuccess: () => done && toast.success(done), onError: (e) => toast.error(errorMessage(e)) });
+  const run = (a: FriendAction, done: string) =>
+    action.mutate(a, { onSuccess: () => { setConfirmRemove(false); toast.success(done); }, onError: (e) => toast.error(errorMessage(e)) });
   const busy = action.isPending;
-  const variable = action.variables;
+  const doing = (a: FriendAction) => busy && action.variables === a;
 
   switch (p.friendship) {
     case "OUTGOING":
       return (
         <div className="friend-actions">
-          <span className="friend-state" role="status"><Clock aria-hidden /> {t("Request sent")}</span>
-          <Button variant="ghost" loading={busy} onClick={() => run("remove", t("Request cancelled"))}>{t("Cancel request")}</Button>
+          <Button variant="secondary" icon={<UserX aria-hidden />} loading={busy} onClick={() => run("remove", t("Request cancelled"))}>
+            {t("Cancel request")}
+          </Button>
         </div>
       );
     case "INCOMING":
       return (
         <div className="friend-actions">
-          <Button icon={<Check aria-hidden />} loading={busy && variable === "accept"} disabled={busy} onClick={() => run("accept", t("You're friends now"))}>
-            {t("Accept request")}
+          <p className="friend-actions__note">{t("{name} sent you a friend request", { name: p.displayName })}</p>
+          <Button icon={<Check aria-hidden />} loading={doing("accept")} disabled={busy} onClick={() => run("accept", t("You're friends now"))}>
+            {t("Accept")}
           </Button>
-          <Button variant="ghost" icon={<X aria-hidden />} loading={busy && variable === "remove"} disabled={busy} onClick={() => run("remove", t("Request declined"))}>
+          <Button variant="secondary" icon={<X aria-hidden />} loading={doing("remove")} disabled={busy} onClick={() => run("remove", t("Request declined"))}>
             {t("Decline")}
           </Button>
         </div>
       );
     case "FRIENDS":
-      return <span className="friend-state friend-state--friends" role="status"><UserCheck aria-hidden /> {t("Friends")}</span>;
+      return confirmRemove ? (
+        <div className="friend-actions">
+          <p className="friend-actions__note">{t("Remove {name} from your friends?", { name: p.displayName })}</p>
+          <Button variant="danger" icon={<UserMinus aria-hidden />} loading={busy} onClick={() => run("remove", t("Removed from friends"))}>
+            {t("Remove from friends")}
+          </Button>
+          <Button variant="secondary" disabled={busy} onClick={() => setConfirmRemove(false)}>{t("Cancel")}</Button>
+        </div>
+      ) : (
+        <div className="friend-actions">
+          <Button variant="secondary" icon={<UserCheck aria-hidden />} onClick={() => setConfirmRemove(true)}>
+            {t("Friends")}
+          </Button>
+        </div>
+      );
     default:
       return (
-        <Button className="friend-btn" icon={<UserPlus aria-hidden />} loading={busy} onClick={() => run("request", t("Friend request sent"))}>
-          {t("Add friend")}
-        </Button>
+        <div className="friend-actions">
+          <Button icon={<UserPlus aria-hidden />} loading={busy} onClick={() => run("request", t("Friend request sent"))}>
+            {t("Add friend")}
+          </Button>
+        </div>
       );
   }
 }

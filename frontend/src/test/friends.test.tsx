@@ -40,8 +40,12 @@ function show(element = <UserProfilePage />, at = "/users/u2") {
   render(<QueryClientProvider client={client}><ToastProvider><RouterProvider router={router} /></ToastProvider></QueryClientProvider>);
   return router;
 }
-/** The friendship as the profile shows it (the toasts are statuses too). */
-const friendState = () => waitFor(() => { const el = document.querySelector(".friend-state"); expect(el).not.toBeNull(); return el!; });
+/** The friendship buttons under the name: always buttons, in the same place, whatever the state. */
+const friendButtons = () => waitFor(() => {
+  const box = document.querySelector(".person-hero .friend-actions");
+  expect(box).not.toBeNull();
+  return within(box as HTMLElement).getAllByRole("button").map((b) => b.textContent);
+});
 const posts = (path: string) => calls.filter((c) => c.method === "POST" && c.path === path).length;
 
 beforeEach(() => {
@@ -55,7 +59,7 @@ beforeEach(() => {
 });
 
 describe("Add friend", () => {
-  it("sends one request however fast it's tapped, then says it's sent and offers to cancel it", async () => {
+  it("sends one request however fast it's tapped, then offers to cancel it in the same place", async () => {
     let release: () => void = () => {};
     reply("POST", "/api/users/u2/friend-request", () => new Promise((resolve) => { release = () => resolve(answer("OUTGOING")()); }));
     reply("DELETE", "/api/users/u2/friendship", answer("NONE"));
@@ -67,24 +71,53 @@ describe("Add friend", () => {
     expect(add).toBeDisabled();
     release();
 
-    expect(await friendState()).toHaveTextContent("Request sent");
+    await waitFor(async () => expect(await friendButtons()).toEqual(["Cancel request"]));
     await userEvent.click(screen.getByRole("button", { name: "Cancel request" }));
-    expect(await screen.findByRole("button", { name: "Add friend" })).toBeInTheDocument();
+    await waitFor(async () => expect(await friendButtons()).toEqual(["Add friend"]));
     expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/users/u2/friendship")).toBe(true);
   });
 
-  it("offers to accept or decline a request received, and says when you're friends; ending it is in the menu", async () => {
+  it("offers to accept or decline a request received, then shows Friends, which offers to remove them", async () => {
     friendship = "INCOMING";
     reply("POST", "/api/users/u2/friend-request/accept", answer("FRIENDS"));
     reply("DELETE", "/api/users/u2/friendship", answer("NONE"));
     show();
-    expect(await screen.findByRole("button", { name: "Decline" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Accept request" }));
-    expect(await friendState()).toHaveTextContent("Friends");
+    expect(await screen.findByText("Anna Verdi sent you a friend request")).toBeInTheDocument();
+    expect(await friendButtons()).toEqual(["Accept", "Decline"]);
+    await userEvent.click(screen.getByRole("button", { name: "Accept" }));
+    await waitFor(async () => expect(await friendButtons()).toEqual(["Friends"]));
 
-    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    // Tapping Friends asks first; changing one's mind leaves things as they were.
+    await userEvent.click(screen.getByRole("button", { name: "Friends" }));
+    expect(screen.getByText("Remove Anna Verdi from your friends?")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await friendButtons()).toEqual(["Friends"]);
+    await userEvent.click(screen.getByRole("button", { name: "Friends" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove from friends" }));
+    await waitFor(async () => expect(await friendButtons()).toEqual(["Add friend"]));
+  });
+
+  it("can also end a friendship from the page's menu", async () => {
+    friendship = "FRIENDS";
+    reply("DELETE", "/api/users/u2/friendship", answer("NONE"));
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "More actions" }));
     await userEvent.click(within(screen.getByRole("menu")).getByRole("menuitem", { name: "Remove from friends" }));
     expect(await screen.findByRole("button", { name: "Add friend" })).toBeInTheDocument();
+  });
+
+  it("shows the bio and the number of friends under the name; the number opens the Friends tab", async () => {
+    reply("GET", "/api/users/u2/profile", () => profile({ bio: "Crimper.\nBlocchi a Milano", friendCount: 3 }));
+    show();
+    expect(await screen.findByText(/Crimper\.\s*Blocchi a Milano/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "3 friends" }));
+    expect(screen.getByRole("tab", { name: "Friends" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows no number of friends where the server doesn't give one", async () => {
+    show();
+    expect(await screen.findByRole("heading", { name: "Anna Verdi" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^\d+ friends?$/ })).not.toBeInTheDocument();
   });
 
   it("says what went wrong and stays as it was when the request fails", async () => {
@@ -92,7 +125,7 @@ describe("Add friend", () => {
     show();
     await userEvent.click(await screen.findByRole("button", { name: "Add friend" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Add friend" })).toBeEnabled());
-    expect(screen.queryByText("Request sent")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel request" })).not.toBeInTheDocument();
   });
 
   it("is not on your own profile", async () => {

@@ -9,7 +9,7 @@ import { useCurrentUser, useUpdateProfile } from "@/features/users/api";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
-import { SelectField } from "@/components/Fields";
+import { SelectField, TextAreaField } from "@/components/Fields";
 import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { Avatar } from "@/components/Avatar";
@@ -25,6 +25,9 @@ import { PasswordSection } from "@/features/users/PasswordSection";
 import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
 import { BlockedList } from "@/features/users/BlockedList";
 
+/** As long as the server takes (User.BioMaxLength). */
+const BIO_MAX = 160;
+
 export function ProfilePage() {
   const { session, signOut } = useAuth();
   const me = useCurrentUser();
@@ -37,9 +40,13 @@ export function ProfilePage() {
   const setAvatar = useSetAvatar();
   const toast = useToast();
   const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
 
   useEffect(() => {
-    if (me.data) setDisplayName(me.data.displayName);
+    if (me.data) {
+      setDisplayName(me.data.displayName);
+      setBio(me.data.bio ?? "");
+    }
   }, [me.data]);
 
   if (me.isPending) return <LoadingState label={t("Loading your profile")} />;
@@ -47,12 +54,15 @@ export function ProfilePage() {
 
   const user = me.data;
   const fieldError = update.error instanceof ApiError ? update.error.fieldError("displayName") : undefined;
-  const dirty = displayName.trim() !== user.displayName;
+  const bioError = update.error instanceof ApiError ? update.error.fieldError("bio") : undefined;
+  // An older server sends no bio, and then the app offers none.
+  const hasBio = "bio" in user;
+  const dirty = displayName.trim() !== user.displayName || (hasBio && bio.trim() !== (user.bio ?? ""));
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     update.mutate(
-      { displayName: displayName.trim() },
+      { displayName: displayName.trim(), ...(hasBio ? { bio: bio.trim() } : {}) },
       {
         onSuccess: () => toast.success(t("Profile saved")),
         onError: (err) => {
@@ -121,7 +131,7 @@ export function ProfilePage() {
         <div className="disclosures">
           <details className="disclosure">
             <summary className="disclosure__summary">
-              <span className="disclosure__text"><span className="list__title">{t("Edit profile")}</span><span className="list__sub">{t("Name, photo and language")}</span></span>
+              <span className="disclosure__text"><span className="list__title">{t("Edit profile")}</span><span className="list__sub">{hasBio ? t("Name, photo, bio and language") : t("Name, photo and language")}</span></span>
               <ChevronDown className="disclosure__chevron" aria-hidden />
             </summary>
             <div className="disclosure__body stack">
@@ -131,6 +141,10 @@ export function ProfilePage() {
                 onRemove={() => setAvatar.mutate(null, { onSuccess: () => toast.success(t("Photo removed")), onError: (e) => toast.error(errorMessage(e)) })} />
               <form className="form" onSubmit={onSubmit} noValidate>
                 <TextField label={t("Display name")} value={displayName} onChange={(e) => setDisplayName(e.target.value)} error={fieldError} maxLength={40} />
+                {hasBio && (
+                  <TextAreaField label={t("Bio")} value={bio} onChange={(e) => setBio(e.target.value)} error={bioError} maxLength={BIO_MAX} rows={3}
+                    placeholder={t("A few words about you and how you climb")} hint={t("{count} of {max} characters. Shown under your name on your profile.", { count: bio.trim().length, max: BIO_MAX })} />
+                )}
                 <TextField label={t("Email")} value={user.email} readOnly disabled hint={t("Your sign-in email can't be changed here.")} />
                 <SelectField label={t("Language")} value={language}
                   options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}

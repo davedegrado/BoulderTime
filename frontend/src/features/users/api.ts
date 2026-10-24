@@ -38,11 +38,15 @@ export interface CurrentUser {
   minimumAgeConfirmed?: boolean;
   /** Only they see the content of their profile (ADR-061). Absent from older servers. */
   profilePrivate?: boolean;
+  /** What they wrote about themselves, shown under their name. Absent from older servers. */
+  bio?: string | null;
 }
 
 export interface UpdateProfileInput {
   displayName: string;
   language?: "it" | "en";
+  /** Left out, the bio stays as it is; blank clears it. */
+  bio?: string;
 }
 
 export const userKeys = {

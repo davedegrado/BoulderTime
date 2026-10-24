@@ -67,6 +67,21 @@ describe("Notification settings", () => {
     await userEvent.click(await screen.findByRole("switch", { name: "Notifications for Crimp Factory" }));
     await waitFor(() => expect(calls.find((c) => c.path === "/api/gyms/g1/follow")?.body).toEqual({ notificationsEnabled: false }));
     expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+    // A server that doesn't know friend requests gets no switch for them.
+    expect(screen.queryByRole("switch", { name: "Friend requests" })).not.toBeInTheDocument();
+  });
+
+  it("turns friend requests on the phone off on their own", async () => {
+    reply("GET", "/api/users/me/notification-settings", { gymUpdates: true, sectorUpdates: true, boulderUpdates: true, myContent: true, friendRequests: true });
+    reply("PUT", "/api/users/me/notification-settings", { gymUpdates: true, sectorUpdates: true, boulderUpdates: true, myContent: true, friendRequests: false });
+    reply("GET", "/api/users/me/follows", { gyms: [], sectors: [], boulders: [] });
+    renderAt("/notifications/settings", "/notifications/settings", <NotificationSettingsPage />);
+
+    const toggle = await screen.findByRole("switch", { name: "Friend requests" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(toggle);
+    await waitFor(() => expect(calls.find((c) => c.path === "/api/users/me/notification-settings" && c.method === "PUT")?.body).toEqual({ friendRequests: false }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Friend requests" })).toHaveAttribute("aria-checked", "false"));
   });
 });
 

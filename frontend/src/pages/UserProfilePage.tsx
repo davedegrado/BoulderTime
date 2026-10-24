@@ -18,7 +18,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { formatDate } from "@/lib/format";
 import { copyText, shareLink, shareUrl } from "@/lib/share";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 import { StaffDistinctions } from "@/features/gyms/StaffDistinctions";
 import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
@@ -60,6 +60,8 @@ export function UserProfilePage() {
         <div className="person-hero__body">
           <EnlargeableAvatar name={p.displayName} url={p.avatarUrl} size={84} />
           <h1 ref={name} className="page__title person-hero__name">{p.displayName}</h1>
+          {p.friendCount != null && <FriendCount count={p.friendCount} />}
+          {p.bio && <p className="person-hero__bio">{p.bio}</p>}
           <p className="person-hero__meta">{t("On BoulderTime since {date}", { date: formatDate(p.memberSince, { month: "long", year: "numeric" }) })}</p>
           <FriendButton profile={p} />
           {!p.contentHidden && <StaffDistinctions distinctions={p.staffDistinctions} />}
@@ -94,6 +96,17 @@ export function UserProfilePage() {
         )
         : <ProfileContent profile={p} sections={sections} onCustomize={canArrange ? () => setPanel("customize") : undefined} />}
     </div>
+  );
+}
+
+/** How many friends, under the name; a tap opens the Friends tab. */
+function FriendCount({ count }: { count: number }) {
+  const [, setParams] = useSearchParams();
+  return (
+    <button type="button" className="person-hero__friends"
+      onClick={() => setParams((q) => { const n = new URLSearchParams(q); n.set("tab", "friends"); return n; }, { replace: true })}>
+      {plural(count, "{count} friend", "{count} friends")}
+    </button>
   );
 }
 

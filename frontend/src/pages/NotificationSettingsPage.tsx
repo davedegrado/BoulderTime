@@ -19,6 +19,8 @@ const CATEGORIES: { key: keyof NotificationSettings; label: string; description:
   { key: "boulderUpdates", label: "Boulder updates", description: "Changes, new official beta and comments on boulders you follow or are projecting." },
   { key: "myContent", label: "Your videos and reports", description: "When your videos are reviewed or your reports are handled." },
 ];
+/** Phone only: the request itself always waits on the profile and in Notifications. */
+const FRIEND_REQUESTS = { key: "friendRequests", label: "Friend requests", description: "A notification on your phone when someone asks to be your friend." } as const;
 
 /**
  * Notifications with the app closed. Kept above the per-category switches because it answers a different question:
@@ -83,7 +85,7 @@ function PhoneNotifications() {
       ) : (
         <Toggle
           label={pushWording().toggle}
-          description={t("New boulders, retraces and gym updates reach you even with the app closed. What you receive follows the settings below.")}
+          description={t("New boulders, retraces, gym updates and friend requests reach you even with the app closed. What you receive follows the settings below.")}
           checked={status.data?.subscribedOnThisDevice ?? false}
           disabled={busy || status.isPending}
           onChange={toggle} />
@@ -135,8 +137,8 @@ export function NotificationSettingsPage() {
 
       <section className="card stack" aria-label={t("Categories")}>
         {settings.isPending ? <LoadingState /> : settings.isError ? <ErrorState error={settings.error} onRetry={() => settings.refetch()} />
-          : CATEGORIES.map((c) => (
-            <Toggle key={c.key} label={t(c.label)} description={t(c.description)} checked={settings.data[c.key]}
+          : [...CATEGORIES, ...("friendRequests" in settings.data ? [FRIEND_REQUESTS] : [])].map((c) => (
+            <Toggle key={c.key} label={t(c.label)} description={t(c.description)} checked={settings.data[c.key] ?? true}
               onChange={(v) => update.mutate({ [c.key]: v }, { onError })} />
           ))}
       </section>
