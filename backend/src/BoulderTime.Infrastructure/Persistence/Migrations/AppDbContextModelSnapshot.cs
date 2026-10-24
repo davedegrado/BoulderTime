@@ -2045,6 +2045,10 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("boulder_updates");
 
+                    b.Property<bool>("FriendRequests")
+                        .HasColumnType("boolean")
+                        .HasColumnName("friend_requests");
+
                     b.Property<bool>("GymUpdates")
                         .HasColumnType("boolean")
                         .HasColumnName("gym_updates");
@@ -2322,6 +2326,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)")
                         .HasColumnName("avatar_url");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("bio");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")

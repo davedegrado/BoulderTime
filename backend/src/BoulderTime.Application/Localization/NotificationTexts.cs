@@ -79,6 +79,10 @@ public static class NotificationTexts
         ? new(count == 1 ? $"{authorName} ha commentato un blocco che segui" : $"{count} nuovi commenti su un blocco che segui", excerpt)
         : new(count == 1 ? $"{authorName} commented on a boulder you follow" : $"{count} new comments on a boulder you follow", excerpt);
 
+    public static NotificationText FriendRequest(string language, string requesterName) => It(language)
+        ? new($"{requesterName} ti ha chiesto l'amicizia", "Apri il suo profilo per accettare o rifiutare.")
+        : new($"{requesterName} sent you a friend request", "Open their profile to accept or decline.");
+
     public static NotificationText VideoApproved(string language) => It(language)
         ? new("Il tuo video è online", "La palestra ha approvato il tuo video. Ora possono vederlo tutti.")
         : new("Your video is live", "The gym approved your video. Everyone can watch it now.");

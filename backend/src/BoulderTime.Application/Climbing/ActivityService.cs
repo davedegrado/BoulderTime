@@ -62,7 +62,17 @@ public sealed record ProfileDto(
     /// The gyms where the person completed at least one boulder, latest first (ADR-064). Following a gym is not enough.
     /// Empty when the content is hidden. Added later: older apps don't read it.
     /// </summary>
-    IReadOnlyList<ClimbedGymDto>? ClimbedGyms = null);
+    IReadOnlyList<ClimbedGymDto>? ClimbedGyms = null,
+    /// <summary>
+    /// What the person wrote about themselves. Like name and photo it says who they are, so a private profile shows it
+    /// too. Null when they wrote none. Added later: older apps don't read it.
+    /// </summary>
+    string? Bio = null,
+    /// <summary>
+    /// How many friends the person has, counting those the viewer may see (as the list of friends does). Null when the
+    /// content is hidden. Added later: older apps don't read it.
+    /// </summary>
+    int? FriendCount = null);
 
 /// <summary>
 /// The sector with the most boulders this person completed, each boulder once. With the gym's floor plan and the
@@ -115,7 +125,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             // Only what identifies the person: name and photo. Everything else empty, with the same shape as always.
             return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, false,
                 new ClimbingStatsDto(0, 0, 0, 0), [], [], [], [], [],
-                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections, Friendship: friendship, ClimbedGyms: []);
+                await blocked.ViewerBlockedAsync(userId, ct), null, isPrivate, ContentHidden: true, Sections: sections, Friendship: friendship, ClimbedGyms: [], Bio: user.Bio);
         }
         var gyms = await db.GymFollows.AsNoTracking().Where(f => f.UserId == userId)
             .Join(db.Gyms, f => f.GymId, g => g.Id, (f, g) => new { f.IsFavorite, g })
@@ -128,7 +138,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
             await StatsAsync(userId, ct), await HighestGradesAsync(userId, ct), await WeeklyAsync(userId, ct),
             await SummariesAsync(gyms, ct), await ToHistoryAsync(userId, recent, ct), await StaffDistinctionsAsync(userId, ct),
-            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections, friendship, await ClimbedGymsAsync(userId, ct));
+            await blocked.ViewerBlockedAsync(userId, ct), await FavoriteSectorAsync(userId, ct), isPrivate, false, sections, friendship, await ClimbedGymsAsync(userId, ct),
+            user.Bio, await friends.CountOfAsync(userId, ct));
     }
 
     public async Task<HomeDto> HomeAsync(CancellationToken ct = default)

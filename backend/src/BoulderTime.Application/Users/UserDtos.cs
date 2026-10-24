@@ -35,13 +35,16 @@ public sealed record CurrentUserDto(
     /// <summary>The person declared being at least 14 (ADR-041).</summary>
     bool MinimumAgeConfirmed = false,
     /// <summary>Only the person sees the content of their profile (ADR-061). Added later: older apps don't read it.</summary>
-    bool ProfilePrivate = false)
+    bool ProfilePrivate = false,
+    /// <summary>What the person wrote about themselves, shown under their name. Added later: older apps don't read it.</summary>
+    string? Bio = null)
 {
     public static CurrentUserDto From(User u, IReadOnlyList<MyStaffGymDto>? staffGyms = null, int pendingInvitations = 0) =>
         new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.IsPlatformAdmin, u.CreatedAt, staffGyms ?? [], pendingInvitations, u.Language,
             u.LeaderboardOptOut, u.LeaderboardExcludedAt is not null,
             u.AcceptedLegalVersion, LegalAcceptanceService.IsNeeded(u), u.IsSuspended, u.MinimumAgeConfirmed,
-            u.ProfileVisibility == ProfileVisibility.Private);
+            u.ProfileVisibility == ProfileVisibility.Private, u.Bio);
 }
 
-public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null);
+/// <param name="Bio">Null leaves the bio as it is (older apps never send it); blank clears it.</param>
+public sealed record UpdateProfileRequest(string? DisplayName, string? Language = null, string? Bio = null);

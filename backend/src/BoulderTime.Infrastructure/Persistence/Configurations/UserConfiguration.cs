@@ -25,6 +25,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(u => u.IsPlatformAdmin).HasDefaultValue(false);
         b.Property(u => u.ProfileVisibility).HasConversion<string>().HasMaxLength(32).HasDefaultValue(ProfileVisibility.Public);
         b.Property(u => u.ProfileSections).HasMaxLength(User.ProfileSectionsMaxLength);
+        b.Property(u => u.Bio).HasMaxLength(User.BioMaxLength);
         b.Property(u => u.SuspensionReason).HasMaxLength(User.SuspensionReasonMaxLength);
         b.Property(u => u.CreatedAt).IsRequired();
         b.Property(u => u.UpdatedAt).IsRequired();

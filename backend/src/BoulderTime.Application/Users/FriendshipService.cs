@@ -1,6 +1,7 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Localization;
 using BoulderTime.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +28,7 @@ public sealed record FriendDto(PersonDto Person, DateTimeOffset Since);
 /// and the other lists don't change. Blocking ends a friendship and is never revealed: a request to someone who blocked
 /// you looks sent like any other, and they never see it while the block lasts.
 /// </summary>
-public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BlockedPeople blocked, ProfileAccess access)
+public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BlockedPeople blocked, ProfileAccess access, IPushQueue push)
 {
     /// <summary>Requests one person may send in a day: plenty for real use, too few to spam with.</summary>
     public const int RequestsPerDay = 30;
@@ -67,7 +68,26 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
         var request = Friendship.Request(me, otherId, clock.UtcNow);
         db.Friendships.Add(request);
         await db.SaveChangesAsync(ct);
+        await NotifyRequestAsync(me, otherId, ct);
         return new FriendshipDto(FriendshipState.Outgoing);
+    }
+
+    /// <summary>
+    /// A phone notification for a new request, to whoever has notifications on and hasn't turned friend requests off.
+    /// Push only, no line in the notification list: installed apps can't draw a kind of notification they don't know,
+    /// and the request already waits on the profile and in Notifications. Someone who blocked the requester hears
+    /// nothing, as the request stays out of their sight. Asking again after cancelling replaces the notification on
+    /// the phone instead of adding one (same tag).
+    /// </summary>
+    private async Task NotifyRequestAsync(Guid requesterId, Guid addresseeId, CancellationToken ct)
+    {
+        if (await db.UserBlocks.AsNoTracking().AnyAsync(b => b.BlockerUserId == addresseeId && b.BlockedUserId == requesterId, ct)) return;
+        var settings = await db.NotificationSettings.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == addresseeId, ct);
+        if (settings is { FriendRequests: false }) return;
+        var requesterName = await db.Users.AsNoTracking().Where(u => u.Id == requesterId).Select(u => u.DisplayName).FirstAsync(ct);
+        var language = await db.Users.AsNoTracking().Where(u => u.Id == addresseeId).Select(u => u.Language).FirstAsync(ct);
+        var text = NotificationTexts.FriendRequest(language, requesterName);
+        push.Enqueue(addresseeId, new PushMessage(text.Title, text.Body ?? "", $"/users/{requesterId}", $"friend-request:{requesterId}"));
     }
 
     public async Task<FriendshipDto> AcceptAsync(Guid otherId, CancellationToken ct = default)
@@ -128,6 +148,19 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
         var total = await q.CountAsync(ct);
         var rows = await q.OrderBy(x => x.DisplayName).ThenBy(x => x.Id).Skip((p - 1) * size).Take(size).ToListAsync(ct);
         return new PagedResult<FriendDto>(rows.Select(x => new FriendDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.Since)).ToList(), p, size, total);
+    }
+
+    /// <summary>
+    /// How many friends the person has, leaving out people hidden from the viewer: the same people the list of friends
+    /// shows. The caller decides whether the viewer may see it at all.
+    /// </summary>
+    public async Task<int> CountOfAsync(Guid userId, CancellationToken ct = default)
+    {
+        var hidden = await blocked.ForViewerAsync(ct);
+        return await db.Friendships.AsNoTracking()
+            .Where(f => f.Status == FriendshipStatus.Accepted && (f.UserLowId == userId || f.UserHighId == userId))
+            .Select(f => f.UserLowId == userId ? f.UserHighId : f.UserLowId)
+            .CountAsync(other => !hidden.Contains(other), ct);
     }
 
     private async Task<Friendship?> PairAsync(Guid a, Guid b, bool tracked, CancellationToken ct)
