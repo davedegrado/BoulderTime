@@ -141,6 +141,149 @@ export function paintStroke(mask: Uint8Array, width: number, height: number, fro
     paintDab(mask, width, height, from.x + ((to.x - from.x) * i) / steps, from.y + ((to.y - from.y) * i) / steps, radius, value);
 }
 
+// ---- Wand: a tap selects one whole hold, or takes away one whole area selected by mistake ----
+
+/** sRGB to linear light, once per value. */
+const LINEAR = Float32Array.from({ length: 256 }, (_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+
+/**
+ * OKLab: lightness and two colour axes, spaced as colours look apart. The wand compares colours here because what
+ * makes a hold one thing — the same colour from its lit side to its shaded one, a clear edge against the wall — is
+ * a question of how colours look, which hue alone doesn't answer (a lime hold on a dark green wall has the same hue).
+ */
+function oklabAt(rgba: Uint8ClampedArray, p: number, out: Float32Array, o = 0) {
+  const r = LINEAR[rgba[p * 4]!]!, g = LINEAR[rgba[p * 4 + 1]!]!, b = LINEAR[rgba[p * 4 + 2]!]!;
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  out[o] = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  out[o + 1] = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  out[o + 2] = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+}
+
+/** The colour around a pixel (its 3 × 3 mean): chalk dust, grain and JPEG noise don't read as edges. */
+function smoothAt(rgba: Uint8ClampedArray, width: number, height: number, p: number, out: Float32Array, o: number, tmp: Float32Array) {
+  const px = p % width, py = (p - px) / width;
+  let L = 0, a = 0, b = 0, n = 0;
+  for (let yy = Math.max(0, py - 1); yy <= Math.min(height - 1, py + 1); yy++)
+    for (let xx = Math.max(0, px - 1); xx <= Math.min(width - 1, px + 1); xx++) { oklabAt(rgba, yy * width + xx, tmp); L += tmp[0]!; a += tmp[1]!; b += tmp[2]!; n++; }
+  out[o] = L / n; out[o + 1] = a / n; out[o + 2] = b / n;
+}
+
+/** How far apart two colours look, lightness counting a little less than colour: shade on a hold is still the hold. */
+const apart = (c: Float32Array, i: number, j: number) => {
+  const dl = c[i]! - c[j]!, da = c[i + 1]! - c[j + 1]!, db = c[i + 2]! - c[j + 2]!;
+  return Math.sqrt(dl * dl * 0.6 + da * da + db * db);
+};
+
+/** The wand's limits, tried on photos of real walls: how far from the hold's colour, how sharp an edge stops it, how big a hold can be. */
+export interface WandLimits { fromHold: number; edge: number; maxShare: number; tapShare: number }
+export const WAND: WandLimits = { fromHold: 0.085, edge: 0.035, maxShare: 0.04, tapShare: 1 / 100 };
+/** Below this colourfulness a surface reads as white, grey or black (chalk on a coloured hold looks like this too). */
+const NEUTRAL_CHROMA = 0.045;
+
+export interface Area { x0: number; y0: number; x1: number; y1: number }
+
+/**
+ * Selects the hold under a tap, adding it to `mask`. From the most colourful pixel under the fingertip (for a coloured
+ * hold — `colourful` — a finger on a patch of chalk looks a little further for the hold's colour), it spreads over neighbouring pixels while they stay near the hold's colour and
+ * don't cross an edge, then fills what it encloses (chalk, a bolt hole, a reflection). Anything as big as a wall is not
+ * a hold: nothing is added. Returns the rectangle changed, or null when nothing was.
+ */
+export function selectHoldAt(rgba: Uint8ClampedArray, width: number, height: number, mask: Uint8Array, x: number, y: number,
+  colourful = true, limits: WandLimits = WAND): Area | null {
+  const cx = Math.round(x), cy = Math.round(y);
+  if (cx < 0 || cy < 0 || cx >= width || cy >= height) return null;
+  const side = Math.max(width, height);
+  const c = new Float32Array(3);
+  /** The more colourful half of a disc around the tap: its mean colour, and its most colourful pixel. */
+  const sample = (reach: number) => {
+    const disc: { p: number; chroma: number; lab: [number, number, number] }[] = [];
+    for (let yy = Math.max(0, cy - reach); yy <= Math.min(height - 1, cy + reach); yy++)
+      for (let xx = Math.max(0, cx - reach); xx <= Math.min(width - 1, cx + reach); xx++) {
+        if ((xx - cx) ** 2 + (yy - cy) ** 2 > reach * reach) continue;
+        const p = yy * width + xx;
+        oklabAt(rgba, p, c);
+        disc.push({ p, chroma: Math.hypot(c[1]!, c[2]!), lab: [c[0]!, c[1]!, c[2]!] });
+      }
+    disc.sort((a, b) => b.chroma - a.chroma);
+    const half = disc.slice(0, Math.max(1, disc.length >> 1));
+    const mean = new Float32Array(3);
+    for (const d of half) { mean[0]! += d.lab[0]; mean[1]! += d.lab[1]; mean[2]! += d.lab[2]; }
+    mean[0]! /= half.length; mean[1]! /= half.length; mean[2]! /= half.length;
+    return { mean, start: half[0]!.p, chroma: Math.hypot(mean[1]!, mean[2]!) };
+  };
+  // Under the fingertip first. Only when that is all white or grey — a coloured hold's chalk — the wider ring around it
+  // says the hold's colour; never for white, grey or black holds, whose colour that is.
+  let picked = sample(Math.max(2, Math.round(side / 240)));
+  if (colourful && picked.chroma < NEUTRAL_CHROMA) picked = sample(Math.max(3, Math.round(side * limits.tapShare)));
+  const hold = picked.mean, start = picked.start;
+
+  const limit = Math.round(width * height * limits.maxShare);
+  const seen = new Uint8Array(width * height);
+  const got: number[] = [];
+  const stack = [start];
+  seen[start] = 1;
+  const here = new Float32Array(6), tmp = new Float32Array(3);
+  while (stack.length) {
+    const p = stack.pop()!;
+    got.push(p);
+    if (got.length > limit) return null;
+    smoothAt(rgba, width, height, p, here, 0, tmp);
+    const px = p % width, py = (p - px) / width;
+    const next = [px > 0 ? p - 1 : -1, px < width - 1 ? p + 1 : -1, py > 0 ? p - width : -1, py < height - 1 ? p + width : -1];
+    for (const q of next) {
+      if (q < 0 || seen[q]) continue;
+      seen[q] = 1;
+      smoothAt(rgba, width, height, q, here, 3, tmp);
+      const fromHold = Math.sqrt((here[3]! - hold[0]!) ** 2 * 0.6 + (here[4]! - hold[1]!) ** 2 + (here[5]! - hold[2]!) ** 2);
+      if (fromHold <= limits.fromHold && apart(here, 0, 3) <= limits.edge) stack.push(q);
+    }
+  }
+
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  for (const p of got) { const px = p % width, py = (p - px) / width; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+  // What the hold encloses: inside its rectangle, everything not reachable from the rectangle's border without crossing it.
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, inHold = new Uint8Array(bw * bh), outside = new Uint8Array(bw * bh);
+  for (const p of got) { const px = p % width, py = (p - px) / width; inHold[(py - y0) * bw + (px - x0)] = 1; }
+  const flood: number[] = [];
+  for (let i = 0; i < bw; i++) for (const j of [i, (bh - 1) * bw + i]) if (!inHold[j] && !outside[j]) { outside[j] = 1; flood.push(j); }
+  for (let k = 0; k < bh; k++) for (const j of [k * bw, k * bw + bw - 1]) if (!inHold[j] && !outside[j]) { outside[j] = 1; flood.push(j); }
+  while (flood.length) {
+    const j = flood.pop()!, jx = j % bw, jy = (j - jx) / bw;
+    for (const q of [jx > 0 ? j - 1 : -1, jx < bw - 1 ? j + 1 : -1, jy > 0 ? j - bw : -1, jy < bh - 1 ? j + bw : -1])
+      if (q >= 0 && !inHold[q] && !outside[q]) { outside[q] = 1; flood.push(q); }
+  }
+  for (let j = 0; j < bw * bh; j++) if (!outside[j]) mask[(y0 + Math.floor(j / bw)) * width + x0 + (j % bw)] = 255;
+  return { x0, y0, x1: x1 + 1, y1: y1 + 1 };
+}
+
+/**
+ * Takes away the whole selected area under a tap (a wall panel, a logo, another boulder's hold), or the nearest one
+ * within a fingertip. Returns the rectangle changed, or null when there was nothing selected there.
+ */
+export function removeAreaAt(mask: Uint8Array, width: number, height: number, x: number, y: number): Area | null {
+  const cx = Math.round(x), cy = Math.round(y);
+  const reach = Math.max(4, Math.round(Math.max(width, height) / 150));
+  let start = -1, best = Infinity;
+  for (let yy = Math.max(0, cy - reach); yy <= Math.min(height - 1, cy + reach); yy++)
+    for (let xx = Math.max(0, cx - reach); xx <= Math.min(width - 1, cx + reach); xx++) {
+      const d = (xx - cx) ** 2 + (yy - cy) ** 2;
+      if (d <= reach * reach && d < best && mask[yy * width + xx]! >= 128) { best = d; start = yy * width + xx; }
+    }
+  if (start < 0) return null;
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  const stack = [start];
+  mask[start] = 0;
+  while (stack.length) {
+    const p = stack.pop()!, px = p % width, py = (p - px) / width;
+    if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+    for (const q of [px > 0 ? p - 1 : -1, px < width - 1 ? p + 1 : -1, py > 0 ? p - width : -1, py < height - 1 ? p + width : -1])
+      if (q >= 0 && mask[q]! >= 128) { mask[q] = 0; stack.push(q); }
+  }
+  return { x0, y0, x1: x1 + 1, y1: y1 + 1 };
+}
+
 /** Softens the mask's edge (a box blur), so the colour fades into the grey instead of stopping on a jagged line. */
 export function featherMask(mask: Uint8Array, width: number, height: number, radius: number): Uint8Array {
   if (radius < 1) return mask;

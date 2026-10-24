@@ -1258,3 +1258,29 @@ followed.
 It travels on the profile as an added `climbedGyms` field: no new storage, no new endpoint, empty when the content is
 hidden by the privacy. Older apps don't read it; the new app, against an older server, shows the gyms followed as
 before. The cover isn't used: the cards stay short, the logo (or the initials) identifies the gym.
+
+## ADR-065 · A tap of the wand, to correct the highlighted holds
+
+The automatic guess finds the holds by colour, from fixed ranges that no single palette gets right in every gym (pink
+holds that fall among the reds, walls the colour of the holds, chalk that greys a hold out). It stays as it is; what
+changes is how fast it is corrected. The highlighter gets a third tool beside the two brushes, "Tap a hold":
+
+- a tap on a part in colour takes that whole connected area away (a wall panel, another boulder's hold, a logo);
+- a tap on a grey part selects the hold there, whole: from the colour under the fingertip — the more colourful half of
+  a small disc, and only when that is all white or grey (a coloured hold's chalk) a wider one — the area grows over the
+  neighbours whose colour, in OKLab and smoothed over 3 × 3, stays close to the hold's and changes little from one pixel
+  to the next; what it encloses (chalk, a bolt hole) is taken too. For white, grey and black holds the wider look is
+  never taken, since their colour is the chalk's;
+- an area larger than a twenty-fifth of the photo is no hold but a wall: nothing is added, and the editor says to paint
+  it with the brush.
+
+It runs on the phone, in milliseconds, on the picture the editor already holds; nothing is sent anywhere and no AI
+service is involved. It only writes the mask, which stays the one truth: each tap can be undone like a stroke, the
+outline follows from the mask, and what is saved is the same mask PNG and the same settings as before, so nothing
+changes for the server or for older apps. A tap that moves further than a fingertip turns into moving the photo; two
+fingers still zoom.
+
+Tried on five photos of a gym's walls: one tap selects a hold whole on pinks, greens, oranges, blues and a large cream
+hold, and one tap takes away a green wall the guess had kept. It finds nothing — and so adds nothing — on a hold
+heavily chalked all over, on yellow holds on a yellow wall, or on white holds on a white wall: those are painted by
+hand as before.
