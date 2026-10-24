@@ -33,6 +33,9 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
     /// <summary>Requests one person may send in a day: plenty for real use, too few to spam with.</summary>
     public const int RequestsPerDay = 30;
 
+    /// <summary>The first store app version that has friends (ADR-063).</summary>
+    public const string FriendsSinceAppVersion = "1.1.0";
+
     /// <summary>The viewer's friendship with this person; null for oneself and when signed out.</summary>
     public async Task<FriendshipState?> StateWithAsync(Guid otherId, CancellationToken ct = default)
     {
@@ -73,7 +76,8 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
     }
 
     /// <summary>
-    /// A phone notification for a new request, to whoever has notifications on and hasn't turned friend requests off.
+    /// A phone notification for a new request, to whoever has notifications on and hasn't turned friend requests off,
+    /// on the devices whose app has friends.
     /// Push only, no line in the notification list: installed apps can't draw a kind of notification they don't know,
     /// and the request already waits on the profile and in Notifications. Someone who blocked the requester hears
     /// nothing, as the request stays out of their sight. Asking again after cancelling replaces the notification on
@@ -87,7 +91,10 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
         var requesterName = await db.Users.AsNoTracking().Where(u => u.Id == requesterId).Select(u => u.DisplayName).FirstAsync(ct);
         var language = await db.Users.AsNoTracking().Where(u => u.Id == addresseeId).Select(u => u.Language).FirstAsync(ct);
         var text = NotificationTexts.FriendRequest(language, requesterName);
-        push.Enqueue(addresseeId, new PushMessage(text.Title, text.Body ?? "", $"/users/{requesterId}", $"friend-request:{requesterId}"));
+        // Only where the request can be answered: the website and store apps from 1.1. A 1.0 app has no friends, and
+        // would open a profile without Accept.
+        push.Enqueue(addresseeId, new PushMessage(text.Title, text.Body ?? "", $"/users/{requesterId}", $"friend-request:{requesterId}",
+            MinimumAppVersion: FriendsSinceAppVersion));
     }
 
     public async Task<FriendshipDto> AcceptAsync(Guid otherId, CancellationToken ct = default)

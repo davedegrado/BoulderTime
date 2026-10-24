@@ -6,7 +6,11 @@ namespace BoulderTime.Application.Abstractions;
 public sealed record PushTarget(PushPlatform Platform, string Address, string P256dh, string Auth);
 
 /// <summary>What the device shows. Kept small: push services limit the payload size.</summary>
-public sealed record PushMessage(string Title, string Body, string Url, string? Tag = null);
+/// <param name="MinimumAppVersion">
+/// Only for store apps of at least this version (and browsers, always the latest): a notification about something an
+/// older app can't show or act on goes only where it makes sense. Null: every device.
+/// </param>
+public sealed record PushMessage(string Title, string Body, string Url, string? Tag = null, string? MinimumAppVersion = null);
 
 public enum PushResult { Delivered, Failed, Gone, Skipped }
 

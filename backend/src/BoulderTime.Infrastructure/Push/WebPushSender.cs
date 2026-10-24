@@ -43,7 +43,8 @@ public sealed class WebPushSender(HttpClient http, IOptions<WebPushOptions> opti
     {
         if (!IsConfigured) return PushResult.Skipped;
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(message, JsonOptions);
+        // Exactly what the service worker reads, as it always was: routing hints such as the minimum app version stay here.
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new { message.Title, message.Body, message.Url, message.Tag }, JsonOptions);
         var body = Encrypt(payload, FromBase64Url(target.P256dh), FromBase64Url(target.Auth));
 
         using var request = new HttpRequestMessage(HttpMethod.Post, target.Address) { Content = new ByteArrayContent(body) };

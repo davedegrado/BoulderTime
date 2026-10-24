@@ -96,6 +96,7 @@ internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<P
         b.Property(x => x.Platform).HasConversion<int>().HasDefaultValue(PushPlatform.Web);
         b.Property(x => x.P256dh).HasMaxLength(200).IsRequired();
         b.Property(x => x.Auth).HasMaxLength(100).IsRequired();
+        b.Property(x => x.AppVersion).HasMaxLength(PushSubscription.AppVersionMaxLength);
         b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         // One row per device: the address is the push service URL, or the Firebase token for a store app.
         b.HasIndex(x => x.Address).IsUnique().HasDatabaseName("ix_push_subscriptions_endpoint");

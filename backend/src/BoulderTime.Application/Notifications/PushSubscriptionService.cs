@@ -1,6 +1,7 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Localization;
+using BoulderTime.Domain.Apps;
 using BoulderTime.Domain.Notifications;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,11 @@ public sealed record PushKeysDto(string? P256dh, string? Auth);
 /// <summary>
 /// A device registering itself. A browser sends its push endpoint and keys; a store app sends its Firebase token.
 /// </summary>
-public sealed record SubscribeToPushRequest(string? Endpoint, PushKeysDto? Keys, string? Token, PushPlatform? Platform);
+/// <param name="AppVersion">
+/// The store app's own version, sent from 1.1 (a browser sends none). Older apps don't send it; anything that isn't a
+/// version is taken as not said, never refused.
+/// </param>
+public sealed record SubscribeToPushRequest(string? Endpoint, PushKeysDto? Keys, string? Token, PushPlatform? Platform, string? AppVersion = null);
 
 public sealed record PushStatusDto(bool Available, string? PublicKey, bool SubscribedOnThisDevice);
 
@@ -48,20 +53,22 @@ public sealed class PushSubscriptionService(IAppDbContext db, ICurrentUser curre
         if (!Enum.IsDefined(platform)) throw new ValidationException("platform", "Unknown kind of device.");
 
         var (address, p256dh, auth) = platform == PushPlatform.Native ? NativeDevice(r) : WebDevice(r);
+        var appVersion = platform == PushPlatform.Native && AppVersionPolicy.Parse(r.AppVersion) is not null
+            && r.AppVersion!.Trim().Length <= PushSubscription.AppVersionMaxLength ? r.AppVersion.Trim() : null;
 
         // The same device registering again (keys rotate, tokens are reissued) updates its row instead of adding one.
         // An address can only belong to one account: a shared phone follows whoever signed in on it.
         var existing = await db.PushSubscriptions.FirstOrDefaultAsync(s => s.Address == address, ct);
         if (existing is not null && existing.UserId == userId)
         {
-            existing.Refresh(platform, p256dh, auth, clock.UtcNow);
+            existing.Refresh(platform, p256dh, auth, clock.UtcNow, appVersion);
             await db.SaveChangesAsync(ct);
             return;
         }
         if (existing is not null) db.PushSubscriptions.Remove(existing);
 
         db.PushSubscriptions.Add(platform == PushPlatform.Native
-            ? PushSubscription.CreateNative(userId, address, clock.UtcNow)
+            ? PushSubscription.CreateNative(userId, address, clock.UtcNow, appVersion)
             : PushSubscription.CreateWeb(userId, address, p256dh, auth, clock.UtcNow));
         await db.SaveChangesAsync(ct);
     }

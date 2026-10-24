@@ -129,4 +129,24 @@ public sealed class PushSubscriptionTests(PostgresFixture postgres) : IAsyncLife
         result.Detail.Should().Be("NOT_CONFIGURED");
         (await _f.Db(db => db.PushSubscriptions.CountAsync(s => s.UserId == climber.Id))).Should().Be(1);
     }
+
+    [Fact]
+    public async Task A_store_app_says_its_version_from_1_1_an_older_one_says_none_and_a_browser_has_none()
+    {
+        var climber = await _f.UserAsync();
+        // 1.0 sends no version.
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-old" })).EnsureSuccessStatusCode();
+        (await _f.Db(db => db.PushSubscriptions.FirstAsync(s => s.Address == "fcm-old"))).AppVersion.Should().BeNull();
+
+        // Updated to 1.1, the same phone registers again with its version.
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-old", appVersion = "1.1.0" })).EnsureSuccessStatusCode();
+        (await _f.Db(db => db.PushSubscriptions.FirstAsync(s => s.Address == "fcm-old"))).AppVersion.Should().Be("1.1.0");
+
+        // Something that isn't a version is taken as not said, never refused.
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", new { platform = "NATIVE", token = "fcm-odd", appVersion = "beta" })).EnsureSuccessStatusCode();
+        (await _f.Db(db => db.PushSubscriptions.FirstAsync(s => s.Address == "fcm-odd"))).AppVersion.Should().BeNull();
+
+        (await climber.Client.PostAsJsonAsync("/api/users/me/push", Device())).EnsureSuccessStatusCode();
+        (await _f.Db(db => db.PushSubscriptions.FirstAsync(s => s.Platform == PushPlatform.Web))).AppVersion.Should().BeNull();
+    }
 }

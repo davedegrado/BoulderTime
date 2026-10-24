@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Domain.Apps;
 using BoulderTime.Domain.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,6 +52,7 @@ public sealed class PushDispatcher(IServiceScopeFactory scopes, IEnumerable<IPus
 
         foreach (var device in devices)
         {
+            if (!ReachesVersion(device, message.MinimumAppVersion)) continue;
             var sender = senders.FirstOrDefault(s => s.Handles(device.Platform) && s.IsConfigured);
             if (sender is null) continue; // that platform isn't set up; the device stays registered for when it is
 
@@ -71,4 +73,12 @@ public sealed class PushDispatcher(IServiceScopeFactory scopes, IEnumerable<IPus
         }
         await db.SaveChangesAsync(ct);
     }
+
+    /// <summary>
+    /// Whether the device runs an app recent enough for the message. A browser always does; a store app that never
+    /// said its version is one from before versions were sent (1.0), so it doesn't.
+    /// </summary>
+    internal static bool ReachesVersion(PushSubscription device, string? minimum) =>
+        minimum is null || device.Platform != PushPlatform.Native
+        || (device.AppVersion is { } v && AppVersionPolicy.Compare(v, minimum) >= 0);
 }
