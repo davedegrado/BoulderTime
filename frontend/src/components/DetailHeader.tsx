@@ -13,11 +13,15 @@ import { t } from "@/i18n/i18n";
  * Without a cover (while loading, on an error) it is solid from the start. Back returns where the page was opened
  * from and goes Home only when it was opened directly (useGoBack).
  */
-export function DetailHeader({ menu, title, coverRef, titleRef }: {
+export function DetailHeader({ menu, title, coverRef, titleRef, backTo = "/", wide = false }: {
   menu?: ReactNode;
   title?: string;
   coverRef?: RefObject<HTMLElement | null>;
   titleRef?: RefObject<HTMLElement | null>;
+  /** Where Back goes when the page was opened directly. */
+  backTo?: string;
+  /** Room on the right for more than one button (a boulder's follow and edit). */
+  wide?: boolean;
 }) {
   const goBack = useGoBack();
   const header = useRef<HTMLDivElement>(null);
@@ -57,8 +61,8 @@ export function DetailHeader({ menu, title, coverRef, titleRef }: {
   }, [overCover]);
 
   return (
-    <div ref={header} className={`detail-header${coverRef ? " detail-header--over" : ""}${solid ? " is-solid" : ""}${titled ? " has-title" : ""}`}>
-      <button type="button" className="icon-btn detail-header__back" aria-label={t("Back")} onClick={() => goBack("/")}>
+    <div ref={header} className={`detail-header${coverRef ? " detail-header--over" : ""}${solid ? " is-solid" : ""}${titled ? " has-title" : ""}${wide ? " detail-header--wide" : ""}`}>
+      <button type="button" className="icon-btn detail-header__back" aria-label={t("Back")} onClick={() => goBack(backTo)}>
         <ArrowLeft aria-hidden />
       </button>
       {/* The page's heading already names it for screen readers: this is its echo for the eyes. */}

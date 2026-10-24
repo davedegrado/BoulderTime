@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Bell, BellRing, History, Maximize2, Pencil } from "lucide-react";
-import { useGoBack } from "@/lib/navigation";
+import { Bell, BellRing, CalendarDays, History, MapPin, Maximize2, Pencil, Star, UserRound, Users } from "lucide-react";
+import { DetailHeader } from "@/components/DetailHeader";
 import { useBoulder } from "@/features/boulders/api";
 import { useGym, useSectors } from "@/features/gyms/api";
 import { floorPlanOf, SectorMap } from "@/features/gyms/SectorMap";
 import { ProgressTracker } from "@/features/climbing/ProgressTracker";
-import { RatingSummaryText } from "@/features/climbing/ClimbingBits";
 import { useFollowBoulder } from "@/features/climbing/api";
 import { useAuth } from "@/auth/AuthProvider";
 import { CommentsSection } from "@/features/community/CommentsSection";
@@ -25,10 +24,11 @@ import { plural, t } from "@/i18n/i18n";
 import type { BoulderGrade } from "@/features/boulders/api";
 
 /**
- * One boulder. The photo comes first, because it is how a climber finds the problem on the wall, but it no longer
- * fills the screen: a tap opens it full size. The grade sits on the photo's corner; right under it, one quiet line
- * with holds, sector, date, setter and rating, and the follow/edit buttons. Then what the climber does with it
- * (progress), then what others say (beta, grade, comments).
+ * One boulder. A plain header (back, follow, edit) and then the photo, the largest thing on the page, because it is
+ * how a climber finds the problem on the wall: the hold colour in its top-left corner, full screen top-right, the
+ * official grade bottom-left, the points bottom-right — hold colour and grade are two different things and never sit
+ * together. Under it what the boulder is (name, sector, date, sends, community rating), its tags, what the climber does
+ * with it (progress), then what others say. Whatever a boulder doesn't have takes no room: no name, no title row.
  */
 export function BoulderPage() {
   const { id } = useParams();
@@ -36,38 +36,66 @@ export function BoulderPage() {
   const { session } = useAuth();
   const follow = useFollowBoulder(id ?? "");
   const [viewing, setViewing] = useState(false);
-  const goBack = useGoBack();
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
-  if (boulder.isPending) return <LoadingState label={t("Loading boulder")} />;
-  if (boulder.isError) return boulder.error instanceof ApiError && boulder.error.isNotFound ? <NotFoundPage /> : <ErrorState error={boulder.error} onRetry={() => boulder.refetch()} />;
+  if (boulder.isPending) return <div className="page page--flush boulder-page"><DetailHeader /><LoadingState label={t("Loading boulder")} /></div>;
+  if (boulder.isError) {
+    return boulder.error instanceof ApiError && boulder.error.isNotFound
+      ? <NotFoundPage />
+      : <div className="page page--flush boulder-page"><DetailHeader /><div className="page__pad"><ErrorState error={boulder.error} onRetry={() => boulder.refetch()} /></div></div>;
+  }
 
   const b = boulder.data;
   const removed = b.status === "REMOVED";
   const name = b.name?.trim() || null;
   const photoAlt = name ? t("{name}, boulder in {sector}", { name, sector: b.sectorName }) : t("Boulder in {sector}", { sector: b.sectorName });
   const pointsLabel = b.points != null ? plural(b.points, "Worth {count} point", "Worth {count} points") : null;
+  const completions = b.completions ?? 0;
+  const rated = b.rating.count > 0 && b.rating.average !== null;
+
+  const actions = (
+    <div className="boulder-page__actions">
+      {session && (
+        <button type="button" className={`round-btn ${b.isFollowing ? "is-following" : ""}`}
+          aria-pressed={b.isFollowing} onClick={() => follow.mutate(!b.isFollowing)}
+          aria-label={b.isFollowing ? t("Stop following this boulder") : t("Follow this boulder")}
+          title={b.isFollowing ? t("Stop following this boulder") : t("Follow this boulder")}>
+          {b.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+        </button>
+      )}
+      {b.viewerRole && (
+        <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="round-btn" aria-label={t("Edit")} title={t("Edit")}>
+          <Pencil aria-hidden />
+        </Link>
+      )}
+    </div>
+  );
 
   return (
     <article className="page page--flush boulder-page">
+      {/* Back returns where the boulder was opened from (a profile, a filtered list, the notifications); the gym only
+          when the app was opened right here. */}
+      <DetailHeader menu={actions} title={name ?? b.sectorName} titleRef={titleRef} backTo={`/gyms/${b.gymSlug}`} wide />
+
       <div className="boulder-page__photo">
         {b.photoUrl && (
           <button type="button" className="boulder-page__photo-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
             <img src={b.photoUrl} alt={photoAlt} />
           </button>
         )}
-        {/* Back to wherever the boulder was opened from (a profile, a filtered list, the notifications); the gym only
-            when the app was opened right here. */}
-        <button type="button" className="boulder-page__back" aria-label={t("Back")} onClick={() => goBack(`/gyms/${b.gymSlug}`)}><ArrowLeft aria-hidden /></button>
         {b.photoUrl && (
-          <button type="button" className="boulder-page__enlarge" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
-            <Maximize2 aria-hidden />
-          </button>
-        )}
-        {b.photoUrl && <Grades grades={b.grades} className="boulder-page__grades--on-photo" />}
-        {b.photoUrl && b.points != null && (
-          <span className="boulder-page__points" title={pointsLabel ?? undefined}>
-            <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
-          </span>
+          <>
+            <span className="boulder-page__holds"><HoldBadge color={b.holdColor} compact /></span>
+            <button type="button" className="boulder-page__enlarge" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
+              <Maximize2 aria-hidden />
+            </button>
+            <Grades grades={b.grades} className="boulder-page__grades--on-photo" />
+            {b.points != null && (
+              <span className="boulder-page__points" title={pointsLabel ?? undefined}>
+                <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
+              </span>
+            )}
+          </>
         )}
       </div>
       {viewing && b.photoUrl && <PhotoViewer src={b.photoUrl} alt={photoAlt} onClose={() => setViewing(false)} />}
@@ -81,36 +109,27 @@ export function BoulderPage() {
         )}
 
         <header className="boulder-page__head">
-          {name && <h1 className="boulder-page__name">{name}</h1>}
-          {!b.photoUrl && <Grades grades={b.grades} />}
-          <div className="boulder-page__info">
-            <div className="boulder-meta__clip">
-            <ul className="boulder-meta" aria-label={t("About this boulder")}>
+          <div className="boulder-page__intro">
+            {/* Without a name the page still has a heading, for screen readers only: no empty row for the eyes. */}
+            {name ? <h1 ref={titleRef} className="boulder-page__name">{name}</h1> : <h1 ref={titleRef} className="sr-only">{photoAlt}</h1>}
+            {!b.photoUrl && <Grades grades={b.grades} />}
+            <ul className="boulder-facts" aria-label={t("About this boulder")}>
+              {!b.photoUrl && <li><HoldBadge color={b.holdColor} compact /></li>}
               {!b.photoUrl && b.points != null && <li>{pointsLabel}</li>}
-              <li><HoldBadge color={b.holdColor} compact /></li>
+              <li><MapPin aria-hidden /><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
+              <li><CalendarDays aria-hidden /><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
+              {completions > 0 && <li><Users aria-hidden />{plural(completions, "1 send", "{count} sends")}</li>}
+              {b.setter && <li><UserRound aria-hidden /><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
               {b.intensity && <li><IntensityBadge intensity={b.intensity} /></li>}
-              <li><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
-              <li><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
-              {b.setter && <li><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
-              {b.rating.count > 0 && <li><RatingSummaryText rating={b.rating} compact /></li>}
             </ul>
-            </div>
-            <div className="boulder-page__actions">
-              {session && (
-                <button type="button" className={`icon-btn icon-btn--outlined ${b.isFollowing ? "is-following" : ""}`}
-                  aria-pressed={b.isFollowing} onClick={() => follow.mutate(!b.isFollowing)}
-                  aria-label={b.isFollowing ? t("Stop following this boulder") : t("Follow this boulder")}
-                  title={b.isFollowing ? t("Stop following this boulder") : t("Follow this boulder")}>
-                  {b.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
-                </button>
-              )}
-              {b.viewerRole && (
-                <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="icon-btn icon-btn--outlined" aria-label={t("Edit")} title={t("Edit")}>
-                  <Pencil aria-hidden />
-                </Link>
-              )}
-            </div>
           </div>
+          {rated && (
+            <div className="boulder-page__rating-card"
+              aria-label={t("Rated {average} out of 5 by {count} climbers", { average: b.rating.average!, count: b.rating.count })}>
+              <span className="boulder-page__rating-value" aria-hidden><Star /> {b.rating.average!.toFixed(1)}</span>
+              <span className="boulder-page__rating-caption" aria-hidden>{t("Community rating")}</span>
+            </div>
+          )}
         </header>
 
         {(b.tags ?? []).length > 0 && (
@@ -120,7 +139,7 @@ export function BoulderPage() {
         )}
 
         <ProgressTracker key={b.id} boulder={b} />
-        <CompletionsLine boulderId={b.id} count={b.completions ?? 0} />
+        <CompletionsLine boulderId={b.id} count={completions} />
         <BoulderWhere gymSlug={b.gymSlug} gymId={b.gymId} sectorId={b.sectorId} />
 
         <BetaSection boulderId={b.id} gymName={b.gymName} />

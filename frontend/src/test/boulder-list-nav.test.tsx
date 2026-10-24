@@ -125,7 +125,8 @@ describe("Back from a boulder", () => {
 
   it("goes to the gym only when the boulder was opened directly, without adding a page to go back to", async () => {
     const router = renderRouter(["/boulders/b1"]);
-    await userEvent.click(await screen.findByRole("button", { name: "Back" }));
+    await screen.findByRole("list", { name: "About this boulder" });
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(await screen.findByRole("heading", { name: "The gym's page" })).toBeInTheDocument();
     expect(router.state.historyAction).toBe("REPLACE");
   });

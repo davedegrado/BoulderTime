@@ -1310,3 +1310,32 @@ Tried on five photos of a gym's walls: one tap selects a hold whole on pinks, gr
 hold, and one tap takes away a green wall the guess had kept. It finds nothing — and so adds nothing — on a hold
 heavily chalked all over, on yellow holds on a yellow wall, or on white holds on a white wall: those are painted by
 hand as before.
+
+## ADR-066 · Light blue and wood holds, and a boulder's page laid out around its photo
+
+**Hold colours.** Two hold colours join the twelve: light blue (`LIGHT_BLUE`, "azzurre") and wood (`WOOD`, "in legno").
+They are hold colours only, never grades; the grade scales and their points don't change. The database keeps the
+colour's name as text with no constraint on it, so nothing migrates; the enum only grows at its end.
+
+The store apps already installed know twelve colours and show any other as their first, red. So an app says what it
+understands in a request header, `X-BoulderTime-Capabilities: hold-colors-2` (sent by the app and the website from
+1.1); without it, the server answers as before:
+- light blue is sent as `BLUE` and wood as `BROWN`, the closest colours those apps know, in every answer (one JSON
+  converter for the colour, wherever it appears);
+- filtering by blue finds light blue too, and by brown finds wood: what they see as that colour;
+- saving a boulder from such an app (its editor sends back the colour it was shown) keeps light blue or wood when it
+  sends blue or brown; any other colour it picks is a real change.
+Apps from 1.1 get and send every colour as it is. The list filter reads the colour itself rather than binding it as an
+enum, which would refuse names with an underscore; anything else is refused as before. Outside a request everything
+is understood. Highlighting finds light blue (cyan-side, bright blue) and wood (pale, warm, less saturated than brown)
+on the photo like the other colours.
+
+**A boulder's page.** A plain header (back, follow, edit) replaces the logo bar, as on a gym's and a person's page.
+The photo is the largest thing on the page at a fixed share of the screen: hold colour top-left, full screen top-right,
+the official grade bottom-left, points bottom-right — colour and grade never side by side. Under it the name (only when
+there is one: without it there is no title row, and the heading is for screen readers only), the facts with icons
+(sector, date, sends, setter, intensity, each only when known) and, apart from them, the community's rating; then the
+tags, when there are any. "Your progress" keeps all it had — attempts, the climber's own rating, Mark as completed or
+when it was completed with Undo — with the big action last and always in the same place. Comments without any are one
+line and the box to write the first. A project is still what it was (tried and not completed, as the filter and the
+statistics count it): nothing on this page marks one.

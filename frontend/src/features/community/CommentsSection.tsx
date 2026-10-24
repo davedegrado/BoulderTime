@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { EyeOff, Eye, Heart, MessageSquare, Pencil, Send, Trash2 } from "lucide-react";
+import { EyeOff, Eye, Heart, Pencil, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCommentMutations, useComments, type Comment } from "@/features/community/api";
 import { ReportButton } from "@/features/community/ReportButton";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { EmptyState, ErrorState, LoadingState } from "@/components/States";
+import { ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { ApiError, errorMessage } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
@@ -37,7 +37,7 @@ export function CommentsSection({ boulderId }: { boulderId: string }) {
       <h2 id="comments-title" className="section__title">{t("Comments")}{items.length > 0 && ` (${comments.data?.pages[0]?.total})`}</h2>
       {comments.isPending ? <LoadingState label={t("Loading comments")} />
         : comments.isError ? <ErrorState error={comments.error} onRetry={() => comments.refetch()} />
-        : items.length === 0 ? <EmptyState icon={<MessageSquare />} title={t("No comments yet")} body={t("Share a tip, a key hold or how it went.")} />
+        : items.length === 0 ? <p className="comments__empty">{session ? t("No comments yet. Be the first: a tip, a key hold or how it went.") : t("No comments yet.")}</p>
         : <ul className="comments">{items.map((c) => <CommentItem key={c.id} comment={c} boulderId={boulderId} signedIn={!!session} />)}</ul>}
       {comments.hasNextPage && <Button variant="secondary" onClick={() => comments.fetchNextPage()} loading={comments.isFetchingNextPage}>{t("Older comments")}</Button>}
 

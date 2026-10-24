@@ -39,9 +39,13 @@ const MATCHERS: Record<HoldColor, ((h: number, s: number, v: number) => boolean)
   YELLOW: (h, s, v) => between(h, 40, 68) && s >= 0.35 && v >= 0.4,
   GREEN: (h, s, v) => between(h, 72, 165) && s >= 0.25 && v >= 0.15,
   BLUE: (h, s, v) => between(h, 186, 250) && s >= 0.3 && v >= 0.15,
+  // Light blue: the cyan side of blue, and bright.
+  LIGHT_BLUE: (h, s, v) => between(h, 180, 215) && s >= 0.25 && v >= 0.5,
   PURPLE: (h, s, v) => between(h, 251, 298) && s >= 0.2 && v >= 0.12,
   PINK: (h, s, v) => between(h, 299, 341) && s >= 0.22 && v >= 0.4,
   BROWN: (h, s, v) => between(h, 10, 40) && s >= 0.3 && v >= 0.12 && v <= 0.55,
+  // Wood: the warm hue of brown, paler and less saturated, lighter than brown plastic.
+  WOOD: (h, s, v) => between(h, 18, 45) && s >= 0.18 && s <= 0.65 && v >= 0.4,
   WHITE: (_h, s, v) => s <= 0.14 && v >= 0.82,
   GREY: (_h, s, v) => s <= 0.12 && v >= 0.3 && v <= 0.72,
   BLACK: (_h, _s, v) => v <= 0.17,

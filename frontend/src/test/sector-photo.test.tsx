@@ -167,7 +167,7 @@ describe("Setting a boulder on its sector's wall photo", () => {
     // Already set on it: nothing more to offer.
     expect(screen.queryByRole("button", { name: "Use the photo of Cave" })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("radio", { name: /blue/i }));
+    await userEvent.click(screen.getByRole("radio", { name: /^blue$/i }));
     await userEvent.click(screen.getByRole("button", { name: "Add boulder" }));
 
     await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")).toBeDefined());

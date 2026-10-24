@@ -14,7 +14,8 @@ import { t } from "@/i18n/i18n";
 const SAVE_DELAY_MS = 700;
 
 /**
- * Attempts, completion and rating for the signed-in climber.
+ * Attempts, completion and rating for the signed-in climber: attempts and the climber's own rating side by side, then
+ * the one big action, "Mark as completed" (or, once done, when and a way to undo it), always in the same place.
  * Changes apply instantly on screen and are saved after a short pause, so fast tapping sends one request
  * with the final value instead of racing several.
  */
@@ -83,23 +84,6 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         <span className="tracker__status" aria-live="polite">{saving ? t("Saving…") : boulder.viewer ? t("Saved") : ""}</span>
       </div>
 
-      {completed ? (
-        <div className="tracker__sent">
-          <span className="sent-mark" aria-hidden><Check /></span>
-          <p className="tracker__sent-text">
-            <strong>{t("Completed")}</strong>
-            <span> · {boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : t("Just now")}</span>
-          </p>
-          <button type="button" className="tracker__undo" onClick={() => change({ attempts, completed: false })}>
-            <RotateCcw aria-hidden />{t("Undo")}
-          </button>
-        </div>
-      ) : (
-        <Button block icon={<Check aria-hidden />} onClick={() => change({ attempts, completed: true })}>
-          {t("Mark as completed")}
-        </Button>
-      )}
-
       <div className="tracker__rows">
         <div className="stepper">
           <span className="stepper__label" id="attempts-label">{t("Attempts")}</span>
@@ -118,6 +102,23 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         </div>
       </div>
       {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
+      {completed ? (
+        <div className="tracker__sent">
+          <span className="sent-mark" aria-hidden><Check /></span>
+          <p className="tracker__sent-text">
+            <strong>{t("Completed")}</strong>
+            <span> · {boulder.viewer?.completedAt ? formatDate(boulder.viewer.completedAt) : t("Just now")}</span>
+          </p>
+          <button type="button" className="tracker__undo" onClick={() => change({ attempts, completed: false })}>
+            <RotateCcw aria-hidden />{t("Undo")}
+          </button>
+        </div>
+      ) : (
+        <Button block icon={<Check aria-hidden />} onClick={() => change({ attempts, completed: true })}>
+          {t("Mark as completed")}
+        </Button>
+      )}
+
     </section>
   );
 }

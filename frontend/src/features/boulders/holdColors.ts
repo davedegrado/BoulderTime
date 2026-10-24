@@ -4,7 +4,7 @@ import { t } from "@/i18n/i18n";
  * PHYSICAL hold colours. This palette is only ever used for holds — never for grades,
  * even when a gym grades by colour. UI copy always says "… holds".
  */
-export type HoldColor = "RED" | "ORANGE" | "YELLOW" | "GREEN" | "BLUE" | "PURPLE" | "PINK" | "WHITE" | "BLACK" | "GREY" | "BROWN" | "MIXED";
+export type HoldColor = "RED" | "ORANGE" | "YELLOW" | "GREEN" | "BLUE" | "LIGHT_BLUE" | "PURPLE" | "PINK" | "WHITE" | "BLACK" | "GREY" | "BROWN" | "WOOD" | "MIXED";
 
 export const HOLD_COLORS: { value: HoldColor; label: string; hex: string }[] = [
   { value: "RED", label: "Red", hex: "#D93A2B" },
@@ -12,12 +12,16 @@ export const HOLD_COLORS: { value: HoldColor; label: string; hex: string }[] = [
   { value: "YELLOW", label: "Yellow", hex: "#F5C400" },
   { value: "GREEN", label: "Green", hex: "#2E9E4F" },
   { value: "BLUE", label: "Blue", hex: "#2F6FDB" },
+  // From 1.1 (ADR-066). The server shows them to older apps as blue and brown, the closest colours they know.
+  { value: "LIGHT_BLUE", label: "Light blue", hex: "#4CC3F0" },
   { value: "PURPLE", label: "Purple", hex: "#8046BE" },
   { value: "PINK", label: "Pink", hex: "#E85EA0" },
   { value: "WHITE", label: "White", hex: "#F4F4F4" },
   { value: "BLACK", label: "Black", hex: "#1A1A1A" },
   { value: "GREY", label: "Grey", hex: "#8A8A8A" },
   { value: "BROWN", label: "Brown", hex: "#8B5A2B" },
+  // Natural wood: lighter and warmer than brown plastic, with a grain so it never reads as a flat colour.
+  { value: "WOOD", label: "Wood", hex: "repeating-linear-gradient(115deg, #D6A86C 0 4px, #C38F55 4px 6px, #DDB27A 6px 10px)" },
   { value: "MIXED", label: "Mixed", hex: "conic-gradient(#D93A2B 0 25%, #F5C400 0 50%, #2E9E4F 0 75%, #2F6FDB 0)" },
 ];
 

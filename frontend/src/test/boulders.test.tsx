@@ -122,7 +122,7 @@ describe("Boulder list (climber)", () => {
 });
 
 describe("Boulder page", () => {
-  it("puts the grade on the photo and the facts in one line under it", async () => {
+  it("puts the hold colour and the grade on the photo, apart, and the facts and community rating under it", async () => {
     reply("GET", "/api/boulders/b1", { ...boulder("b1", { rating: { average: 4.5, count: 3 } }), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false });
     reply("GET", "/api/boulders/b1/beta", undefined);
     reply("GET", "/api/boulders/b1/grade-consensus", { viewerCanSuggest: false, systems: [] });
@@ -130,11 +130,14 @@ describe("Boulder page", () => {
     renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
 
     const grade = await screen.findByTitle("Colour grade: Yellow");
-    expect(grade.closest(".boulder-page__photo")).not.toBeNull();
+    expect(grade.closest(".boulder-page__grades--on-photo")).not.toBeNull();
+    const holds = screen.getByText("Blue holds");
+    expect(holds.closest(".boulder-page__holds")).not.toBeNull();
+    expect(holds.closest(".boulder-page__grades--on-photo")).toBeNull();
     const facts = screen.getByRole("list", { name: "About this boulder" });
-    expect(within(facts).getByText("Blue holds")).toBeInTheDocument();
     expect(within(facts).getByText("Cave")).toBeInTheDocument();
-    expect(within(facts).getByLabelText(/Rated 4.5 out of 5/)).toBeInTheDocument();
+    expect(within(facts).queryByText("Blue holds")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Rated 4.5 out of 5 by 3 climbers/)).toHaveTextContent("Community rating");
   });
 
   it("keeps removed boulders readable with a history notice and no edit for climbers", async () => {

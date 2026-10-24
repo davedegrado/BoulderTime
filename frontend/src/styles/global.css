@@ -400,7 +400,6 @@ svg { flex-shrink: 0; }
 /* Boulder detail */
 .boulder-page__photo { position: relative; background: var(--bt-charcoal); }
 .boulder-page__photo img { width: 100%; max-height: 70vh; object-fit: contain; margin: 0 auto; }
-.boulder-page__back { position: absolute; left: 12px; top: 12px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; }
 .boulder-page__head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--bt-3); }
 .boulder-page__grades { display: flex; flex-direction: column; align-items: flex-start; gap: var(--bt-2); }
 .boulder-page__caption { font-size: var(--bt-text-xs); font-weight: 700; color: var(--bt-ink-3); }
@@ -898,10 +897,11 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 /* The whole photo stays visible (contain), about a third of a phone screen tall; a tap opens it full size. */
 .boulder-page__photo { display: grid; place-items: center; }
 .boulder-page__photo-btn { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
-.boulder-page__photo img { width: 100%; height: min(34vh, 320px); max-height: none; object-fit: contain; }
-@media (min-width: 960px) { .boulder-page__photo img { height: min(46vh, 440px); } }
-.boulder-page__back, .boulder-page__enlarge { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.35); }
-.boulder-page__enlarge { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; cursor: pointer; }
+/* The photo is the largest thing on the page, at a fixed share of the screen: nothing below it makes it shrink. */
+.boulder-page__photo img { width: 100%; height: min(50vh, 460px); max-height: none; object-fit: contain; }
+@media (min-width: 960px) { .boulder-page__photo img { height: min(56vh, 540px); } }
+.boulder-page__enlarge { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.35); }
+.boulder-page__enlarge { position: absolute; right: 12px; top: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; cursor: pointer; }
 .boulder-page__enlarge svg { width: 20px; height: 20px; }
 .boulder-page__head { display: flex; flex-direction: column; align-items: stretch; gap: var(--bt-2); }
 .boulder-page__title-row { display: flex; justify-content: space-between; align-items: center; gap: var(--bt-3); }
@@ -1292,7 +1292,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .grade-row__points { display: flex; flex-direction: column; gap: 4px; width: 4.5rem; }
 .grade-row__points .field__input::placeholder { color: var(--bt-ink-3); }
 .boulder-page__name { margin: 0; font-size: var(--bt-text-lg); font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
-.boulder-page__points { position: absolute; right: 64px; bottom: 19px; display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.78); color: #fff; font-size: var(--bt-text-sm); font-weight: 800; box-shadow: 0 2px 8px rgb(0 0 0 / 0.3); }
+.boulder-page__points { position: absolute; right: 12px; bottom: 17px; display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.78); color: #fff; font-size: var(--bt-text-sm); font-weight: 800; box-shadow: 0 2px 8px rgb(0 0 0 / 0.3); }
 
 /* Links in text written by gyms. */
 .text-link { color: var(--bt-orange-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
@@ -1445,7 +1445,7 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
   .boulder-row__thumb { width: 40px; height: 40px; }
 }
 /* The back arrows are buttons now (they go back, they don't open a page): no button chrome. */
-button.boulder-page__back, button.manage-head__back { padding: 0; border: 0; font: inherit; cursor: pointer; }
+button.manage-head__back { padding: 0; border: 0; font: inherit; cursor: pointer; }
 button.manage-head__back { background: transparent; }
 
 /* ---------- Highlight the holds (full screen, like the card picture cropper) ---------- */
@@ -1700,3 +1700,42 @@ button.manage-head__back { background: transparent; }
   body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   input, textarea, [contenteditable="true"] { -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; }
 }
+
+/* ---------- A boulder's page ---------- */
+/* Room for follow and edit on the right of the header; the title stays between them. */
+.detail-header--wide { grid-template-columns: minmax(44px, auto) minmax(0, 1fr) minmax(44px, auto); }
+.boulder-page__actions { display: flex; align-items: center; gap: 2px; }
+.boulder-page__actions .round-btn.is-following { color: var(--bt-orange-ink); }
+/* The hold colour, top-left on the photo: a light pill, so it reads on any wall and never looks like the grade. */
+.boulder-page__holds {
+  position: absolute; left: 12px; top: 12px; display: inline-flex; align-items: center; min-height: 34px; padding: 0 12px;
+  border-radius: var(--bt-radius-pill); background: rgb(255 255 255 / 0.94); color: #1A1A1A; box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.boulder-page__holds .holds { color: inherit; font-size: var(--bt-text-sm); font-weight: 700; }
+.boulder-page__holds .holds__label::first-letter { text-transform: uppercase; }
+/* What the boulder is: name and facts on the left, the community's rating on the right, each only when there is one. */
+.boulder-page__head { display: flex; flex-direction: row; align-items: flex-start; justify-content: space-between; gap: var(--bt-3); }
+.boulder-page__intro { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--bt-2); }
+.boulder-page__name { font-size: var(--bt-text-xl); }
+.boulder-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--bt-4); font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); }
+.boulder-facts > li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.boulder-facts svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--bt-ink-3); }
+.boulder-facts .holds { font-size: inherit; color: var(--bt-ink); }
+.boulder-page__rating-card {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--bt-2) var(--bt-3);
+  border: 1px solid var(--bt-line); border-radius: var(--bt-radius-md); background: var(--bt-surface);
+}
+.boulder-page__rating-value { display: inline-flex; align-items: center; gap: 6px; font-size: var(--bt-text-lg); font-weight: 800; color: var(--bt-ink); }
+.boulder-page__rating-value svg { width: 20px; height: 20px; color: var(--bt-orange); fill: var(--bt-orange); }
+.boulder-page__rating-caption { font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-ink-3); white-space: nowrap; }
+/* Progress: attempts and the climber's own rating as two tiles, side by side where they fit with stars large enough to
+   tap, one under the other on a phone; then the one big action under them. */
+.tracker__rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--bt-2); }
+.tracker__rows > * + * { border-top: 0; }
+.tracker .stepper, .tracker .tracker__rating {
+  flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bt-2); min-height: 56px;
+  padding: var(--bt-2) var(--bt-3); border-radius: var(--bt-radius-md); background: var(--bt-surface-2);
+}
+.tracker .stepper__btn { background: var(--bt-surface); }
+/* Comments: with none yet, one short line and the box to write the first. */
+.comments__empty { margin: 0; color: var(--bt-ink-3); font-size: var(--bt-text-sm); }

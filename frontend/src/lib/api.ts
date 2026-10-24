@@ -14,7 +14,9 @@ interface RequestOptions {
 
 async function send(method: Method, path: string, options: RequestOptions = {}, accept = "application/json"): Promise<Response> {
   // The server answers (and writes notifications) in the language the person is using.
-  const headers: Record<string, string> = { Accept: accept, "Accept-Language": activeLanguage() };
+  // What this app understands, so the server can answer the apps already in the stores in a way they still show
+  // (ADR-066): here, the hold colours added in 1.1.
+  const headers: Record<string, string> = { Accept: accept, "Accept-Language": activeLanguage(), "X-BoulderTime-Capabilities": "hold-colors-2" };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   if (!options.anonymous) {

@@ -39,10 +39,11 @@ export function AppShell() {
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
   const friendRequests = useFriendRequests().data?.length ?? 0;
-  // A gym's page and a person's page carry their own compact header (back and "…" over the cover): no logo bar on top.
+  // A gym's, a person's and a boulder's page carry their own compact header (back and actions): no logo bar on top.
   const gymPage = useMatch("/gyms/:slug");
   const personPage = useMatch("/users/:id");
-  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage);
+  const boulderPage = useMatch("/boulders/:id");
+  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage) || Boolean(boulderPage);
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
   const onLegalPage = ["/privacy", "/termini", "/terms", "/delete-account"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
