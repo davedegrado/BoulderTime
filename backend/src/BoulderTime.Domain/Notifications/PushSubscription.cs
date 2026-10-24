@@ -32,6 +32,13 @@ public class PushSubscription
     public DateTimeOffset? LastSucceededAt { get; private set; }
     /// <summary>Consecutive delivery failures; a device that keeps failing is dropped rather than retried forever.</summary>
     public int Failures { get; private set; }
+    /// <summary>
+    /// The version of the store app on this device, as it said when registering (from 1.1). Null for a browser, which
+    /// is always the latest, and for a store app of a version that didn't say (1.0): that is how the server knows not
+    /// to send it notifications it can't act on.
+    /// </summary>
+    public string? AppVersion { get; private set; }
+    public const int AppVersionMaxLength = 20;
 
     private PushSubscription() { }
 
@@ -43,15 +50,16 @@ public class PushSubscription
     };
 
     /// <summary>A store app: the Firebase registration token, which is all Firebase needs to reach the device.</summary>
-    public static PushSubscription CreateNative(Guid userId, string token, DateTimeOffset now) => new()
+    public static PushSubscription CreateNative(Guid userId, string token, DateTimeOffset now, string? appVersion = null) => new()
     {
-        Id = Guid.NewGuid(), UserId = userId, Platform = PushPlatform.Native, Address = token.Trim(), CreatedAt = now,
+        Id = Guid.NewGuid(), UserId = userId, Platform = PushPlatform.Native, Address = token.Trim(), CreatedAt = now, AppVersion = appVersion,
     };
 
     /// <summary>The same device registering again: its keys may have rotated, and its failures start over.</summary>
-    public void Refresh(PushPlatform platform, string p256dh, string auth, DateTimeOffset now)
+    public void Refresh(PushPlatform platform, string p256dh, string auth, DateTimeOffset now, string? appVersion = null)
     {
         Platform = platform;
+        AppVersion = appVersion;
         P256dh = p256dh.Trim();
         Auth = auth.Trim();
         Failures = 0;

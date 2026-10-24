@@ -2079,6 +2079,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("endpoint");
 
+                    b.Property<string>("AppVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("app_version");
+
                     b.Property<string>("Auth")
                         .IsRequired()
                         .HasMaxLength(100)

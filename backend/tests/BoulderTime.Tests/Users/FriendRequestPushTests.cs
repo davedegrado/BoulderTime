@@ -49,6 +49,7 @@ public sealed class FriendRequestPushTests : IAsyncLifetime
         sent.Message.Title.Should().Be("Anna ti ha chiesto l'amicizia");
         sent.Message.Url.Should().Be($"/users/{anna.Id}");
         sent.Message.Tag.Should().Be($"friend-request:{anna.Id}");
+        sent.Message.MinimumAppVersion.Should().Be("1.1.0", "a 1.0 app has no friends to answer it with");
 
         // Saying yes by asking back is an answer, not a new request: Anna isn't notified.
         await Ask(luca, anna);
