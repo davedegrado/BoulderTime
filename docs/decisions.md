@@ -1248,6 +1248,11 @@ A new request also reaches the phone of the person asked, as a push notification
 reason above), in their language, opening the asker's profile where Accept and Decline are. It has its own switch in
 the notification settings (`friendRequests` on `notification_settings`, on by default, existing rows included), and is
 never sent to someone who blocked the asker. Asking again, or saying yes by asking back, sends nothing new.
+It goes only where the request can be answered: browsers (always the latest) and store apps from 1.1. A store app now
+says its version when it registers for notifications (`appVersion`, optional, kept on `push_subscriptions`); 1.0 says
+none, and a phone registered without a version gets none of the notifications marked for newer apps
+(`PushMessage.MinimumAppVersion`). A 1.1 app registers again at its first start, and after every update, even when
+Firebase keeps the same token. Everything else reaches every device as before.
 
 On a person's profile the friendship is always buttons of the same size in the same place: Add friend; Cancel request;
 Accept and Decline under "… sent you a friend request"; Friends, which asks before removing. Under the name: how many

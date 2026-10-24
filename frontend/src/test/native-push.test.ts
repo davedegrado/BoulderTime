@@ -27,7 +27,11 @@ vi.mock("@capacitor/push-notifications", () => ({
   },
 }));
 
+let appVersion = "1.1.0";
+vi.mock("@capacitor/app", () => ({ App: { getInfo: async () => ({ version: appVersion }) } }));
+
 beforeEach(() => {
+  appVersion = "1.1.0";
   calls.length = 0;
   nextToken = "fcm-token-123";
   localStorage.clear();
@@ -48,7 +52,7 @@ describe("Notifications inside the store app", () => {
     await expect(enablePush("")).resolves.toBe("enabled");
 
     expect(registerCalled).toHaveBeenCalledTimes(1);
-    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-123" } });
+    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-123", appVersion: "1.1.0" } });
   });
 
   it("asks the server about the phone, not about a browser endpoint", async () => {
@@ -140,8 +144,34 @@ describe("Notifications inside the store app", () => {
 
     await syncNativePush();
 
-    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-456" } });
+    expect(calls).toContainEqual({ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-456", appVersion: "1.1.0" } });
     expect(calls).toContainEqual({ method: "DELETE", path: "/api/users/me/push?address=fcm-token-123" });
+  });
+
+  it("registers again with the new version after an update, even when the token is the same", async () => {
+    native.mockReturnValue(true);
+    const { enablePush } = await import("@/features/notifications/push");
+    await enablePush("");
+
+    // Nothing changed: nothing to tell the server.
+    vi.resetModules();
+    calls.length = 0;
+    await (await import("@/features/notifications/push")).syncNativePush();
+    expect(calls).toHaveLength(0);
+
+    // Updated from the store, same token.
+    appVersion = "1.2.0";
+    vi.resetModules();
+    await (await import("@/features/notifications/push")).syncNativePush();
+    expect(calls).toEqual([{ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-123", appVersion: "1.2.0" } }]);
+  });
+
+  it("a phone first registered by 1.0, which kept no version, registers its version on the first start of 1.1", async () => {
+    native.mockReturnValue(true);
+    localStorage.setItem("bt.nativePushToken", "fcm-token-123");
+    const { syncNativePush } = await import("@/features/notifications/push");
+    await syncNativePush();
+    expect(calls).toEqual([{ method: "POST", path: "/api/users/me/push", body: { platform: "NATIVE", token: "fcm-token-123", appVersion: "1.1.0" } }]);
   });
 
   it("does nothing at start on a phone where they were never turned on", async () => {

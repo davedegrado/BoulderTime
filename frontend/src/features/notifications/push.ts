@@ -57,6 +57,7 @@ export function nativePushInThisBuild(): boolean {
  */
 let nativeToken: string | undefined;
 const TOKEN_KEY = "bt.nativePushToken";
+const VERSION_KEY = "bt.nativePushVersion";
 
 function storedNativeToken(): string | undefined {
   try { return localStorage.getItem(TOKEN_KEY) ?? undefined; } catch { return undefined; }
@@ -66,10 +67,39 @@ function rememberNativeToken(token: string | undefined) {
   nativeToken = token;
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    else { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(VERSION_KEY); }
   } catch {
     // Without storage the token lives for this run only; the next start asks Firebase again.
   }
+}
+
+/**
+ * The app version this phone was last registered with. The server sends some notifications only to apps that can act
+ * on them (a friend request, from 1.1), so after an update from the store the phone registers again with its new
+ * version, even when Firebase kept the same token. Kept under VERSION_KEY.
+ */
+async function currentAppVersion(): Promise<string | undefined> {
+  try {
+    const { App } = await import("@capacitor/app");
+    return (await App.getInfo()).version || undefined;
+  } catch {
+    return undefined; // registered without a version, as 1.0 did: the server then sends only what every app shows
+  }
+}
+
+/** Registers this phone; servers from before versions were sent ignore the extra field. */
+async function registerNative(token: string): Promise<void> {
+  const appVersion = await currentAppVersion();
+  await api.post("/api/users/me/push", { platform: "NATIVE", token, ...(appVersion ? { appVersion } : {}) });
+  try {
+    if (appVersion) localStorage.setItem(VERSION_KEY, appVersion);
+  } catch {
+    // Not remembered: the next start registers again, which is harmless.
+  }
+}
+
+function registeredVersion(): string | undefined {
+  try { return localStorage.getItem(VERSION_KEY) ?? undefined; } catch { return undefined; }
 }
 
 type PushPlugin = (typeof import("@capacitor/push-notifications"))["PushNotifications"];
@@ -99,7 +129,7 @@ async function enableNativePush(): Promise<"enabled" | "denied" | "unsupported">
   const token = await fetchNativeToken(PushNotifications);
   if (!token) return "unsupported";
 
-  await api.post("/api/users/me/push", { platform: "NATIVE", token });
+  await registerNative(token);
   rememberNativeToken(token);
   return "enabled";
 }
@@ -118,7 +148,8 @@ async function disableNativePush(): Promise<void> {
 /**
  * At every start of the store app: if notifications were turned on here and the permission still stands, ask Firebase
  * for the token again, quietly (no prompt). Firebase renews tokens now and then; a new one is registered and the old
- * one dropped, so notifications keep arriving without the person doing anything.
+ * one dropped, so notifications keep arriving without the person doing anything. After an update the phone registers
+ * again with its new version.
  */
 export async function syncNativePush(): Promise<void> {
   if (!nativePushInThisBuild()) return;
@@ -130,9 +161,12 @@ export async function syncNativePush(): Promise<void> {
   if (!token) return;
   nativeToken = token;
   if (token !== previous) {
-    await api.post("/api/users/me/push", { platform: "NATIVE", token });
+    await registerNative(token);
     await api.delete(`/api/users/me/push?address=${encodeURIComponent(previous)}`).catch(() => {});
     rememberNativeToken(token);
+  } else if (registeredVersion() !== (await currentAppVersion())) {
+    // Updated from the store: same token, new version.
+    await registerNative(token);
   }
 }
 
