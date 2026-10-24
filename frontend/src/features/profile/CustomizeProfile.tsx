@@ -29,11 +29,15 @@ export function CustomizeProfile({ sections, onClose }: { sections: ProfileSecti
   const save = useSaveProfileSections();
   const toast = useToast();
 
+  // The gyms are a tab of their own, never in the overview: their switch shows or hides the tab, and has no place in
+  // the order.
+  const ordered = draft.filter((s) => s.key !== "gyms");
+  const gyms = draft.find((s) => s.key === "gyms");
   const move = (i: number, by: -1 | 1) => setDraft((d) => {
-    const next = [...d];
+    const next = d.filter((s) => s.key !== "gyms");
     const [item] = next.splice(i, 1);
     next.splice(i + by, 0, item!);
-    return next;
+    return [...next, ...d.filter((s) => s.key === "gyms")];
   });
   const toggle = (key: ProfileSectionKey, visible: boolean) => setDraft((d) => d.map((s) => (s.key === key ? { ...s, visible } : s)));
   const done = (next: ProfileSection[] | null, message: string) =>
@@ -44,18 +48,19 @@ export function CustomizeProfile({ sections, onClose }: { sections: ProfileSecti
       <h2 id="customize-title" className="section__title">{t("Customise profile")}</h2>
       <p className="field__hint">{t("Show, hide and reorder the sections of your profile. Hiding one doesn't make it private: that is the privacy setting.")}</p>
       <ol className="section-order">
-        {draft.map((s, i) => (
+        {ordered.map((s, i) => (
           <li key={s.key} className="section-order__row">
             <div className="section-order__moves">
               <button type="button" className="icon-btn icon-btn--sm" disabled={i === 0} onClick={() => move(i, -1)}
                 aria-label={t("Move {name} up", { name: sectionLabel(s.key) })}><ArrowUp aria-hidden /></button>
-              <button type="button" className="icon-btn icon-btn--sm" disabled={i === draft.length - 1} onClick={() => move(i, 1)}
+              <button type="button" className="icon-btn icon-btn--sm" disabled={i === ordered.length - 1} onClick={() => move(i, 1)}
                 aria-label={t("Move {name} down", { name: sectionLabel(s.key) })}><ArrowDown aria-hidden /></button>
             </div>
             <Toggle label={sectionLabel(s.key)} checked={s.visible} onChange={(v) => toggle(s.key, v)} />
           </li>
         ))}
       </ol>
+      {gyms && <Toggle label={t("Gyms tab")} description={t("The gyms where you climbed, in a tab of their own.")} checked={gyms.visible} onChange={(v) => toggle("gyms", v)} />}
       <div className="row">
         <Button loading={save.isPending} onClick={() => done(draft, t("Profile saved"))}>{t("Save")}</Button>
         <Button variant="ghost" onClick={onClose}>{t("Cancel")}</Button>

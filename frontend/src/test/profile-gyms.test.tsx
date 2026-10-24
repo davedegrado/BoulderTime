@@ -1,5 +1,5 @@
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastProvider } from "@/components/Toast";
 
@@ -79,11 +79,11 @@ describe("A person's gyms", () => {
     expect(screen.queryByText("Volume Lab")).not.toBeInTheDocument();
   });
 
-  it("on the overview too are where they climbed, not the gyms followed", async () => {
+  it("are never on the overview: only in their own tab", async () => {
     show(profile({ climbedGyms: [{ gym: gym("crimp", "Crimp Factory"), completed: 1, lastCompletedAt: null, highest: [] }] }), "");
-    const section = await screen.findByRole("region", { name: "Gyms" });
-    expect(within(section).getByRole("link", { name: /Crimp Factory/ })).toBeInTheDocument();
-    expect(within(section).queryByText("Volume Lab")).not.toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Gyms" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Gyms" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Crimp Factory/ })).not.toBeInTheDocument();
   });
 
   it("from an older server, which doesn't say where they climbed, are the gyms followed, as before", async () => {

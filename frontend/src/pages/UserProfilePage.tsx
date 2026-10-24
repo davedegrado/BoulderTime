@@ -5,7 +5,7 @@ import { DEFAULT_PROFILE_SECTIONS, useProfile, type Profile, type ProfileSection
 import { CompactHistoryRow, HighestGrades, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
 import { HistorySection } from "@/pages/ActivityPage";
-import { CustomizeProfile, sectionLabel } from "@/features/profile/CustomizeProfile";
+import { CustomizeProfile } from "@/features/profile/CustomizeProfile";
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
 import { GymAvatar } from "@/components/GymAvatar";
@@ -159,9 +159,6 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
   const setTab = (next: Tab) => setParams((q) => { const n = new URLSearchParams(q); if (next === "overview") n.delete("tab"); else n.set("tab", next); return n; }, { replace: true });
   const label: Record<Tab, string> = { overview: t("Overview"), activity: t("Activity"), gyms: t("Gyms"), friends: t("Friends") };
 
-  // Where they climbed (ADR-064); the gyms followed only against an older server that doesn't say.
-  const gyms = p.climbedGyms ? p.climbedGyms.map((c) => c.gym) : p.followedGyms;
-
   // Only sections with something to show: nothing invented, no empty boxes.
   const blocks = sections.filter((s) => s.visible).map((s) => {
     switch (s.key) {
@@ -173,9 +170,8 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
       case "highestGrades": return p.highestGrades.length > 0
         ? <Block key={s.key} id="highest" title={t("Highest grades")}><HighestGrades grades={p.highestGrades} /></Block>
         : null;
-      case "gyms": return gyms.length > 0
-        ? <Block key={s.key} id="gyms" title={sectionLabel("gyms")}><GymChips gyms={gyms} /></Block>
-        : null;
+      // The gyms have their own tab and are never in the overview.
+      case "gyms": return null;
       case "history": return p.recentCompletions.length > 0
         ? (
           <Block key={s.key} id="recent" title={t("Recent activity")}

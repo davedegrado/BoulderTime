@@ -111,7 +111,7 @@ function IncomingRequests() {
   );
 }
 
-function RequestRow({ person }: { person: FriendPerson }) {
+export function RequestRow({ person }: { person: FriendPerson }) {
   const action = useFriendAction(person.userId);
   const toast = useToast();
   const run = (a: FriendAction, done: string) => action.mutate(a, { onSuccess: () => toast.success(done), onError: (e) => toast.error(errorMessage(e)) });
@@ -127,14 +127,14 @@ function RequestRow({ person }: { person: FriendPerson }) {
   );
 }
 
-function FriendList({ userId, isMe }: { userId: string; isMe: boolean }) {
+export function FriendList({ userId, isMe }: { userId: string; isMe: boolean }) {
   const friends = useFriendsOf(userId);
   const items = friends.data?.pages.flatMap((pg) => pg.items) ?? [];
   if (friends.isPending) return <LoadingState label={t("Loading friends")} />;
   if (friends.isError) return <ErrorState error={friends.error} onRetry={() => friends.refetch()} />;
   if (items.length === 0) {
     return <EmptyState icon={<Users />} title={isMe ? t("No friends yet") : t("No friends to show")}
-      body={isMe ? t("Open a climber's profile and tap “Add friend”.") : undefined} />;
+      body={isMe ? t("Search for climbers by name in Friends, or open a profile and tap “Add friend”.") : undefined} />;
   }
   return (
     <section className="profile-block" aria-labelledby="friends-title">
@@ -145,7 +145,7 @@ function FriendList({ userId, isMe }: { userId: string; isMe: boolean }) {
   );
 }
 
-function PersonLink({ person }: { person: FriendPerson }) {
+export function PersonLink({ person }: { person: FriendPerson }) {
   return (
     <Link to={`/users/${person.userId}`} className="people__person">
       <Avatar name={person.displayName} url={person.avatarUrl} size={40} />

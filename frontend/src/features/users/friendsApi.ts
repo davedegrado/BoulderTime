@@ -9,10 +9,17 @@ export interface FriendPerson { userId: string; displayName: string; avatarUrl: 
 export interface FriendRequest { person: FriendPerson; requestedAt: string }
 export interface Friend { person: FriendPerson; since: string }
 
+export interface PersonResult { person: FriendPerson; friendship: FriendshipState }
+
 export const friendKeys = {
   requests: ["friends", "requests"] as const,
+  sent: ["friends", "sent"] as const,
+  search: (q: string) => ["friends", "search", q] as const,
   of: (userId: string) => ["friends", "of", userId] as const,
 };
+
+/** Shortest search the server answers. */
+export const SEARCH_MIN_LENGTH = 2;
 
 export type FriendAction = "request" | "accept" | "remove";
 
@@ -55,5 +62,29 @@ export function useFriendsOf(userId: string, enabled = true) {
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     enabled,
+  });
+}
+
+/** The requests you sent that nobody answered yet. */
+export function useSentFriendRequests() {
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: friendKeys.sent,
+    queryFn: ({ signal }) => api.get<FriendRequest[]>("/api/users/me/friend-requests/sent", { signal }),
+    enabled: !!session,
+    retry: false,
+    staleTime: 30_000,
+  });
+}
+
+/** Climbers by name, with where you stand with each; asked only from two letters on. */
+export function usePeopleSearch(query: string) {
+  const { session } = useAuth();
+  const q = query.trim();
+  return useQuery({
+    queryKey: friendKeys.search(q),
+    queryFn: ({ signal }) => api.get<PersonResult[]>(`/api/users/search?q=${encodeURIComponent(q)}`, { signal }),
+    enabled: !!session && q.length >= SEARCH_MIN_LENGTH,
+    staleTime: 30_000,
   });
 }

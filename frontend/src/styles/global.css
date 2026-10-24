@@ -1654,6 +1654,9 @@ button.manage-head__back { background: transparent; }
 .people__person { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--bt-3); color: inherit; text-decoration: none; }
 .people__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
 .people__actions { display: flex; gap: var(--bt-1); flex-shrink: 0; }
+.people__state { display: inline-flex; align-items: center; gap: 6px; color: var(--bt-ink-2); font-size: var(--bt-text-sm); font-weight: 700; }
+.people__state svg { width: 18px; height: 18px; }
+.friends-page { display: flex; flex-direction: column; gap: var(--bt-4); }
 .friend-requests-link { display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-3) var(--bt-4); color: inherit; text-decoration: none; }
 .friend-requests-link__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
 .friend-requests-link__icon svg { width: 18px; height: 18px; }

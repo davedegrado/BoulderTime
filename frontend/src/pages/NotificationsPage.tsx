@@ -5,7 +5,6 @@ import { notificationIcon, relativeTime } from "@/features/notifications/Notific
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useFriendRequests } from "@/features/users/friendsApi";
-import { useCurrentUser } from "@/features/users/api";
 import { plural, t } from "@/i18n/i18n";
 
 export function NotificationsPage() {
@@ -77,15 +76,14 @@ export function NotificationsPage() {
 
 /**
  * Friend requests are not notifications of the feed (apps already installed would not know how to show them, ADR-063):
- * a line of their own, there only when someone asked, leading to the requests on your profile.
+ * a line of their own, there only when someone asked, leading to the Friends page.
  */
 function FriendRequestsLink() {
   const requests = useFriendRequests();
-  const me = useCurrentUser();
   const count = requests.data?.length ?? 0;
-  if (count === 0 || !me.data) return null;
+  if (count === 0) return null;
   return (
-    <Link to={`/users/${me.data.id}?tab=friends`} className="card friend-requests-link">
+    <Link to="/friends" className="card friend-requests-link">
       <span className="friend-requests-link__icon" aria-hidden><UserPlus /></span>
       <span className="friend-requests-link__text">{plural(count, "1 friend request", "{count} friend requests")}</span>
       <ChevronRight className="list__chevron" aria-hidden />

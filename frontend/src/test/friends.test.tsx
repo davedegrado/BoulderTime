@@ -194,7 +194,7 @@ describe("Notifications", () => {
       { person: { userId: "u4", displayName: "Sara Conti", avatarUrl: null }, requestedAt: "2026-10-22T11:00:00Z" },
     ]);
     show(<NotificationsPage />, "/notifications");
-    expect(await screen.findByRole("link", { name: /2 friend requests/ })).toHaveAttribute("href", "/users/u2?tab=friends");
+    expect(await screen.findByRole("link", { name: /2 friend requests/ })).toHaveAttribute("href", "/friends");
   });
 
   it("stay as they were against a server without friends", async () => {

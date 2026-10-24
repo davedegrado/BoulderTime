@@ -1254,6 +1254,16 @@ none, and a phone registered without a version gets none of the notifications ma
 (`PushMessage.MinimumAppVersion`). A 1.1 app registers again at its first start, and after every update, even when
 Firebase keeps the same token. Everything else reaches every device as before.
 
+Friends have their own place in the tab bar, next to Alerts, with the number of requests received on it. The page
+puts a search for climbers on top (by display name only, never by email; at least two letters; at most 20 results,
+names starting with the text first; leaving out oneself, people hidden either way, suspended accounts and accounts
+being erased, but not private profiles, whose name and photo are public anyway), then the requests received and the
+requests sent (`GET /api/users/me/friend-requests/sent`), then one's friends. Both endpoints are new: nothing an older
+app calls changes.
+
+A profile's gyms are a tab of their own and never a block of the overview: the "gyms" section's switch now shows or
+hides that tab, and has no place in the order. The server's list of sections is unchanged.
+
 On a person's profile the friendship is always buttons of the same size in the same place: Add friend; Cancel request;
 Accept and Decline under "… sent you a friend request"; Friends, which asks before removing. Under the name: how many
 friends (counted as the list of friends shows them; not given when the content is hidden) and a bio of up to 160

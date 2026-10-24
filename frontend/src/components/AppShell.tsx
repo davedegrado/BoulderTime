@@ -1,11 +1,12 @@
 import { NavLink, Outlet, Link, useLocation, useMatch } from "react-router-dom";
-import { Home, Compass, Activity, Bell, UserRound, LogIn, ShieldCheck } from "lucide-react";
+import { Home, Compass, Activity, Bell, UserRound, LogIn, ShieldCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { GymAvatar } from "@/components/GymAvatar";
 import { useUnreadCount } from "@/features/notifications/api";
+import { useFriendRequests } from "@/features/users/friendsApi";
 import { OfflineBanner, RouteAnnouncer } from "@/components/AppChrome";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/States";
@@ -17,14 +18,15 @@ import { PushPrompt } from "@/features/notifications/PushPrompt";
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
 /**
- * "Gyms" from the product brief lives inside Explore (discovery) and Home (followed gyms)
- * to keep the phone tab bar at five thumb-reachable targets.
+ * "Gyms" from the product brief lives inside Explore (discovery) and Home (followed gyms), to keep the phone tab bar
+ * to a few thumb-reachable targets. Friends sit next to Alerts: both are about other people reaching you.
  */
 /** A function, so the labels are read in the language in use, not the one the app started in. */
 const NAV = (): NavItem[] => [
   { to: "/", label: t("Home"), icon: Home, requiresAuth: false },
   { to: "/explore", label: t("Explore"), icon: Compass, requiresAuth: false },
   { to: "/activity", label: t("Activity"), icon: Activity, requiresAuth: true },
+  { to: "/friends", label: t("Friends"), icon: Users, requiresAuth: true },
   { to: "/notifications", label: t("Alerts"), icon: Bell, requiresAuth: true },
   { to: "/profile", label: t("Profile"), icon: UserRound, requiresAuth: true },
 ];
@@ -36,6 +38,7 @@ export function AppShell() {
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
   const unread = useUnreadCount().data?.unread ?? 0;
+  const friendRequests = useFriendRequests().data?.length ?? 0;
   // A gym's page and a person's page carry their own compact header (back and "…" over the cover): no logo bar on top.
   const gymPage = useMatch("/gyms/:slug");
   const personPage = useMatch("/users/:id");
@@ -48,7 +51,9 @@ export function AppShell() {
 
   const badge = (to: string) => to === "/notifications" && unread > 0
     ? <span className="nav-badge" aria-label={plural(unread, "{count} unread notification", "{count} unread notifications")}>{unread > 99 ? "99+" : unread}</span>
-    : null;
+    : to === "/friends" && friendRequests > 0
+      ? <span className="nav-badge" aria-label={plural(friendRequests, "1 friend request", "{count} friend requests")}>{friendRequests > 99 ? "99+" : friendRequests}</span>
+      : null;
 
   if (suspended) return <SuspendedPage />;
   if (mustAccept) return <AcceptLegalPage returning={Boolean(me.data?.acceptedLegalVersion)} />;
