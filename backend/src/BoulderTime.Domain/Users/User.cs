@@ -96,6 +96,10 @@ public class User : IAuditable
     public string? ProfileSections { get; private set; }
     public const int ProfileSectionsMaxLength = 600;
 
+    /// <summary>A few lines the person writes about themselves, shown under their name. Null when they wrote none.</summary>
+    public string? Bio { get; private set; }
+    public const int BioMaxLength = 160;
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
@@ -144,6 +148,9 @@ public class User : IAuditable
     /// <summary>Null goes back to the default arrangement.</summary>
     public void SetProfileSections(string? json) => ProfileSections = json;
 
+    /// <summary>Blank clears it. Length is validated by the application layer.</summary>
+    public void SetBio(string? bio) => Bio = SanitizeBio(bio);
+
     /// <summary>Records the declaration once; declaring again changes nothing.</summary>
     public void ConfirmMinimumAge(DateTimeOffset now) => MinimumAgeConfirmedAt ??= now;
 
@@ -168,6 +175,7 @@ public class User : IAuditable
         Email = $"deleted-{Id:N}{ErasedEmailDomain}";
         AvatarUrl = null;
         AvatarPath = null;
+        Bio = null;
         IsPlatformAdmin = false;
         LeaderboardOptOut = true;
         DeletionRequestedAt = now;
@@ -220,6 +228,20 @@ public class User : IAuditable
     {
         if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email is required.", nameof(email));
         return email.Trim().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Trims, keeps at most one empty line between paragraphs and turns blank into null. Line breaks stay: a bio can
+    /// take two or three short lines.
+    /// </summary>
+    public static string? SanitizeBio(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var lines = value.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Select(l => l.Trim()).ToList();
+        var kept = new List<string>();
+        foreach (var line in lines)
+            if (line.Length > 0 || (kept.Count > 0 && kept[^1].Length > 0)) kept.Add(line);
+        return string.Join('\n', kept).Trim();
     }
 
     /// <summary>Collapses whitespace and trims. Length rules are validated by the application layer.</summary>

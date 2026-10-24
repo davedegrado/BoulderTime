@@ -77,15 +77,18 @@ public sealed class UserService(IAppDbContext db, IClock clock)
     public async Task<CurrentUserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken ct = default)
     {
         var name = User.SanitizeDisplayName(request.DisplayName ?? string.Empty);
+        var bio = User.SanitizeBio(request.Bio);
         new Validator()
             .Check(request.Language is null || Localization.Language.IsSupported(request.Language), "language", "Choose a language BoulderTime speaks.")
             .Check(name.Length >= User.DisplayNameMinLength, "displayName", $"Use at least {User.DisplayNameMinLength} characters.")
             .Check(name.Length <= User.DisplayNameMaxLength, "displayName", $"Keep it to {User.DisplayNameMaxLength} characters or fewer.")
+            .Check(bio is null || bio.Length <= User.BioMaxLength, "bio", $"Keep it to {User.BioMaxLength} characters or fewer.")
             .ThrowIfInvalid();
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException("User", userId);
         user.Rename(name);
+        if (request.Bio is not null) user.SetBio(bio);
         if (request.Language is not null) user.SetLanguage(Localization.Language.Normalize(request.Language));
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(user, ct);

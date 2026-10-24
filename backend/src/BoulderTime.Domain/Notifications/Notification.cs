@@ -91,17 +91,23 @@ public class NotificationSettings
     public bool SectorUpdates { get; private set; } = true;
     public bool BoulderUpdates { get; private set; } = true;
     public bool MyContent { get; private set; } = true;
+    /// <summary>
+    /// A phone notification when someone asks to be friends (ADR-063). Push only: the request itself waits in the app,
+    /// on the profile and in Notifications, whatever this says.
+    /// </summary>
+    public bool FriendRequests { get; private set; } = true;
 
     private NotificationSettings() { }
 
     public static NotificationSettings For(Guid userId) => new() { UserId = userId };
 
-    public void Update(bool? gym, bool? sector, bool? boulder, bool? mine)
+    public void Update(bool? gym, bool? sector, bool? boulder, bool? mine, bool? friendRequests = null)
     {
         if (gym is { } g) GymUpdates = g;
         if (sector is { } s) SectorUpdates = s;
         if (boulder is { } b) BoulderUpdates = b;
         if (mine is { } m) MyContent = m;
+        if (friendRequests is { } f) FriendRequests = f;
     }
 
     public bool Allows(NotificationCategory c) => c switch
