@@ -1690,3 +1690,10 @@ button.manage-head__back { background: transparent; }
 /* Nor lift the card or its picture to drag it somewhere else (WebKit does that on a long press of a link or image). */
 .boulder-card--pressable, .boulder-card--pressable img, .boulder-row--pressable, .boulder-row--pressable img, .zoom-stage img { -webkit-user-drag: none; }
 .cropper input, .cropper textarea { -webkit-user-select: auto; user-select: auto; }
+/* On a touch screen nothing is selected by holding a finger on it, anywhere in the app: a long press is for selecting
+   boulders, opening menus and zooming, never for highlighting words. Only what can be typed into stays selectable,
+   to move the cursor and paste. With a mouse, text selects as on any website. */
+@media (hover: none), (pointer: coarse) {
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea, [contenteditable="true"] { -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; }
+}
