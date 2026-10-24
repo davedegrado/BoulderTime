@@ -39,10 +39,19 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
 
     [HttpGet("api/gyms/{gymId:guid}/boulders"), AllowAnonymous]
     public Task<PagedResult<BoulderSummaryDto>> List(Guid gymId, [FromQuery] BoulderStatus? status, [FromQuery] Guid? sectorId,
-        [FromQuery] HoldColor? holdColor, [FromQuery] Guid? gradeValueId, [FromQuery] ProgressFilter? progress, [FromQuery] int? minRating,
+        [FromQuery] string? holdColor, [FromQuery] Guid? gradeValueId, [FromQuery] ProgressFilter? progress, [FromQuery] int? minRating,
         [FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery(Name = "tagId")] Guid[]? tagIds, [FromQuery(Name = "intensity")] BoulderIntensity[]? intensities,
         [FromQuery] string? name, [FromQuery] BoulderSort? sort, [FromQuery] SortDirection? order, CancellationToken ct) =>
-        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, holdColor, gradeValueId, progress, minRating, page, pageSize, tagIds, intensities, name, sort, order), ct);
+        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, HoldColorFilter(holdColor), gradeValueId, progress, minRating, page, pageSize, tagIds, intensities, name, sort, order), ct);
+
+    /// <summary>
+    /// The hold colour of the list's filter, by its API name ("BLUE", "LIGHT_BLUE"). Read here rather than bound as an
+    /// enum, which would refuse the names with an underscore. Anything else is refused, as before.
+    /// </summary>
+    private static HoldColor? HoldColorFilter(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null
+        : HoldColors.TryParse(value, out var color) ? color
+        : throw new ValidationException("holdColor", "Unknown hold colour.");
 
     [HttpGet("api/boulders/{boulderId:guid}"), AllowAnonymous]
     public Task<BoulderDetailDto> Get(Guid boulderId, CancellationToken ct) => boulders.GetAsync(boulderId, ct);
