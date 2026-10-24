@@ -11,7 +11,7 @@ namespace BoulderTime.Application.Boulders;
 /// Boulder lifecycle. Viewing active boulders is public for visible gyms; a removed boulder stays readable by id
 /// forever (climbing history links to it). Creating, editing, removing and restoring need STAFF+.
 /// </summary>
-public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAccess boulderAccess, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Leaderboards.BoulderPoints points)
+public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAccess boulderAccess, IObjectStorage storage, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.NotificationPublisher notifications, Leaderboards.BoulderPoints points, IClientCapabilities client)
 {
     public const int MaxBulkRemove = 200;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
@@ -41,7 +41,12 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var (page, size) = Paging.Normalize(q.Page, q.PageSize, 24);
         var query = db.Boulders.AsNoTracking().Where(b => b.GymId == gymId && b.Status == status);
         if (q.SectorId is { } sectorId) query = query.Where(b => b.SectorId == sectorId);
-        if (q.HoldColor is { } hold) query = query.Where(b => b.HoldColor == hold);
+        if (q.HoldColor is { } hold)
+        {
+            // An app that doesn't know every colour sees light blue as blue and wood as brown, so it finds them there too.
+            var holds = client.KnowsAllHoldColors ? [hold] : HoldColors.LegacyMatches(hold).ToList();
+            query = query.Where(b => holds.Contains(b.HoldColor));
+        }
         if (q.GradeValueId is { } valueId) query = query.Where(b => db.BoulderGrades.Any(g => g.BoulderId == b.Id && g.GradeValueId == valueId));
         // Every tag chosen narrows the list, as every other filter does. At most a boulder's worth of tags count.
         foreach (var tagId in (q.TagIds ?? []).Distinct().Take(GymTag.MaxPerBoulder))
@@ -250,7 +255,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var primaryGrade = await db.GradeValues.AsNoTracking().Where(v => valueIds.Contains(v.Id))
             .Join(db.GradeSystems, v => v.GradeSystemId, s => s.Id, (v, s) => new { v.Label, s.SortOrder })
             .OrderBy(x => x.SortOrder).Select(x => x.Label).FirstOrDefaultAsync(ct);
-        var summary = primaryGrade is null ? $"{valid.HoldColor} holds" : $"{primaryGrade} · {valid.HoldColor} holds";
+        var holds = HoldColors.EnglishName(valid.HoldColor);
+        var summary = primaryGrade is null ? $"{holds} holds" : $"{primaryGrade} · {holds} holds";
         await notifications.BoulderCreatedAsync(boulder, gym, sector, summary, userId, ct);
         await db.SaveChangesAsync(ct);
         return await GetAsync(boulder.Id, ct);
@@ -286,6 +292,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             .Select(g => g.GradeValueId).ToListAsync(ct);
         var valid = await ValidateAsync(boulder.GymId, r, boulder.PhotoPath, boulder.ThumbnailPath, currentValueIds, ct, boulder);
         var userId = currentUser.RequireUserId();
+        // An older app was shown light blue as blue and wood as brown: sending that back is not a change of colour.
+        if (!client.KnowsAllHoldColors) valid = valid with { HoldColor = HoldColors.KeepOnLegacySave(boulder.HoldColor, valid.HoldColor) };
 
         var changes = new List<Localization.NotificationTexts.BoulderChange>();
         if (boulder.SectorId != valid.SectorId) changes.Add(Localization.NotificationTexts.BoulderChange.Sector);

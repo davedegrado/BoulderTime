@@ -18,6 +18,7 @@ builder.Services
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<IClientCapabilities, HttpClientCapabilities>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ApiExceptionHandler.Customize);
@@ -27,6 +28,9 @@ builder.Services
     .AddControllers()
     // Enums travel as SCREAMING_SNAKE strings ("OWNER", "PENDING") to match the product vocabulary.
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper, allowIntegerValues: false)));
+// Hold colours the same way, but as each app can show them (ADR-066). Ahead of the general enum converter, so it wins.
+builder.Services.AddOptions<Microsoft.AspNetCore.Mvc.JsonOptions>()
+    .Configure<IHttpContextAccessor>((o, accessor) => o.JsonSerializerOptions.Converters.Insert(0, new HoldColorJsonConverter(accessor)));
 
 builder.Services.AddBoulderTimeRateLimiting(builder.Configuration);
 
