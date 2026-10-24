@@ -1462,6 +1462,7 @@ button.manage-head__back { background: transparent; }
 /* The photo's box: nothing in it scrolls or zooms the page; the photo inside is moved and enlarged by a transform. */
 .highlighter__stage { position: relative; flex: 1; min-height: 0; margin: var(--bt-2); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: var(--bt-radius-sm); background: #161616; cursor: crosshair; }
 .highlighter__stage.is-move { cursor: grab; }
+.highlighter__stage.is-wand { cursor: pointer; }
 .highlighter__canvas { position: absolute; left: 0; top: 0; display: block; max-width: none; transform-origin: 0 0; image-rendering: auto; pointer-events: none; }
 .highlighter__ring { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), inset 0 0 0 1px rgb(0 0 0 / 0.6); pointer-events: none; }
 .highlighter__zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }

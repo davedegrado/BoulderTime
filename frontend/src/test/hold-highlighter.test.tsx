@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // jsdom draws nothing: the photo is a 40×20 picture whose left half is yellow and right half is the grey wall, and the
@@ -157,5 +157,63 @@ describe("Highlighting the holds", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalled();
     expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("takes a whole area away with a tap of the wand, undoes it, says when it finds nothing, and moves the photo on a drag", async () => {
+    // jsdom has no PointerEvent and lays nothing out: the stage is 400 × 200, so the 40 × 20 photo is drawn ten times larger.
+    class FakePointerEvent extends MouseEvent {
+      pointerId: number;
+      constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) { super(type, init); this.pointerId = init.pointerId ?? 1; }
+    }
+    vi.stubGlobal("PointerEvent", FakePointerEvent);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(200);
+    try {
+      localStorage.clear();
+      render(<HoldHighlighter sources={[wallOf("Cave")]} initialColor="YELLOW" onCancel={() => {}} onDone={() => {}} />);
+      await userEvent.click(screen.getByRole("button", { name: "Show the preview" }));
+      await screen.findByRole("radio", { name: "Keep colour" });
+      await userEvent.click(screen.getByRole("button", { name: "Outline" })); // no line, to read the pixels plainly
+      const px = (x: number, y = 10) => Array.from(drawn!.slice((y * W + x) * 4, (y * W + x) * 4 + 3));
+      await waitFor(() => expect(px(5)).toEqual([245, 200, 0]));
+
+      await userEvent.click(screen.getByRole("radio", { name: "Tap a hold" }));
+      expect(screen.getByText(/Tap a grey hold to add it whole/)).toBeInTheDocument();
+      const stage = document.querySelector(".highlighter__stage") as HTMLElement;
+      const tap = (x: number, y: number) => act(() => {
+        fireEvent.pointerDown(stage, { pointerId: 1, clientX: x, clientY: y });
+        fireEvent.pointerUp(stage, { pointerId: 1, clientX: x, clientY: y });
+      });
+
+      // A tap on the yellow half, selected: all of it goes grey at once.
+      tap(50, 100);
+      await waitFor(() => expect(px(15)[0]).toBe(px(15)[2]));
+      expect(px(2)[0]).toBe(px(2)[2]);
+      expect(screen.getByText("Area taken away.")).toBeInTheDocument();
+      const undo = screen.getByRole("button", { name: /Undo/ });
+      expect(undo).toBeEnabled();
+      await userEvent.click(undo);
+      await waitFor(() => expect(px(15)).toEqual([245, 200, 0]));
+      expect(undo).toBeDisabled();
+
+      // On the grey wall: as wide as half the photo, no hold — nothing changes, nothing to undo.
+      tap(300, 100);
+      expect(screen.getByText("No hold found there: paint it with the brush.")).toBeInTheDocument();
+      expect(px(30)[0]).toBe(px(30)[2]);
+      expect(px(5)).toEqual([245, 200, 0]);
+      expect(undo).toBeDisabled();
+
+      // A drag is no tap: it leaves the selection alone.
+      act(() => {
+        fireEvent.pointerDown(stage, { pointerId: 1, clientX: 50, clientY: 100 });
+        fireEvent.pointerMove(stage, { pointerId: 1, clientX: 120, clientY: 100 });
+        fireEvent.pointerUp(stage, { pointerId: 1, clientX: 120, clientY: 100 });
+      });
+      expect(px(5)).toEqual([245, 200, 0]);
+      expect(undo).toBeDisabled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
   });
 });

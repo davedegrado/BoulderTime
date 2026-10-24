@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
-import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, MousePointerClick, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
-import { canDetect, compose, composeArea, detectHolds, featherMask, outlineArea, outlineReach, outlineWidth, paintStroke, type OutlineStyle } from "@/features/boulders/holdHighlight";
+import { canDetect, compose, composeArea, detectHolds, featherMask, outlineArea, outlineReach, outlineWidth, paintStroke, removeAreaAt, selectHoldAt, type Area, type OutlineStyle } from "@/features/boulders/holdHighlight";
 import { BOULDER_PHOTO, decodeImage } from "@/features/boulders/imageResize";
 import { clampView, fitted, fitView, MAX_ZOOM, pan, pinch, zoomAt, type Point, type Size, type View } from "@/features/boulders/zoomView";
 import { Button } from "@/components/Button";
@@ -77,7 +77,9 @@ export function readHighlightSettings(json: string | null | undefined): { color:
 }
 
 type Phase = { name: "setup" } | { name: "working" } | { name: "edit" } | { name: "saving" } | { name: "error"; message: string };
-type Tool = "add" | "remove" | "move";
+type Tool = "add" | "remove" | "wand" | "move";
+/** A finger that moves less than this is a tap: for the wand, a hold to select; more, and it moves the photo. */
+const TAP_SLOP = 8;
 
 const sizeOf = (image: CanvasImageSource) =>
   "naturalWidth" in image ? { w: image.naturalWidth, h: image.naturalHeight } : { w: (image as ImageBitmap).width, h: (image as ImageBitmap).height };
@@ -181,9 +183,12 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
   const gesture = useRef<
     | { kind: "paint"; last: Point }
     | { kind: "pan"; last: Point }
+    | { kind: "tap"; at: Point; last: Point }
     | { kind: "pinch"; start: { view: View; mid: Point; spread: number } }
     | null
   >(null);
+  /** What the last wand tap did, said aloud and shown: added a hold, took an area away, or found nothing to take. */
+  const [wandNote, setWandNote] = useState("");
   const frame = useRef(0);
   const dirty = useRef<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
 
@@ -374,6 +379,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
     }
     if (pointers.current.size > 2) return;
     if (tool === "move" || showOriginal) { gesture.current = { kind: "pan", last: p }; return; }
+    if (tool === "wand") { gesture.current = { kind: "tap", at: p, last: p }; return; }
     remember();
     const ip = toImage(p);
     gesture.current = { kind: "paint", last: ip };
@@ -384,7 +390,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
     if (!work.current) return;
     const p = inBox(e);
-    if (e.pointerType === "mouse" && !pointers.current.size) { setRing(tool === "move" || showOriginal ? null : p); return; }
+    if (e.pointerType === "mouse" && !pointers.current.size) { setRing(tool === "move" || tool === "wand" || showOriginal ? null : p); return; }
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, p);
     const g = gesture.current;
@@ -395,6 +401,12 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
     } else if (g.kind === "pan") {
       setView((v) => pan(v, p.x - g.last.x, p.y - g.last.y, base, boxSize()));
       g.last = p;
+    } else if (g.kind === "tap") {
+      // Moved too far for a tap: the finger moves the photo instead, from where it started.
+      if (Math.hypot(p.x - g.at.x, p.y - g.at.y) > TAP_SLOP) {
+        setView((v) => pan(v, p.x - g.at.x, p.y - g.at.y, base, boxSize()));
+        gesture.current = { kind: "pan", last: p };
+      }
     } else if (g.kind === "paint") {
       const ip = toImage(p);
       paint(g.last, ip);
@@ -412,9 +424,39 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
       return;
     }
     if (pointers.current.size === 0) {
+      const g = gesture.current;
       gesture.current = null;
       if (e.pointerType !== "mouse") setRing(null);
+      if (g?.kind === "tap" && e.type === "pointerup") wandAt(toImage(g.at));
     }
+  }
+
+  /**
+   * The wand: a tap on a part in colour takes that whole area away (a wall panel, a logo, another boulder's hold); a tap
+   * on a grey part selects the hold there, whole. Each tap can be undone like a stroke; a tap that finds nothing to take
+   * leaves the selection and the undo list as they were.
+   */
+  function wandAt(at: Point) {
+    const w = work.current;
+    if (!w) return;
+    const width = w.src.width, height = w.src.height;
+    const before = w.mask.slice();
+    const selected = w.mask[Math.min(height - 1, Math.max(0, Math.round(at.y))) * width + Math.min(width - 1, Math.max(0, Math.round(at.x)))]! >= 128;
+    const colourful = !(["WHITE", "GREY", "BLACK"] as HoldColor[]).includes(w.color);
+    const area: Area | null = selected
+      ? removeAreaAt(w.mask, width, height, at.x, at.y)
+      : selectHoldAt(w.src.data, width, height, w.mask, at.x, at.y, colourful);
+    if (!area) {
+      setWandNote(t("No hold found there: paint it with the brush."));
+      return;
+    }
+    w.undo.push(before);
+    if (w.undo.length > UNDO_LIMIT) w.undo.shift();
+    setUndoCount(w.undo.length);
+    setWandNote(selected ? t("Area taken away.") : t("Hold added."));
+    dirty.current = { x0: area.x0, y0: area.y0, x1: area.x1, y1: area.y1 };
+    window.cancelAnimationFrame(frame.current);
+    frame.current = window.requestAnimationFrame(drawDirty);
   }
 
   function onWheel(e: WheelEvent<HTMLDivElement>) {
@@ -546,7 +588,11 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
             {phase.name === "saving" && <div className="highlighter__busy" role="status">{t("Preparing photo…")}</div>}
           </div>
           <div className="cropper__controls highlighter__controls">
-            <p className="cropper__hint">{t("One finger paints, two fingers zoom and move the photo.")}</p>
+            <p className="cropper__hint" aria-live="polite">
+              {tool === "wand"
+                ? wandNote || t("Tap a grey hold to add it whole, tap a part in colour to take it all away. Two fingers zoom.")
+                : t("One finger paints, two fingers zoom and move the photo.")}
+            </p>
             <div className="highlighter__row">
               <div className="highlighter__modes" role="radiogroup" aria-label={t("Brush")}>
                 <button type="button" role="radio" aria-checked={tool === "add"} className="highlighter__mode" onClick={() => setTool("add")}>
@@ -554,6 +600,10 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
                 </button>
                 <button type="button" role="radio" aria-checked={tool === "remove"} className="highlighter__mode" onClick={() => setTool("remove")}>
                   <Eraser aria-hidden /> {t("Turn grey")}
+                </button>
+                <button type="button" role="radio" aria-checked={tool === "wand"} className="highlighter__mode" onClick={() => { setTool("wand"); setWandNote(""); }}
+                  aria-label={t("Tap a hold")} title={t("Tap a hold")}>
+                  <MousePointerClick aria-hidden />
                 </button>
                 <button type="button" role="radio" aria-checked={tool === "move"} className="highlighter__mode" onClick={() => setTool("move")}
                   aria-label={t("Move")} title={t("Move")}>
