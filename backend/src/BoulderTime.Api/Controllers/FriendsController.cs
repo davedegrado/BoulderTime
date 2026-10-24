@@ -30,6 +30,14 @@ public sealed class FriendsController(FriendshipService friends) : ControllerBas
     [HttpGet("api/users/me/friend-requests")]
     public Task<IReadOnlyList<FriendRequestDto>> Incoming(CancellationToken ct) => friends.IncomingAsync(ct);
 
+    /// <summary>The requests the viewer sent and nobody answered yet.</summary>
+    [HttpGet("api/users/me/friend-requests/sent")]
+    public Task<IReadOnlyList<FriendRequestDto>> Sent(CancellationToken ct) => friends.OutgoingAsync(ct);
+
+    /// <summary>Climbers by display name (at least two letters), to add them as friends.</summary>
+    [HttpGet("api/users/search")]
+    public Task<IReadOnlyList<PersonResultDto>> Search([FromQuery] string? q, CancellationToken ct) => friends.SearchAsync(q, ct);
+
     /// <summary>A person's friends, for whoever may see their profile's content.</summary>
     [HttpGet("api/users/{userId:guid}/friends")]
     public Task<PagedResult<FriendDto>> Friends(Guid userId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>

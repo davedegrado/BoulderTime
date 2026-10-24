@@ -21,6 +21,8 @@ public enum FriendshipState
 public sealed record FriendshipDto(FriendshipState State);
 public sealed record FriendRequestDto(PersonDto Person, DateTimeOffset RequestedAt);
 public sealed record FriendDto(PersonDto Person, DateTimeOffset Since);
+/// <summary>Someone found by name, with the viewer's friendship with them, so the list can offer the right button.</summary>
+public sealed record PersonResultDto(PersonDto Person, FriendshipState Friendship);
 
 /// <summary>
 /// Friendships between climbers (ADR-063): one asks, the other accepts; either can end it, and asking someone who
@@ -135,6 +137,61 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
         return rows.Select(x => new FriendRequestDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.CreatedAt)).ToList();
+    }
+
+    /// <summary>
+    /// The requests the viewer sent that haven't been answered, newest first, leaving out suspended accounts and
+    /// accounts being erased. Blocking already ends a request either way, so there is nothing else to hide; a request
+    /// sent to someone who blocked the viewer stays here, as it looks sent like any other.
+    /// </summary>
+    public async Task<IReadOnlyList<FriendRequestDto>> OutgoingAsync(CancellationToken ct = default)
+    {
+        var me = currentUser.RequireUserId();
+        var suspendedOrLeaving = await db.Users.AsNoTracking()
+            .Where(u => u.SuspendedAt != null || u.DeletionRequestedAt != null).Select(u => u.Id).ToListAsync(ct);
+        var rows = await db.Friendships.AsNoTracking()
+            .Where(f => f.Status == FriendshipStatus.Pending && f.RequesterId == me)
+            .Select(f => new { Other = f.UserLowId == me ? f.UserHighId : f.UserLowId, f.CreatedAt })
+            .Where(x => !suspendedOrLeaving.Contains(x.Other))
+            .Join(db.Users, x => x.Other, u => u.Id, (x, u) => new { u.Id, u.DisplayName, u.AvatarUrl, x.CreatedAt })
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(ct);
+        return rows.Select(x => new FriendRequestDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.CreatedAt)).ToList();
+    }
+
+    /// <summary>Shortest text a search answers: one letter would list half the app.</summary>
+    public const int SearchMinLength = 2;
+    public const int SearchMaxResults = 20;
+
+    /// <summary>
+    /// Climbers whose display name contains the text, to add them as friends: by name only, never by email. Names that
+    /// start with the text first. Leaves out the viewer, people hidden from them (blocked either way), suspended
+    /// accounts and accounts being erased; a private profile is found too, as its name and photo are public anyway.
+    /// </summary>
+    public async Task<IReadOnlyList<PersonResultDto>> SearchAsync(string? query, CancellationToken ct = default)
+    {
+        var me = currentUser.RequireUserId();
+        var text = Input.Trimmed(query);
+        if (text.Length < SearchMinLength) return [];
+        if (text.Length > Domain.Users.User.DisplayNameMaxLength) text = text[..Domain.Users.User.DisplayNameMaxLength];
+        var lower = text.ToLowerInvariant();
+        var contains = Input.LikeContains(lower);
+        var startsWith = Input.LikeContains(lower)[1..]; // "%text%" without the leading %
+        var hidden = await blocked.ForViewerAsync(ct);
+        var people = await db.Users.AsNoTracking()
+            .Where(u => u.Id != me && u.SuspendedAt == null && u.DeletionRequestedAt == null && !hidden.Contains(u.Id))
+            .Where(u => EF.Functions.Like(u.DisplayName.ToLower(), contains, @"\"))
+            .OrderBy(u => EF.Functions.Like(u.DisplayName.ToLower(), startsWith, @"\") ? 0 : 1)
+            .ThenBy(u => u.DisplayName).ThenBy(u => u.Id)
+            .Take(SearchMaxResults)
+            .Select(u => new { u.Id, u.DisplayName, u.AvatarUrl })
+            .ToListAsync(ct);
+        var ids = people.Select(p => p.Id).ToList();
+        var pairs = await db.Friendships.AsNoTracking()
+            .Where(f => (f.UserLowId == me && ids.Contains(f.UserHighId)) || (f.UserHighId == me && ids.Contains(f.UserLowId)))
+            .ToListAsync(ct);
+        return people.Select(p => new PersonResultDto(new PersonDto(p.Id, p.DisplayName, p.AvatarUrl),
+            Of(pairs.FirstOrDefault(f => f.Other(me) == p.Id), me))).ToList();
     }
 
     /// <summary>
