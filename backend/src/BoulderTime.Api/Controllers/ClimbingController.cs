@@ -10,7 +10,7 @@ namespace BoulderTime.Api.Controllers;
 /// <summary>Climbing progress, ratings, follows, history, profiles and Home.</summary>
 [ApiController]
 [Produces("application/json")]
-public sealed class ClimbingController(ProgressService progress, FollowService follows, ActivityService activity, CompletionService completions) : ControllerBase
+public sealed class ClimbingController(ProgressService progress, FollowService follows, ActivityService activity, CompletionService completions, ProjectService projects) : ControllerBase
 {
     /// <summary>Who completed the boulder, most recent first. The count is on the boulder itself; the names need an account.</summary>
     [HttpGet("api/boulders/{boulderId:guid}/completions"), Authorize]
@@ -29,6 +29,14 @@ public sealed class ClimbingController(ProgressService progress, FollowService f
 
     [HttpDelete("api/boulders/{boulderId:guid}/rating"), Authorize]
     public Task<ViewerProgressDto?> ClearRating(Guid boulderId, CancellationToken ct) => progress.ClearRatingAsync(boulderId, ct);
+
+    // ---- Projects: chosen by the climber, never inferred (ADR-067) ----
+
+    [HttpPut("api/boulders/{boulderId:guid}/project"), Authorize]
+    public Task<ProjectStateDto> MarkProject(Guid boulderId, CancellationToken ct) => projects.MarkAsync(boulderId, ct);
+
+    [HttpDelete("api/boulders/{boulderId:guid}/project"), Authorize]
+    public Task<ProjectStateDto> UnmarkProject(Guid boulderId, CancellationToken ct) => projects.UnmarkAsync(boulderId, ct);
 
     // ---- Follows ----
 

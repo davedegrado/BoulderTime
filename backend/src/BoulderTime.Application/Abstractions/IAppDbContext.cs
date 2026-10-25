@@ -36,6 +36,7 @@ public interface IAppDbContext
     DbSet<BoulderTag> BoulderTags { get; }
     DbSet<BoulderAttempt> BoulderAttempts { get; }
     DbSet<BoulderRating> BoulderRatings { get; }
+    DbSet<BoulderProject> BoulderProjects { get; }
     DbSet<GymFollow> GymFollows { get; }
     DbSet<SectorFollow> SectorFollows { get; }
     DbSet<BoulderFollow> BoulderFollows { get; }

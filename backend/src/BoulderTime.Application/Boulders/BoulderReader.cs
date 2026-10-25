@@ -19,6 +19,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var viewer = await ViewerAsync(ids, currentUser.UserId, ct);
         var tags = await TagsAsync(ids, ct);
         var completions = await CompletionsAsync(ids, ct);
+        var projects = await ProjectsAsync(ids, currentUser.UserId, ct);
 
         var sectorIds = boulders.Select(b => b.SectorId).Distinct().ToList();
         var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
@@ -34,7 +35,8 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             b.HoldColor, grades.GetValueOrDefault(b.Id, []),
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
-            b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl))
+            b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl,
+            projects.Contains(b.Id)))
             .ToList();
     }
 
@@ -108,6 +110,14 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             .Join(db.Users.Where(u => u.SuspendedAt == null), a => a.UserId, u => u.Id, (a, u) => a.BoulderId)
             .GroupBy(id => id).Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+    }
+
+    /// <summary>Which of these boulders the viewer marked as projects; none when signed out.</summary>
+    public async Task<HashSet<Guid>> ProjectsAsync(List<Guid> boulderIds, Guid? userId, CancellationToken ct)
+    {
+        if (userId is not { } uid || boulderIds.Count == 0) return [];
+        return (await db.BoulderProjects.AsNoTracking().Where(p => p.UserId == uid && boulderIds.Contains(p.BoulderId))
+            .Select(p => p.BoulderId).ToListAsync(ct)).ToHashSet();
     }
 
     public async Task<Dictionary<Guid, ViewerProgressDto>> ViewerAsync(List<Guid> boulderIds, Guid? userId, CancellationToken ct)

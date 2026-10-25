@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<BoulderService>();
         services.AddScoped<BoulderReader>();
         services.AddScoped<ProgressService>();
+        services.AddScoped<ProjectService>();
         services.AddScoped<FollowService>();
         services.AddScoped<ActivityService>();
         services.AddScoped<CompletionService>();

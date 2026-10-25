@@ -119,7 +119,13 @@ public sealed class NotificationTests(PostgresFixture postgres) : IAsyncLifetime
         var follower = await _f.UserAsync();
         var projecting = await _f.UserAsync();
         var sent = await _f.UserAsync();
+        var marked = await _f.UserAsync();
+        var markedAndSent = await _f.UserAsync();
         await follower.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/follow", new { });
+        // Projects the climbers chose (ADR-067): before any attempt too, but not once completed.
+        (await marked.Client.PutAsync($"/api/boulders/{b.Id}/project", null)).EnsureSuccessStatusCode();
+        (await markedAndSent.Client.PutAsync($"/api/boulders/{b.Id}/project", null)).EnsureSuccessStatusCode();
+        await markedAndSent.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/attempt", new { attempts = 2, completed = true });
         await projecting.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/attempt", new { attempts = 6, completed = false });
         await sent.Client.PutAsJsonAsync($"/api/boulders/{b.Id}/attempt", new { attempts = 1, completed = true });
 
@@ -131,6 +137,8 @@ public sealed class NotificationTests(PostgresFixture postgres) : IAsyncLifetime
         (await InboxAsync(follower)).Should().ContainSingle(n => n.Type == NotificationType.OfficialBeta);
         (await InboxAsync(projecting)).Should().ContainSingle(n => n.Type == NotificationType.OfficialBeta);
         (await InboxAsync(sent)).Should().BeEmpty();
+        (await InboxAsync(marked)).Should().ContainSingle(n => n.Type == NotificationType.OfficialBeta);
+        (await InboxAsync(markedAndSent)).Should().BeEmpty();
     }
 
     [Fact]

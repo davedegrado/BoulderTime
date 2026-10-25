@@ -501,6 +501,29 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Climbing.BoulderProject", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("BoulderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("boulder_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("UserId", "BoulderId")
+                        .HasName("pk_boulder_projects");
+
+                    b.HasIndex("BoulderId")
+                        .HasDatabaseName("ix_boulder_projects_boulder_id");
+
+                    b.ToTable("boulder_projects", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Climbing.BoulderRating", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2688,6 +2711,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_boulder_attempts_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Climbing.BoulderProject", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Boulders.Boulder", null)
+                        .WithMany()
+                        .HasForeignKey("BoulderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_projects_boulders_boulder_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_boulder_projects_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Climbing.BoulderRating", b =>

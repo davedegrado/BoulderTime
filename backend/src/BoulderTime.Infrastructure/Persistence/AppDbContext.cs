@@ -43,6 +43,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<BoulderTag> BoulderTags => Set<BoulderTag>();
     public DbSet<BoulderAttempt> BoulderAttempts => Set<BoulderAttempt>();
     public DbSet<BoulderRating> BoulderRatings => Set<BoulderRating>();
+    public DbSet<BoulderProject> BoulderProjects => Set<BoulderProject>();
     public DbSet<GymFollow> GymFollows => Set<GymFollow>();
     public DbSet<SectorFollow> SectorFollows => Set<SectorFollow>();
     public DbSet<BoulderFollow> BoulderFollows => Set<BoulderFollow>();

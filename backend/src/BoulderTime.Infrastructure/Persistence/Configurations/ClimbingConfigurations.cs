@@ -8,6 +8,19 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BoulderTime.Infrastructure.Persistence.Configurations;
 
+internal sealed class BoulderProjectConfiguration : IEntityTypeConfiguration<BoulderProject>
+{
+    public void Configure(EntityTypeBuilder<BoulderProject> b)
+    {
+        b.ToTable("boulder_projects");
+        b.HasKey(x => new { x.UserId, x.BoulderId });
+        // Restrict, as for the attempts: a project is part of the climber's history, erased only with their account.
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Boulder>().WithMany().HasForeignKey(x => x.BoulderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.BoulderId);
+    }
+}
+
 internal sealed class BoulderAttemptConfiguration : IEntityTypeConfiguration<BoulderAttempt>
 {
     public void Configure(EntityTypeBuilder<BoulderAttempt> b)

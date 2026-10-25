@@ -13,12 +13,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BoulderTime.Application.Climbing;
 
-public enum HistoryFilter { All, Completed, Projects }
+/// <remarks><see cref="Projects"/> is "tried, not completed", as older apps know it; <see cref="Marked"/> the projects chosen (ADR-067).</remarks>
+public enum HistoryFilter { All, Completed, Projects, Marked }
 
 /// <summary>One entry of climbing history. The boulder may be removed; history keeps it.</summary>
 public sealed record ClimbHistoryItemDto(BoulderSummaryDto Boulder, int Attempts, bool Completed, DateTimeOffset? CompletedAt, DateTimeOffset UpdatedAt, int? Rating);
 
-public sealed record ClimbingStatsDto(int Completed, int Projects, int TotalAttempts, int CompletedThisMonth);
+/// <param name="Projects">Tried and not completed, as it always was (older apps show it as "projects").</param>
+/// <param name="MarkedProjects">
+/// Projects the person chose, not yet completed, on boulders still on the wall (ADR-067). Added later: older apps don't
+/// read it.
+/// </param>
+public sealed record ClimbingStatsDto(int Completed, int Projects, int TotalAttempts, int CompletedThisMonth, int? MarkedProjects = null);
 
 /// <summary>Highest completed grade within ONE grading system (grades from different systems are never compared).</summary>
 public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, string GymName, string Label, int Rank, string? ColorHex,
@@ -88,7 +94,14 @@ public sealed record HomeDto(
     ClimbingStatsDto Stats, IReadOnlyList<HomeGymDto> Gyms,
     IReadOnlyList<BoulderSummaryDto> Projects, IReadOnlyList<BoulderSummaryDto> FreshToTry,
     IReadOnlyList<ClimbHistoryItemDto> RecentCompletions,
-    IReadOnlyList<Notifications.AnnouncementDto> Updates);
+    IReadOnlyList<Notifications.AnnouncementDto> Updates,
+    /// <summary>The projects the person chose, still on the wall and not completed, latest first (ADR-067). Added later.</summary>
+    IReadOnlyList<BoulderSummaryDto>? MarkedProjects = null,
+    /// <summary>
+    /// Boulders tried, not completed, still on the wall and not marked as projects: what the app may suggest marking.
+    /// Added later: older apps don't read it.
+    /// </summary>
+    int? UnmarkedTries = null);
 
 /// <summary>Personal climbing history, statistics, public profiles and the Home screen. All computed on read.</summary>
 public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BoulderReader reader, Notifications.AnnouncementService announcements, PartnerService partners, Users.BlockedPeople blocked, Users.ProfileAccess access, Users.FriendshipService friends)
@@ -106,6 +119,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         {
             HistoryFilter.Completed => q.Where(a => a.Completed),
             HistoryFilter.Projects => q.Where(a => !a.Completed && a.Attempts > 0),
+            HistoryFilter.Marked => q.Where(a => !a.Completed && db.BoulderProjects.Any(p => p.UserId == userId && p.BoulderId == a.BoulderId)),
             _ => q,
         };
         var total = await q.CountAsync(ct);
@@ -179,13 +193,38 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var recent = await db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId && a.Completed)
             .OrderByDescending(a => a.CompletedAt).Take(5).ToListAsync(ct);
 
+        // The projects chosen (ADR-067): still on the wall, not completed, latest marked first.
+        var marked = await OpenProjects(userId)
+            .OrderByDescending(x => x.CreatedAt).Take(8).Select(x => x.Boulder).ToListAsync(ct);
+        var unmarkedTries = await db.BoulderAttempts.AsNoTracking()
+            .Where(a => a.UserId == userId && !a.Completed && a.Attempts > 0)
+            .Where(a => !db.BoulderProjects.Any(p => p.UserId == userId && p.BoulderId == a.BoulderId))
+            .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => b)
+            .CountAsync(b => b.Status == BoulderStatus.Active, ct);
+
         return new HomeDto(
             await StatsAsync(userId, ct),
             await HomeGymsAsync(follows.Select(x => (x.g, x.IsFavorite, x.Active, x.Fresh)).ToList(), ct),
             await reader.SummariesAsync(projects, ct),
             await reader.SummariesAsync(fresh, ct),
             await ToHistoryAsync(userId, recent, ct),
-            await announcements.ForFollowedGymsAsync(userId, 5, ct));
+            await announcements.ForFollowedGymsAsync(userId, 5, ct),
+            await reader.SummariesAsync(marked, ct),
+            unmarkedTries);
+    }
+
+    /// <summary>A person's chosen projects that are still open: boulder on the wall, not completed.</summary>
+    private IQueryable<OpenProject> OpenProjects(Guid userId) =>
+        db.BoulderProjects.AsNoTracking().Where(p => p.UserId == userId)
+            .Where(p => !db.BoulderAttempts.Any(a => a.UserId == userId && a.BoulderId == p.BoulderId && a.Completed))
+            .Join(db.Boulders.Where(b => b.Status == BoulderStatus.Active), p => p.BoulderId, b => b.Id,
+                (p, b) => new OpenProject { CreatedAt = p.CreatedAt, Boulder = b });
+
+    // Built with an initializer, not a constructor, so the database can still order and count by it.
+    private sealed class OpenProject
+    {
+        public DateTimeOffset CreatedAt { get; init; }
+        public Domain.Boulders.Boulder Boulder { get; init; } = null!;
     }
 
     private async Task<IReadOnlyList<GymSummaryDto>> SummariesAsync(List<Domain.Gyms.Gym> gyms, CancellationToken ct)
@@ -229,7 +268,8 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             await mine.CountAsync(a => a.Completed, ct),
             await mine.CountAsync(a => !a.Completed && a.Attempts > 0, ct),
             await mine.SumAsync(a => a.Attempts, ct),
-            await mine.CountAsync(a => a.Completed && a.CompletedAt >= monthStart, ct));
+            await mine.CountAsync(a => a.Completed && a.CompletedAt >= monthStart, ct),
+            await OpenProjects(userId).CountAsync(ct));
     }
 
     internal async Task<IReadOnlyList<HighestGradeDto>> HighestGradesAsync(Guid userId, CancellationToken ct)
