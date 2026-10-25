@@ -1739,3 +1739,16 @@ button.manage-head__back { background: transparent; }
 .tracker .stepper__btn { background: var(--bt-surface); }
 /* Comments: with none yet, one short line and the box to write the first. */
 .comments__empty { margin: 0; color: var(--bt-ink-3); font-size: var(--bt-text-sm); }
+
+/* ---------- Projects (ADR-067) ---------- */
+.tracker__project { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-3); min-height: 48px; padding: 0 var(--bt-3); border-radius: var(--bt-radius-md); background: var(--bt-surface-2); }
+.tracker__project-label { display: inline-flex; align-items: center; gap: var(--bt-2); font-weight: 700; font-size: var(--bt-text-sm); }
+.tracker__project-label svg { width: 18px; height: 18px; color: var(--bt-orange-ink); }
+.boulder-card__project { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--bt-charcoal); color: var(--bt-orange); box-shadow: 0 0 0 2px #fff; }
+.boulder-card__project svg { width: 17px; height: 17px; stroke-width: 2.6; }
+.projects-invite { display: flex; align-items: flex-start; gap: var(--bt-3); }
+.projects-invite__icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+.projects-invite__icon svg { width: 20px; height: 20px; }
+.projects-invite__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.projects-invite__text p { margin: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.projects-invite__title { margin: 0; font-size: var(--bt-text-md); font-weight: 800; }

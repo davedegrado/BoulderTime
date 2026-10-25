@@ -38,6 +38,8 @@ export interface BoulderSummary {
   points?: number | null;
   /** The gym's logo, for lists that mix gyms; null when it has none. */
   gymLogoUrl?: string | null;
+  /** You marked it as a project (ADR-067). Absent from older servers: then the app offers no projects. */
+  isProject?: boolean;
 }
 
 export interface BoulderDetail extends BoulderSummary {
@@ -63,7 +65,8 @@ export interface BoulderHighlight { sourcePath: string; maskPath: string; settin
 /** What deleting a boulder would take with it. `sends` is what it would NOT take. */
 export interface DeletionImpact { sends: number; comments: number; videos: number; hasBeta: boolean }
 
-export type ProgressFilter = "UNTRIED" | "PROJECTS" | "COMPLETED";
+/** "MARKED": the projects you chose, not completed. "PROJECTS": tried and not completed, called "Tried" in the app (ADR-067). */
+export type ProgressFilter = "UNTRIED" | "MARKED" | "PROJECTS" | "COMPLETED";
 /** `tagIds`: boulders with every one of these tags. `intensity`: boulders with any of these intensities. */
 export interface BoulderFilters {
   status?: BrowsableStatus; sectorId?: string; holdColor?: HoldColor; gradeValueId?: string; progress?: ProgressFilter; minRating?: string;

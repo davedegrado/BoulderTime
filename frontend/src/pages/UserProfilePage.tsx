@@ -218,7 +218,9 @@ function Block({ id, title, action, children }: { id: string; title: string; act
 /** The four numbers in one row, for those who choose to show them. */
 function StatsRow({ stats }: { stats: Profile["stats"] }) {
   const items: [number, string][] = [
-    [stats.completed, t("Sends")], [stats.projects, t("Projects")], [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
+    [stats.completed, t("Sends")], [stats.markedProjects ?? stats.projects, t("Projects")],
+    ...(stats.markedProjects != null ? [[stats.projects, t("Tried")] as [number, string]] : []),
+    [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
   ];
   return (
     <dl className="profile-stats">

@@ -1339,3 +1339,26 @@ tags, when there are any. "Your progress" keeps all it had — attempts, the cli
 when it was completed with Undo — with the big action last and always in the same place. Comments without any are one
 line and the box to write the first. A project is still what it was (tried and not completed, as the filter and the
 statistics count it): nothing on this page marks one.
+
+## ADR-067 · Projects the climber chooses
+
+A project used to be whatever was tried and not completed, worked out from the attempts. Now a project is a boulder the
+climber chooses to work on, with a "Project" switch in Your progress, and only by hand: trying a boulder, however many
+times, never makes it one. It is kept in its own table (`boulder_projects`, one row per person and boulder), apart from
+the attempts, so it can be marked before the first try and survives an attempt count set back to zero (an empty attempt
+row is deleted). Marking twice or unmarking nothing changes nothing.
+
+A completed project is closed and counts among the sends: it leaves the projects (filter, Home, count) and the switch
+goes away. The mark stays, so undoing the send makes it a project again. A boulder off the wall can't become a project;
+one that already was keeps its mark (nothing is erased by a removal) and can be unmarked, and is no longer counted as
+open. Erasing an account erases its projects. The official beta reaches the projects not yet completed too, besides
+those it always reached.
+
+**The apps already installed see nothing change.** Every new thing is additive: `PUT`/`DELETE
+/api/boulders/{id}/project`; `isProject` on boulders; the progress and history filter `MARKED`; `markedProjects` in the
+statistics; `markedProjects` and `unmarkedTries` on Home. What 1.0 reads keeps its meaning: the filter `PROJECTS`, the
+`projects` count and Home's `projects` list are still "tried and not completed", and a project with no attempt leaves the
+progress (`viewer`) as it was, null. From 1.1 the app shows both, as the owner asked for now: "Projects" (chosen) and
+"Tried" (the old meaning). Home has a row for the projects, "Keep trying" for the rest, and once an invitation, for those
+with boulders tried and not marked, to choose some (closing it is for good on that device; it may be removed before the
+release).

@@ -1,7 +1,7 @@
 import { Rail } from "@/components/Rail";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Compass, Heart, Plus, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronRight, Compass, Heart, Plus, ShieldCheck, Target, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { useHome, type HomeGym } from "@/features/climbing/api";
@@ -73,6 +73,7 @@ function SignedInHome() {
 
   const user = me.data;
   const h = home.data;
+  const keepTrying = h.projects.filter((b) => !b.isProject);
   const firstName = user.displayName.split(" ")[0];
   const favourites = h.gyms.filter((g) => g.isFavorite);
   const others = h.gyms.filter((g) => !g.isFavorite);
@@ -122,10 +123,19 @@ function SignedInHome() {
         </section>
       )}
 
-      {h.projects.length > 0 && (
+      {(h.markedProjects ?? []).length > 0 && (
+        <section aria-labelledby="marked-title" className="section">
+          <h2 id="marked-title" className="section__title">{t("Your projects")}</h2>
+          <Rail>{h.markedProjects!.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
+        </section>
+      )}
+      <ProjectsInvitation count={h.unmarkedTries ?? 0} />
+
+      {/* Tried and not completed; the projects already have their own row above. */}
+      {keepTrying.length > 0 && (
         <section aria-labelledby="projects-title" className="section">
           <h2 id="projects-title" className="section__title">{t("Keep trying")}</h2>
-          <Rail>{h.projects.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
+          <Rail>{keepTrying.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
         </section>
       )}
 
@@ -213,3 +223,31 @@ function GymUpdates({ updates, total }: { updates: Announcement[]; total: number
   );
 }
 
+
+const INVITATION_KEY = "bt.projectsInvitationSeen";
+
+/**
+ * Once, for climbers with boulders tried and not completed: projects are now chosen, so here is how (ADR-067). Nothing is
+ * marked for them; it leads to what they tried, where each boulder can be made a project. Closing it is for good, on
+ * this device.
+ */
+function ProjectsInvitation({ count }: { count: number }) {
+  const [seen, setSeen] = useState(() => { try { return localStorage.getItem(INVITATION_KEY) === "1"; } catch { return false; } });
+  if (seen || count === 0) return null;
+  const close = () => {
+    try { localStorage.setItem(INVITATION_KEY, "1"); } catch { /* shown again next time: harmless */ }
+    setSeen(true);
+  };
+  return (
+    <section className="card projects-invite" aria-labelledby="projects-invite-title">
+      <span className="projects-invite__icon" aria-hidden><Target /></span>
+      <div className="projects-invite__text">
+        <h2 id="projects-invite-title" className="projects-invite__title">{t("Choose your projects")}</h2>
+        <p>{plural(count, "You have 1 boulder tried and not completed. Open it and turn on “Project” if you want to work on it.",
+          "You have {count} boulders tried and not completed. Open the ones you want to work on and turn on “Project”.")}</p>
+        <Link to="/activity?history=PROJECTS" className="section__link" onClick={close}>{t("See what you tried")}</Link>
+      </div>
+      <button type="button" className="icon-btn" aria-label={t("Not now")} title={t("Not now")} onClick={close}><X aria-hidden /></button>
+    </section>
+  );
+}

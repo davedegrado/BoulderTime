@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Check, Minus, Plus, RotateCcw } from "lucide-react";
+import { Check, Minus, Plus, RotateCcw, Target } from "lucide-react";
 import type { BoulderDetail } from "@/features/boulders/api";
-import { useSetAttempt, useSetRating } from "@/features/climbing/api";
+import { useSetAttempt, useSetProject, useSetRating } from "@/features/climbing/api";
 import { StarInput } from "@/features/climbing/ClimbingBits";
 import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/Button";
@@ -102,6 +102,7 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         </div>
       </div>
       {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
+      {!completed && <ProjectSwitch boulder={boulder} />}
       {completed ? (
         <div className="tracker__sent">
           <span className="sent-mark" aria-hidden><Check /></span>
@@ -120,5 +121,31 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
       )}
 
     </section>
+  );
+}
+
+/**
+ * "Project": a boulder the climber chooses to work on (ADR-067). Only by hand, never from the attempts. Gone once the
+ * boulder is completed — a completed project is among the sends — and back if the send is undone. A boulder off the
+ * wall can't become one, but one that was can be unmarked. Nothing against a server that doesn't know projects.
+ */
+function ProjectSwitch({ boulder }: { boulder: BoulderDetail }) {
+  const setProject = useSetProject(boulder.id);
+  const toast = useToast();
+  if (boulder.isProject === undefined) return null;
+  const on = boulder.isProject;
+  if (!on && boulder.status !== "ACTIVE") return null;
+  return (
+    <div className="tracker__project">
+      <span className="tracker__project-label"><Target aria-hidden /> {t("Project")}</span>
+      <button type="button" role="switch" aria-checked={on} aria-label={t("Project")} disabled={setProject.isPending}
+        className={`switch ${on ? "is-on" : ""}`}
+        onClick={() => setProject.mutate(!on, {
+          onSuccess: (r) => toast.success(r.isProject ? t("Added to your projects") : t("Removed from your projects")),
+          onError: (e) => toast.error(errorMessage(e)),
+        })}>
+        <span className="switch__thumb" />
+      </button>
+    </div>
   );
 }

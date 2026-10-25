@@ -11,7 +11,11 @@ import type { Announcement } from "@/features/notifications/api";
 import { communityKeys } from "@/features/community/api";
 
 export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null }
-export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number }
+/**
+ * `projects`: tried and not completed (what the app now calls "tried"). `markedProjects`: the projects chosen and still
+ * open (ADR-067); absent from older servers.
+ */
+export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number; markedProjects?: number | null }
 export interface HighestGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gymName: string; label: string; rank: number; colorHex: string | null; colorHex2?: string | null }
 export interface WeekActivity { weekStart: string; completed: number }
 export interface Profile {
@@ -73,8 +77,16 @@ export interface StaffDistinction {
   isFoundingGym: boolean; isEarlyPartner: boolean;
 }
 export interface HomeGym { gym: GymSummary; isFavorite: boolean; activeBoulders: number; newThisWeek: number }
-export interface Home { stats: ClimbingStats; gyms: HomeGym[]; projects: BoulderSummary[]; freshToTry: BoulderSummary[]; recentCompletions: HistoryItem[]; updates: Announcement[] }
-export type HistoryFilter = "ALL" | "COMPLETED" | "PROJECTS";
+/**
+ * `projects`: tried and not completed (shown as "Keep trying"). `markedProjects`: the projects chosen, open (ADR-067).
+ * `unmarkedTries`: tried, not completed and not marked, for the invitation to mark some. Both absent from older servers.
+ */
+export interface Home {
+  stats: ClimbingStats; gyms: HomeGym[]; projects: BoulderSummary[]; freshToTry: BoulderSummary[]; recentCompletions: HistoryItem[]; updates: Announcement[];
+  markedProjects?: BoulderSummary[]; unmarkedTries?: number | null;
+}
+/** "MARKED": projects chosen and open; "PROJECTS": tried and not completed ("Tried"). */
+export type HistoryFilter = "ALL" | "COMPLETED" | "MARKED" | "PROJECTS";
 
 export const climbingKeys = {
   home: ["climbing", "home"] as const,
@@ -131,6 +143,19 @@ function useProgressCache(boulderId: string) {
     // query. Without this, the climber records an attempt and the grade vote stays hidden until a page reload.
     qc.invalidateQueries({ queryKey: communityKeys.consensus(boulderId) });
   };
+}
+
+/** Marks or unmarks a boulder as one of your projects (ADR-067). Only ever by hand. */
+export function useSetProject(boulderId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (on: boolean) => (on ? api.put<{ isProject: boolean }>(`/api/boulders/${boulderId}/project`) : api.delete<{ isProject: boolean }>(`/api/boulders/${boulderId}/project`)),
+    onSuccess: ({ isProject }) => {
+      qc.setQueryData<BoulderDetail>(boulderKeys.detail(boulderId), (d) => (d ? { ...d, isProject } : d));
+      qc.invalidateQueries({ queryKey: ["boulders"], refetchType: "none" });
+      qc.invalidateQueries({ queryKey: ["climbing"] });
+    },
+  });
 }
 
 export function useSetAttempt(boulderId: string) {

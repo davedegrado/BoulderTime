@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, MountainSnow, RotateCw, Users } from "lucide-react";
+import { Check, MountainSnow, RotateCw, Users, Target } from "lucide-react";
 import { IntensityBadge } from "@/features/boulders/intensity";
 import { useLongPress } from "@/features/boulders/useLongPress";
 import type { BoulderSummary } from "@/features/boulders/api";
@@ -61,6 +61,10 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
           // Top right: the climber's own state.
           <span className="boulder-card__corner">
             {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
+            {/* One of the climber's projects, still open: a completed project is just a send. */}
+            {boulder.isProject && !boulder.viewer?.completed && (
+              <span className="boulder-card__project" title={t("Your project")}><Target aria-hidden /><span className="sr-only">{t("Your project")}</span></span>
+            )}
             {tries > 0 && (
               <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
                 <RotateCw aria-hidden /><span aria-hidden>{tries}</span>

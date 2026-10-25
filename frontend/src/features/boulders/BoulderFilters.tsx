@@ -41,7 +41,8 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
       <SelectField label={t("Grade")} value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
       {session && (
         <SelectField label={t("Your progress")} value={filters.progress ?? ""} onChange={(e) => set({ progress: (e.target.value || undefined) as ProgressFilter | undefined })}
-          options={[{ value: "", label: t("All") }, { value: "UNTRIED", label: t("Not tried") }, { value: "PROJECTS", label: t("Projects") }, { value: "COMPLETED", label: t("Completed") }]} />
+          options={[{ value: "", label: t("All") }, { value: "UNTRIED", label: t("Not tried") }, { value: "MARKED", label: t("Projects") },
+            { value: "PROJECTS", label: t("Tried") }, { value: "COMPLETED", label: t("Completed") }]} />
       )}
       <AdvancedSearch filters={filters} set={set} tags={tags} />
     </div>
@@ -113,7 +114,7 @@ export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSyste
     out.push({ id: "gradeValueId", label: value ? dataLabel(value.label) : t("Grade"), clear: drop("gradeValueId") });
   }
   if (f.holdColor) out.push({ id: "holdColor", label: holdLabel(f.holdColor), clear: drop("holdColor") });
-  if (f.progress) out.push({ id: "progress", label: f.progress === "UNTRIED" ? t("Not tried") : f.progress === "PROJECTS" ? t("Projects") : t("Completed"), clear: drop("progress") });
+  if (f.progress) out.push({ id: "progress", label: progressLabel(f.progress), clear: drop("progress") });
   if (f.minRating) out.push({ id: "minRating", label: f.minRating === "4" ? t("4+ stars") : t("3+ stars"), clear: drop("minRating") });
   for (const i of f.intensity ?? [])
     out.push({ id: `intensity-${i}`, label: intensityLabel(i as Intensity), clear: (x) => ({ ...x, intensity: toggled(x.intensity, i) }) });
@@ -192,3 +193,13 @@ export function BoulderStatusSelect({ removed, onChange }: { removed: boolean; o
 /** "18 on the wall", "1 taken down". */
 export const boulderCount = (total: number, removed: boolean) =>
   removed ? plural(total, "1 taken down", "{count} taken down") : plural(total, "1 on the wall", "{count} on the wall");
+
+/** "Projects" are the ones chosen (MARKED); tried and not completed is "Tried" (PROJECTS, its name in the API) — ADR-067. */
+function progressLabel(p: ProgressFilter): string {
+  switch (p) {
+    case "UNTRIED": return t("Not tried");
+    case "MARKED": return t("Projects");
+    case "PROJECTS": return t("Tried");
+    default: return t("Completed");
+  }
+}

@@ -47,12 +47,14 @@ export function ClimbingActivity({ userId, title, header }: { userId: string; ti
   );
 }
 
-/** The four numbers of a climber. */
+/** A climber's numbers. */
 export function StatsGrid({ stats }: { stats: Profile["stats"] }) {
   return (
     <div className="stats">
       <div className="stat"><span className="stat__value">{stats.completed}</span><span className="stat__label">{t("Sends")}</span></div>
-      <div className="stat"><span className="stat__value">{stats.projects}</span><span className="stat__label">{t("Projects")}</span></div>
+      {/* Projects are the ones chosen (ADR-067); an older server only knows what was tried and not completed. */}
+      <div className="stat"><span className="stat__value">{stats.markedProjects ?? stats.projects}</span><span className="stat__label">{t("Projects")}</span></div>
+      {stats.markedProjects != null && <div className="stat"><span className="stat__value">{stats.projects}</span><span className="stat__label">{t("Tried")}</span></div>}
       <div className="stat"><span className="stat__value">{stats.completedThisMonth}</span><span className="stat__label">{t("Sent this month")}</span></div>
       <div className="stat"><span className="stat__value">{stats.totalAttempts}</span><span className="stat__label">{t("Attempts")}</span></div>
     </div>
@@ -65,7 +67,7 @@ export function HistorySection({ userId, isMe, titled = true, compact = false }:
   // In the address, so coming back from a boulder of the history finds the same choice (and the same place in it).
   const [params, setParams] = useSearchParams();
   const asked = params.get("history") as HistoryFilter | null;
-  const filter: HistoryFilter = asked === "COMPLETED" || asked === "PROJECTS" ? asked : "ALL";
+  const filter: HistoryFilter = asked === "COMPLETED" || asked === "MARKED" || asked === "PROJECTS" ? asked : "ALL";
   const setFilter = (f: HistoryFilter) => setParams((p) => { const n = new URLSearchParams(p); if (f === "ALL") n.delete("history"); else n.set("history", f); return n; }, { replace: true });
   const history = useHistory(userId, filter);
   const items = history.data?.pages.flatMap((pg) => pg.items) ?? [];
@@ -73,17 +75,17 @@ export function HistorySection({ userId, isMe, titled = true, compact = false }:
       <section className="section" aria-labelledby={titled ? "history-title" : undefined} aria-label={titled ? undefined : t("History")}>
         {titled && <h2 id="history-title" className="section__title">{t("History")}</h2>}
         <div className="chips" role="radiogroup" aria-label={t("Filter history")}>
-          {(["ALL", "COMPLETED", "PROJECTS"] as HistoryFilter[]).map((f) => (
+          {(["ALL", "COMPLETED", "MARKED", "PROJECTS"] as HistoryFilter[]).map((f) => (
             <button key={f} role="radio" aria-checked={filter === f} className="chip" onClick={() => setFilter(f)}>
-              {f === "ALL" ? t("All") : f === "COMPLETED" ? t("Completed") : t("Projects")}
+              {f === "ALL" ? t("All") : f === "COMPLETED" ? t("Completed") : f === "MARKED" ? t("Projects") : t("Tried")}
             </button>
           ))}
         </div>
         {history.isPending ? <LoadingState label={t("Loading history")} />
           : history.isError ? <ErrorState error={history.error} onRetry={() => history.refetch()} />
           : items.length === 0 ? (
-            <EmptyState icon={<Mountain />} title={filter === "PROJECTS" ? t("No open projects") : t("No climbs logged yet")}
-              body={isMe ? t("Open a boulder at your gym and tap “Mark as completed” or add attempts.") : undefined}
+            <EmptyState icon={<Mountain />} title={filter === "MARKED" ? t("No open projects") : filter === "PROJECTS" ? t("Nothing tried and not completed") : t("No climbs logged yet")}
+              body={isMe ? (filter === "MARKED" ? t("Open a boulder and turn on “Project” to keep it here until you complete it.") : t("Open a boulder at your gym and tap “Mark as completed” or add attempts.")) : undefined}
               action={isMe ? <Link to="/explore" className="btn btn--primary"><span>{t("Find a gym")}</span></Link> : undefined} />
           ) : (
             <>
