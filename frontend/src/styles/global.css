@@ -1808,3 +1808,23 @@ button.manage-head__back { background: transparent; }
 .thumb-anchor svg { width: 18px; height: 18px; }
 .thumb-anchor[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
 .thumb-mode:disabled, .thumb-anchor:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- Badges (ADR-069) ---------- */
+.badge-art { display: block; flex-shrink: 0; object-fit: contain; }
+.badge-art--none { border-radius: 50%; background: var(--bt-surface-2); box-shadow: inset 0 0 0 2px var(--bt-line); }
+.badge-featured { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bt-2); }
+.badge-featured__item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: var(--bt-3) var(--bt-2); border-radius: var(--bt-radius-md); background: var(--bt-surface); border: 1px solid var(--bt-line); text-align: center; }
+.badge-featured__name { font-weight: 800; font-size: var(--bt-text-sm); line-height: 1.2; }
+.badge-featured__context { font-size: var(--bt-text-xs); color: var(--bt-ink-3); line-height: 1.2; }
+.badge-featured__empty { display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-3); border: 1px dashed var(--bt-line); border-radius: var(--bt-radius-md); color: var(--bt-ink-2); font-size: var(--bt-text-sm); font-weight: 600; text-decoration: none; }
+.badge-featured__empty svg { width: 20px; height: 20px; flex-shrink: 0; }
+.badge-featured__empty span { flex: 1; }
+.badge-list { list-style: none; margin: 0; padding: 0; }
+.badge-list > li + li { border-top: 1px solid var(--bt-line); }
+.badge-row { display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-3) 0; }
+.badge-row__text { flex: 1; min-width: 0; }
+.badge-row__name { margin: 0; font-weight: 800; }
+.badge-row__desc { margin: 2px 0 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.badge-row__meta { margin: 4px 0 0; font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
+.badge-pin { color: var(--bt-ink-3); }
+.badge-pin.is-on { color: var(--bt-orange-ink); }

@@ -42,8 +42,9 @@ export function AppShell() {
   // A gym's, a person's and a boulder's page carry their own compact header (back and actions): no logo bar on top.
   const gymPage = useMatch("/gyms/:slug");
   const personPage = useMatch("/users/:id");
+  const badgesPage = useMatch("/users/:id/badges");
   const boulderPage = useMatch("/boulders/:id");
-  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage) || Boolean(boulderPage);
+  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage) || Boolean(boulderPage) || Boolean(badgesPage);
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
   const onLegalPage = ["/privacy", "/termini", "/terms", "/delete-account"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;
