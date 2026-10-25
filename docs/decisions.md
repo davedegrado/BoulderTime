@@ -1362,3 +1362,23 @@ progress (`viewer`) as it was, null. From 1.1 the app shows both, as the owner a
 "Tried" (the old meaning). Home has a row for the projects, "Keep trying" for the rest, and once an invitation, for those
 with boulders tried and not marked, to choose some (closing it is for good on that device; it may be removed before the
 release).
+
+## ADR-068 · How a boulder's card picture is made
+
+Staff choose how the cards show a boulder's photo, under "Card picture" in the editor:
+- **Fill** (the default, as cards always were): the photo covers the 5:4 card and the edges that don't fit are left out,
+  keeping its **top**, **centre** or **bottom** — three small buttons, for tall photos where the boulder starts high or
+  low on the wall. Sideways it is always centred.
+- **Fit**: the whole photo, centred; the room left over is the same photo covering the card, blurred and darkened (the
+  canvas blur filter where the device has it; elsewhere — older iPhones — drawn small and stretched back in steps).
+- **Custom**: the part chosen by hand, as before.
+
+The app makes the picture itself, a 480×384 JPEG, and uploads it as before: every card, in every version of the app,
+shows exactly that picture. Whenever the photo changes (a new one, a highlight, the sector's wall) the picture is made
+again the way the last one was; a part chosen by hand doesn't fit another photo, so it becomes Fill from the centre.
+
+So that the editor can show the choice again, the boulder keeps it: `boulders.thumbnail_mode` (nullable column, additive
+migration), `thumbnailMode` in the save request (optional) and on the boulder for its gym's staff only. It follows the
+picture: a new picture takes the choice sent with it, and keeps none when none was sent — what the 1.0 editor does, so a
+picture it makes is "not known" rather than wrongly described; saving without a new picture keeps both as they are. An
+unknown choice is refused. The server never makes or changes a picture from it.

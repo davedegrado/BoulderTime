@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
@@ -9,6 +9,11 @@ type Handler = (body?: unknown) => unknown;
 const routes = new Map<string, Handler>();
 const calls: { method: string; path: string; body?: unknown }[] = [];
 const reply = (method: string, path: string, value: unknown) => routes.set(`${method} ${path}`, typeof value === "function" ? (value as Handler) : () => value);
+// jsdom has no canvas nor object URLs: the card picture is a stand-in, made as the real one would be asked to.
+if (!URL.createObjectURL) Object.assign(URL, { createObjectURL: () => "blob:card", revokeObjectURL: () => {} });
+const cardPicture = vi.fn(async (_source: Blob, mode: string) => new Blob([`card:${mode}`], { type: "image/jpeg" }));
+vi.mock("@/features/boulders/imageResize", async (original) => ({ ...(await original<object>()), cardPicture: (s: Blob, m: string) => cardPicture(s, m) }));
+
 vi.mock("@/lib/api", () => {
   const call = (method: string) => async (path: string, bodyOrOpts?: unknown) => {
     const body = method === "GET" || method === "DELETE" ? undefined : bodyOrOpts;
@@ -111,8 +116,10 @@ describe("Setting a boulder on its sector's wall photo", () => {
 
     expect(await screen.findByRole("button", { name: "Edit the highlighted holds" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start again from a photo" })).toBeInTheDocument();
-    // A cut-out card picture can go back to the whole photo.
-    expect(screen.getByRole("button", { name: "Use the whole photo" })).toBeInTheDocument();
+    // The card picture's choices are there; how this one was made isn't known (an older server, or an older app).
+    const modes = screen.getByRole("radiogroup", { name: "Card picture" });
+    expect(within(modes).getAllByRole("radio").map((b) => b.textContent)).toEqual(["Fill", "Fit", "Custom crop"]);
+    expect(within(modes).getAllByRole("radio").every((b) => b.getAttribute("aria-checked") === "false")).toBe(true);
 
     // Only the name changes: the photo and its highlight stay as they are (nothing sent replaces them).
     await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "La Fessura");
@@ -121,6 +128,8 @@ describe("Setting a boulder on its sector's wall photo", () => {
     const sent = calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")!.body as Record<string, unknown>;
     expect(sent.photoPath).toBe("gyms/g1/boulders/b1.jpg");
     expect(sent).not.toHaveProperty("highlight");
+    // No new card picture, so nothing said about how one was made.
+    expect(sent).not.toHaveProperty("thumbnailMode");
   });
 
   it("highlights a boulder of a sector without a wall photo on its own photo, never on another sector's wall", async () => {
@@ -150,6 +159,48 @@ describe("Setting a boulder on its sector's wall photo", () => {
     expect(screen.queryByRole("button", { name: "Highlight the holds" })).not.toBeInTheDocument();
   });
 
+  it("shows how a saved card picture was made, and makes a new one with the choice picked, saying which", async () => {
+    setup();
+    reply("GET", "/api/boulders/b1", {
+      id: "b1", gymId: "g1", gymName: "Crimp Factory", gymSlug: "crimp", sectorId: "s1", sectorName: "Cave", photoUrl: "/img/b1.jpg", photoPath: "gyms/g1/boulders/b1.jpg",
+      thumbnailUrl: "/img/b1.thumb.jpg", holdColor: "BLUE", grades: [], setter: null, status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null,
+      viewerRole: "STAFF", rating: { average: null, count: 0 }, viewer: null, isFollowing: false, communityVideosEnabled: false, canAddOfficialBeta: true,
+      thumbnailMode: "FIT",
+    });
+    reply("GET", "/api/boulders/b1/beta", null);
+    reply("GET", "/api/settings/videos", { uploadsEnabled: true, maxUploadMegabytes: 50 });
+    reply("BLOB", "/api/boulders/b1/photo", new Blob(["photo"], { type: "image/jpeg" }));
+    reply("POST", "/api/gyms/g1/boulder-photos", { ...ticket, path: "gyms/g1/boulders/new.thumb.jpg" });
+    reply("PUT", "/api/boulders/b1", (body?: unknown) => body);
+    renderAt("/manage/crimp/boulders/b1/edit", "/manage/:slug", <ManageLayout />, <Route path="boulders/:boulderId/edit" element={<BoulderEditorPage />} />);
+
+    expect(await screen.findByRole("radio", { name: /Fit/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("radiogroup", { name: "Part of the photo to keep" })).not.toBeInTheDocument();
+
+    // Fill starts from the centre, then keeps the top.
+    await userEvent.click(screen.getByRole("radio", { name: /Fill/ }));
+    await waitFor(() => expect(cardPicture).toHaveBeenLastCalledWith(expect.any(Blob), "FILL_CENTER"));
+    await userEvent.click(screen.getByRole("radio", { name: "Top" }));
+    await waitFor(() => expect(cardPicture).toHaveBeenLastCalledWith(expect.any(Blob), "FILL_TOP"));
+    expect(screen.getByRole("radio", { name: "Top" })).toHaveAttribute("aria-checked", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")).toBeDefined());
+    const sent = calls.find((c) => c.method === "PUT" && c.path === "/api/boulders/b1")!.body as Record<string, unknown>;
+    expect(sent.thumbnailPath).toBe("gyms/g1/boulders/new.thumb.jpg");
+    expect(sent.thumbnailMode).toBe("FILL_TOP");
+  });
+
+  it("opens the cropper for a part chosen by hand", async () => {
+    setup();
+    renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    reply("BLOB", "/api/sectors/s1/photo", new Blob(["wall"], { type: "image/jpeg" }));
+    await userEvent.selectOptions(await screen.findByRole("combobox", { name: "Sector *" }), "s1");
+    await userEvent.click(screen.getByRole("button", { name: "Use the photo of Cave" }));
+    await userEvent.click(await screen.findByRole("radio", { name: /Custom crop/ }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it("offers the wall once the sector is chosen, leaves the card picture optional, and saves the wall's path with a small picture of it", async () => {
     setup();
     reply("BLOB", "/api/sectors/s1/photo", new Blob(["wall"], { type: "image/jpeg" }));
@@ -161,9 +212,10 @@ describe("Setting a boulder on its sector's wall photo", () => {
     await userEvent.selectOptions(sectorSelect, "s1");
     await userEvent.click(screen.getByRole("button", { name: "Use the photo of Cave" }));
 
-    // The card picture is optional: nothing opens by itself, and the cards will show the whole photo.
+    // The card picture is made by itself, filling the card from the centre: nothing opens.
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByText(/without it the cards show the whole photo/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Fill/ })).toHaveAttribute("aria-checked", "true"));
+    expect(screen.getByRole("radio", { name: "Centre" })).toHaveAttribute("aria-checked", "true");
     // Already set on it: nothing more to offer.
     expect(screen.queryByRole("button", { name: "Use the photo of Cave" })).not.toBeInTheDocument();
 
@@ -171,7 +223,9 @@ describe("Setting a boulder on its sector's wall photo", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add boulder" }));
 
     await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")).toBeDefined());
-    const saved = calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")!.body as { photoPath: string; thumbnailPath: string | null };
+    const saved = calls.find((c) => c.method === "POST" && c.path === "/api/gyms/g1/boulders")!.body as { photoPath: string; thumbnailPath: string | null; thumbnailMode?: string };
+    expect(saved.thumbnailMode).toBe("FILL_CENTER");
+    expect(cardPicture).toHaveBeenLastCalledWith(expect.any(Blob), "FILL_CENTER");
     expect(saved.photoPath).toBe(wallPath);
     // A small picture of the whole wall for the lists, not the 1600 px photo; no photo of its own uploaded.
     expect(saved.thumbnailPath).toBe("gyms/g1/boulders/whole.thumb.jpg");

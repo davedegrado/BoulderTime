@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useGoBack } from "@/lib/navigation";
-import { ArrowLeft, Camera, Check, Crop, Expand, ImagePlus, Mountain, Plus, RotateCcw, Save, Trash2, Wand2 } from "lucide-react";
+import { AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ArrowLeft, Camera, Check, Crop, ImagePlus, Maximize, Minimize, Mountain, Plus, RotateCcw, Save, Trash2, Wand2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
 import { useSectors } from "@/features/gyms/api";
 import { fetchSectorPhoto } from "@/features/gyms/sectorPhoto";
@@ -22,7 +22,7 @@ import { MediaInput, type MediaInputHandle } from "@/components/MediaInput";
 import { BetaEditor } from "@/features/community/BetaEditor";
 import { ThumbnailCropper } from "@/features/boulders/ThumbnailCropper";
 import { HoldHighlighter, readHighlightSettings, type HighlightResult, type HighlightResume, type HighlightSource } from "@/features/boulders/HoldHighlighter";
-import { CARD_PICTURE, cropImage, type CropRect } from "@/features/boulders/imageResize";
+import { CARD_PICTURE, cardPicture, cropImage, type CropRect, type ThumbnailMode } from "@/features/boulders/imageResize";
 import { INTENSITIES, IntensityBars, intensityShort, type Intensity } from "@/features/boulders/intensity";
 import { useCreateTag, useGymTags } from "@/features/boulders/tags";
 
@@ -75,9 +75,13 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const [pointsText, setPointsText] = useState(initial?.pointsOverride != null ? String(initial.pointsOverride) : "");
   const [stage, setStage] = useState<Stage>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // The part of the photo the cards show, when staff chose one; otherwise the cards show the whole photo.
-  // `whole`: the whole photo, chosen again after a part had been cut out.
-  const [thumb, setThumb] = useState<{ blob: Blob; url: string; whole?: boolean } | null>(null);
+  // The card picture made here, to upload with the boulder (ADR-068): made with `cardMode`, again whenever the photo
+  // changes. None: the boulder keeps the one it has.
+  const [thumb, setThumb] = useState<{ blob: Blob; url: string } | null>(null);
+  // How the card picture is made. A saved boulder shows how its picture was made, when the server knows; a new one
+  // starts filled from the centre, as the cards always showed a photo.
+  const [cardMode, setCardMode] = useState<ThumbnailMode | null>(initial ? initial.thumbnailMode ?? null : "FILL_CENTER");
+  const [makingCard, setMakingCard] = useState(false);
   const [cropping, setCropping] = useState(false);
   // The sector's wall photo, when staff set the boulder on it instead of uploading a photo of its own.
   const [wall, setWall] = useState<{ sectorId: string; path: string } | null>(null);
@@ -161,8 +165,33 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     setFile(f);
     setWall(null);
     setPreview(URL.createObjectURL(f));
-    setThumb(null); // a new photo starts again from the whole picture
+    setThumb(null);
+    // A new photo gets its card picture made the way the last one was; a part chosen by hand doesn't fit another photo.
+    void makeCard(keptMode(), f);
     setErrors((e) => ({ ...e, photoPath: "" }));
+  }
+
+  /** The choice to make a new photo's card picture with: the last one, unless it was a part chosen by hand. */
+  const keptMode = (): Exclude<ThumbnailMode, "CUSTOM"> => (cardMode && cardMode !== "CUSTOM" ? cardMode : "FILL_CENTER");
+
+  /** The photo the card picture is made from: the one just picked, the wall chosen, or the saved one. */
+  const cardSource = (): Promise<Blob> =>
+    file ? Promise.resolve(file) : wall ? fetchSectorPhoto(wall.sectorId) : fetchBoulderPhoto(initial!.id);
+
+  /** Makes the card picture with one of the ready choices, from this photo (or the current one). */
+  async function makeCard(mode: Exclude<ThumbnailMode, "CUSTOM">, source?: Blob | Promise<Blob>) {
+    setCardMode(mode);
+    setMakingCard(true);
+    try {
+      const blob = await cardPicture(await (source ?? cardSource()), mode);
+      setThumb({ blob, url: URL.createObjectURL(blob) });
+    } catch (err) {
+      setThumb(null);
+      const reason = err instanceof Error && err.message ? ` (${err.message})` : "";
+      toast.error(t("Couldn't prepare the card picture. Try again.") + reason);
+    } finally {
+      setMakingCard(false);
+    }
   }
 
   /** Sets the boulder on its sector's wall photo, and goes straight to choosing its part for the cards. */
@@ -172,29 +201,18 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
     setWall({ sectorId: wallOffer.id, path: wallOffer.photoPath! });
     setPreview(wallOffer.imageUrl);
     setThumb(null);
+    void makeCard(keptMode(), fetchSectorPhoto(wallOffer.id));
     setPendingHighlight(null);
     setErrors((e) => ({ ...e, photoPath: "" }));
-  }
-
-  /** The cards show the whole photo again, after a part had been chosen. */
-  async function chooseWholePhoto() {
-    try {
-      const source = file ?? (wall ? await fetchSectorPhoto(wall.sectorId) : await fetchBoulderPhoto(initial!.id));
-      const blob = await wholeThumbnail(source);
-      setThumb({ blob, url: URL.createObjectURL(blob), whole: true });
-    } catch (err) {
-      const reason = err instanceof Error && err.message ? ` (${err.message})` : "";
-      toast.error(t("Couldn't prepare the card picture. Try again.") + reason);
-    }
   }
 
   async function applyCrop(rect: CropRect) {
     setCropping(false);
     try {
       // The photo just picked, the wall chosen, or the saved one, fetched again to cut the part out on this device.
-      const source = file ?? (wall ? await fetchSectorPhoto(wall.sectorId) : await fetchBoulderPhoto(initial!.id));
-      const blob = await cropImage(source, rect, CARD_PICTURE);
+      const blob = await cropImage(await cardSource(), rect, CARD_PICTURE);
       setThumb({ blob, url: URL.createObjectURL(blob) });
+      setCardMode("CUSTOM");
     } catch (err) {
       // The reason travels along: this is a staff tool, and "why" is what they'll be asked when they report it.
       const reason = err instanceof Error && err.message ? ` (${err.message})` : "";
@@ -237,6 +255,8 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
         grades: Object.entries(grades).filter(([, v]) => v).map(([gradeSystemId, gradeValueId]) => ({ gradeSystemId, gradeValueId })),
         intensity, tagIds, name: name.trim(), points: points ?? 0,
         ...(highlight ? { highlight } : {}),
+        // Said only with a picture made here: one made otherwise (the fallbacks above) has no known choice.
+        ...(thumb && cardMode ? { thumbnailMode: cardMode } : {}),
       };
       if (initial) {
         await update.mutateAsync(input);
@@ -320,23 +340,37 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           onCancel={() => setHighlighting(false)} onDone={applyHighlighted} />
       )}
 
-      {/* Card picture: which part of the photo the boulder's cards show */}
+      {/* Card picture: how the boulder's cards show its photo (ADR-068) */}
       {preview && (
         <section className="editor__section" aria-labelledby="thumb-label">
           <p id="thumb-label" className="field__label">{t("Card picture")}</p>
           <div className="thumb-choice">
-            <div className="thumb-choice__preview">
+            <div className="thumb-choice__preview" aria-busy={makingCard || undefined}>
               <img src={thumb?.url ?? (file || wall ? preview : initial?.thumbnailUrl ?? preview)} alt={t("What the cards show")} />
             </div>
             <div className="thumb-choice__text">
-              <p className="field__hint">{thumb?.whole ? t("The whole photo. It is saved with the boulder.")
-                : thumb ? t("The part you chose. It is saved with the boulder.")
-                : t("Optional: without it the cards show the whole photo. Choose a part if the boulder doesn't stand out.")}</p>
-              <Button type="button" variant="secondary" icon={<Crop aria-hidden />} onClick={() => setCropping(true)}>{t("Choose the part")}</Button>
-              {/* Back to the whole photo after a part was chosen (now, or when the boulder was saved). */}
-              {((thumb && !thumb.whole) || (!thumb && initial && !file && !wall)) && (
-                <Button type="button" variant="ghost" icon={<Expand aria-hidden />} onClick={chooseWholePhoto}>{t("Use the whole photo")}</Button>
+              <div className="thumb-modes" role="radiogroup" aria-label={t("Card picture")}>
+                {([["FILL", t("Fill"), <Maximize key="i" aria-hidden />], ["FIT", t("Fit"), <Minimize key="i" aria-hidden />], ["CUSTOM", t("Custom crop"), <Crop key="i" aria-hidden />]] as const).map(([key, label, icon]) => {
+                  const on = key === "FILL" ? cardMode?.startsWith("FILL") : cardMode === key;
+                  return (
+                    <button key={key} type="button" role="radio" aria-checked={Boolean(on)} className="thumb-mode" disabled={makingCard}
+                      onClick={() => key === "CUSTOM" ? setCropping(true) : void makeCard(key === "FIT" ? "FIT" : cardMode?.startsWith("FILL") ? cardMode as Exclude<ThumbnailMode, "CUSTOM"> : "FILL_CENTER")}>
+                      {icon}<span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {cardMode?.startsWith("FILL") && (
+                <div className="thumb-anchors" role="radiogroup" aria-label={t("Part of the photo to keep")}>
+                  {([["FILL_TOP", t("Top"), <AlignVerticalJustifyStart key="i" aria-hidden />], ["FILL_CENTER", t("Centre"), <AlignVerticalJustifyCenter key="i" aria-hidden />], ["FILL_BOTTOM", t("Bottom"), <AlignVerticalJustifyEnd key="i" aria-hidden />]] as const).map(([mode, label, icon]) => (
+                    <button key={mode} type="button" role="radio" aria-checked={cardMode === mode} className="thumb-anchor" disabled={makingCard}
+                      aria-label={label} title={label} onClick={() => void makeCard(mode)}>
+                      {icon}
+                    </button>
+                  ))}
+                </div>
               )}
+              <p className="field__hint">{cardModeHint(cardMode)}</p>
             </div>
           </div>
         </section>
@@ -434,7 +468,7 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       )}
 
       <div className="editor__submit">
-        <Button type="submit" block icon={<Save aria-hidden />} loading={busy}>{busy ? busyLabel : initial ? t("Save changes") : t("Add boulder")}</Button>
+        <Button type="submit" block icon={<Save aria-hidden />} loading={busy} disabled={makingCard}>{busy ? busyLabel : initial ? t("Save changes") : t("Add boulder")}</Button>
       </div>
 
       {/* Removing one boulder is a correction, so it is silent. A whole sector coming down is a retrace: that is
@@ -504,4 +538,14 @@ function TagPicker({ gymId, gymSlug, selected, onChange, error }: { gymId: strin
       {error && <p className="field__error">{error}</p>}
     </fieldset>
   );
+}
+
+/** What the chosen way of making the card picture does, in a line. */
+function cardModeHint(mode: ThumbnailMode | null): string {
+  switch (mode) {
+    case "FILL_CENTER": case "FILL_TOP": case "FILL_BOTTOM": return t("The photo fills the card; the edges that don't fit are left out.");
+    case "FIT": return t("The whole photo, on the same photo blurred.");
+    case "CUSTOM": return t("The part you chose.");
+    default: return t("Choose how the cards show the photo.");
+  }
 }

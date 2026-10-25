@@ -5,6 +5,7 @@ import type { PagedResult } from "@/lib/paging";
 import type { GymRole } from "@/lib/format";
 import type { GradeSystemType } from "@/features/grading/api";
 import type { HoldColor } from "@/features/boulders/holdColors";
+import type { ThumbnailMode } from "@/features/boulders/imageResize";
 import { HIGHLIGHT_SOURCE, WHOLE_CARD_PICTURE, prepareBoulderPhoto, prepareImage } from "@/features/boulders/imageResize";
 import { t } from "@/i18n/i18n";
 import type { Intensity } from "@/features/boulders/intensity";
@@ -57,6 +58,8 @@ export interface BoulderDetail extends BoulderSummary {
   pointsOverride?: number | null;
   /** What its highlighted photo was made from, so staff go on from where they left it; only staff receive it. */
   highlight?: BoulderHighlight | null;
+  /** How its card picture was made (ADR-068); only staff receive it, null when not known. */
+  thumbnailMode?: ThumbnailMode | null;
 }
 
 /** "Highlight the holds" as it was saved: the original photo, the mask PNG, and the choices as JSON. */
@@ -83,6 +86,8 @@ export interface SaveBoulderInput {
   tagIds: string[];
   /** Empty string removes the name. */
   name: string;
+  /** How the card picture sent with it was made; only with a new card picture (ADR-068). */
+  thumbnailMode?: ThumbnailMode;
   /** Points set by hand; 0 goes back to the grade's. */
   points: number;
   /** Sent with a highlighted photo; left out keeps what the boulder has while its photo stays the same. */

@@ -1791,3 +1791,20 @@ button.manage-head__back { background: transparent; }
 .boulder-page__holds { max-width: calc(100% - 150px); }
 .boulder-page__holds .holds { min-width: 0; }
 .boulder-page__holds .holds__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Card picture choices (ADR-068) ---------- */
+.thumb-choice { align-items: flex-start; }
+.thumb-choice__preview[aria-busy] img { opacity: 0.5; }
+.thumb-modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.thumb-mode {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--bt-3);
+  border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); color: var(--bt-ink-2);
+  font: inherit; font-weight: 700; font-size: var(--bt-text-sm); cursor: pointer;
+}
+.thumb-mode svg { width: 16px; height: 16px; }
+.thumb-mode[aria-checked="true"] { border-color: var(--bt-ink); color: var(--bt-ink); box-shadow: 0 0 0 1px var(--bt-ink); }
+.thumb-anchors { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); }
+.thumb-anchor { display: grid; place-items: center; width: 40px; height: 36px; border: 0; border-radius: var(--bt-radius-pill); background: none; color: var(--bt-ink-2); cursor: pointer; }
+.thumb-anchor svg { width: 18px; height: 18px; }
+.thumb-anchor[aria-checked="true"] { background: var(--bt-surface); color: var(--bt-ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+.thumb-mode:disabled, .thumb-anchor:disabled { opacity: 0.5; cursor: default; }
