@@ -84,11 +84,17 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock, IPushQ
             collapseKey: $"boulder-updated:{boulder.Id}", ct);
     }
 
-    /// <summary>Followers of the boulder, plus climbers who are projecting it (tried, not sent) — beta matters most to them.</summary>
+    /// <summary>
+    /// Followers of the boulder, plus climbers who are projecting it — tried and not sent, or marked as a project and not
+    /// sent (ADR-067) — beta matters most to them.
+    /// </summary>
     public async Task OfficialBetaAsync(Boulder boulder, Gym gym, string sectorName, Guid actorId, CancellationToken ct)
     {
         var audience = await BoulderFollowersAsync(boulder.Id, ct);
         audience.AddRange(await db.BoulderAttempts.Where(a => a.BoulderId == boulder.Id && !a.Completed && a.Attempts > 0).Select(a => a.UserId).ToListAsync(ct));
+        audience.AddRange(await db.BoulderProjects.Where(p => p.BoulderId == boulder.Id
+                && !db.BoulderAttempts.Any(a => a.BoulderId == boulder.Id && a.UserId == p.UserId && a.Completed))
+            .Select(p => p.UserId).ToListAsync(ct));
         await PublishAsync(audience, actorId, NotificationType.OfficialBeta,
             lang => NotificationTexts.OfficialBeta(lang, gym.Name, sectorName),
             RelatedEntityType.Boulder, boulder.Id, gym.Id, $"/boulders/{boulder.Id}",

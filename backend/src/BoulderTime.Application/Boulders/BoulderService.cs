@@ -73,6 +73,9 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             {
                 ProgressFilter.Completed => query.Where(b => db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid && a.Completed)),
                 ProgressFilter.Projects => query.Where(b => db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid && !a.Completed && a.Attempts > 0)),
+                // Chosen by the climber and not completed yet: a completed project is among the sends.
+                ProgressFilter.Marked => query.Where(b => db.BoulderProjects.Any(p => p.BoulderId == b.Id && p.UserId == uid)
+                                                          && !db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid && a.Completed)),
                 _ => query.Where(b => !db.BoulderAttempts.Any(a => a.BoulderId == b.Id && a.UserId == uid)),
             };
         }
@@ -176,6 +179,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var tags = (await reader.TagsAsync([b.Id], ct)).GetValueOrDefault(b.Id, []);
         var completions = (await reader.CompletionsAsync([b.Id], ct)).GetValueOrDefault(b.Id);
         var viewer = (await reader.ViewerAsync([b.Id], currentUser.UserId, ct)).GetValueOrDefault(b.Id);
+        var isProject = (await reader.ProjectsAsync([b.Id], currentUser.UserId, ct)).Contains(b.Id);
         var scales = new Dictionary<Guid, Leaderboards.GymScales> { [gym.Id] = await points.ForGymAsync(gym.Id, ct) };
         var following = currentUser.UserId is { } uid && await db.BoulderFollows.AnyAsync(f => f.BoulderId == b.Id && f.UserId == uid, ct);
         PersonDto? setter = null;
@@ -189,7 +193,8 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             b.ThumbnailPath is null ? null : storage.PublicUrl(StorageBuckets.BoulderImages, b.ThumbnailPath),
             b.Intensity, tags, completions,
             b.Name, BoulderReader.PointsOf(scales, b, grades), role is null ? null : b.PointsOverride,
-            role is null || b.HighlightMaskPath is null ? null : new BoulderHighlightDto(b.HighlightSourcePath, b.HighlightMaskPath, b.HighlightSettings));
+            role is null || b.HighlightMaskPath is null ? null : new BoulderHighlightDto(b.HighlightSourcePath, b.HighlightMaskPath, b.HighlightSettings),
+            isProject);
     }
 
     /// <summary>

@@ -33,7 +33,9 @@ public sealed record BoulderSummaryDto(
     /// <summary>What completing it scores on the gym's leaderboard; null when it scores nothing (ungraded).</summary>
     int? Points = null,
     /// <summary>The gym's logo, for lists that mix gyms (Home); null when the gym has none.</summary>
-    string? GymLogoUrl = null);
+    string? GymLogoUrl = null,
+    /// <summary>The viewer marked it as a project (ADR-067). Added later: older apps don't read it.</summary>
+    bool IsProject = false);
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
@@ -64,7 +66,9 @@ public sealed record BoulderDetailDto(
     /// <summary>The points staff set on this boulder by hand, shown to its gym's staff only; null when it follows its grade.</summary>
     int? PointsOverride = null,
     /// <summary>What its highlighted photo was made from, for its gym's staff to go on editing; null otherwise.</summary>
-    BoulderHighlightDto? Highlight = null);
+    BoulderHighlightDto? Highlight = null,
+    /// <summary>The viewer marked it as a project (ADR-067). Added later: older apps don't read it.</summary>
+    bool IsProject = false);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
@@ -89,7 +93,11 @@ public sealed record SaveBoulderRequest(
 public sealed record BoulderHighlightDto(string? SourcePath, string? MaskPath, string? Settings);
 
 /// <summary>Filters by the viewer's own progress. Ignored for anonymous requests.</summary>
-public enum ProgressFilter { All, Untried, Projects, Completed }
+/// <remarks>
+/// <see cref="Projects"/> keeps its first meaning, tried and not completed, for the apps already installed; from 1.1 the
+/// app calls it "tried". <see cref="Marked"/> is the projects the climber chose, not yet completed (ADR-067).
+/// </remarks>
+public enum ProgressFilter { All, Untried, Projects, Completed, Marked }
 
 /// <param name="TagIds">Boulders carrying ALL of these tags (each one narrows, like every other filter).</param>
 /// <param name="Intensities">Boulders with ANY of these intensities; boulders without one are left out.</param>

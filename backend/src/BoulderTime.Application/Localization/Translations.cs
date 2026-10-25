@@ -112,6 +112,7 @@ public static partial class Translations
         ("Add a photo of the boulder.", "Aggiungi una foto del blocco."),
         ("Choose the hold colour.", "Scegli il colore delle prese."),
         ("Unknown hold colour.", "Colore delle prese sconosciuto."),
+        ("This boulder is no longer on the wall: it can't become a project.", "Questo blocco non è più sulla parete: non può diventare un progetto."),
         ("Choose a known intensity.", "Scegli un'intensità valida."),
         ("Use this gym's tags.", "Usa i tag di questa palestra."),
         ("Pick at most {0} tags.", "Scegli al massimo {0} tag."),
