@@ -74,10 +74,21 @@ public class Gym : IAuditable
     /// </summary>
     public string? OpeningHours { get; private set; }
     public GymStatus Status { get; private set; } = GymStatus.Draft;
+    /// <summary>
+    /// When the gym launched BoulderTime for real, at the end of its beta test (ADR-069): its leaderboards hand out
+    /// titles from then on. Null while it hasn't.
+    /// </summary>
+    public DateTimeOffset? LaunchedAt { get; private set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
     private Gym() { }
+
+    /// <summary>The first launch counts: running the beta test again later doesn't move it.</summary>
+    public void Launch(DateTimeOffset now) => LaunchedAt ??= now;
+
+    /// <summary>The beta test undone as a mistake: the gym hasn't launched after all.</summary>
+    public void Unlaunch() => LaunchedAt = null;
 
     public static Gym Create(string name, string slug, string city)
     {

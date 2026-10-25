@@ -69,7 +69,7 @@ public static class IntensityConsensus
     }
 }
 
-public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser)
+public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess boulders, ICurrentUser currentUser, IBadgeQueue badges, IClock clock)
 {
     public async Task<GradeConsensusDto> GetAsync(Guid boulderId, CancellationToken ct = default)
     {
@@ -118,6 +118,7 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
         else existing.Change(intensity);
         try { await db.SaveChangesAsync(ct); }
         catch (UniqueConstraintViolationException) { throw new ConflictException("You already suggested an intensity for this boulder.", "suggestion_exists"); }
+        badges.Enqueue(userId, clock.UtcNow);
         return await GetAsync(boulderId, ct);
     }
 
@@ -161,6 +162,7 @@ public sealed class GradeSuggestionService(IAppDbContext db, BoulderAccess bould
         else existing.Change(r.GradeValueId!.Value);
         try { await db.SaveChangesAsync(ct); }
         catch (UniqueConstraintViolationException) { throw new ConflictException("You already suggested a grade in this system.", "suggestion_exists"); }
+        badges.Enqueue(userId, clock.UtcNow);
         return await GetAsync(boulderId, ct);
     }
 

@@ -183,6 +183,11 @@ svg { flex-shrink: 0; }
 .toast--error svg { color: #ff8a80; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 @media (min-width: 960px) { .toasts { left: auto; right: var(--bt-6); bottom: var(--bt-6); width: 360px; } }
+.badge-notice { position: fixed; z-index: 45; left: var(--bt-4); right: var(--bt-4); bottom: calc(var(--bt-tabbar-h) + var(--bt-safe-bottom) + var(--bt-3)); display: flex; align-items: center; gap: var(--bt-2); padding: var(--bt-2) var(--bt-2) var(--bt-2) var(--bt-3); border-radius: var(--bt-radius-md); background: var(--bt-surface); border: 1px solid var(--bt-line); box-shadow: var(--bt-shadow-raised); animation: toast-in 180ms ease-out; }
+.badge-notice__link { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--bt-3); color: inherit; text-decoration: none; }
+.badge-notice__text { display: flex; flex-direction: column; min-width: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.badge-notice__text strong { color: var(--bt-ink); font-size: var(--bt-text-base); }
+@media (min-width: 960px) { .badge-notice { left: auto; right: var(--bt-6); bottom: var(--bt-6); width: 360px; } }
 
 /* =====================================================================
    Phase 2 — gyms, staff area, admin

@@ -14,6 +14,7 @@ import { plural, t } from "@/i18n/i18n";
 import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
 import { SuspendedPage } from "@/pages/SuspendedPage";
 import { PushPrompt } from "@/features/notifications/PushPrompt";
+import { NewBadgeNotice } from "@/features/badges/NewBadgeNotice";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
 
@@ -107,6 +108,7 @@ export function AppShell() {
       </header>
 
       {session && <PushPrompt />}
+      {session && me.data && <NewBadgeNotice userId={me.data.id} />}
       <RouteAnnouncer />
       <OfflineBanner />
       <main id="main" className="main" tabIndex={-1}>

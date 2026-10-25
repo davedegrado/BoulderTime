@@ -1,3 +1,4 @@
+using BoulderTime.Domain.Badges;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Climbing;
@@ -58,6 +59,9 @@ public interface IAppDbContext
     DbSet<Friendship> Friendships { get; }
     DbSet<UserReport> UserReports { get; }
     DbSet<SuspendedEmail> SuspendedEmails { get; }
+    DbSet<BadgeAward> BadgeAwards { get; }
+    DbSet<ActivityDay> ActivityDays { get; }
+    DbSet<CompetitionPeriod> CompetitionPeriods { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

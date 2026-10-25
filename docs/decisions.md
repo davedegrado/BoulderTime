@@ -1382,3 +1382,53 @@ migration), `thumbnailMode` in the save request (optional) and on the boulder fo
 picture: a new picture takes the choice sent with it, and keeps none when none was sent — what the 1.0 editor does, so a
 picture it makes is "not known" rather than wrongly described; saving without a new picture keeps both as they are. An
 unknown choice is refused. The server never makes or changes a picture from it.
+
+## ADR-069 · Badges
+
+People earn badges for what they record; the profile shows up to three of them, and a page lists them all by category.
+
+**Catalog.** In code (`BadgeCatalog`), one line per badge: a stable id (`PROGRESSION_COMPLETIONS_10`, never renamed),
+category, rule, threshold, picture key, Italian and English name and description, and whether it is live. The app gets
+names in the request's language and shows the picture `public/badges/<key>.png`; replacing that file changes the
+picture everywhere and nothing else. A key without a file shows the generic picture. Community badges (first comment;
+10, 50, 100 grade votes) are described but off: nobody earns or sees them until they are switched on with pictures.
+
+**Rules.**
+- Progression: 1, 10, 50, 100, 500 boulders completed, anywhere, ever.
+- Consistency: 3, 10, 30, 100 distinct days of activity. A day is an Italian calendar day (Europe/Rome) on which the
+  person recorded an attempt or a send, rated, voted a grade or an intensity, or marked a project; kept in
+  `activity_days`. Clearing what was recorded is not activity.
+- Experience: 10, 50, 100 attempts in all; "Progetto chiuso": a boulder completed after it was marked as a project.
+- Exploration: 1, 3, 5, 10 gyms with at least one boulder completed (the rule of ADR-064).
+- Competition: champion of a gym's month and year on the points leaderboard; Doppietta and Dominatore for 2 and 3 month
+  titles at the same gym, Leggenda della palestra for 2 year titles there. A tie at the top makes everyone at the top a
+  champion, as the leaderboard shows them; nobody with no points. Only for gyms that launched (below), only for what was
+  climbed from the launch on. A period is settled once, the hour after it closes, with the leaderboard's rules and the
+  points as they are then (`competition_periods`); the titles stay whatever changes later.
+- Beta Tester: closing a gym's trial period (ADR-056) is its launch — the first run sets
+  `gyms.launched_at` — and gives the badge to whoever recorded an attempt or a send on any of its boulders, on the wall
+  or not. Running it again adds whoever climbed since; undoing it takes the launch back, not the badges.
+- Founder: given by hand from the server only, `grant-badge SPECIAL_FOUNDER <email>`, to exactly one active account the
+  address names; nothing in the app can give a badge.
+
+**Kept.** `badge_awards`: one row per person, badge and scope (empty for the badges earned once; gym and period for
+titles), unique, so nothing is earned twice. Badges are never taken back. They go with the account when it is erased.
+
+**Awarding.** Away from the requests: saving a send queues the person, and a background worker records the day and
+awards what the counts reached; a failure there is logged and never touches the send. A phone notification per new
+badge, only to apps 1.1 and later, opening the profile, never to people who turned off notifications about their own
+things, and only with `Badges__PushEnabled=true` — off by default, because a browser doesn't say which app version it
+runs. The 1.1 app also shows new badges once, in a quiet card above the tab bar (`/api/users/me/badges/new`, then
+`/seen`). Nothing goes in the notifications list, whose 1.0 version can't show a new kind.
+
+**The past.** `backfill-badges` (a dry run; `--apply` to save) rebuilds active days from the dates already recorded —
+attempt rows created, changed and completed, projects marked, ratings and votes — real days, fewer than there were,
+never more; then awards every count badge reached, dated where the data says when, without notifications. Safe to run
+again. No titles are rebuilt: there is no launch before badges.
+
+**Privacy and the foreground.** `GET /api/users/{id}/badges` follows the profile: nothing for a private profile to
+someone who may not see its content. `PUT /api/users/me/badges/featured` takes up to three of the caller's own live
+badges, distinct, in order.
+
+**Compatibility.** Additive only: new tables, a nullable column on `gyms`, new endpoints, and `betaTesters` added to the
+beta-test answer. Every existing answer is unchanged; the 1.0 apps never call the new endpoints.

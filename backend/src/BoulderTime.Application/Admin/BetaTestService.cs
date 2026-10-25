@@ -12,7 +12,8 @@ public sealed record BetaTestRequest(string? GymSlug);
 
 /// <param name="BetaTestBoulders">The gym's boulders now marked as trial ones.</param>
 /// <param name="Changed">How many this call marked (or, undoing, unmarked).</param>
-public sealed record BetaTestResultDto(int BetaTestBoulders, int Changed);
+/// <param name="BetaTesters">People who got the Beta Tester badge with this call (ADR-069).</param>
+public sealed record BetaTestResultDto(int BetaTestBoulders, int Changed, int BetaTesters = 0);
 
 /// <summary>
 /// Closes a gym's trial period when it launches BoulderTime for real. Every boulder off the wall (removed, or deleted
@@ -23,8 +24,13 @@ public sealed record BetaTestResultDto(int BetaTestBoulders, int Changed);
 /// Run it on launch day. Running it again marks the boulders taken down since — the ones staff forgot — and leaves the
 /// others as they are; after launch it would also mark the gym's ordinary retraces, so it is not for later use.
 /// Platform administrators only.
+///
+/// It is also the gym's launch (ADR-069): the first run sets its launch date, from which its leaderboards hand out titles,
+/// and whoever climbed any of its boulders so far — on the wall or not — gets the Beta Tester badge. Undoing it takes
+/// the launch back, not the badges.
 /// </summary>
-public sealed class BetaTestService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, ILogger<BetaTestService> logger)
+public sealed class BetaTestService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, ILogger<BetaTestService> logger,
+    Badges.BadgeAwarder badges)
 {
     public async Task<BetaTestResultDto> MarkAsync(Guid gymId, BetaTestRequest r, CancellationToken ct = default)
     {
@@ -32,11 +38,21 @@ public sealed class BetaTestService(IAppDbContext db, GymAccess access, ICurrent
         var now = clock.UtcNow;
         var boulders = await db.Boulders.Where(b => b.GymId == gymId && b.Status != BoulderStatus.Active).ToListAsync(ct);
         var changed = boulders.Count(b => b.MarkBetaTest(now));
+        var gym = await db.Gyms.FirstAsync(g => g.Id == gymId, ct);
+        gym.Launch(now);
         await db.SaveChangesAsync(ct);
         var total = boulders.Count(b => b.BetaTestAt is not null);
         logger.LogInformation("Platform admin {UserId} marked {Changed} boulders of gym {GymId} as trial ones ({Total} in all)",
             currentUser.UserId, changed, gymId, total);
-        return new BetaTestResultDto(total, changed);
+
+        // After the marking is saved: the badges must never be the reason it isn't.
+        var testers = 0;
+        try { testers = await badges.AwardBetaTestersAsync(gymId, ct); }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            logger.LogError(e, "Could not award the Beta Tester badges of gym {GymId}; running the beta test again awards them", gymId);
+        }
+        return new BetaTestResultDto(total, changed, testers);
     }
 
     /// <summary>Takes the mark off every boulder of the gym, in case it was put on by mistake.</summary>
@@ -45,6 +61,7 @@ public sealed class BetaTestService(IAppDbContext db, GymAccess access, ICurrent
         await RequireConfirmedAsync(gymId, r, ct);
         var boulders = await db.Boulders.Where(b => b.GymId == gymId && b.BetaTestAt != null).ToListAsync(ct);
         var changed = boulders.Count(b => b.UnmarkBetaTest());
+        (await db.Gyms.FirstAsync(g => g.Id == gymId, ct)).Unlaunch();
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Platform admin {UserId} unmarked {Changed} trial boulders of gym {GymId}", currentUser.UserId, changed, gymId);
         return new BetaTestResultDto(0, changed);

@@ -12,7 +12,7 @@ public sealed record ProjectStateDto(bool IsProject);
 /// The boulders a climber chose as projects (ADR-067). Only the climber marks and unmarks them; nothing does it for
 /// them. A boulder off the wall can't become a project, but one that already was can always be unmarked.
 /// </summary>
-public sealed class ProjectService(IAppDbContext db, ICurrentUser currentUser, IClock clock, Gyms.GymAccess access)
+public sealed class ProjectService(IAppDbContext db, ICurrentUser currentUser, IClock clock, Gyms.GymAccess access, IBadgeQueue badges)
 {
     public async Task<ProjectStateDto> MarkAsync(Guid boulderId, CancellationToken ct = default)
     {
@@ -24,6 +24,7 @@ public sealed class ProjectService(IAppDbContext db, ICurrentUser currentUser, I
         db.BoulderProjects.Add(BoulderProject.Mark(userId, boulderId, clock.UtcNow));
         try { await db.SaveChangesAsync(ct); }
         catch (UniqueConstraintViolationException) { /* marked at the same moment from another device: it is marked */ }
+        badges.Enqueue(userId, clock.UtcNow);
         return new(true);
     }
 

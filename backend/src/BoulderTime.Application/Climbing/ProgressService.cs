@@ -15,7 +15,7 @@ public sealed record SetRatingRequest(int? Rating);
 /// A climber's own tracking and rating of a boulder. Works on removed boulders too, so people can log
 /// or correct sessions after a retrace. Every rule is scoped to the caller: nobody can touch another user's data.
 /// </summary>
-public sealed class ProgressService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, BoulderReader reader)
+public sealed class ProgressService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, BoulderReader reader, IBadgeQueue badges)
 {
     public async Task<ViewerProgressDto?> SetAttemptAsync(Guid boulderId, SetAttemptRequest r, CancellationToken ct = default)
     {
@@ -46,6 +46,8 @@ public sealed class ProgressService(IAppDbContext db, GymAccess access, ICurrent
         {
             throw new ConflictException("Your progress was updated from another device. Refresh and try again.", "concurrent_update");
         }
+        // Clearing what was recorded is not climbing: no active day, no badge.
+        if (!row.IsEmpty) badges.Enqueue(userId, clock.UtcNow);
         return await ViewerAsync(boulderId, userId, ct);
     }
 
@@ -62,6 +64,7 @@ public sealed class ProgressService(IAppDbContext db, GymAccess access, ICurrent
         if (rating is null) db.BoulderRatings.Add(BoulderRating.Create(userId, boulderId, r.Rating.Value));
         else rating.Change(r.Rating.Value);
         await db.SaveChangesAsync(ct);
+        badges.Enqueue(userId, clock.UtcNow);
         return await ViewerAsync(boulderId, userId, ct);
     }
 
