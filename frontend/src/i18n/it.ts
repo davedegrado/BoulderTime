@@ -189,6 +189,7 @@ export const it: Record<string, string> = {
   "{count} sends": "{count} completamenti",
   "Community rating": "Valutazione community",
   "Tried": "Provati",
+  "Show the full name": "Mostra il nome intero",
   "Your project": "Tuo progetto",
   "Your projects": "I tuoi progetti",
   "Added to your projects": "Aggiunto ai tuoi progetti",

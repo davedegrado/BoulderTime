@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { useGoBack } from "@/lib/navigation";
 import { setStatusBarOverCover } from "@/lib/theme";
 import { t } from "@/i18n/i18n";
@@ -13,7 +13,7 @@ import { t } from "@/i18n/i18n";
  * Without a cover (while loading, on an error) it is solid from the start. Back returns where the page was opened
  * from and goes Home only when it was opened directly (useGoBack).
  */
-export function DetailHeader({ menu, title, coverRef, titleRef, backTo = "/", wide = false }: {
+export function DetailHeader({ menu, title, coverRef, titleRef, backTo = "/", wide = false, titleAlways = false }: {
   menu?: ReactNode;
   title?: string;
   coverRef?: RefObject<HTMLElement | null>;
@@ -22,6 +22,11 @@ export function DetailHeader({ menu, title, coverRef, titleRef, backTo = "/", wi
   backTo?: string;
   /** Room on the right for more than one button (a boulder's follow and edit). */
   wide?: boolean;
+  /**
+   * The title is always there, left beside Back, instead of appearing on scroll (a boulder's name). Cut with "…" when
+   * too long, and then — only then — an info button shows it whole.
+   */
+  titleAlways?: boolean;
 }) {
   const goBack = useGoBack();
   const header = useRef<HTMLDivElement>(null);
@@ -61,13 +66,41 @@ export function DetailHeader({ menu, title, coverRef, titleRef, backTo = "/", wi
   }, [overCover]);
 
   return (
-    <div ref={header} className={`detail-header${coverRef ? " detail-header--over" : ""}${solid ? " is-solid" : ""}${titled ? " has-title" : ""}${wide ? " detail-header--wide" : ""}`}>
+    <div ref={header} className={`detail-header${coverRef ? " detail-header--over" : ""}${solid ? " is-solid" : ""}${titled ? " has-title" : ""}${wide ? " detail-header--wide" : ""}${titleAlways ? " detail-header--titled" : ""}`}>
       <button type="button" className="icon-btn detail-header__back" aria-label={t("Back")} onClick={() => goBack(backTo)}>
         <ArrowLeft aria-hidden />
       </button>
       {/* The page's heading already names it for screen readers: this is its echo for the eyes. */}
-      <span className="detail-header__title" aria-hidden>{title}</span>
+      {titleAlways && title ? <FittedTitle title={title} /> : <span className="detail-header__title" aria-hidden>{title}</span>}
       <div className="detail-header__end">{menu}</div>
+    </div>
+  );
+}
+
+/** A title that may not fit: cut with "…", and only when it is cut, an info button that shows it whole under the header. */
+function FittedTitle({ title }: { title: string }) {
+  const text = useRef<HTMLSpanElement>(null);
+  const [cut, setCut] = useState(false);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const el = text.current;
+    if (!el) return;
+    const measure = () => setCut(el.scrollWidth > el.clientWidth + 1);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [title]);
+  return (
+    <div className="detail-header__title-wrap">
+      <span ref={text} className="detail-header__title" aria-hidden>{title}</span>
+      {cut && (
+        <button type="button" className="icon-btn detail-header__info" aria-label={t("Show the full name")} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          <Info aria-hidden />
+        </button>
+      )}
+      {cut && open && <p className="detail-header__full" role="status" onClick={() => setOpen(false)}>{title}</p>}
     </div>
   );
 }

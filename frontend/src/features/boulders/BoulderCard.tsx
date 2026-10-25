@@ -26,10 +26,12 @@ interface BoulderCardProps {
    * that corner is the selection.
    */
   showOwnState?: boolean;
+  /** The mark of an open project; off in the row of projects itself, where every card is one. */
+  showProjectMark?: boolean;
 }
 
 /** Image-first card for scanning many boulders: grade and holds are always both visible, and the holds always labelled. */
-export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false, showOwnState = true }: BoulderCardProps) {
+export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLongPress, showGym = false, compact = false, showOwnState = true, showProjectMark = true }: BoulderCardProps) {
   const { pressHandlers, toggleHandlers } = useLongPress(onLongPress, onToggle);
 
   // Fixed anatomy, so a card never grows with what it happens to hold. On the photo: the grade (bottom left, as on the
@@ -62,7 +64,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
           <span className="boulder-card__corner">
             {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
             {/* One of the climber's projects, still open: a completed project is just a send. */}
-            {boulder.isProject && !boulder.viewer?.completed && (
+            {showProjectMark && boulder.isProject && !boulder.viewer?.completed && (
               <span className="boulder-card__project" title={t("Your project")}><Target aria-hidden /><span className="sr-only">{t("Your project")}</span></span>
             )}
             {tries > 0 && (

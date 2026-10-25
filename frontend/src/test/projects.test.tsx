@@ -100,7 +100,8 @@ describe("Projects on Home", () => {
     const { unmount } = renderAt("/", "/", <HomePage />);
     const marked = await screen.findByRole("region", { name: "Your projects" });
     expect(within(marked).getAllByRole("link")).toHaveLength(1);
-    expect(within(marked).getByTitle("Your project")).toBeInTheDocument();
+    // Every card there is a project: no mark to say so again.
+    expect(within(marked).queryByTitle("Your project")).not.toBeInTheDocument();
     const trying = screen.getByRole("region", { name: "Keep trying" });
     expect(within(trying).getAllByRole("link")).toHaveLength(2);
 

@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderAt } from "@/test/renderApp";
 
 let signedIn = true;
@@ -86,6 +87,31 @@ describe("A boulder's page", () => {
     expect(container.querySelector(".tag-list")).toBeNull();
     // The hold colour is still on the photo.
     expect(container.querySelector(".boulder-page__holds")).toHaveTextContent("Blue holds");
+  });
+
+  it("names the boulder in the header, and offers the whole name only when it is cut", async () => {
+    const { container, unmount } = show(full);
+    await screen.findByRole("list", { name: "About this boulder" });
+    expect(container.querySelector(".detail-header__title")).toHaveTextContent("Ex Moon");
+    expect(screen.queryByRole("button", { name: "Show the full name" })).not.toBeInTheDocument();
+    unmount();
+
+    // A name wider than its room: jsdom has no layout, so the widths are what the browser would measure.
+    const sw = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(400);
+    const cw = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(200);
+    const { container: container2 } = show({ ...full, name: "La lunghissima traversata del tetto nord" });
+    const info = await screen.findByRole("button", { name: "Show the full name" });
+    await userEvent.click(info);
+    expect(container2.querySelector(".detail-header__full")).toHaveTextContent("La lunghissima traversata del tetto nord");
+    sw.mockRestore(); cw.mockRestore();
+  });
+
+  it("puts the intensity beside the grade and a drill beside the setter", async () => {
+    const { container } = show({ ...full, intensity: "MEDIUM", setter: { userId: "u9", displayName: "DaveDegrado", avatarUrl: null } });
+    const facts = await screen.findByRole("list", { name: "About this boulder" });
+    expect(container.querySelector(".boulder-page__grades--on-photo .intensity")).not.toBeNull();
+    expect(within(facts).queryByText(/intensity/i)).not.toBeInTheDocument();
+    expect(within(facts).getByText("DaveDegrado").closest("li")!.querySelector("svg.lucide-drill")).not.toBeNull();
   });
 
   it("without a photo puts hold colour, grade and points in the facts instead", async () => {

@@ -14,8 +14,8 @@ import { t } from "@/i18n/i18n";
 const SAVE_DELAY_MS = 700;
 
 /**
- * Attempts, completion and rating for the signed-in climber: attempts and the climber's own rating side by side, then
- * the one big action, "Mark as completed" (or, once done, when and a way to undo it), always in the same place.
+ * Attempts, completion and rating for the signed-in climber: attempts and the project switch side by side, then the one
+ * big action, "Mark as completed" (or, once done, when and a way to undo it), then the climber's own rating.
  * Changes apply instantly on screen and are saved after a short pause, so fast tapping sends one request
  * with the final value instead of racing several.
  */
@@ -84,7 +84,7 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         <span className="tracker__status" aria-live="polite">{saving ? t("Saving…") : boulder.viewer ? t("Saved") : ""}</span>
       </div>
 
-      <div className="tracker__rows">
+      <div className="tracker__top">
         <div className="stepper">
           <span className="stepper__label" id="attempts-label">{t("Attempts")}</span>
           <div className="stepper__controls" role="group" aria-labelledby="attempts-label">
@@ -94,15 +94,9 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
             <button type="button" className="stepper__btn" onClick={() => change({ attempts: attempts + 1, completed })} aria-label={t("One more attempt")}><Plus aria-hidden /></button>
           </div>
         </div>
-
-        <div className="tracker__rating">
-          <span className="stepper__label">{t("Your rating")}</span>
-          <StarInput value={myRating} disabled={!canRate || setRating.isPending}
-            onChange={(v) => setRating.mutate(v, { onError: (e) => toast.error(errorMessage(e)) })} />
-        </div>
+        {!completed && <ProjectSwitch boulder={boulder} />}
       </div>
-      {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
-      {!completed && <ProjectSwitch boulder={boulder} />}
+
       {completed ? (
         <div className="tracker__sent">
           <span className="sent-mark" aria-hidden><Check /></span>
@@ -120,6 +114,14 @@ function SignedInTracker({ boulder }: { boulder: BoulderDetail }) {
         </Button>
       )}
 
+      <div className="tracker__rows">
+        <div className="tracker__rating">
+          <span className="stepper__label">{t("Your rating")}</span>
+          <StarInput value={myRating} disabled={!canRate || setRating.isPending}
+            onChange={(v) => setRating.mutate(v, { onError: (e) => toast.error(errorMessage(e)) })} />
+        </div>
+      </div>
+      {attempts === 0 && <p className="field__hint">{t("Log an attempt to rate this boulder.")}</p>}
     </section>
   );
 }

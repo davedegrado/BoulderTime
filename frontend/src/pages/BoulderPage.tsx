@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Bell, BellRing, CalendarDays, History, MapPin, Maximize2, Pencil, Star, UserRound, Users } from "lucide-react";
+import { Bell, BellRing, CalendarDays, Drill, History, MapPin, Maximize2, Pencil, Star, Users } from "lucide-react";
 import { DetailHeader } from "@/components/DetailHeader";
 import { useBoulder } from "@/features/boulders/api";
 import { useGym, useSectors } from "@/features/gyms/api";
@@ -13,7 +13,7 @@ import { CommunityGradeSection } from "@/features/community/CommunityGradeSectio
 import { BetaSection, CommunityVideosSection } from "@/features/community/VideoSections";
 import { ReportButton } from "@/features/community/ReportButton";
 import { GradeBadge, HoldBadge } from "@/features/boulders/BoulderBits";
-import { IntensityBadge } from "@/features/boulders/intensity";
+import { IntensityBadge, type Intensity } from "@/features/boulders/intensity";
 import { CompletionsLine } from "@/features/climbing/Completions";
 import { PhotoViewer } from "@/features/boulders/PhotoViewer";
 import { ErrorState, LoadingState } from "@/components/States";
@@ -36,7 +36,6 @@ export function BoulderPage() {
   const { session } = useAuth();
   const follow = useFollowBoulder(id ?? "");
   const [viewing, setViewing] = useState(false);
-  const titleRef = useRef<HTMLHeadingElement>(null);
 
   if (boulder.isPending) return <div className="page page--flush boulder-page"><DetailHeader /><LoadingState label={t("Loading boulder")} /></div>;
   if (boulder.isError) {
@@ -75,29 +74,29 @@ export function BoulderPage() {
     <article className="page page--flush boulder-page">
       {/* Back returns where the boulder was opened from (a profile, a filtered list, the notifications); the gym only
           when the app was opened right here. */}
-      <DetailHeader menu={actions} title={name ?? b.sectorName} titleRef={titleRef} backTo={`/gyms/${b.gymSlug}`} wide />
+      {/* The name, when the boulder has one, is the header's title: always there, cut with an info button if too long. */}
+      <DetailHeader menu={actions} title={name ?? undefined} backTo={`/gyms/${b.gymSlug}`} wide titleAlways />
 
-      <div className="boulder-page__photo">
-        {b.photoUrl && (
-          <button type="button" className="boulder-page__photo-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
-            <img src={b.photoUrl} alt={photoAlt} />
-          </button>
-        )}
-        {b.photoUrl && (
-          <>
+      {/* The overlays sit in a frame the photo's own size, so each corner is on the picture whatever its shape. */}
+      {b.photoUrl && (
+        <div className="boulder-page__photo">
+          <div className="boulder-page__frame">
+            <button type="button" className="boulder-page__photo-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
+              <img src={b.photoUrl} alt={photoAlt} />
+            </button>
             <span className="boulder-page__holds"><HoldBadge color={b.holdColor} compact /></span>
             <button type="button" className="boulder-page__enlarge" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
               <Maximize2 aria-hidden />
             </button>
-            <Grades grades={b.grades} className="boulder-page__grades--on-photo" />
+            <Grades grades={b.grades} intensity={b.intensity} className="boulder-page__grades--on-photo" />
             {b.points != null && (
               <span className="boulder-page__points" title={pointsLabel ?? undefined}>
                 <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
               </span>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
       {viewing && b.photoUrl && <PhotoViewer src={b.photoUrl} alt={photoAlt} onClose={() => setViewing(false)} />}
 
       <div className="page__pad stack">
@@ -110,17 +109,16 @@ export function BoulderPage() {
 
         <header className="boulder-page__head">
           <div className="boulder-page__intro">
-            {/* Without a name the page still has a heading, for screen readers only: no empty row for the eyes. */}
-            {name ? <h1 ref={titleRef} className="boulder-page__name">{name}</h1> : <h1 ref={titleRef} className="sr-only">{photoAlt}</h1>}
-            {!b.photoUrl && <Grades grades={b.grades} />}
+            {/* The name is in the header: the heading is for screen readers only, so it takes no room. */}
+            <h1 className="sr-only">{name ?? photoAlt}</h1>
+            {!b.photoUrl && <Grades grades={b.grades} intensity={b.intensity} />}
             <ul className="boulder-facts" aria-label={t("About this boulder")}>
               {!b.photoUrl && <li><HoldBadge color={b.holdColor} compact /></li>}
               {!b.photoUrl && b.points != null && <li>{pointsLabel}</li>}
               <li><MapPin aria-hidden /><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
               <li><CalendarDays aria-hidden /><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
               {completions > 0 && <li><Users aria-hidden />{plural(completions, "1 send", "{count} sends")}</li>}
-              {b.setter && <li><UserRound aria-hidden /><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
-              {b.intensity && <li><IntensityBadge intensity={b.intensity} /></li>}
+              {b.setter && <li><Drill aria-hidden /><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
             </ul>
           </div>
           {rated && (
@@ -156,14 +154,15 @@ export function BoulderPage() {
   );
 }
 
-/** The official grades: the first one large, the gym's other systems after it. */
-function Grades({ grades, className = "" }: { grades: BoulderGrade[]; className?: string }) {
+/** The official grades: the first one large, the gym's other systems after it, then the intensity, as on the cards. */
+function Grades({ grades, intensity, className = "" }: { grades: BoulderGrade[]; intensity?: Intensity | null; className?: string }) {
   const [primary, ...others] = grades;
-  if (!primary) return null;
+  if (!primary && !intensity) return null;
   return (
     <div className={`boulder-page__grades ${className}`}>
-      <GradeBadge grade={primary} size="lg" />
+      {primary && <GradeBadge grade={primary} size="lg" />}
       {others.map((g) => <GradeBadge key={g.gradeSystemId} grade={g} size="md" />)}
+      {intensity && <span className="boulder-page__intensity"><IntensityBadge intensity={intensity} compact /></span>}
     </div>
   );
 }

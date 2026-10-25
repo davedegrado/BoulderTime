@@ -126,7 +126,7 @@ function SignedInHome() {
       {(h.markedProjects ?? []).length > 0 && (
         <section aria-labelledby="marked-title" className="section">
           <h2 id="marked-title" className="section__title">{t("Your projects")}</h2>
-          <Rail>{h.markedProjects!.map((b) => <BoulderCard key={b.id} boulder={b} showGym />)}</Rail>
+          <Rail>{h.markedProjects!.map((b) => <BoulderCard key={b.id} boulder={b} showGym showProjectMark={false} />)}</Rail>
         </section>
       )}
       <ProjectsInvitation count={h.unmarkedTries ?? 0} />
