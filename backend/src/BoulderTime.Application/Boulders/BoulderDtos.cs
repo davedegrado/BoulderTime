@@ -68,7 +68,9 @@ public sealed record BoulderDetailDto(
     /// <summary>What its highlighted photo was made from, for its gym's staff to go on editing; null otherwise.</summary>
     BoulderHighlightDto? Highlight = null,
     /// <summary>The viewer marked it as a project (ADR-067). Added later: older apps don't read it.</summary>
-    bool IsProject = false);
+    bool IsProject = false,
+    /// <summary>How its card picture was made, for its gym's staff (ADR-068); null otherwise or when not known.</summary>
+    ThumbnailMode? ThumbnailMode = null);
 
 public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 
@@ -84,7 +86,9 @@ public sealed record GradeChoice(Guid? GradeSystemId, Guid? GradeValueId);
 public sealed record SaveBoulderRequest(
     Guid? SectorId, string? PhotoPath, HoldColor? HoldColor, IReadOnlyList<GradeChoice>? Grades, Guid? SetterUserId, string? ThumbnailPath = null,
     BoulderIntensity? Intensity = null, IReadOnlyList<Guid>? TagIds = null, string? Name = null, int? Points = null,
-    BoulderHighlightDto? Highlight = null);
+    BoulderHighlightDto? Highlight = null,
+    /// <summary>How the card picture sent with it was made (ADR-068). Older apps don't send it: it is then not known.</summary>
+    ThumbnailMode? ThumbnailMode = null);
 
 /// <summary>
 /// "Highlight the holds" as it was left: the original photo (a sector's wall photo or one uploaded for it), the mask
