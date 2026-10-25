@@ -325,6 +325,7 @@ export const it: Record<string, string> = {
   "{count} rating": "{count} valutazione",
   "{count} ratings": "{count} valutazioni",
   "Rated {average} out of 5 by {count} climbers": "Valutato {average} su 5 da {count} arrampicatori",
+  "Rated {average} out of 5": "Valutato {average} su 5",
   "Completed {date}": "Completato il {date}",
   "Last tried {date}": "Ultimo tentativo il {date}",
   "{total} completions in the last {weeks} weeks": "{total} completati nelle ultime {weeks} settimane",

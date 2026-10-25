@@ -21,6 +21,7 @@ vi.mock("@/lib/api", () => {
 import { BoulderPage } from "@/pages/BoulderPage";
 import { HomePage } from "@/pages/HomePage";
 import { BoulderFiltersBar } from "@/features/boulders/BoulderFilters";
+import { BoulderCard } from "@/features/boulders/BoulderCard";
 
 const grades = [{ gradeSystemId: "col", systemName: "Colour", systemType: "COLOR", gradeValueId: "vg", label: "Green", rank: 1, colorHex: "#2E9E4F" }];
 const card = (id: string, over: object = {}) => ({
@@ -136,5 +137,18 @@ describe("Your progress filter", () => {
     const select = screen.getByRole("combobox", { name: "Your progress" });
     expect(within(select).getAllByRole("option").map((o) => [o.getAttribute("value"), o.textContent]))
       .toEqual([["", "All"], ["UNTRIED", "Not tried"], ["MARKED", "Projects"], ["PROJECTS", "Tried"], ["COMPLETED", "Completed"]]);
+  });
+});
+
+describe("The project mark on a card", () => {
+  it("sits top-left, apart from the tries top-right; never on a completed one", () => {
+    const { container, unmount } = renderAt("/", "/", <BoulderCard boulder={card("b1", { isProject: true, viewer: { attempts: 2, completed: false, completedAt: null, rating: null } }) as never} />);
+    const mark = container.querySelector(".boulder-card__project")!;
+    expect(mark.closest(".boulder-card__lead")).not.toBeNull();
+    expect(mark.closest(".boulder-card__corner")).toBeNull();
+    expect(container.querySelector(".boulder-card__corner .boulder-card__tries")).not.toBeNull();
+    unmount();
+    const done = renderAt("/", "/", <BoulderCard boulder={card("b1", { isProject: true, viewer: { attempts: 2, completed: true, completedAt: "2026-10-20T00:00:00Z", rating: null } }) as never} />);
+    expect(done.container.querySelector(".boulder-card__project")).toBeNull();
   });
 });

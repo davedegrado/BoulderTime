@@ -507,7 +507,7 @@ svg { flex-shrink: 0; }
 .inline-fav { width: 14px; height: 14px; fill: #E0245E; color: #E0245E; vertical-align: -1px; }
 
 /* Home rails */
-.rail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 44%); gap: var(--bt-3); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin: 0 calc(-1 * var(--bt-4)); padding-left: var(--bt-4); padding-right: var(--bt-4); scrollbar-width: none; }
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: max(150px, 44%); gap: var(--bt-3); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin: 0 calc(-1 * var(--bt-4)); padding-left: var(--bt-4); padding-right: var(--bt-4); scrollbar-width: none; }
 .rail > * { scroll-snap-align: start; }
 @media (min-width: 720px) { .rail { grid-auto-columns: 220px; margin: 0; padding-left: 0; padding-right: 0; } }
 .section__row { display: flex; justify-content: space-between; align-items: baseline; }
@@ -897,16 +897,13 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 /* The whole photo stays visible (contain), about a third of a phone screen tall; a tap opens it full size. */
 .boulder-page__photo { display: grid; place-items: center; }
 .boulder-page__photo-btn { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
-/* The photo is the largest thing on the page and nothing below it makes it shrink. The frame takes the photo's own
-   shape (no black bands above and below a landscape photo, so what sits on its corners sits on the picture), up to a
-   fixed share of the screen for a tall one. */
-.boulder-page__photo { display: flex; justify-content: center; }
-.boulder-page__frame { position: relative; max-width: 100%; }
-.boulder-page__photo-btn { display: block; }
-.boulder-page__photo img { display: block; width: auto; height: auto; max-width: 100%; max-height: min(62vh, 560px); margin: 0; }
-/* Both sizes auto with both limits: the browser keeps the photo's proportions, so a landscape photo fills the width and
-   a tall one fills the height, and the frame is exactly the picture. */
-@media (min-width: 960px) { .boulder-page__photo img { max-height: min(66vh, 620px); } }
+/* The photo is the largest thing on the page: full width, one fixed height for every photo, so the page below never
+   moves. The photo is whole inside it (contain, never cropped or stretched): whatever room is left — above and below a
+   landscape photo, at the sides of a tall one — is the frame's neutral colour. */
+.boulder-page__photo { display: block; height: min(50vh, 460px); }
+.boulder-page__photo-btn { display: block; width: 100%; height: 100%; }
+.boulder-page__photo img { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; object-position: center; }
+@media (min-width: 960px) { .boulder-page__photo { height: min(56vh, 540px); } }
 .boulder-page__enlarge { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.35); }
 .boulder-page__enlarge { position: absolute; right: 12px; top: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; cursor: pointer; }
 .boulder-page__enlarge svg { width: 20px; height: 20px; }
@@ -1781,3 +1778,16 @@ button.manage-head__back { background: transparent; }
 .tracker .tracker__top .stepper__controls { width: 100%; justify-content: space-between; gap: 6px; }
 .tracker .tracker__top .stepper__btn { width: 36px; height: 36px; }
 .tracker .tracker__top .tracker__project { flex-direction: column; align-items: flex-start; justify-content: space-between; gap: var(--bt-2); min-height: 0; padding: var(--bt-2) var(--bt-3); }
+
+/* The community's rating on the photo's top-right corner: one compact line, like the other labels on the photo. */
+.community-rating { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-weight: 800; font-size: var(--bt-text-sm); font-variant-numeric: tabular-nums; }
+.community-rating__star { width: 16px; height: 16px; flex-shrink: 0; color: var(--bt-orange); fill: var(--bt-orange); }
+.community-rating__count { font-weight: 600; opacity: 0.8; }
+.boulder-page__rating {
+  position: absolute; right: 12px; top: 12px; min-height: 34px; padding: 0 12px;
+  border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.78); color: #fff; box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+/* The hold colour never runs into the rating on a narrow phone. */
+.boulder-page__holds { max-width: calc(100% - 150px); }
+.boulder-page__holds .holds { min-width: 0; }
+.boulder-page__holds .holds__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

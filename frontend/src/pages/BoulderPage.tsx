@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Bell, BellRing, CalendarDays, Drill, History, MapPin, Maximize2, Pencil, Star, Users } from "lucide-react";
+import { Bell, BellRing, CalendarDays, Drill, History, MapPin, Pencil, Star } from "lucide-react";
 import { DetailHeader } from "@/components/DetailHeader";
 import { useBoulder } from "@/features/boulders/api";
 import { useGym, useSectors } from "@/features/gyms/api";
@@ -20,8 +20,8 @@ import { ErrorState, LoadingState } from "@/components/States";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
-import { plural, t } from "@/i18n/i18n";
-import type { BoulderGrade } from "@/features/boulders/api";
+import { activeLanguage, plural, t } from "@/i18n/i18n";
+import type { BoulderGrade, RatingSummary } from "@/features/boulders/api";
 
 /**
  * One boulder. A plain header (back, follow, edit) and then the photo, the largest thing on the page, because it is
@@ -50,7 +50,6 @@ export function BoulderPage() {
   const photoAlt = name ? t("{name}, boulder in {sector}", { name, sector: b.sectorName }) : t("Boulder in {sector}", { sector: b.sectorName });
   const pointsLabel = b.points != null ? plural(b.points, "Worth {count} point", "Worth {count} points") : null;
   const completions = b.completions ?? 0;
-  const rated = b.rating.count > 0 && b.rating.average !== null;
 
   const actions = (
     <div className="boulder-page__actions">
@@ -77,24 +76,22 @@ export function BoulderPage() {
       {/* The name, when the boulder has one, is the header's title: always there, cut with an info button if too long. */}
       <DetailHeader menu={actions} title={name ?? undefined} backTo={`/gyms/${b.gymSlug}`} wide titleAlways />
 
-      {/* The overlays sit in a frame the photo's own size, so each corner is on the picture whatever its shape. */}
+      {/* A frame of fixed height, the photo whole inside it (contain): bands of the neutral colour above and below a
+          landscape photo, at the sides of a tall one. The corners are the frame's, so they never move with the photo.
+          Tapping the photo opens it full screen. */}
       {b.photoUrl && (
         <div className="boulder-page__photo">
-          <div className="boulder-page__frame">
-            <button type="button" className="boulder-page__photo-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
-              <img src={b.photoUrl} alt={photoAlt} />
-            </button>
-            <span className="boulder-page__holds"><HoldBadge color={b.holdColor} compact /></span>
-            <button type="button" className="boulder-page__enlarge" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
-              <Maximize2 aria-hidden />
-            </button>
-            <Grades grades={b.grades} intensity={b.intensity} className="boulder-page__grades--on-photo" />
-            {b.points != null && (
-              <span className="boulder-page__points" title={pointsLabel ?? undefined}>
-                <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
-              </span>
-            )}
-          </div>
+          <button type="button" className="boulder-page__photo-btn" onClick={() => setViewing(true)} aria-label={t("Enlarge the photo")}>
+            <img src={b.photoUrl} alt={photoAlt} />
+          </button>
+          <span className="boulder-page__holds"><HoldBadge color={b.holdColor} compact /></span>
+          <CommunityRating rating={b.rating} className="boulder-page__rating" />
+          <Grades grades={b.grades} intensity={b.intensity} className="boulder-page__grades--on-photo" />
+          {b.points != null && (
+            <span className="boulder-page__points" title={pointsLabel ?? undefined}>
+              <span aria-hidden>{t("+{points} pt", { points: b.points })}</span><span className="sr-only">{pointsLabel}</span>
+            </span>
+          )}
         </div>
       )}
       {viewing && b.photoUrl && <PhotoViewer src={b.photoUrl} alt={photoAlt} onClose={() => setViewing(false)} />}
@@ -115,19 +112,12 @@ export function BoulderPage() {
             <ul className="boulder-facts" aria-label={t("About this boulder")}>
               {!b.photoUrl && <li><HoldBadge color={b.holdColor} compact /></li>}
               {!b.photoUrl && b.points != null && <li>{pointsLabel}</li>}
+              {!b.photoUrl && <li><CommunityRating rating={b.rating} /></li>}
               <li><MapPin aria-hidden /><span className="sr-only">{t("Sector")}: </span>{b.sectorName}</li>
               <li><CalendarDays aria-hidden /><span className="sr-only">{t("Set on")}: </span>{formatDate(b.createdAt)}</li>
-              {completions > 0 && <li><Users aria-hidden />{plural(completions, "1 send", "{count} sends")}</li>}
               {b.setter && <li><Drill aria-hidden /><span className="sr-only">{t("Setter")}: </span>{b.setter.displayName}</li>}
             </ul>
           </div>
-          {rated && (
-            <div className="boulder-page__rating-card"
-              aria-label={t("Rated {average} out of 5 by {count} climbers", { average: b.rating.average!, count: b.rating.count })}>
-              <span className="boulder-page__rating-value" aria-hidden><Star /> {b.rating.average!.toFixed(1)}</span>
-              <span className="boulder-page__rating-caption" aria-hidden>{t("Community rating")}</span>
-            </div>
-          )}
         </header>
 
         {(b.tags ?? []).length > 0 && (
@@ -151,6 +141,27 @@ export function BoulderPage() {
         </div>
       </div>
     </article>
+  );
+}
+
+/**
+ * The community's rating as one compact line: star, average, and how many rated it in brackets ("★ 4,0 (12)"). Nothing
+ * when nobody rated it; the number only when there is one. Information, not a button. The climber's own rating is in
+ * Your progress.
+ */
+function CommunityRating({ rating, className = "" }: { rating: RatingSummary; className?: string }) {
+  if (rating.average === null || rating.average === undefined) return null;
+  const average = rating.average.toLocaleString(activeLanguage(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const count = typeof rating.count === "number" && rating.count > 0 ? rating.count : null;
+  const label = count !== null
+    ? t("Rated {average} out of 5 by {count} climbers", { average, count })
+    : t("Rated {average} out of 5", { average });
+  return (
+    <span className={`community-rating ${className}`} role="img" aria-label={label}>
+      <Star aria-hidden className="community-rating__star" />
+      <span aria-hidden>{average}</span>
+      {count !== null && <span className="community-rating__count" aria-hidden>({count})</span>}
+    </span>
   );
 }
 

@@ -48,14 +48,20 @@ describe("A boulder's page", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Ex Moon" })).toBeInTheDocument();
     const photo = container.querySelector(".boulder-page__photo")!;
     expect(within(photo as HTMLElement).getByText("Blue holds").closest(".boulder-page__holds")).not.toBeNull();
-    expect(photo.querySelector("button.boulder-page__enlarge")).toHaveAccessibleName("Enlarge the photo");
+    // No full-screen button: the photo itself opens full screen, and its top-right corner is the community's rating.
+    expect(photo.querySelector(".boulder-page__enlarge")).toBeNull();
+    expect(photo.querySelector("button.boulder-page__photo-btn")).toHaveAccessibleName("Enlarge the photo");
+    const rating = within(photo as HTMLElement).getByRole("img", { name: "Rated 3.0 out of 5 by 4 climbers" });
+    expect(rating).toHaveClass("boulder-page__rating");
+    expect(rating).toHaveTextContent(/^3\.0\(4\)$/);
     expect(within(photo as HTMLElement).getByTitle("Colour grade: Green").closest(".boulder-page__grades--on-photo")).not.toBeNull();
     expect(within(photo as HTMLElement).getByText("+46 pt")).toBeInTheDocument();
 
     const facts = screen.getByRole("list", { name: "About this boulder" });
     expect(within(facts).getByText("Onda")).toBeInTheDocument();
-    expect(within(facts).getByText("2 sends")).toBeInTheDocument();
-    expect(screen.getByLabelText("Rated 3 out of 5 by 4 climbers")).toHaveTextContent("3.0");
+    // The sends are said once, further down ("Completed by 2 people"), not among the facts.
+    expect(within(facts).queryByText(/sends?$/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completed by 2 people" })).toBeInTheDocument();
 
     const tags = screen.getByRole("list", { name: "Tags" });
     const progress = screen.getByRole("region", { name: "Your progress" });
@@ -82,7 +88,7 @@ describe("A boulder's page", () => {
     const { container } = show({ ...full, name: null, tags: undefined, rating: { average: null, count: 0 }, completions: 0, points: null, setter: null, intensity: null });
     const facts = await screen.findByRole("list", { name: "About this boulder" });
     expect(within(facts).getAllByRole("listitem")).toHaveLength(2); // sector and date
-    expect(container.querySelector(".boulder-page__rating-card")).toBeNull();
+    expect(container.querySelector(".community-rating")).toBeNull();
     expect(container.querySelector(".boulder-page__points")).toBeNull();
     expect(container.querySelector(".tag-list")).toBeNull();
     // The hold colour is still on the photo.
@@ -112,6 +118,13 @@ describe("A boulder's page", () => {
     expect(container.querySelector(".boulder-page__grades--on-photo .intensity")).not.toBeNull();
     expect(within(facts).queryByText(/intensity/i)).not.toBeInTheDocument();
     expect(within(facts).getByText("DaveDegrado").closest("li")!.querySelector("svg.lucide-drill")).not.toBeNull();
+  });
+
+  it("shows the community's average alone when there is no number of ratings to show", async () => {
+    const { container } = show({ ...full, rating: { average: 4, count: 0 } });
+    await screen.findByRole("list", { name: "About this boulder" });
+    expect(container.querySelector(".boulder-page__rating")).toHaveAccessibleName("Rated 4.0 out of 5");
+    expect(container.querySelector(".community-rating__count")).toBeNull();
   });
 
   it("without a photo puts hold colour, grade and points in the facts instead", async () => {

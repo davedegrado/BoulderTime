@@ -40,14 +40,16 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
   const name = boulder.name?.trim() || null;
   const sends = boulder.completions ?? 0;
   const tries = boulder.viewer && !boulder.viewer.completed ? boulder.viewer.attempts : 0;
+  const projectMark = showOwnState && !selectable && showProjectMark && Boolean(boulder.isProject) && !boulder.viewer?.completed;
   const body = (
     <>
       <div className="boulder-card__photo">
         {boulder.photoUrl
           ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" draggable={false} />
           : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
-        {/* Top left: the gym's logo where a list mixes gyms, then whether the boulder is still on the wall. */}
-        {(showGym || boulder.status !== "ACTIVE") && (
+        {/* Top left: the gym's logo where a list mixes gyms, whether the boulder is still on the wall, and whether it is
+            one of the climber's open projects (a completed project is just a send). */}
+        {(showGym || boulder.status !== "ACTIVE" || projectMark) && (
           <span className="boulder-card__lead">
             {showGym && (
               <span className="boulder-card__gym" title={boulder.gymName}>
@@ -57,16 +59,15 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
             )}
             {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
             {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
+            {projectMark && (
+              <span className="boulder-card__project" title={t("Your project")}><Target aria-hidden /><span className="sr-only">{t("Your project")}</span></span>
+            )}
           </span>
         )}
         {!selectable && showOwnState && (
           // Top right: the climber's own state.
           <span className="boulder-card__corner">
             {boulder.viewer?.completed && <span className="boulder-card__sent" aria-label={t("You completed this")}><Check aria-hidden /></span>}
-            {/* One of the climber's projects, still open: a completed project is just a send. */}
-            {showProjectMark && boulder.isProject && !boulder.viewer?.completed && (
-              <span className="boulder-card__project" title={t("Your project")}><Target aria-hidden /><span className="sr-only">{t("Your project")}</span></span>
-            )}
             {tries > 0 && (
               <span className="boulder-card__tries" title={plural(tries, "{count} try", "{count} tries")}>
                 <RotateCw aria-hidden /><span aria-hidden>{tries}</span>

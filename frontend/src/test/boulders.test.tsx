@@ -137,7 +137,9 @@ describe("Boulder page", () => {
     const facts = screen.getByRole("list", { name: "About this boulder" });
     expect(within(facts).getByText("Cave")).toBeInTheDocument();
     expect(within(facts).queryByText("Blue holds")).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/Rated 4.5 out of 5 by 3 climbers/)).toHaveTextContent("Community rating");
+    const rating = screen.getByRole("img", { name: "Rated 4.5 out of 5 by 3 climbers" });
+    expect(rating).toHaveTextContent("4.5(3)");
+    expect(rating.closest(".boulder-page__photo")).not.toBeNull();
   });
 
   it("keeps removed boulders readable with a history notice and no edit for climbers", async () => {
@@ -154,10 +156,10 @@ describe("Boulder page", () => {
     reply("GET", "/api/boulders/b1", { ...boulder("b1"), gymSlug: "crimp", gymName: "Crimp Factory", photoPath: "p", setter: null, viewerRole: null, isFollowing: false });
     renderAt("/boulders/b1", "/boulders/:id", <BoulderPage />);
 
-    // Both the photo itself and the corner button open it.
+    // Tapping the photo opens it (no separate full-screen button: its corner shows the community rating).
     const enlarge = await screen.findAllByRole("button", { name: "Enlarge the photo" });
-    expect(enlarge).toHaveLength(2);
-    await userEvent.click(enlarge[1]!);
+    expect(enlarge).toHaveLength(1);
+    await userEvent.click(enlarge[0]!);
     const viewer = screen.getByRole("dialog");
     const photo = within(viewer).getByRole("img");
     expect(photo).toHaveAttribute("src", "/img/b1.jpg");
