@@ -1,5 +1,6 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
+using BoulderTime.Domain.Badges;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Candidates;
 using BoulderTime.Domain.Climbing;
@@ -65,6 +66,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<SuspendedEmail> SuspendedEmails => Set<SuspendedEmail>();
+    public DbSet<BadgeAward> BadgeAwards => Set<BadgeAward>();
+    public DbSet<ActivityDay> ActivityDays => Set<ActivityDay>();
+    public DbSet<CompetitionPeriod> CompetitionPeriods => Set<CompetitionPeriod>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

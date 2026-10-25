@@ -78,6 +78,117 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Badges.ActivityDay", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.HasKey("UserId", "Day")
+                        .HasName("pk_activity_days");
+
+                    b.ToTable("activity_days", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Badges.BadgeAward", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BadgeId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("badge_id");
+
+                    b.Property<DateTimeOffset>("EarnedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("earned_at");
+
+                    b.Property<int?>("FeaturedOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("featured_order");
+
+                    b.Property<Guid?>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("PeriodKind")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("period_kind");
+
+                    b.Property<DateTimeOffset?>("PeriodStart")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_start");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("scope_key");
+
+                    b.Property<DateTimeOffset?>("SeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("seen_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_badge_awards");
+
+                    b.HasIndex("GymId")
+                        .HasDatabaseName("ix_badge_awards_gym_id");
+
+                    b.HasIndex("BadgeId", "ScopeKey")
+                        .HasDatabaseName("ix_badge_awards_badge_id_scope_key");
+
+                    b.HasIndex("UserId", "BadgeId", "ScopeKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_badge_awards_user_id_badge_id_scope_key");
+
+                    b.ToTable("badge_awards", "bouldertime", t =>
+                        {
+                            t.HasCheckConstraint("ck_badge_awards_featured_order", "featured_order IS NULL OR featured_order BETWEEN 1 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Badges.CompetitionPeriod", b =>
+                {
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gym_id");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset>("Start")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start");
+
+                    b.Property<int>("Champions")
+                        .HasColumnType("integer")
+                        .HasColumnName("champions");
+
+                    b.Property<DateTimeOffset>("SettledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("settled_at");
+
+                    b.HasKey("GymId", "Kind", "Start")
+                        .HasName("pk_competition_periods");
+
+                    b.ToTable("competition_periods", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1654,6 +1765,10 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("double precision")
                         .HasColumnName("latitude");
 
+                    b.Property<DateTimeOffset?>("LaunchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("launched_at");
+
                     b.Property<string>("LogoPath")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
@@ -2562,6 +2677,42 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UpdatedByUserId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_app_version_policies_users_updated_by_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Badges.ActivityDay", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_activity_days_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Badges.BadgeAward", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_badge_awards_gyms_gym_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_badge_awards_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Badges.CompetitionPeriod", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Gyms.Gym", null)
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_periods_gyms_gym_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Boulders.Boulder", b =>

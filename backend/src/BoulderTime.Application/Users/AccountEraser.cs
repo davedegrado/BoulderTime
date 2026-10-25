@@ -10,7 +10,7 @@ namespace BoulderTime.Application.Users;
 /// Erases accounts whose week of grace has passed.
 ///
 /// Everything personal goes: name, email, photo, attempts, sends, ratings, grade suggestions, comments, likes,
-/// community videos (files included), follows, the events they said they'd come to, notifications and their settings, registered devices, reports and
+/// community videos (files included), follows, badges and active days, the events they said they'd come to, notifications and their settings, registered devices, reports and
 /// blocks made by or about the person (reports on their comments and videos included), staff invitations sent to
 /// their address, and the Supabase sign-in itself. A suspended account leaves one thing behind: the hash of its address
 /// (ADR-038), so that it can't sign up again unsuspended.
@@ -93,6 +93,8 @@ public sealed class AccountEraser(IAppDbContext db, IObjectStorage storage, IAut
         db.UserReports.RemoveRange(await db.UserReports.Where(x => x.ReportedUserId == userId || x.ReportedByUserId == userId).ToListAsync(ct));
         db.UserBlocks.RemoveRange(await db.UserBlocks.Where(x => x.BlockerUserId == userId || x.BlockedUserId == userId).ToListAsync(ct));
         db.Friendships.RemoveRange(await db.Friendships.Where(x => x.UserLowId == userId || x.UserHighId == userId).ToListAsync(ct));
+        db.BadgeAwards.RemoveRange(await db.BadgeAwards.Where(x => x.UserId == userId).ToListAsync(ct));
+        db.ActivityDays.RemoveRange(await db.ActivityDays.Where(x => x.UserId == userId).ToListAsync(ct));
 
         // A suspended account leaving keeps only the fingerprint of its address, so it can't come back clean (ADR-038).
         if (user.IsSuspended)

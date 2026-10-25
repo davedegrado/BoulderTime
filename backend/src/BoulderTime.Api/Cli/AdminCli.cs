@@ -10,11 +10,14 @@ namespace BoulderTime.Api.Cli;
 ///   dotnet run --project src/BoulderTime.Api -- seed [--owner you@example.com]
 ///   dotnet run --project src/BoulderTime.Api -- grant-platform-admin you@example.com
 ///   dotnet run --project src/BoulderTime.Api -- revoke-platform-admin you@example.com
+///   dotnet run --project src/BoulderTime.Api -- grant-badge SPECIAL_FOUNDER you@example.com
+///   dotnet run --project src/BoulderTime.Api -- backfill-badges [--apply]
 /// </summary>
 public static class AdminCli
 {
     public static bool IsCommand(string[] args) =>
-        args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin" or "generate-push-keys";
+        args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin" or "generate-push-keys"
+            or "grant-badge" or "backfill-badges";
 
     public static async Task<int> RunAsync(WebApplication app, string[] args)
     {
@@ -93,8 +96,48 @@ public static class AdminCli
                 Console.WriteLine($"{(args[0] == "grant-platform-admin" ? "Granted" : "Revoked")} platform admin for {email} ({matches.Count} account(s)).");
                 return 0;
 
+            case "grant-badge" when args.Length == 3:
+            {
+                // Only badges given by hand (the founder's), and only to one account the address names for certain.
+                var badgeId = args[1].Trim().ToUpperInvariant();
+                if (BoulderTime.Application.Badges.BadgeCatalog.Find(badgeId) is not { Rule: BoulderTime.Application.Badges.BadgeRule.Manual })
+                {
+                    Console.Error.WriteLine($"{badgeId} is not a badge given by hand.");
+                    return 1;
+                }
+                var address = args[2].Trim().ToLowerInvariant();
+                var accounts = await db.Users.Where(u => u.Email == address && u.SuspendedAt == null && u.DeletionRequestedAt == null).ToListAsync();
+                if (accounts.Count != 1)
+                {
+                    Console.Error.WriteLine(accounts.Count == 0
+                        ? $"No active account with email {address}. It must sign in to BoulderTime once first."
+                        : $"{accounts.Count} accounts have email {address}: not guessing which one.");
+                    return 1;
+                }
+                var awarder = scope.ServiceProvider.GetRequiredService<BoulderTime.Application.Badges.BadgeAwarder>();
+                var granted = await awarder.GrantAsync(accounts[0].Id, badgeId);
+                Console.WriteLine(granted
+                    ? $"Granted {badgeId} to {accounts[0].DisplayName} ({address}, {accounts[0].Id})."
+                    : $"{accounts[0].DisplayName} ({address}) already has {badgeId}.");
+                return 0;
+            }
+
+            case "backfill-badges":
+            {
+                // A dry run unless --apply: everything happens in a transaction that is rolled back.
+                var apply = args.Contains("--apply");
+                await using var transaction = await db.Database.BeginTransactionAsync();
+                var report = await scope.ServiceProvider.GetRequiredService<BoulderTime.Application.Badges.BadgeBackfill>().RunAsync();
+                Console.WriteLine($"{(apply ? "Applied" : "Dry run, nothing saved")}: {report.People} people, {report.Days} active day(s) reconstructed.");
+                foreach (var (badgeId, count) in report.Awards.OrderBy(x => x.Key)) Console.WriteLine($"  {badgeId}: {count}");
+                if (report.Awards.Count == 0) Console.WriteLine("  no badges to award");
+                if (apply) await transaction.CommitAsync(); else await transaction.RollbackAsync();
+                if (!apply) Console.WriteLine("Run again with --apply to save it.");
+                return 0;
+            }
+
             default:
-                Console.Error.WriteLine("Usage: migrate | seed [--owner <email>] | grant-platform-admin <email> | revoke-platform-admin <email>");
+                Console.Error.WriteLine("Usage: migrate | seed [--owner <email>] | grant-platform-admin <email> | revoke-platform-admin <email> | grant-badge <BADGE_ID> <email> | backfill-badges [--apply]");
                 return 2;
         }
     }

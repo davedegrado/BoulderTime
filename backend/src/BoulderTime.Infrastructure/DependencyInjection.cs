@@ -55,6 +55,12 @@ public static class DependencyInjection
         services.AddSingleton<IModerationAlerts>(sp => sp.GetRequiredService<Email.ResendModerationAlerts>());
         services.AddHostedService(sp => sp.GetRequiredService<Email.ResendModerationAlerts>());
 
+        // Badges: awarded away from the requests that earn them, titles settled when a month or a year closes (ADR-069).
+        services.AddSingleton<IBadgeSettings>(new BadgeSettings(bool.TryParse(configuration["Badges:PushEnabled"], out var badgePush) && badgePush));
+        services.AddSingleton<Badges.BadgeWorker>();
+        services.AddSingleton<IBadgeQueue>(sp => sp.GetRequiredService<Badges.BadgeWorker>());
+        services.AddHostedService(sp => sp.GetRequiredService<Badges.BadgeWorker>());
+
         // Deleting an account: removing the sign-in, and the daily sweep that erases accounts past their week.
         services.AddHttpClient<IAuthAdmin, Supabase.SupabaseAuthAdmin>(c => c.Timeout = TimeSpan.FromSeconds(10));
         services.AddHostedService<Users.AccountErasureWorker>();
@@ -99,6 +105,8 @@ public static class DependencyInjection
 
 /// <summary>Exposes the public VAPID key to the application layer without handing it the whole options object.</summary>
 internal sealed record PushConfig(string? PublicKey) : IPushConfig;
+
+internal sealed record BadgeSettings(bool PushEnabled) : IBadgeSettings;
 
 internal sealed record VideoSettings(bool UploadsEnabled, int MaxUploadMegabytes) : IVideoSettings
 {

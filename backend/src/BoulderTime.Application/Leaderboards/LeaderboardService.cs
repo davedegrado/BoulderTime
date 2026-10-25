@@ -62,11 +62,62 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var take = Math.Clamp(limit ?? DefaultLimit, 1, 100);
         var from = PeriodStart(p, clock.UtcNow);
 
+        var viewerId = currentUser.UserId;
+        var (rows, systems, primary) = await RowsAsync(gymId, from, null, ct);
+        var systemIds = systems.Select(s => s.Id).ToList();
+
+        if (m == LeaderboardMetric.Highest) rows = rows.Where(r => r.Highest is not null).ToList();
+
+        // Primary key per metric, then secondary keys; ties on the primary value share a position.
+        var sorted = (m switch
+        {
+            LeaderboardMetric.Completed => rows.OrderByDescending(r => r.Completed).ThenByDescending(r => r.Points),
+            LeaderboardMetric.Highest => rows.OrderByDescending(r => r.Highest!.Rank).ThenByDescending(r => r.Points),
+            _ => rows.OrderByDescending(r => r.Points).ThenByDescending(r => r.Completed),
+        }).ThenBy(r => r.LastSend).ToList();
+        int Key(Row r) => m switch { LeaderboardMetric.Completed => r.Completed, LeaderboardMetric.Highest => r.Highest!.Rank, _ => r.Points };
+
+        var positions = new int[sorted.Count];
+        for (var i = 0; i < sorted.Count; i++)
+            positions[i] = i > 0 && Key(sorted[i]) == Key(sorted[i - 1]) ? positions[i - 1] : i + 1;
+
+        var wanted = sorted.Take(take).Select(r => r.UserId).ToHashSet();
+        var viewerIndex = viewerId is { } vid ? sorted.FindIndex(r => r.UserId == vid) : -1;
+        if (viewerIndex >= 0) wanted.Add(sorted[viewerIndex].UserId);
+        var people = await db.Users.AsNoTracking().Where(u => wanted.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl), ct);
+
+        LeaderboardEntryDto ToEntry(int i) => new(positions[i], people[sorted[i].UserId], sorted[i].Points, sorted[i].Completed, sorted[i].Highest, sorted[i].UserId == viewerId);
+
+        var entries = Enumerable.Range(0, Math.Min(take, sorted.Count)).Select(ToEntry).ToList();
+        var viewer = viewerIndex >= 0 ? ToEntry(viewerIndex) : null;
+        var scoringSystem = primary?.Name ?? "grade";
+        var customised = await db.GradeValues.AsNoTracking().AnyAsync(v => systemIds.Contains(v.GradeSystemId) && v.PointsOverride != null, ct)
+                         || await db.Boulders.AsNoTracking().AnyAsync(b => b.GymId == gymId && b.PointsOverride != null, ct);
+        return new LeaderboardDto(gymId, m, p, from, primary?.Id, primary?.Name, primary?.Type, scoring.Describe(scoringSystem),
+            sorted.Count, entries, viewer, new ScoringRuleDto(RankBasedScoring.MinPoints, RankBasedScoring.MaxPoints, customised));
+    }
+
+    /// <summary>
+    /// The champions of a gym's closed period (ADR-069): everyone at the first position of the points leaderboard for
+    /// completions from <paramref name="from"/> to <paramref name="to"/> (excluded), with the leaderboard's own rules —
+    /// who appears, trial boulders, points as they are now, ties sharing the position. Nobody with no points.
+    /// </summary>
+    public async Task<IReadOnlyList<Guid>> ChampionsAsync(Guid gymId, DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    {
+        var (rows, _, _) = await RowsAsync(gymId, from, to, ct);
+        var top = rows.Count == 0 ? 0 : rows.Max(r => r.Points);
+        return top <= 0 ? [] : rows.Where(r => r.Points == top).Select(r => r.UserId).ToList();
+    }
+
+    /// <summary>One row per climber with completions at the gym in the period, unsorted.</summary>
+    private async Task<(List<Row> Rows, List<GradeSystem> Systems, GradeSystem? Primary)> RowsAsync(
+        Guid gymId, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
+    {
         // Completions at this gym in the period. Who appears is the leaderboard setting alone: a private profile still
         // appears if its owner chose so, showing only what a leaderboard row shows (ADR-061).
-        var viewerId = currentUser.UserId;
         var sends = await db.BoulderAttempts.AsNoTracking()
-            .Where(a => a.Completed && (from == null || a.CompletedAt >= from))
+            .Where(a => a.Completed && (from == null || a.CompletedAt >= from) && (to == null || a.CompletedAt < to))
             // The gym's trial boulders count for nobody: neither points, nor completions, nor the highest grade.
             .Join(db.Boulders.Where(b => b.BetaTestAt == null), a => a.BoulderId, b => b.Id, (a, b) => new { a.UserId, a.BoulderId, a.CompletedAt, b.GymId })
             .Where(x => x.GymId == gymId)
@@ -114,37 +165,7 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
             var lastSend = g.Max(x => x.CompletedAt) ?? DateTimeOffset.MinValue;
             return new Row(g.Key, points, g.Count(), highest, lastSend);
         }).ToList();
-
-        if (m == LeaderboardMetric.Highest) rows = rows.Where(r => r.Highest is not null).ToList();
-
-        // Primary key per metric, then secondary keys; ties on the primary value share a position.
-        var sorted = (m switch
-        {
-            LeaderboardMetric.Completed => rows.OrderByDescending(r => r.Completed).ThenByDescending(r => r.Points),
-            LeaderboardMetric.Highest => rows.OrderByDescending(r => r.Highest!.Rank).ThenByDescending(r => r.Points),
-            _ => rows.OrderByDescending(r => r.Points).ThenByDescending(r => r.Completed),
-        }).ThenBy(r => r.LastSend).ToList();
-        int Key(Row r) => m switch { LeaderboardMetric.Completed => r.Completed, LeaderboardMetric.Highest => r.Highest!.Rank, _ => r.Points };
-
-        var positions = new int[sorted.Count];
-        for (var i = 0; i < sorted.Count; i++)
-            positions[i] = i > 0 && Key(sorted[i]) == Key(sorted[i - 1]) ? positions[i - 1] : i + 1;
-
-        var wanted = sorted.Take(take).Select(r => r.UserId).ToHashSet();
-        var viewerIndex = viewerId is { } vid ? sorted.FindIndex(r => r.UserId == vid) : -1;
-        if (viewerIndex >= 0) wanted.Add(sorted[viewerIndex].UserId);
-        var people = await db.Users.AsNoTracking().Where(u => wanted.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => new PersonDto(u.Id, u.DisplayName, u.AvatarUrl), ct);
-
-        LeaderboardEntryDto ToEntry(int i) => new(positions[i], people[sorted[i].UserId], sorted[i].Points, sorted[i].Completed, sorted[i].Highest, sorted[i].UserId == viewerId);
-
-        var entries = Enumerable.Range(0, Math.Min(take, sorted.Count)).Select(ToEntry).ToList();
-        var viewer = viewerIndex >= 0 ? ToEntry(viewerIndex) : null;
-        var scoringSystem = primary?.Name ?? "grade";
-        var customised = await db.GradeValues.AsNoTracking().AnyAsync(v => systemIds.Contains(v.GradeSystemId) && v.PointsOverride != null, ct)
-                         || await db.Boulders.AsNoTracking().AnyAsync(b => b.GymId == gymId && b.PointsOverride != null, ct);
-        return new LeaderboardDto(gymId, m, p, from, primary?.Id, primary?.Name, primary?.Type, scoring.Describe(scoringSystem),
-            sorted.Count, entries, viewer, new ScoringRuleDto(RankBasedScoring.MinPoints, RankBasedScoring.MaxPoints, customised));
+        return (rows, systems, primary);
     }
 
     /// <remarks>Ties on the metric are ordered by who got there first (earlier last send).</remarks>

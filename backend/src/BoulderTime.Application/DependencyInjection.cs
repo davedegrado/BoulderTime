@@ -65,6 +65,10 @@ public static class DependencyInjection
         services.AddScoped<LegalAcceptanceService>();
         services.AddScoped<AccountEraser>();
         services.AddScoped<Help.HelpService>();
+        services.AddScoped<Badges.BadgeAwarder>();
+        services.AddScoped<Badges.CompetitionTitles>();
+        services.AddScoped<Badges.BadgeService>();
+        services.AddScoped<Badges.BadgeBackfill>();
         return services;
     }
 }

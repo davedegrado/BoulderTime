@@ -51,7 +51,7 @@ public sealed class BetaTestTests(PostgresFixture postgres) : IAsyncLifetime
         (await w.Staff.Client.DeleteAsync($"/api/boulders/{erased.Id}")).EnsureSuccessStatusCode();
 
         var admin = await _f.UserAsync(platformAdmin: true);
-        (await MarkAsync(admin, w)).Should().Be(new BetaTestResultDto(2, 2));
+        (await MarkAsync(admin, w)).Should().Be(new BetaTestResultDto(2, 2, BetaTesters: 1));
 
         // Only the boulder still on the wall counts, in every leaderboard.
         var keptPoints = (await (await _f.CreateClient().GetAsync($"/api/boulders/{kept.Id}")).ReadAsync<BoulderDetailDto>())!.Points;

@@ -73,6 +73,9 @@ public static partial class Translations
         ("Choose an active sector of this gym.", "Scegli un settore attivo di questa palestra."),
         ("List every sector of this gym exactly once.", "Elenca ogni settore di questa palestra una sola volta."),
         ("Choose a status.", "Scegli uno stato."),
+        ("Choose up to 3 badges.", "Scegli al massimo 3 badge."),
+        ("Choose each badge once.", "Scegli ogni badge una volta sola."),
+        ("You can only choose badges you have earned.", "Puoi scegliere solo badge che hai ottenuto."),
 
         // ---- Staff & invitations ----
         ("Choose a role.", "Scegli un ruolo."),
