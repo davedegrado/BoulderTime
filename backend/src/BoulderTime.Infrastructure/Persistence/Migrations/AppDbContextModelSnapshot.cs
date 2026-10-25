@@ -163,6 +163,11 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("status");
 
+                    b.Property<string>("ThumbnailMode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("thumbnail_mode");
+
                     b.Property<string>("ThumbnailPath")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")

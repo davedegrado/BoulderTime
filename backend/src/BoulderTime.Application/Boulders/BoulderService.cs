@@ -194,7 +194,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
             b.Intensity, tags, completions,
             b.Name, BoulderReader.PointsOf(scales, b, grades), role is null ? null : b.PointsOverride,
             role is null || b.HighlightMaskPath is null ? null : new BoulderHighlightDto(b.HighlightSourcePath, b.HighlightMaskPath, b.HighlightSettings),
-            isProject);
+            isProject, role is null ? null : b.ThumbnailMode);
     }
 
     /// <summary>
@@ -246,7 +246,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var valid = await ValidateAsync(gymId, r, currentPhotoPath: null, currentThumbnailPath: null, currentValueIds: [], ct);
         var userId = currentUser.RequireUserId();
 
-        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity);
+        var boulder = Boulder.Create(gymId, valid.SectorId, valid.PhotoPath, valid.HoldColor, valid.SetterUserId, userId, valid.ThumbnailPath, valid.Intensity, r.ThumbnailMode);
         valid.ApplyNameAndPoints(boulder);
         if (valid.Highlight is { } h) boulder.SetHighlight(h.SourcePath, h.MaskPath, h.Settings);
         db.Boulders.Add(boulder);
@@ -305,7 +305,7 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         if (boulder.HoldColor != valid.HoldColor) changes.Add(Localization.NotificationTexts.BoulderChange.HoldColor);
         if (boulder.PhotoPath != valid.PhotoPath) changes.Add(Localization.NotificationTexts.BoulderChange.Photo);
         var photoChanged = boulder.PhotoPath != valid.PhotoPath;
-        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity).ToList();
+        var obsolete = boulder.Update(valid.SectorId, valid.PhotoPath, valid.ThumbnailPath, valid.HoldColor, valid.SetterUserId, valid.Intensity, r.ThumbnailMode).ToList();
         // A highlight sent replaces the one there was; a new photo without one (an older app, a photo picked instead)
         // leaves nothing to go back to.
         if (valid.Highlight is { } highlight) obsolete.AddRange(boulder.SetHighlight(highlight.SourcePath, highlight.MaskPath, highlight.Settings));

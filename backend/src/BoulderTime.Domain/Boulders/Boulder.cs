@@ -34,6 +34,11 @@ public class Boulder : IAuditable
     public string PhotoPath { get; private set; } = string.Empty;
     /// <summary>Small version (≈480 px) generated on the uploading device for lists; null for older boulders.</summary>
     public string? ThumbnailPath { get; private set; }
+    /// <summary>
+    /// How the card picture was made (ADR-068); null when not known — an older app made it, or there is none. It follows
+    /// the picture: a new picture takes the choice sent with it, and keeps none when none was sent.
+    /// </summary>
+    public ThumbnailMode? ThumbnailMode { get; private set; }
     public HoldColor HoldColor { get; private set; }
     /// <summary>
     /// The name the setters gave it ("La Fessura"), optional. Never empty: no name is null, so no screen ever shows an
@@ -73,16 +78,18 @@ public class Boulder : IAuditable
     private Boulder() { }
 
     public static Boulder Create(Guid gymId, Guid sectorId, string photoPath, HoldColor holdColor, Guid? setterUserId, Guid? createdBy, string? thumbnailPath = null,
-        BoulderIntensity? intensity = null) => new()
+        BoulderIntensity? intensity = null, ThumbnailMode? thumbnailMode = null) => new()
     {
         Id = Guid.NewGuid(), GymId = gymId, SectorId = sectorId, PhotoPath = photoPath, ThumbnailPath = thumbnailPath, HoldColor = holdColor,
+        ThumbnailMode = thumbnailPath is null ? null : thumbnailMode,
         Intensity = intensity, SetterUserId = setterUserId, CreatedByUserId = createdBy, Status = BoulderStatus.Active,
     };
 
     /// <returns>Storage paths that are no longer referenced after the update.</returns>
     public IReadOnlyList<string> Update(Guid sectorId, string photoPath, string? thumbnailPath, HoldColor holdColor, Guid? setterUserId,
-        BoulderIntensity? intensity = null)
+        BoulderIntensity? intensity = null, ThumbnailMode? thumbnailMode = null)
     {
+        var picture = ThumbnailPath;
         Intensity = intensity;
         var obsolete = new List<string>();
         if (photoPath != PhotoPath)
@@ -98,6 +105,7 @@ public class Boulder : IAuditable
             if (ThumbnailPath is not null) obsolete.Add(ThumbnailPath);
             ThumbnailPath = thumbnailPath;
         }
+        if (ThumbnailPath != picture) ThumbnailMode = ThumbnailPath is null ? null : thumbnailMode;
         SectorId = sectorId;
         PhotoPath = photoPath;
         HoldColor = holdColor;
@@ -208,6 +216,7 @@ public class Boulder : IAuditable
         obsolete.AddRange(SetHighlight(null, null, null));
         PhotoPath = string.Empty;
         ThumbnailPath = null;
+        ThumbnailMode = null;
         Status = BoulderStatus.Deleted;
         RemovedAt ??= now;
         RemovedByUserId ??= byUserId;
