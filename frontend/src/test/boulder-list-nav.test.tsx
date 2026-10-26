@@ -48,6 +48,7 @@ describe("The gym's boulder list", () => {
       boulder("b1", { name: "La Fessura", points: 64, viewer: { attempts: 2, completed: true } }),
       boulder("b2", { sectorName: "A sector with a very long name that must not stretch its row", photoUrl: null, holdColor: "YELLOW", grades: [], points: null, isProject: true }),
       boulder("b3", { holdColor: "WHITE", points: 10, viewer: { attempts: 3, completed: false } }),
+      boulder("b4", { points: 10 }),
     ]));
   }
 
@@ -78,17 +79,19 @@ describe("The gym's boulder list", () => {
     await userEvent.click(screen.getByRole("radio", { name: "List" }));
 
     const rows = container.querySelectorAll(".boulder-row");
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     for (const row of rows) {
-      expect([...row.children].map((c) => c.className.split(" ")[0])).toEqual(["boulder-row__state", "boulder-row__thumb", "boulder-row__grade", "boulder-row__sector", "boulder-row__holds", "boulder-row__points"]);
-      expect(row).toHaveAttribute("href", expect.stringMatching(/^\/boulders\/b[123]$/));
+      expect([...row.children].map((c) => c.className)).toEqual(["boulder-row__thumb", "boulder-row__grade", "boulder-row__sector", "boulder-row__holds", "boulder-row__points"]);
+      expect(row).toHaveAttribute("href", expect.stringMatching(/^\/boulders\/b[1-4]$/));
     }
-    // The climber's own state first, as on the cards: completed, an open project, neither (tries alone are neither).
-    expect(rows[0]!.querySelector(".boulder-row__state")).toHaveClass("is-done");
-    expect(rows[1]!.querySelector(".boulder-row__state")).toHaveClass("is-project");
-    expect(rows[2]!.querySelector(".boulder-row__state")).toHaveClass("is-open");
+    // The row's background says the climber's own state: completed, an open project, tried, never tried.
+    expect(rows[0]).toHaveClass("boulder-row--done");
+    expect(rows[1]).toHaveClass("boulder-row--project");
+    expect(rows[2]).toHaveClass("boulder-row--tried");
+    expect(rows[3]).toHaveClass("boulder-row--untried");
     expect(rows[0]).toHaveAccessibleName(expect.stringContaining("You completed this"));
     expect(rows[1]).toHaveAccessibleName(expect.stringContaining("Your project"));
+    expect(rows[2]).toHaveAccessibleName(expect.stringContaining("Tried, not completed"));
     // No name in the compact list; the holds as a hold of their colour, named for screen readers.
     expect(screen.queryByText("La Fessura")).not.toBeInTheDocument();
     expect(screen.queryByText("Holds")).not.toBeInTheDocument();
