@@ -45,8 +45,9 @@ describe("The gym's boulder list", () => {
     reply("GET", "/api/gyms/g1/sectors", sectors);
     reply("GET", "/api/gyms/g1/grade-systems", []);
     reply("GET", "/api/gyms/g1/boulders", page([
-      boulder("b1", { name: "La Fessura", points: 64 }),
-      boulder("b2", { sectorName: "A sector with a very long name that must not stretch its row", photoUrl: null, holdColor: "YELLOW", grades: [], points: null }),
+      boulder("b1", { name: "La Fessura", points: 64, viewer: { attempts: 2, completed: true } }),
+      boulder("b2", { sectorName: "A sector with a very long name that must not stretch its row", photoUrl: null, holdColor: "YELLOW", grades: [], points: null, isProject: true }),
+      boulder("b3", { holdColor: "WHITE", points: 10, viewer: { attempts: 3, completed: false } }),
     ]));
   }
 
@@ -68,7 +69,7 @@ describe("The gym's boulder list", () => {
     expect(options).toEqual(["Sector", "Points", "Grade", "Date set"]);
   });
 
-  it("shows a compact list with the same five places in every row, and keeps the sort when switching", async () => {
+  it("shows a compact list with the same places in every row, and keeps the sort when switching", async () => {
     setup();
     const { container } = renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
     await screen.findAllByRole("link", { name: /grade 6A/i });
@@ -77,16 +78,23 @@ describe("The gym's boulder list", () => {
     await userEvent.click(screen.getByRole("radio", { name: "List" }));
 
     const rows = container.querySelectorAll(".boulder-row");
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     for (const row of rows) {
-      expect([...row.children].map((c) => c.className)).toEqual(["boulder-row__thumb", "boulder-row__grade", "boulder-row__sector", "boulder-row__holds", "boulder-row__points"]);
-      expect(row).toHaveAttribute("href", expect.stringMatching(/^\/boulders\/b[12]$/));
+      expect([...row.children].map((c) => c.className.split(" ")[0])).toEqual(["boulder-row__state", "boulder-row__thumb", "boulder-row__grade", "boulder-row__sector", "boulder-row__holds", "boulder-row__points"]);
+      expect(row).toHaveAttribute("href", expect.stringMatching(/^\/boulders\/b[123]$/));
     }
-    // No name in the compact list; the holds labelled, with a dot of their colour.
+    // The climber's own state first, as on the cards: completed, an open project, neither (tries alone are neither).
+    expect(rows[0]!.querySelector(".boulder-row__state")).toHaveClass("is-done");
+    expect(rows[1]!.querySelector(".boulder-row__state")).toHaveClass("is-project");
+    expect(rows[2]!.querySelector(".boulder-row__state")).toHaveClass("is-open");
+    expect(rows[0]).toHaveAccessibleName(expect.stringContaining("You completed this"));
+    expect(rows[1]).toHaveAccessibleName(expect.stringContaining("Your project"));
+    // No name in the compact list; the holds as a hold of their colour, named for screen readers.
     expect(screen.queryByText("La Fessura")).not.toBeInTheDocument();
-    expect(within(rows[0] as HTMLElement).getByText("Holds")).toBeInTheDocument();
-    expect((rows[0]!.querySelector(".boulder-row__dot") as HTMLElement).style.background).toBe("rgb(47, 111, 219)");
-    expect((rows[1]!.querySelector(".boulder-row__dot") as HTMLElement).style.background).toBe("rgb(245, 196, 0)");
+    expect(screen.queryByText("Holds")).not.toBeInTheDocument();
+    expect(rows[0]).toHaveAccessibleName(expect.stringContaining("Blue holds"));
+    expect((rows[0]!.querySelector(".boulder-row__hold") as HTMLElement).style.background).toBe("rgb(47, 111, 219)");
+    expect((rows[1]!.querySelector(".boulder-row__hold") as HTMLElement).style.background).toBe("rgb(245, 196, 0)");
     // What a boulder lacks leaves its place empty instead of moving the others.
     expect(rows[0]!.querySelector(".boulder-row__points")).toHaveTextContent("+64 pt");
     expect(rows[1]!.querySelector(".boulder-row__points")).toHaveTextContent("–");
