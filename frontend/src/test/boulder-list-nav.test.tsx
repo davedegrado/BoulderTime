@@ -84,7 +84,7 @@ describe("The gym's boulder list", () => {
       expect([...row.children].map((c) => c.className)).toEqual(["boulder-row__thumb", "boulder-row__grade", "boulder-row__sector", "boulder-row__holds", "boulder-row__points"]);
       expect(row).toHaveAttribute("href", expect.stringMatching(/^\/boulders\/b[1-4]$/));
     }
-    // The row's background says the climber's own state: completed, an open project, tried, never tried.
+    // A bar on the row's edge says the climber's own state: completed, an open project, tried, never tried.
     expect(rows[0]).toHaveClass("boulder-row--done");
     expect(rows[1]).toHaveClass("boulder-row--project");
     expect(rows[2]).toHaveClass("boulder-row--tried");

@@ -120,8 +120,8 @@ const STATE_LABEL: Record<OwnState, string | null> = { done: "You completed this
 
 /**
  * One boulder as a row of a compact list: the same places in every row, whatever the boulder has — picture, grade,
- * sector, holds, points. With `showOwnState` the row's background says the climber's own state: green when completed,
- * orange for an open project, yellow when tried, plain when never tried (and the label says it for screen readers). A missing value leaves its place empty rather
+ * sector, holds, points. With `showOwnState` a bar on the row's left edge says the climber's own state: green when
+ * completed, orange for an open project, yellow when tried, none when never tried (and the label says it for screen readers). A missing value leaves its place empty rather
  * than moving the others, and long text is cut short, never wrapped. The name is left out: this list is for scanning,
  * the card and the page have it. With `onLongPress`, holding it starts selecting, as on the cards.
  */
