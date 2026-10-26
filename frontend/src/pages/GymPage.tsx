@@ -140,6 +140,8 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
 }
 
 function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorId?: string | null }) {
+  // Signed out there is no own state to show: no column for it.
+  const signedIn = Boolean(useAuth().session);
   // A "?sector=…" link asks for that sector: filters kept from before only count when they're on the same one.
   const [filters, setFilters] = useRememberedFilters(`bt:boulder-filters:${gymId}`, () => (initialSectorId ? { sectorId: initialSectorId } : {}),
     (kept) => !initialSectorId || kept.sectorId === initialSectorId);
@@ -180,7 +182,7 @@ function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorI
         ) : (
           <>
             {view === "list"
-              ? <ul className="boulder-rows">{items.map((b) => <li key={b.id}><BoulderRow boulder={b} /></li>)}</ul>
+              ? <ul className="boulder-rows">{items.map((b) => <li key={b.id}><BoulderRow boulder={b} showOwnState={signedIn} /></li>)}</ul>
               : <div className="boulder-grid">{items.map((b) => <BoulderCard key={b.id} boulder={b} />)}</div>}
             {boulders.hasNextPage && <Button variant="secondary" onClick={() => boulders.fetchNextPage()} loading={boulders.isFetchingNextPage}>{translate("Show more")}</Button>}
           </>

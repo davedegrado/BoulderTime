@@ -227,6 +227,7 @@ export const it: Record<string, string> = {
   "The part you chose.": "La parte che hai scelto.",
   "Choose how the cards show the photo.": "Scegli come le card mostrano la foto.",
   "Your project": "Tuo progetto",
+  "Tried, not completed": "Provato, non completato",
   "Your projects": "I tuoi progetti",
   "Added to your projects": "Aggiunto ai tuoi progetti",
   "Removed from your projects": "Tolto dai tuoi progetti",

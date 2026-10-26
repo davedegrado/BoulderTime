@@ -112,20 +112,30 @@ export function ViewToggle({ value, onChange }: { value: BoulderView; onChange: 
   );
 }
 
+/** The climber's own state of a boulder: completed, an open project, tried (not a project), or never tried. */
+type OwnState = "done" | "project" | "tried" | "untried";
+const ownState = (b: BoulderSummary): OwnState =>
+  b.viewer?.completed ? "done" : b.isProject ? "project" : (b.viewer?.attempts ?? 0) > 0 ? "tried" : "untried";
+const STATE_LABEL: Record<OwnState, string | null> = { done: "You completed this", project: "Your project", tried: "Tried, not completed", untried: null };
+
 /**
- * One boulder as a row of a compact list: the same five places in every row, whatever the boulder has — picture,
- * grade, sector, holds, points. A missing value leaves its place empty rather than moving the others, and long text
- * is cut short, never wrapped. The name is left out: this list is for scanning, the card and the page have it.
+ * One boulder as a row of a compact list: the same places in every row, whatever the boulder has — picture, grade,
+ * sector, holds, points. With `showOwnState` a bar on the row's left edge says the climber's own state: green when
+ * completed, orange for an open project, yellow when tried, none when never tried (and the label says it for screen readers). A missing value leaves its place empty rather
+ * than moving the others, and long text is cut short, never wrapped. The name is left out: this list is for scanning,
+ * the card and the page have it. With `onLongPress`, holding it starts selecting, as on the cards.
  */
-/** One boulder on one line. With `onLongPress`, holding it starts selecting, as on the cards. */
-export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLongPress }: {
+export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLongPress, showOwnState = false }: {
   boulder: BoulderSummary; to?: string; selectable?: boolean; selected?: boolean; onToggle?: () => void; onLongPress?: () => void;
+  showOwnState?: boolean;
 }) {
   const { pressHandlers, toggleHandlers } = useLongPress(onLongPress, onToggle);
   const primary = boulder.grades[0];
   const holds = holdColorInfo(boulder.holdColor);
+  const state = showOwnState && !selectable ? ownState(boulder) : null;
   const label = [primary ? dataLabel(primary.label) : t("Ungraded"), boulder.sectorName, t("{colour} holds", { colour: holdColorName(boulder.holdColor) }),
-    boulder.points != null ? plural(boulder.points, "Worth {count} point", "Worth {count} points") : null].filter(Boolean).join(", ");
+    boulder.points != null ? plural(boulder.points, "Worth {count} point", "Worth {count} points") : null,
+    state && STATE_LABEL[state] ? t(STATE_LABEL[state]!) : null].filter(Boolean).join(", ");
   const cells = (
     <>
       <span className="boulder-row__thumb">
@@ -136,18 +146,18 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLong
         {primary ? <GradeBadge grade={primary} size="sm" /> : <span className="boulder-row__none" aria-hidden>–</span>}
       </span>
       <span className="boulder-row__sector">{boulder.sectorName}</span>
-      <span className="boulder-row__holds">
-        <span className="boulder-row__holds-label" aria-hidden>{t("Holds")}</span>
-        <span className="boulder-row__dot" style={{ background: holds.hex }} title={holdColorName(boulder.holdColor)} aria-hidden />
+      {/* A hold in the holds' colour says it without words, and leaves the sector the room. */}
+      <span className="boulder-row__holds" title={t("{colour} holds", { colour: holdColorName(boulder.holdColor) })} aria-hidden>
+        <span className="boulder-row__hold" style={{ background: holds.hex }} />
       </span>
       <span className="boulder-row__points" aria-hidden>{boulder.points != null ? t("+{points} pt", { points: boulder.points }) : "–"}</span>
     </>
   );
   if (selectable) {
     return (
-      <button type="button" className={`boulder-row boulder-row--pressable ${selected ? "boulder-row--selected" : ""}`} aria-pressed={selected} aria-label={label}
+      <button type="button" className={`boulder-row boulder-row--pressable${state ? ` boulder-row--${state}` : ""} ${selected ? "boulder-row--selected" : ""}`} aria-pressed={selected} aria-label={label}
         {...toggleHandlers}>{cells}</button>
     );
   }
-  return <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-row ${onLongPress ? "boulder-row--pressable" : ""}`} aria-label={label} {...pressHandlers}>{cells}</Link>;
+  return <Link to={to ?? `/boulders/${boulder.id}`} className={`boulder-row${state ? ` boulder-row--${state}` : ""} ${onLongPress ? "boulder-row--pressable" : ""}`} aria-label={label} {...pressHandlers}>{cells}</Link>;
 }
