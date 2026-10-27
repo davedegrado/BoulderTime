@@ -17,7 +17,10 @@ namespace BoulderTime.Application.Climbing;
 public enum HistoryFilter { All, Completed, Projects, Marked }
 
 /// <summary>One entry of climbing history. The boulder may be removed; history keeps it.</summary>
-public sealed record ClimbHistoryItemDto(BoulderSummaryDto Boulder, int Attempts, bool Completed, DateTimeOffset? CompletedAt, DateTimeOffset UpdatedAt, int? Rating);
+/// <param name="IsProject">Whether the person whose history this is marked the boulder as a project (ADR-067): theirs, not
+/// the viewer's. Added for 1.1; older apps don't read it.</param>
+public sealed record ClimbHistoryItemDto(BoulderSummaryDto Boulder, int Attempts, bool Completed, DateTimeOffset? CompletedAt, DateTimeOffset UpdatedAt, int? Rating,
+    bool IsProject = false);
 
 /// <param name="Projects">Tried and not completed, as it always was (older apps show it as "projects").</param>
 /// <param name="MarkedProjects">
@@ -368,9 +371,10 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var summaries = (await reader.SummariesAsync(boulders, ct)).ToDictionary(s => s.Id);
         var ratings = await db.BoulderRatings.AsNoTracking().Where(r => r.UserId == userId && ids.Contains(r.BoulderId))
             .ToDictionaryAsync(r => r.BoulderId, r => r.Rating, ct);
+        var projects = await reader.ProjectsAsync(ids, userId, ct);
         return rows.Where(r => summaries.ContainsKey(r.BoulderId))
             .Select(r => new ClimbHistoryItemDto(summaries[r.BoulderId], r.Attempts, r.Completed, r.CompletedAt, r.UpdatedAt,
-                ratings.TryGetValue(r.BoulderId, out var rating) ? rating : (int?)null))
+                ratings.TryGetValue(r.BoulderId, out var rating) ? rating : (int?)null, projects.Contains(r.BoulderId)))
             .ToList();
     }
 

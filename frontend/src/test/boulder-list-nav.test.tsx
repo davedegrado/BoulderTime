@@ -96,8 +96,8 @@ describe("The gym's boulder list", () => {
     expect(screen.queryByText("La Fessura")).not.toBeInTheDocument();
     expect(screen.queryByText("Holds")).not.toBeInTheDocument();
     expect(rows[0]).toHaveAccessibleName(expect.stringContaining("Blue holds"));
-    expect((rows[0]!.querySelector(".boulder-row__hold") as HTMLElement).style.background).toBe("rgb(47, 111, 219)");
-    expect((rows[1]!.querySelector(".boulder-row__hold") as HTMLElement).style.background).toBe("rgb(245, 196, 0)");
+    expect((rows[0]!.querySelector(".hold-icon__shape") as HTMLElement).style.background).toBe("rgb(47, 111, 219)");
+    expect((rows[1]!.querySelector(".hold-icon__shape") as HTMLElement).style.background).toBe("rgb(245, 196, 0)");
     // What a boulder lacks leaves its place empty instead of moving the others.
     expect(rows[0]!.querySelector(".boulder-row__points")).toHaveTextContent("+64 pt");
     expect(rows[1]!.querySelector(".boulder-row__points")).toHaveTextContent("–");

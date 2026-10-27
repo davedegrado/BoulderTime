@@ -4,7 +4,7 @@ import { Ban, Copy, Flag, LayoutList, Lock, MapPin, Pencil, Share2, ShieldCheck,
 import { DEFAULT_PROFILE_SECTIONS, useProfile, type Profile, type ProfileSection } from "@/features/climbing/api";
 import { CompactHistoryRow, HighestGrades, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
-import { HistorySection } from "@/pages/ActivityPage";
+import { HistorySection, triedCount } from "@/pages/ActivityPage";
 import { CustomizeProfile } from "@/features/profile/CustomizeProfile";
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
@@ -154,7 +154,8 @@ function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; can
 function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profile; sections: ProfileSection[]; onCustomize?: () => void }) {
   const [params, setParams] = useSearchParams();
   const shown = (key: ProfileSection["key"]) => sections.some((s) => s.key === key && s.visible);
-  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") ? ["gyms" as const] : []),
+  // The gyms tab is always there: it can't be hidden (a switch saved off by an earlier 1.1 build is ignored).
+  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), "gyms" as const,
     ...(supportsFriends(p) ? ["friends" as const] : [])];
   const asked = params.get("tab") as Tab | null;
   const tab: Tab = asked && tabs.includes(asked) ? asked : "overview";
@@ -167,10 +168,14 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
   const blocks = sections.filter((s) => s.visible).map((s) => {
     switch (s.key) {
       case "stats": return <Block key={s.key} id="stats" title={t("Statistics")}><StatsRow stats={p.stats} /></Block>;
-      case "favoriteSector": return p.favoriteSector ? <FavoriteSectorCard key={s.key} sector={p.favoriteSector} isMe={p.isMe} /> : null;
-      case "weekly": return p.weekly.some((w) => w.completed > 0)
-        ? <Block key={s.key} id="weekly" title={t("Last 12 weeks")}><WeeklyChart weeks={p.weekly} /></Block>
-        : null;
+      case "favoriteSector": return p.favoriteSector ? <FavoriteSectorCard key={s.key} sector={p.favoriteSector} isMe={p.isMe} compact /> : null;
+      case "weekly": {
+        const total = p.weekly.reduce((n, w) => n + w.completed, 0);
+        return total > 0
+          ? <Block key={s.key} id="weekly" title={t("Last 12 weeks")}
+              action={<span className="profile-block__note">{plural(total, "{count} boulder", "{count} boulders")}</span>}><WeeklyChart weeks={p.weekly} /></Block>
+          : null;
+      }
       case "highestGrades": return p.highestGrades.length > 0
         ? <Block key={s.key} id="highest" title={t("Highest grades")}><HighestGrades grades={p.highestGrades} /></Block>
         : null;
@@ -220,12 +225,16 @@ function Block({ id, title, action, children }: { id: string; title: string; act
   );
 }
 
-/** The four numbers in one row, for those who choose to show them. */
+/**
+ * The numbers, for those who choose to show them, as small tiles three to a row: sends, this month, attempts; then
+ * projects and everything tried (completed or not).
+ */
 function StatsRow({ stats }: { stats: Profile["stats"] }) {
   const items: [number, string][] = [
-    [stats.completed, t("Sends")], [stats.markedProjects ?? stats.projects, t("Projects")],
-    ...(stats.markedProjects != null ? [[stats.projects, t("Tried")] as [number, string]] : []),
-    [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
+    [stats.completed, t("Sends")], [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
+    [stats.markedProjects ?? stats.projects, t("Projects")],
+    // An older server's "projects" are what was tried and not completed: no separate count of everything tried then.
+    ...(stats.markedProjects != null ? [[triedCount(stats), t("Tried")] as [number, string]] : []),
   ];
   return (
     <dl className="profile-stats">

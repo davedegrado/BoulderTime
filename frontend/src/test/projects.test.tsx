@@ -131,12 +131,12 @@ describe("Projects on Home", () => {
 });
 
 describe("Your progress filter", () => {
-  it("offers the chosen projects as Projects and what was tried as Tried", async () => {
+  it("offers the chosen projects as Projects and what was tried and not completed apart from everything tried", async () => {
     const onChange = vi.fn();
     renderAt("/", "/", <BoulderFiltersBar filters={{}} onChange={onChange} sectors={[]} systems={[]} />);
     const select = screen.getByRole("combobox", { name: "Your progress" });
     expect(within(select).getAllByRole("option").map((o) => [o.getAttribute("value"), o.textContent]))
-      .toEqual([["", "All"], ["UNTRIED", "Not tried"], ["MARKED", "Projects"], ["PROJECTS", "Tried"], ["COMPLETED", "Completed"]]);
+      .toEqual([["", "All"], ["UNTRIED", "Not tried"], ["MARKED", "Projects"], ["PROJECTS", "Tried, not completed yet"], ["COMPLETED", "Completed"]]);
   });
 });
 
