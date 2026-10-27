@@ -87,6 +87,29 @@ describe("Setting a boulder on its sector's wall photo", () => {
     reply("POST", "/api/gyms/g1/boulders", (body?: unknown) => ({ id: "b1", ...(body as object) }));
   }
 
+  it("asks for the sector first, before the photo, and then offers its wall photo", async () => {
+    setup();
+    renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    const sectorField = await screen.findByRole("combobox", { name: "Sector *" });
+    const photoLabel = screen.getByText("Photo *");
+    expect(sectorField.compareDocumentPosition(photoLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("Choose the sector first to use the photo of its wall.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Use the photo of Cave" })).not.toBeInTheDocument();
+    await userEvent.selectOptions(sectorField, "s1");
+    expect(screen.getByRole("button", { name: "Use the photo of Cave" })).toBeInTheDocument();
+    expect(screen.queryByText("Choose the sector first to use the photo of its wall.")).not.toBeInTheDocument();
+  });
+
+  it("starts in the sector the list was showing, and not in one that isn't on offer", async () => {
+    setup();
+    const { unmount } = renderAt("/manage/crimp/boulders/new?sector=s1", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    expect(await screen.findByRole("combobox", { name: "Sector *" })).toHaveValue("s1");
+    expect(screen.getByRole("button", { name: "Use the photo of Cave" })).toBeInTheDocument();
+    unmount();
+    renderAt("/manage/crimp/boulders/new?sector=gone", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Sector *" })).toHaveValue(""));
+  });
+
   it("offers to highlight the holds on the wall photo of the boulder's sector, and says what to do when there are none", async () => {
     setup();
     renderAt("/manage/crimp/boulders/new", "/manage/:slug", <ManageLayout />, <Route path="boulders/new" element={<BoulderEditorPage />} />);
