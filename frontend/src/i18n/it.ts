@@ -1420,8 +1420,6 @@ export const it: Record<string, string> = {
   "Requests received": "Richieste ricevute",
   "Requests sent": "Richieste inviate",
   "Cancel the request to {name}": "Annulla la richiesta a {name}",
-  "Gyms tab": "Scheda Palestre",
-  "The gyms where you climbed, in a tab of their own.": "Le palestre in cui hai scalato, in una scheda a parte.",
   "Profile sections": "Sezioni del profilo",
   "Nothing to show yet": "Ancora niente da mostrare",
   "No activity yet": "Ancora nessuna attività",

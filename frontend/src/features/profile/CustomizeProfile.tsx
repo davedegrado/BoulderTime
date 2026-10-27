@@ -29,10 +29,9 @@ export function CustomizeProfile({ sections, onClose }: { sections: ProfileSecti
   const save = useSaveProfileSections();
   const toast = useToast();
 
-  // The gyms are a tab of their own, never in the overview: their switch shows or hides the tab, and has no place in
-  // the order.
+  // The gyms are a tab of their own, always there and never in the overview: nothing to switch or order here. Their
+  // entry stays in what is saved, as the server keeps it.
   const ordered = draft.filter((s) => s.key !== "gyms");
-  const gyms = draft.find((s) => s.key === "gyms");
   const move = (i: number, by: -1 | 1) => setDraft((d) => {
     const next = d.filter((s) => s.key !== "gyms");
     const [item] = next.splice(i, 1);
@@ -60,7 +59,6 @@ export function CustomizeProfile({ sections, onClose }: { sections: ProfileSecti
           </li>
         ))}
       </ol>
-      {gyms && <Toggle label={t("Gyms tab")} description={t("The gyms where you climbed, in a tab of their own.")} checked={gyms.visible} onChange={(v) => toggle("gyms", v)} />}
       <div className="row">
         <Button loading={save.isPending} onClick={() => done(draft, t("Profile saved"))}>{t("Save")}</Button>
         <Button variant="ghost" onClick={onClose}>{t("Cancel")}</Button>

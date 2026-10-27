@@ -90,9 +90,9 @@ describe("A person's profile", () => {
   });
 
   it("leaves out the sections its owner hid, in the order they chose", async () => {
-    reply("GET", "/api/users/u2/profile", profile({ sections: [{ key: "gyms", visible: true }, { key: "stats", visible: false }, ...DEFAULT.filter((s) => s.key !== "gyms" && s.key !== "stats")] }));
+    reply("GET", "/api/users/u2/profile", profile({ sections: [{ key: "gyms", visible: false }, { key: "stats", visible: false }, ...DEFAULT.filter((s) => s.key !== "gyms" && s.key !== "stats")] }));
     show(<UserProfilePage />, "/users/:id", "/users/u2");
-    // Shown, the gyms are a tab of their own, never a block of the overview.
+    // The gyms are always a tab of their own (even saved as hidden by an earlier build), never a block of the overview.
     expect(await screen.findByRole("tab", { name: "Gyms" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gyms" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sends")).not.toBeInTheDocument();
@@ -140,12 +140,13 @@ describe("A person's profile", () => {
     await userEvent.click(within(await openMenu()).getByRole("menuitem", { name: "Customise profile" }));
 
     await userEvent.click(screen.getByRole("switch", { name: "Statistics" }));
-    expect(screen.getByRole("switch", { name: "Gyms tab" })).toBeChecked();
+    // The gyms tab can't be switched off: no switch for it.
+    expect(screen.queryByRole("switch", { name: /Gyms/ })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Move Recent activity up" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
     const sent = (calls.find((c) => c.method === "PUT")!.body as { sections: { key: string; visible: boolean }[] }).sections;
-    // The gyms aren't in the order (they have their own tab), only their switch.
+    // The gyms aren't in the order (they have their own tab, always there); their entry is kept as it was.
     expect(screen.queryByRole("button", { name: "Move Gyms up" })).not.toBeInTheDocument();
     expect(sent.map((s) => s.key)).toEqual(["stats", "favoriteSector", "weekly", "history", "highestGrades", "gyms"]);
     // Off by default, so the switch turned them on.

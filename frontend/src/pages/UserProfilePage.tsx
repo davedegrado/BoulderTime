@@ -154,7 +154,8 @@ function ProfileMenu({ profile: p, canArrange, onOpen }: { profile: Profile; can
 function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profile; sections: ProfileSection[]; onCustomize?: () => void }) {
   const [params, setParams] = useSearchParams();
   const shown = (key: ProfileSection["key"]) => sections.some((s) => s.key === key && s.visible);
-  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), ...(shown("gyms") ? ["gyms" as const] : []),
+  // The gyms tab is always there: it can't be hidden (a switch saved off by an earlier 1.1 build is ignored).
+  const tabs: Tab[] = ["overview", ...(shown("history") ? ["activity" as const] : []), "gyms" as const,
     ...(supportsFriends(p) ? ["friends" as const] : [])];
   const asked = params.get("tab") as Tab | null;
   const tab: Tab = asked && tabs.includes(asked) ? asked : "overview";
