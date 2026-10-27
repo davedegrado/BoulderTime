@@ -162,4 +162,39 @@ public sealed class ProjectTests(PostgresFixture postgres) : IAsyncLifetime
         (await _f.CreateClient().PutAsync($"/api/boulders/{b.Id}/project", null)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         (await (await _f.UserAsync()).Client.PutAsync($"/api/boulders/{Guid.NewGuid()}/project", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task The_history_says_which_boulders_its_owner_marked_as_projects_whoever_reads_it()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var project = await w.BoulderAsync();
+        var tried = await w.BoulderAsync();
+        var sent = await w.BoulderAsync();
+        var me = await _f.UserAsync();
+        await Mark(me, project.Id);
+        await Attempt(me, project.Id, 3, false);
+        await Attempt(me, tried.Id, 22, false);
+        await Attempt(me, sent.Id, 2, true);
+
+        async Task<Dictionary<Guid, bool>> Read(TestUser reader) =>
+            (await (await reader.Client.GetAsync($"/api/users/{me.Id}/history")).ReadAsync<PagedResult<ClimbHistoryItemDto>>())!
+                .Items.ToDictionary(i => i.Boulder.Id, i => i.IsProject);
+
+        var mine = await Read(me);
+        mine[project.Id].Should().BeTrue();
+        mine[tried.Id].Should().BeFalse("tried many times, never marked");
+        mine[sent.Id].Should().BeFalse();
+
+        // Someone else reading the history sees the owner's marks, not their own.
+        var other = await _f.UserAsync();
+        await Mark(other, tried.Id);
+        var theirs = await Read(other);
+        theirs[project.Id].Should().BeTrue();
+        theirs[tried.Id].Should().BeFalse();
+
+        // The raw answer only gains a field: what the 1.0 apps read is unchanged.
+        var raw = await (await me.Client.GetAsync($"/api/users/{me.Id}/history")).Content.ReadAsStringAsync();
+        var item = JsonDocument.Parse(raw).RootElement.GetProperty("items")[0];
+        item.EnumerateObject().Select(x => x.Name).Should().Contain(["boulder", "attempts", "completed", "completedAt", "updatedAt", "rating", "isProject"]);
+    }
 }
