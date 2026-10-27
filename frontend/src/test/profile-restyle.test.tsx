@@ -132,6 +132,47 @@ describe("A person's profile", () => {
     expect(await screen.findByRole("tab", { name: "Activity", selected: true })).toBeInTheDocument();
   });
 
+  it("marks each row of the activity with the person's own state, keeps the grades on one line, and filters by tried, sends and projects", async () => {
+    const font = (label: string, rank: number) => ({ gradeSystemId: `font-${label}`, systemName: "Fontainebleau", systemType: "FONTAINEBLEAU", gradeValueId: label, label, rank, colorHex: null });
+    const item = (id: string, over: object, boulder: object = {}) => ({
+      boulder: { id, name: null, gymId: "g1", gymName: "Crimp Factory", sectorId: "s1", sectorName: "Cave", photoUrl: `/${id}.jpg`, holdColor: "BLUE", points: 28, status: "ACTIVE",
+        grades: [font("6A", 5)], ...boulder },
+      completed: false, completedAt: null, updatedAt: "2026-10-20T10:00:00Z", attempts: 1, ...over,
+    });
+    reply("GET", "/api/users/u2/profile", profile({ sections: DEFAULT.map((s) => ({ ...s, visible: true })), stats: { completed: 42, projects: 8, markedProjects: 2, completedThisMonth: 22, totalAttempts: 244 } }));
+    reply("GET", "/api/users/u2/history", { items: [
+      item("b1", { isProject: true }, { name: "Blocco test notturno", grades: [font("7A+", 9), font("V15", 30), font("8A", 12)] }),
+      item("b2", { completed: true, completedAt: "2026-10-22T10:00:00Z", attempts: 5, isProject: false }),
+      item("b3", { attempts: 22, isProject: false }),
+      item("b4", { attempts: 4 }), // from an older server: nothing says it is a project, so it isn't called one
+    ], page: 1, pageSize: 20, total: 4, hasMore: false });
+    renderProfile();
+
+    // The numbers: "Tried" is every boulder tried, completed or not (42 sent + 8 still open).
+    const stats = await screen.findByRole("region", { name: "Statistics" });
+    expect(within(stats).getByText("Tried").nextSibling).toHaveTextContent("50");
+    expect(within(stats).getByText("Projects").nextSibling).toHaveTextContent("2");
+
+    await userEvent.click(screen.getByRole("tab", { name: "Activity" }));
+    expect((await screen.findAllByRole("radio")).map((r) => r.textContent)).toEqual(["Tried", "Sends", "Projects"]);
+    const rows = await screen.findAllByRole("link", { name: /Cave · Crimp Factory/ });
+    const state = (i: number) => rows[i]!.querySelector(".hrow__state")!;
+    expect(state(0)).toHaveClass("is-project");
+    expect(state(0)).toHaveTextContent("Project");
+    expect(state(1)).toHaveClass("is-done");
+    expect(state(2)).toHaveClass("is-tried");
+    expect(state(2)).toHaveTextContent("22");
+    expect(state(3)).toHaveClass("is-tried");
+    // The main grade as a badge, the others small beside it, then the name, all on the first line.
+    const top = rows[0]!.querySelector(".hrow__top")!;
+    expect(top.querySelector(".grade")).toHaveTextContent("7A+");
+    expect(top.querySelector(".hrow__grades")).toHaveTextContent("V15 · 8A");
+    expect(top.querySelector(".hrow__name")).toHaveTextContent("Blocco test notturno");
+    // The holds as a hold of their colour, named for screen readers.
+    expect(rows[0]!.querySelector(".hrow__where .hold-icon")).not.toBeNull();
+    expect(rows[0]).toHaveTextContent(/blue/i);
+  });
+
   it("is customised by its owner: hide, move, save; and back to the default", async () => {
     reply("GET", "/api/users/u2/profile", profile({ isMe: true }));
     reply("PUT", "/api/users/me/profile-sections", (body: unknown) => (body as { sections: unknown }).sections);

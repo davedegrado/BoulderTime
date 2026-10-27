@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDownUp, ArrowUpDown, Check, ChevronDown, LayoutGrid, List, MountainSnow } from "lucide-react";
 import type { BoulderSummary } from "@/features/boulders/api";
-import { GradeBadge } from "@/features/boulders/BoulderBits";
-import { holdColorInfo, holdColorName } from "@/features/boulders/holdColors";
+import { GradeBadge, HoldIcon } from "@/features/boulders/BoulderBits";
+import { holdColorName } from "@/features/boulders/holdColors";
 import { useLongPress } from "@/features/boulders/useLongPress";
 import { dataLabel } from "@/i18n/data";
 import { plural, t } from "@/i18n/i18n";
@@ -131,7 +131,6 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLong
 }) {
   const { pressHandlers, toggleHandlers } = useLongPress(onLongPress, onToggle);
   const primary = boulder.grades[0];
-  const holds = holdColorInfo(boulder.holdColor);
   const state = showOwnState && !selectable ? ownState(boulder) : null;
   const label = [primary ? dataLabel(primary.label) : t("Ungraded"), boulder.sectorName, t("{colour} holds", { colour: holdColorName(boulder.holdColor) }),
     boulder.points != null ? plural(boulder.points, "Worth {count} point", "Worth {count} points") : null,
@@ -148,7 +147,7 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLong
       <span className="boulder-row__sector">{boulder.sectorName}</span>
       {/* A hold in the holds' colour says it without words, and leaves the sector the room. */}
       <span className="boulder-row__holds" title={t("{colour} holds", { colour: holdColorName(boulder.holdColor) })} aria-hidden>
-        <span className="boulder-row__hold" style={{ background: holds.hex }} />
+        <HoldIcon color={boulder.holdColor} />
       </span>
       <span className="boulder-row__points" aria-hidden>{boulder.points != null ? t("+{points} pt", { points: boulder.points }) : "–"}</span>
     </>

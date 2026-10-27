@@ -5,6 +5,19 @@ import { dataLabel } from "@/i18n/data";
 import { t } from "@/i18n/i18n";
 
 /**
+ * The holds' colour as the shape of a hold (with its bolt hole), the colour or pattern painted through it, with a thin
+ * edge that keeps white holds visible on a light page and black ones on a dark page. Decorative: say the colour in text
+ * too.
+ */
+export function HoldIcon({ color, className }: { color: HoldColor; className?: string }) {
+  return (
+    <span className={`hold-icon${className ? ` ${className}` : ""}`} aria-hidden>
+      <span className="hold-icon__shape" style={{ background: holdColorInfo(color).hex }} />
+    </span>
+  );
+}
+
+/**
  * GRADE display. Colour grades render as a solid grade badge with the grade name written in it;
  * numeric systems render as text. Hold colour is never shown here.
  */

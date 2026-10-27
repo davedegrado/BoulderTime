@@ -10,7 +10,8 @@ import type { GradeSystemType } from "@/features/grading/api";
 import type { Announcement } from "@/features/notifications/api";
 import { communityKeys } from "@/features/community/api";
 
-export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null }
+/** `isProject`: whether the person whose history it is marked the boulder as a project (ADR-067); absent from older servers. */
+export interface HistoryItem { boulder: BoulderSummary; attempts: number; completed: boolean; completedAt: string | null; updatedAt: string; rating: number | null; isProject?: boolean }
 /**
  * `projects`: tried and not completed (what the app now calls "tried"). `markedProjects`: the projects chosen and still
  * open (ADR-067); absent from older servers.

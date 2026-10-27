@@ -42,7 +42,7 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
       {session && (
         <SelectField label={t("Your progress")} value={filters.progress ?? ""} onChange={(e) => set({ progress: (e.target.value || undefined) as ProgressFilter | undefined })}
           options={[{ value: "", label: t("All") }, { value: "UNTRIED", label: t("Not tried") }, { value: "MARKED", label: t("Projects") },
-            { value: "PROJECTS", label: t("Tried") }, { value: "COMPLETED", label: t("Completed") }]} />
+            { value: "PROJECTS", label: t("Tried, not completed yet") }, { value: "COMPLETED", label: t("Completed") }]} />
       )}
       <AdvancedSearch filters={filters} set={set} tags={tags} />
     </div>
@@ -194,12 +194,13 @@ export function BoulderStatusSelect({ removed, onChange }: { removed: boolean; o
 export const boulderCount = (total: number, removed: boolean) =>
   removed ? plural(total, "1 taken down", "{count} taken down") : plural(total, "1 on the wall", "{count} on the wall");
 
-/** "Projects" are the ones chosen (MARKED); tried and not completed is "Tried" (PROJECTS, its name in the API) — ADR-067. */
+/** "Projects" are the ones chosen (MARKED); tried and not completed is "Tried, not completed yet" (PROJECTS, its name in the API) — ADR-067. "Tried"
+ * alone means every boulder tried, completed or not, as the profile counts it. */
 function progressLabel(p: ProgressFilter): string {
   switch (p) {
     case "UNTRIED": return t("Not tried");
     case "MARKED": return t("Projects");
-    case "PROJECTS": return t("Tried");
+    case "PROJECTS": return t("Tried, not completed yet");
     default: return t("Completed");
   }
 }

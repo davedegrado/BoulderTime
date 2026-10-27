@@ -1636,16 +1636,33 @@ button.manage-head__back { background: transparent; }
 /* A history on fewer lines: one list, a divider between entries. */
 .hlist { list-style: none; margin: 0; padding: 0; }
 .hlist > li + li { border-top: 1px solid var(--bt-line); }
-.hrow { display: flex; align-items: center; gap: var(--bt-3); padding: var(--bt-2) 0; color: inherit; text-decoration: none; }
+.hrow { display: flex; align-items: center; gap: var(--bt-3); padding: 10px 0; color: inherit; text-decoration: none; }
 .hrow:active { background: var(--bt-surface-2); }
 .hrow--gone { cursor: default; }
-.hrow__thumb { display: grid; place-items: center; width: 48px; height: 60px; flex-shrink: 0; object-fit: cover; overflow: hidden; border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
-.hrow__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.hrow__top { display: flex; align-items: center; gap: var(--bt-2); min-width: 0; }
-.hrow__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
-.hrow__points { margin-left: auto; flex-shrink: 0; white-space: nowrap; font-size: var(--bt-text-xs); font-weight: 800; color: var(--bt-ink-2); }
-.hrow__where { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
-.hrow__swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18); }
+/* The picture, square, with the person's state on its corner. */
+.hrow__pic { position: relative; flex: none; }
+.hrow__thumb { display: grid; place-items: center; width: 52px; height: 52px; flex-shrink: 0; object-fit: cover; overflow: hidden; border-radius: var(--bt-radius-sm); background: var(--bt-surface-2); }
+.hrow__state {
+  position: absolute; right: -6px; top: -6px; display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+  min-width: 22px; height: 22px; padding: 0 5px; border-radius: var(--bt-radius-pill); box-sizing: border-box;
+  font-size: 11px; font-weight: 800; box-shadow: 0 0 0 2px var(--bt-light);
+}
+.hrow__state svg { width: 13px; height: 13px; stroke-width: 3; }
+.hrow__state.is-done { background: var(--bt-success); color: #fff; padding: 0; }
+.hrow__state.is-project { background: var(--bt-charcoal); color: var(--bt-orange); padding: 0; }
+.hrow__state.is-project svg { stroke-width: 2.6; }
+.hrow__state.is-tried { background: var(--bt-orange); color: var(--bt-charcoal); }
+.hrow__state.is-tried svg { width: 11px; height: 11px; }
+.hrow__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* One line whatever the grades: the main one as a badge, the others small beside it, the name cut short after them. */
+.hrow__top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hrow__top .grade { flex: none; }
+.hrow__grades { flex: none; font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-ink-3); white-space: nowrap; }
+.hrow__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: var(--bt-text-sm); }
+.hrow__points { flex-shrink: 0; align-self: center; white-space: nowrap; font-size: var(--bt-text-xs); font-weight: 800; color: var(--bt-ink-2); }
+.hrow__where { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.hrow__where .hold-icon { font-size: 15px; }
+.hrow__place { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hrow__meta { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
 
 /* ---------- Friendships (ADR-063) ---------- */
@@ -1835,14 +1852,15 @@ button.manage-head__back { background: transparent; }
 .badge-pin.is-on { color: var(--bt-orange-ink); }
 
 /* ---------- Boulder rows: the holds as a hold, and the climber's own state as the background ---------- */
-/* The holds' colour as the shape of a hold (with its bolt hole), the colour or pattern painted through it; a thin dark
-   edge, drawn by the wrapper's shadow, keeps white and yellow holds visible on a light row. */
-.boulder-row__holds { justify-content: center; }
-.boulder-row__hold {
-  display: block; width: 24px; height: 22px;
+/* The holds' colour as the shape of a hold (with its bolt hole), the colour or pattern painted through it; a thin
+   edge, drawn by the wrapper's shadow (a mask would cut a shadow of its own), keeps white holds visible on a light page
+   and black ones on a dark page. Sized by font-size: 1em high. */
+.boulder-row__holds { justify-content: center; font-size: 22px; }
+.hold-icon { display: inline-flex; flex: none; line-height: 0; filter: drop-shadow(0 0 0.6px rgb(0 0 0 / 0.75)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.18)); }
+.hold-icon__shape {
+  display: block; width: 1.1em; height: 1em;
   -webkit-mask: var(--bt-hold-shape) center / contain no-repeat; mask: var(--bt-hold-shape) center / contain no-repeat;
 }
-.boulder-row__holds { filter: drop-shadow(0 0 0.6px rgb(0 0 0 / 0.75)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.18)); }
 :root {
   --bt-hold-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill-rule='evenodd' d='M2.2 13.6C1 9.6 3.4 4.6 8 2.9c3.4-1.3 7.6-1.2 10.7.6 3 1.8 4.4 5.2 3.3 8.3-1 2.9-3.6 4.6-6.4 5.9-2.8 1.3-5.9 2.6-8.8 1.6-2.2-.8-3.9-3-4.6-5.7zM12.4 8.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z'/%3E%3C/svg%3E");
 }
@@ -1859,4 +1877,37 @@ button.manage-head__back { background: transparent; }
 @media (min-width: 640px) { .boulder-row { --row-cols: 48px 5rem minmax(0, 1fr) 32px 4rem; } }
 @media (max-width: 380px) { .boulder-row { --row-cols: 40px 3rem minmax(0, 1fr) 24px 2.75rem; } }
 /* On a dark row black and grey holds need a light edge. */
-:root[data-theme="dark"] .boulder-row__holds { filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.95)) drop-shadow(0 0 0.5px rgb(255 255 255 / 0.9)); }
+:root[data-theme="dark"] .hold-icon { filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.95)) drop-shadow(0 0 0.5px rgb(255 255 255 / 0.9)); }
+
+/* ---------- A person's overview: compact boxes (owner's choice "A") ---------- */
+/* Each section is a short box of its own, close to the next: a heading, what it holds, little padding. */
+.profile-overview { gap: var(--bt-3); }
+.profile-overview > * + * { margin-top: 0; padding-top: 14px; border-top: 1px solid var(--bt-line); }
+.profile-overview > * { padding: 14px; background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: 16px; }
+.profile-overview .profile-block { gap: var(--bt-3); }
+.profile-overview .profile-block__title { font-size: 1.0625rem; }
+.profile-block__note { font-size: var(--bt-text-sm); color: var(--bt-ink-2); white-space: nowrap; }
+/* Badges: the pictures and names without a box each, inside the section's box. */
+.profile-overview .badge-featured__item { padding: 0; background: none; border: 0; gap: 4px; }
+.profile-overview .badge-featured__item img { width: 56px; height: 56px; }
+/* The favourite sector: words left, the plan small on the right; the whole box opens it. */
+.profile-overview > .favorite-sector--compact { padding: 0; }
+.favorite-sector__box { display: flex; align-items: stretch; gap: var(--bt-3); padding: 14px; color: inherit; text-decoration: none; }
+.favorite-sector__caption { margin: 0 0 4px; font-size: var(--bt-text-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bt-ink-3); }
+.favorite-sector__count { margin-top: 6px; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.favorite-sector__mini { flex: none; width: 132px; align-self: center; }
+.favorite-sector__mini .sector-map { width: 100%; height: auto; border-radius: var(--bt-radius-sm); }
+.favorite-sector--compact .list__chevron { align-self: center; }
+/* The weeks: a lower chart. */
+.profile-overview .weekly__bars { height: 64px; }
+/* The numbers: small tiles, three to a row. */
+.profile-overview .profile-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bt-2); }
+.profile-overview .profile-stats__item { padding: 8px 10px; border-radius: var(--bt-radius-md); background: var(--bt-surface-2); }
+.profile-overview .profile-stats dd { font-size: 1.25rem; }
+/* The highest grades on one line when they fit. */
+.profile-overview .highest { flex-direction: row; flex-wrap: wrap; gap: var(--bt-2) var(--bt-4); }
+/* "See all" reads like the badges' link, and doesn't push the rows down. */
+.profile-overview .profile-block__head .text-btn { min-height: 0; padding: 0; color: var(--bt-orange-ink); font-weight: 600; }
+.profile-overview .profile-block__head { align-items: center; }
+.profile-overview .hlist > li:first-child .hrow { padding-top: 2px; }
+.profile-overview .hlist > li:last-child .hrow { padding-bottom: 0; }

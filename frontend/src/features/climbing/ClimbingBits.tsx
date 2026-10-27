@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { Bell, BellRing, Check, MountainSnow, Star } from "lucide-react";
+import { Bell, BellRing, Check, MountainSnow, RotateCw, Star, Target } from "lucide-react";
 import type { RatingSummary } from "@/features/boulders/api";
 import type { HighestGrade, HistoryItem, WeekActivity } from "@/features/climbing/api";
-import { ColorGrade, GradeLine, HoldBadge } from "@/features/boulders/BoulderBits";
-import { holdColorInfo, holdLabel } from "@/features/boulders/holdColors";
+import { ColorGrade, GradeBadge, GradeLine, HoldBadge, HoldIcon } from "@/features/boulders/BoulderBits";
+import { holdLabel } from "@/features/boulders/holdColors";
 import { Button } from "@/components/Button";
 import { formatDate } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
@@ -85,29 +85,41 @@ export function HistoryRow({ item }: { item: HistoryItem }) {
 }
 
 /**
- * The same entry of a history as HistoryRow, on fewer lines, for a person's profile: picture, grade and name first,
- * the points on the right; then holds, sector and gym; then date and attempts. One list with dividers, no card each.
+ * The same entry of a history as HistoryRow, on fewer lines, for a person's profile. The person's state sits on the
+ * picture's corner, as on the cards: a check when completed, the target for a project they marked, the attempts for
+ * anything else tried. Then the main grade with the others small beside it, and the name when there is one, cut short
+ * rather than pushed aside; the holds as a hold of their colour with sector and gym; date and attempts. The points on
+ * the right, in the middle.
  */
 export function CompactHistoryRow({ item }: { item: HistoryItem }) {
   const b = item.boulder;
   const gone = b.status === "DELETED";
-  const hold = holdColorInfo(b.holdColor);
+  const [primary, ...others] = b.grades;
+  const state = item.completed ? "done" : item.isProject ? "project" : "tried";
+  const stateLabel = state === "done" ? t("Completed") : state === "project" ? t("Project") : plural(item.attempts, "{count} attempt", "{count} attempts");
   const inside = (
     <>
-      {b.photoUrl
-        ? <img className="hrow__thumb" src={b.photoUrl} alt="" loading="lazy" />
-        : <span className="hrow__thumb history-row__thumb--gone" aria-hidden><MountainSnow /></span>}
+      <span className="hrow__pic">
+        {b.photoUrl
+          ? <img className="hrow__thumb" src={b.photoUrl} alt="" loading="lazy" />
+          : <span className="hrow__thumb history-row__thumb--gone" aria-hidden><MountainSnow /></span>}
+        <span className={`hrow__state is-${state}`} title={stateLabel}>
+          {state === "done" ? <Check aria-hidden /> : state === "project" ? <Target aria-hidden /> : <><RotateCw aria-hidden />{item.attempts}</>}
+          <span className="sr-only">{stateLabel}</span>
+        </span>
+      </span>
       <span className="hrow__main">
         <span className="hrow__top">
-          {item.completed ? <span className="sent-mark" aria-label={t("Completed")}><Check aria-hidden /></span> : <span className="project-mark">{t("Project")}</span>}
-          <GradeLine grades={b.grades} />
+          {primary
+            ? <GradeBadge grade={primary} size="sm" />
+            : <span className="grade grade--text grade--ungraded grade--sm">{t("Ungraded")}</span>}
+          {others.length > 0 && <span className="hrow__grades">{others.map((g) => dataLabel(g.label)).join(" · ")}</span>}
           {b.name && <span className="hrow__name">{b.name}</span>}
-          {b.points != null && <span className="hrow__points">{t("+{points} pt", { points: b.points })}</span>}
         </span>
         <span className="hrow__where">
-          <span className="hrow__swatch" style={{ background: hold.hex }} title={holdLabel(b.holdColor)} aria-hidden />
+          <HoldIcon color={b.holdColor} />
           <span className="sr-only">{holdLabel(b.holdColor)}, </span>
-          {b.sectorName} · {b.gymName}
+          <span className="hrow__place">{b.sectorName} · {b.gymName}</span>
         </span>
         <span className="hrow__meta">
           {item.completed && item.completedAt ? formatDate(item.completedAt) : t("Last tried {date}", { date: formatDate(item.updatedAt) })}
@@ -116,6 +128,7 @@ export function CompactHistoryRow({ item }: { item: HistoryItem }) {
           {gone && ` · ${t("No longer at the gym")}`}
         </span>
       </span>
+      {b.points != null && <span className="hrow__points">{t("+{points} pt", { points: b.points })}</span>}
     </>
   );
   return (
