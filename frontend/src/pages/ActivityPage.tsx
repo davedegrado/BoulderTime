@@ -50,17 +50,35 @@ export function ClimbingActivity({ userId, title, header }: { userId: string; ti
 /** Every boulder tried, completed or not: the sends and those tried and not completed yet (projects among them). */
 export const triedCount = (stats: Profile["stats"]) => stats.completed + stats.projects;
 
+/** One number of the statistics: the total, and this month's share where the server counts it by month. */
+export interface StatItem { value: number; label: string; month?: number | null }
+
+/**
+ * The numbers, each with this month's share below it: sends, projects, everything tried. Attempts are kept as a running
+ * total per boulder, so they have no month. Projects are the ones chosen (ADR-067); an older server only knows what was
+ * tried and not completed, and then there is no separate count of everything tried.
+ */
+export function statItems(stats: Profile["stats"]): StatItem[] {
+  return [
+    { value: stats.completed, label: t("Sends"), month: stats.completedThisMonth },
+    { value: stats.markedProjects ?? stats.projects, label: t("Projects"), month: stats.markedProjects != null ? stats.markedProjectsThisMonth : null },
+    ...(stats.markedProjects != null ? [{ value: triedCount(stats), label: t("Tried"), month: stats.triedThisMonth }] : []),
+    { value: stats.totalAttempts, label: t("Attempts") },
+  ];
+}
+
+/** "+3 this month" under a number, when the month is known. */
+export function MonthShare({ month }: { month?: number | null }) {
+  return month != null ? <span className="stat__month">{t("+{count} this month", { count: month })}</span> : null;
+}
+
 /** A climber's numbers. */
 export function StatsGrid({ stats }: { stats: Profile["stats"] }) {
   return (
     <div className="stats">
-      <div className="stat"><span className="stat__value">{stats.completed}</span><span className="stat__label">{t("Sends")}</span></div>
-      {/* Projects are the ones chosen (ADR-067); an older server only knows what was tried and not completed. */}
-      <div className="stat"><span className="stat__value">{stats.markedProjects ?? stats.projects}</span><span className="stat__label">{t("Projects")}</span></div>
-      {/* Tried: every boulder tried, completed or not — sends and what is still open, projects included. */}
-      <div className="stat"><span className="stat__value">{triedCount(stats)}</span><span className="stat__label">{t("Tried")}</span></div>
-      <div className="stat"><span className="stat__value">{stats.completedThisMonth}</span><span className="stat__label">{t("Sent this month")}</span></div>
-      <div className="stat"><span className="stat__value">{stats.totalAttempts}</span><span className="stat__label">{t("Attempts")}</span></div>
+      {statItems(stats).map((s) => (
+        <div key={s.label} className="stat"><span className="stat__value">{s.value}</span><span className="stat__label">{s.label}</span><MonthShare month={s.month} /></div>
+      ))}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Ban, Copy, Flag, LayoutList, Lock, MapPin, Pencil, Share2, ShieldCheck,
 import { DEFAULT_PROFILE_SECTIONS, useProfile, type Profile, type ProfileSection } from "@/features/climbing/api";
 import { CompactHistoryRow, HighestGrades, WeeklyChart } from "@/features/climbing/ClimbingBits";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
-import { HistorySection, triedCount } from "@/pages/ActivityPage";
+import { HistorySection, MonthShare, statItems } from "@/pages/ActivityPage";
 import { CustomizeProfile } from "@/features/profile/CustomizeProfile";
 import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { EnlargeableAvatar } from "@/components/EnlargeableAvatar";
@@ -225,20 +225,14 @@ function Block({ id, title, action, children }: { id: string; title: string; act
   );
 }
 
-/**
- * The numbers, for those who choose to show them, as small tiles three to a row: sends, this month, attempts; then
- * projects and everything tried (completed or not).
- */
+/** The numbers, for those who choose to show them: small tiles, the total large and this month's share below it. */
 function StatsRow({ stats }: { stats: Profile["stats"] }) {
-  const items: [number, string][] = [
-    [stats.completed, t("Sends")], [stats.completedThisMonth, t("Sent this month")], [stats.totalAttempts, t("Attempts")],
-    [stats.markedProjects ?? stats.projects, t("Projects")],
-    // An older server's "projects" are what was tried and not completed: no separate count of everything tried then.
-    ...(stats.markedProjects != null ? [[triedCount(stats), t("Tried")] as [number, string]] : []),
-  ];
+  const items = statItems(stats);
   return (
     <dl className="profile-stats">
-      {items.map(([value, name]) => <div key={name} className="profile-stats__item"><dt>{name}</dt><dd>{value}</dd></div>)}
+      {items.map((s) => (
+        <div key={s.label} className="profile-stats__item"><dt>{s.label}</dt><dd>{s.value}</dd>{s.month != null && <dd className="profile-stats__month"><MonthShare month={s.month} /></dd>}</div>
+      ))}
     </dl>
   );
 }

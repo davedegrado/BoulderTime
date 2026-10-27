@@ -16,7 +16,11 @@ export interface HistoryItem { boulder: BoulderSummary; attempts: number; comple
  * `projects`: tried and not completed (what the app now calls "tried"). `markedProjects`: the projects chosen and still
  * open (ADR-067); absent from older servers.
  */
-export interface ClimbingStats { completed: number; projects: number; totalAttempts: number; completedThisMonth: number; markedProjects?: number | null }
+/** `triedThisMonth`, `markedProjectsThisMonth`: this month's share of everything tried and of the open projects (1.1). */
+export interface ClimbingStats {
+  completed: number; projects: number; totalAttempts: number; completedThisMonth: number; markedProjects?: number | null;
+  triedThisMonth?: number | null; markedProjectsThisMonth?: number | null;
+}
 export interface HighestGrade { gradeSystemId: string; systemName: string; systemType: GradeSystemType; gymName: string; label: string; rank: number; colorHex: string | null; colorHex2?: string | null }
 export interface WeekActivity { weekStart: string; completed: number }
 export interface Profile {

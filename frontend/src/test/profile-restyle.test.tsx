@@ -139,7 +139,7 @@ describe("A person's profile", () => {
         grades: [font("6A", 5)], ...boulder },
       completed: false, completedAt: null, updatedAt: "2026-10-20T10:00:00Z", attempts: 1, ...over,
     });
-    reply("GET", "/api/users/u2/profile", profile({ sections: DEFAULT.map((s) => ({ ...s, visible: true })), stats: { completed: 42, projects: 8, markedProjects: 2, completedThisMonth: 22, totalAttempts: 244 } }));
+    reply("GET", "/api/users/u2/profile", profile({ sections: DEFAULT.map((s) => ({ ...s, visible: true })), stats: { completed: 42, projects: 8, markedProjects: 2, completedThisMonth: 22, totalAttempts: 244, triedThisMonth: 25, markedProjectsThisMonth: 1 } }));
     reply("GET", "/api/users/u2/history", { items: [
       item("b1", { isProject: true }, { name: "Blocco test notturno", grades: [font("7A+", 9), font("V15", 30), font("8A", 12)] }),
       item("b2", { completed: true, completedAt: "2026-10-22T10:00:00Z", attempts: 5, isProject: false }),
@@ -152,6 +152,12 @@ describe("A person's profile", () => {
     const stats = await screen.findByRole("region", { name: "Statistics" });
     expect(within(stats).getByText("Tried").nextSibling).toHaveTextContent("50");
     expect(within(stats).getByText("Projects").nextSibling).toHaveTextContent("2");
+    // Each with this month's share below it, but the attempts: they are only kept as a running total.
+    const tile = (name: string) => within(stats).getByText(name).parentElement!;
+    expect(tile("Sends")).toHaveTextContent("+22 this month");
+    expect(tile("Projects")).toHaveTextContent("+1 this month");
+    expect(tile("Tried")).toHaveTextContent("+25 this month");
+    expect(tile("Attempts")).not.toHaveTextContent("this month");
 
     await userEvent.click(screen.getByRole("tab", { name: "Activity" }));
     expect((await screen.findAllByRole("radio")).map((r) => r.textContent)).toEqual(["Tried", "Sends", "Projects"]);
