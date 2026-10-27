@@ -13,16 +13,32 @@ export function ShoeThumb({ shoe, size = 48 }: { shoe: CatalogShoe; size?: numbe
     : <span className="shoe-thumb shoe-thumb--none" aria-hidden style={{ width: size, height: size }}>{initials(shoe.brand)}</span>;
 }
 
+/**
+ * The maker credited under its picture, "Photo: brand", linking to the model's page on its site when there is one.
+ * Nothing under the brand's initials: there is no picture to credit.
+ */
+export function ShoeCredit({ shoe }: { shoe: CatalogShoe }) {
+  if (!shoe.imageUrl) return null;
+  const label = t("Photo: {brand}", { brand: shoe.brand });
+  return shoe.productUrl
+    ? <a className="shoe-credit" href={shoe.productUrl} target="_blank" rel="noopener noreferrer"
+        aria-label={t("Photo: {brand}, {name} on the maker's site", { brand: shoe.brand, name: shoe.name })}>{label}</a>
+    : <span className="shoe-credit">{label}</span>;
+}
+
 /** "Main pair": a word with a star, so it is never said by colour alone. */
 export function PrimaryTag() {
   return <span className="shoe-primary"><Star aria-hidden />{t("Main pair")}</span>;
 }
 
-/** One pair on one line: picture, brand, model (cut short, never wrapped), the main pair said, and what can be done. */
+/** One pair on one line: picture with its credit, brand, model (cut short, never wrapped), the main pair said, and what can be done. */
 export function ShoeRow({ shoe, action, primary }: { shoe: CatalogShoe; action?: ReactNode; primary?: boolean }) {
   return (
     <li className="shoe-row">
-      <ShoeThumb shoe={shoe} />
+      <span className="shoe-row__pic">
+        <ShoeThumb shoe={shoe} />
+        <ShoeCredit shoe={shoe} />
+      </span>
       <span className="shoe-row__text">
         <span className="shoe-row__brand">{shoe.brand}</span>
         <span className="shoe-row__name">{shoe.name}</span>

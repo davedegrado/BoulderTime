@@ -1927,6 +1927,9 @@ button.manage-head__back { background: transparent; }
 .shoe-row { display: flex; align-items: center; gap: var(--bt-3); padding: 8px 0; min-width: 0; }
 .profile-overview .shoe-list > li:first-child { padding-top: 0; }
 .profile-overview .shoe-list > li:last-child { padding-bottom: 0; }
+.shoe-row__pic { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.shoe-credit { max-width: 64px; font-size: 10px; line-height: 1.2; color: var(--bt-ink-3); text-align: center; overflow-wrap: anywhere; }
+a.shoe-credit { text-decoration: underline; text-underline-offset: 2px; }
 .shoe-thumb { flex: none; display: grid; place-items: center; border-radius: var(--bt-radius-sm); object-fit: contain; background: #fff; }
 .shoe-thumb--none { background: var(--bt-surface-2); color: var(--bt-ink-3); font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
 .shoe-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }

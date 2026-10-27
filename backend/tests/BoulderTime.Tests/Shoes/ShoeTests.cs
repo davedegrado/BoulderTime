@@ -210,6 +210,7 @@ public sealed class ShoeTests(PostgresFixture postgres) : IAsyncLifetime
         var entries = ShoeCatalogSeeder.FromFile();
         entries.GroupBy(e => ClimbingShoe.KeyOf(e.Brand, e.Name)).Should().OnlyContain(g => g.Count() == 1);
         entries.Should().OnlyContain(e => !string.IsNullOrWhiteSpace(e.Brand) && !string.IsNullOrWhiteSpace(e.Name));
+        entries.Should().OnlyContain(e => ShoeService.BrandOrder.Contains(e.Brand), "brands written as the catalogue orders them");
         foreach (var url in entries.SelectMany(e => new[] { e.ImageUrl, e.ProductUrl, e.SourceUrl }).Where(u => u != null))
             url.Should().StartWith("https://");
     }

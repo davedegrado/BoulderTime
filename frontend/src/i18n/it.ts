@@ -1449,4 +1449,6 @@ export const it: Record<string, string> = {
   "Add {name}": "Aggiungi {name}",
   "Added": "Aggiunte",
   "Showing {shown} of {total}: search to narrow them down.": "{shown} di {total}: cerca per restringere.",
+  "Photo: {brand}": "Foto: {brand}",
+  "Photo: {brand}, {name} on the maker's site": "Foto: {brand}, {name} sul sito del produttore",
 };

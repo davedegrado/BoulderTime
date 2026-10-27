@@ -7,7 +7,8 @@ import { api } from "@/lib/api";
  * never add to the catalogue.
  */
 export type ShoeStatus = "CURRENT" | "DISCONTINUED";
-export interface CatalogShoe { id: string; brand: string; name: string; imageUrl: string | null; status: ShoeStatus }
+/** imageUrl and productUrl are the maker's, linked, never copied; an older server may send no productUrl. */
+export interface CatalogShoe { id: string; brand: string; name: string; imageUrl: string | null; productUrl?: string | null; status: ShoeStatus }
 export interface MyShoe extends CatalogShoe { isPrimary: boolean }
 export interface UserShoes { shoes: MyShoe[] }
 export interface ShoeCatalogPage { items: CatalogShoe[]; total: number }
