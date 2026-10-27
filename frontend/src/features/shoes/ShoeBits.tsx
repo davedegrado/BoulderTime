@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Star } from "lucide-react";
 import { ordered, useUserShoes, type CatalogShoe, type MyShoe } from "@/features/shoes/api";
@@ -7,9 +7,12 @@ import { t } from "@/i18n/i18n";
 /** The brand's initials where a model has no picture: never another model's picture in its place. */
 const initials = (brand: string) => brand.replace(/[^A-Za-zÀ-ÿ ]/g, "").split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 
-export function ShoeThumb({ shoe, size = 48 }: { shoe: CatalogShoe; size?: number }) {
-  return shoe.imageUrl
-    ? <img className="shoe-thumb" src={shoe.imageUrl} alt="" loading="lazy" style={{ width: size, height: size }} />
+/** The maker's picture, or the brand's initials when there is none or it does not load (a linked picture can go away). */
+export function ShoeThumb({ shoe, size = 48, onFail }: { shoe: CatalogShoe; size?: number; onFail?: () => void }) {
+  const [failed, setFailed] = useState(false);
+  return shoe.imageUrl && !failed
+    ? <img className="shoe-thumb" src={shoe.imageUrl} alt="" loading="lazy" style={{ width: size, height: size }}
+        onError={() => { setFailed(true); onFail?.(); }} />
     : <span className="shoe-thumb shoe-thumb--none" aria-hidden style={{ width: size, height: size }}>{initials(shoe.brand)}</span>;
 }
 
@@ -26,6 +29,17 @@ export function ShoeCredit({ shoe }: { shoe: CatalogShoe }) {
     : <span className="shoe-credit">{label}</span>;
 }
 
+/** Picture and credit together: when the picture does not load, the credit goes with it. */
+function ShoePic({ shoe }: { shoe: CatalogShoe }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span className="shoe-row__pic">
+      <ShoeThumb shoe={shoe} onFail={() => setFailed(true)} />
+      {!failed && <ShoeCredit shoe={shoe} />}
+    </span>
+  );
+}
+
 /** "Main pair": a word with a star, so it is never said by colour alone. */
 export function PrimaryTag() {
   return <span className="shoe-primary"><Star aria-hidden />{t("Main pair")}</span>;
@@ -35,10 +49,7 @@ export function PrimaryTag() {
 export function ShoeRow({ shoe, action, primary }: { shoe: CatalogShoe; action?: ReactNode; primary?: boolean }) {
   return (
     <li className="shoe-row">
-      <span className="shoe-row__pic">
-        <ShoeThumb shoe={shoe} />
-        <ShoeCredit shoe={shoe} />
-      </span>
+      <ShoePic shoe={shoe} />
       <span className="shoe-row__text">
         <span className="shoe-row__brand">{shoe.brand}</span>
         <span className="shoe-row__name">{shoe.name}</span>

@@ -1,5 +1,357 @@
 [
   {
+    "brand": "SCARPA",
+    "name": "Blackbird",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70086-000-1_00_BLB_Blk-Wht.jpg?v=1771850890&width=400",
+    "productUrl": "https://scarpa.com/products/blackbird-our-first-carbon-midsole-climbing-shoe-70086-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Furia Air",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70007-000-1_00_FUR-AIR_Ice-Red.jpg?v=1776412821&width=400",
+    "productUrl": "https://scarpa.com/products/furia-air-lightweight-precision-70007-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Drago XT",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70091-000-1_00_DRA-XT_Blk-Iro.jpg?v=1772121012&width=400",
+    "productUrl": "https://scarpa.com/products/drago-xt-maximum-toe-precision-70091-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Drago",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70017-000-1_00_DRA_Yel.jpg?v=1770044436&width=400",
+    "productUrl": "https://scarpa.com/products/drago-all-hooking-possibilities-70017-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Drago LV",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70029-000-2_00_DRA-LV_Wht.jpg?v=1770044448&width=400",
+    "productUrl": "https://scarpa.com/products/drago-lv-low-volume-and-all-hooking-possibilities-70029-000-2",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct VSR",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70015-000-1_00_INS-VSR_Blk-Azu.jpg?v=1770044421&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-vsr-sensitivity-and-aggressive-hooking-70015-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct VSR LV",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70092-000-1_00_INS-VSR-LV_Blk-Vio-Mil.jpg?v=1770044051&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-vsr-lv-sensitivity-low-volume-and-aggressive-hooking-70092-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct S",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70039-000-1_00_INS-S_Blk-Azu.jpg?v=1770044537&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-s-precision-and-aggressive-hooking-70039-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct VS",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70013-000-1_00_INS-VS_Blk.jpg?v=1770044442&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-vs-precision-and-aggressive-hooking-70013-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct VS Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70013-002-1_00_INS-VS-W_Blk-Aqu.jpg?v=1770044454&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-vs-woman-precision-and-aggressive-hooking-70013-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70036-000-1_00_INS_Blk.jpg?v=1770044531&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-precision-and-aggressive-hooking-70036-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Instinct Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70036-002-1_00_INS-W_Blk-Aqu.jpg?v=1770044551&width=400",
+    "productUrl": "https://scarpa.com/products/instinct-woman-precision-and-aggressive-hooking-70036-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor V",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70096-000-1_00_VAP-V_Smo-Yel.jpg?v=1770044184&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-v-support-and-versatility-70096-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor V LV",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70093-000-1_00_VAP-V-LV_Smo-Cor.jpg?v=1770044063&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-v-lv-support-versatility-and-low-volume-70093-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor S",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70078-001-1_00_VAP-S_Smo-Yel.jpg?v=1770043335&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-s-slip-into-performance-70078-001-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor S Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70078-002-1_00_VAP-S-W_DuG-Aqu.jpg?v=1770043374&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-s-woman-slip-into-performance-70078-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70074-000-1_00_VAP_Smo-Yel.jpg?v=1770043382&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-versatility-on-the-edge-70074-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Vapor Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70074-002-1_00_VAP-W_DuG-Aqu.jpg?v=1770043355&width=400",
+    "productUrl": "https://scarpa.com/products/vapor-woman-versatility-on-the-edge-70074-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Arpia V",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70084-000-1_00_ARP-V_Sha-Yel.jpg?v=1770043710&width=400",
+    "productUrl": "https://scarpa.com/products/arpia-v-versatility-in-all-situations-70084-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Arpia V LV",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70087-000-1_00_ARP-V-LV_Sha-Aqu.jpg?v=1770043814&width=400",
+    "productUrl": "https://scarpa.com/products/arpia-v-lv-versatility-in-all-situations-70087-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Boostic",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70071-000-2_00_BOO_Blk-Azu.jpg?v=1770045265&width=400",
+    "productUrl": "https://scarpa.com/products/boostic-for-precise-edging-on-micro-holds-70071-000-2",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Booster",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70060-000-1_00_BOO_Blk-Ora.jpg?v=1770044787&width=400",
+    "productUrl": "https://scarpa.com/products/booster-precise-climbing-shoe-70060-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Boostic R",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70090-000-1_00_BOO-R_Hon-Wht.jpg?v=1770043933&width=400",
+    "productUrl": "https://scarpa.com/products/boostic-r-precise-and-powerful-on-micro-holds-70090-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Mago",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70077-000-1_00_MAG_Blk.jpg?v=1773131171&width=400",
+    "productUrl": "https://scarpa.com/products/mago-the-power-of-focus-70077-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Chimera",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70073-000-1_00_CHI_Blk-Wht-Azu.jpg?v=1770043342&width=400",
+    "productUrl": "https://scarpa.com/products/chimera-powerfully-soft-70073-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Veloce",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70065-001-1_00_VEL_Blk-Yel.jpg?v=1770044894&width=400",
+    "productUrl": "https://scarpa.com/products/veloce-climbing-shoe-for-indoor-use-70065-001-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Veloce Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70065-002-1_00_VEL-W_Gra-Mal.jpg?v=1770045016&width=400",
+    "productUrl": "https://scarpa.com/products/veloce-woman-climbing-shoe-for-indoor-use-70065-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Veloce L",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70079-001-1_00_VEL-L_Blk-Yel.jpg?v=1770043368&width=400",
+    "productUrl": "https://scarpa.com/products/veloce-l-indoor-climbing-shoe-for-extended-use-70079-001-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Veloce L Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70079-002-1_00_VEL-L-W_Gra-Mal.jpg?v=1770043348&width=400",
+    "productUrl": "https://scarpa.com/products/veloce-l-woman-indoor-climbing-shoe-for-extended-use-70079-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Generator",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70068-000-1_00_GEN_Mid.jpg?v=1754303726&width=400",
+    "productUrl": "https://scarpa.com/products/generator-trad-climbing-shoe-70068-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Generator Mid",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70063-000-1_00_GEN-MID_OrR.jpg?v=1754303685&width=400",
+    "productUrl": "https://scarpa.com/products/generator-mid-mid-top-shoe-for-trad-climbing-70063-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Force",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70049-001-1_00_FOR-V_Con-Azu.jpg?v=1754303670&width=400",
+    "productUrl": "https://scarpa.com/products/force-climbing-shoe-for-extended-use-70049-001-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Force Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70049-002-1_00_FOR-V-W_Con-Cor.jpg?v=1771919172&width=400",
+    "productUrl": "https://scarpa.com/products/force-woman-climbing-shoe-for-extended-use-70049-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Reflex VS",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70088-000-1_00_REF-VS_Ton-Blk.jpg?v=1754303273&width=400",
+    "productUrl": "https://scarpa.com/products/reflex-vs-climbing-shoe-for-beginner-70088-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Reflex VS Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70088-002-2_00_REF-VS-W_lGr-Blk.jpg?v=1754303368&width=400",
+    "productUrl": "https://scarpa.com/products/reflex-vs-woman-climbing-shoe-for-beginner-70088-002-2",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Helix",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70105-000-3_00_HEL_Sha-Mid.jpg?v=1776419656&width=400",
+    "productUrl": "https://scarpa.com/products/helix-classic-style-reborn-70105-000-3",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Helix Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70105-002-2_00_HEL-W_Sil-Mid.jpg?v=1776419773&width=400",
+    "productUrl": "https://scarpa.com/products/helix-woman-classic-style-reborn-70105-002-2",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Helix V",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70107-000-1_00_HEL-V_HyB-Sil.jpg?v=1776419530&width=400",
+    "productUrl": "https://scarpa.com/products/helix-v-classic-style-quick-closure-70107-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Helix V Woman",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70107-002-1_00_HEL-V-W_Cri-Sil.jpg?v=1776419650&width=400",
+    "productUrl": "https://scarpa.com/products/helix-v-woman-classic-style-quick-closure-70107-002-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Origin VS",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70109-000-1_00_ORI-VS_Gra-Red.jpg?v=1776416652&width=400",
+    "productUrl": "https://scarpa.com/products/origin-vs-indoor-climbing-shoe-70109-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Origin VS LV",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70110-000-1_00_ORI-VS-LV_Wht-Pur.jpg?v=1776416892&width=400",
+    "productUrl": "https://scarpa.com/products/origin-vs-lv-indoor-climbing-shoe-70110-000-1",
+    "sourceUrl": "https://scarpa.com/collections/climbing-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Drago-Y",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70047-003-1_00_DRA-KID_Yel.jpg?v=1754303507&width=400",
+    "productUrl": "https://scarpa.com/products/drago-y-kids-climbing-shoe-for-high-performance-70047-003-1",
+    "sourceUrl": "https://scarpa.com/collections/kids-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Reflex-Y",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70072-003-1_00_REF-V-KID_Yel-Blk.jpg?v=1754304958&width=400",
+    "productUrl": "https://scarpa.com/products/reflex-y-kids-climbing-shoe-with-comfortable-fit-70072-003-1",
+    "sourceUrl": "https://scarpa.com/collections/kids-shoes"
+  },
+  {
+    "brand": "SCARPA",
+    "name": "Piki-Y",
+    "status": "Current",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0900/8827/6350/files/70045-003-1_00_PIK-J_Mal-Yel.jpg?v=1754303498&width=400",
+    "productUrl": "https://scarpa.com/products/piki-y-foot-friendly-kid-climbing-shoe-70045-003-1",
+    "sourceUrl": "https://scarpa.com/collections/kids-shoes"
+  },
+  {
     "brand": "OCÚN",
     "name": "Diamond S",
     "status": "Current",
@@ -190,5 +542,45 @@
     "imageUrl": "https://www.ocun.com/assets/products/1_400x400/0zllcde2tr.02431-Strike-LU-01.jpg",
     "productUrl": "https://www.ocun.com/product/strike-lu",
     "sourceUrl": "https://www.ocun.com/product/strike-lu"
+  },
+  {
+    "brand": "SIMOND",
+    "name": "First Klimb",
+    "status": "Current",
+    "imageUrl": "https://contents.mediadecathlon.com/p2898614/k$ca9f56ce95351a7d0043fd578e1707f8/picture.jpg",
+    "productUrl": "https://www.simond.com/en-GB/product/climbing-shoe-first-klimb-grey_303601--c382m8518575",
+    "sourceUrl": "https://www.simond.com/en-GB/browse/men-climbing-shoes"
+  },
+  {
+    "brand": "SIMOND",
+    "name": "Klimb",
+    "status": "Current",
+    "imageUrl": "https://contents.mediadecathlon.com/p2923492/k$8b61909d3dd0681aee9a1b987fda6ab9/picture.jpg",
+    "productUrl": "https://www.simond.com/en-GB/product/climbing-shoes-klimb-turquoise_339875--c271c340c271m8756745",
+    "sourceUrl": "https://www.simond.com/en-GB/browse/men-climbing-shoes"
+  },
+  {
+    "brand": "SIMOND",
+    "name": "Edge Soft",
+    "status": "Current",
+    "imageUrl": "https://contents.mediadecathlon.com/p2923519/k$1bce50dfc490223fbf11bac8056c0bf9/picture.jpg",
+    "productUrl": "https://www.simond.com/en-GB/product/climbing-shoes-edge-soft-white-black_346802--c382c406c81m8801502",
+    "sourceUrl": "https://www.simond.com/en-GB/browse/men-climbing-shoes"
+  },
+  {
+    "brand": "SIMOND",
+    "name": "Vertika",
+    "status": "Current",
+    "imageUrl": "https://contents.mediadecathlon.com/p3150005/k$54273b615a37dc5cab678ee37af17abf/picture.jpg",
+    "productUrl": "https://www.simond.com/en-GB/product/men-s-technical-and-precision-climbing-shoes-vertika_373824--c382m8967157",
+    "sourceUrl": "https://www.simond.com/en-GB/browse/men-climbing-shoes"
+  },
+  {
+    "brand": "SIMOND",
+    "name": "Vertika Soft",
+    "status": "Current",
+    "imageUrl": "https://contents.mediadecathlon.com/p2882074/k$d28bc356d37facfd2d37df7e34d0ea20/picture.jpg",
+    "productUrl": "https://www.simond.com/en-GB/product/men-s-climbing-technical-and-flexible-shoes-vertika-soft-green_354043--c311c339m8916466",
+    "sourceUrl": "https://www.simond.com/en-GB/browse/men-climbing-shoes"
   }
 ]

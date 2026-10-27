@@ -50,14 +50,28 @@ public class ClimbingShoe
     public static string KeyOf(string brand, string name) => $"{Fold(brand)}|{Fold(name)}";
 
     /// <summary>Lower case, without accents, single spaces: "OCÚN  Ozone" and "ocun ozone" are the same.</summary>
+    /// <remarks>
+    /// Accents are taken off from a table, not with Unicode normalization: the API runs with invariant globalization,
+    /// where normalization leaves "ú" as it is — and the key would then depend on how the process was started.
+    /// </remarks>
     public static string Fold(string text)
     {
-        var decomposed = Clean(text).ToLowerInvariant().Normalize(NormalizationForm.FormD);
-        var sb = new StringBuilder(decomposed.Length);
-        foreach (var c in decomposed)
-            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) sb.Append(c);
-        return sb.ToString().Normalize(NormalizationForm.FormC);
+        var lower = Clean(text).ToLowerInvariant();
+        var sb = new StringBuilder(lower.Length);
+        foreach (var c in lower)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark) continue; // a combining accent
+            sb.Append(Plain.TryGetValue(c, out var plain) ? plain : c);
+        }
+        return sb.ToString();
     }
+
+    private static readonly Dictionary<char, char> Plain = new[]
+    {
+        ('a', "àáâãäåāăą"), ('c', "çćĉċč"), ('d', "ďđ"), ('e', "èéêëēĕėęě"), ('g', "ĝğġģ"), ('h', "ĥħ"),
+        ('i', "ìíîïĩīĭįı"), ('j', "ĵ"), ('k', "ķ"), ('l', "ĺļľŀł"), ('n', "ñńņňŉ"), ('o', "òóôõöøōŏő"),
+        ('r', "ŕŗř"), ('s', "śŝşš"), ('t', "ţťŧ"), ('u', "ùúûüũūŭůűų"), ('w', "ŵ"), ('y', "ýÿŷ"), ('z', "źżž"),
+    }.SelectMany(p => p.Item2.Select(c => (c, p.Item1))).ToDictionary(x => x.c, x => x.Item2);
 
     private static string Clean(string text) => string.Join(' ', (text ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 }

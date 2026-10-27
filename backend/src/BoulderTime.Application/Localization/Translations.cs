@@ -265,6 +265,7 @@ public static partial class Translations
         ("You've sent a lot of friend requests today. Try again tomorrow.", "Oggi hai inviato molte richieste di amicizia. Riprova domani."),
         ("Friend request was not found.", "Richiesta di amicizia non trovata."),
         ("Keep the note under {0} characters.", "La nota deve restare sotto i {0} caratteri."),
+        ("You can keep up to {0} pairs.", "Puoi tenere al massimo {0} paia di scarpette."),
     ];
 
     private static readonly Dictionary<string, string> Exact =
