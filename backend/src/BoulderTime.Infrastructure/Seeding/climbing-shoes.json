@@ -1,5 +1,381 @@
 [
   {
+    "brand": "La Sportiva",
+    "name": "Cobra",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-cobra-unisex-zfcs008",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Cobra 4.99",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-cobra-4-99-unisex-zfcs017",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Finale",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-finale-uomo-zfcs069",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Finale Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-finale-woman-donna-zfcs028",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Futura",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-futura-unisex-zfcs166",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Genius",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-genius-unisex-zfcs165",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "HyperEZ",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-hyperez-unisex-zfcs149",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Katana",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-katana-uomo-zfcs080",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Katana Laces",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-katana-laces-uomo-zfcs029",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Katana Laces Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-katana-laces-woman-donna-zfcs030",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Katana Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-katana-woman-donna-zfcs081",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Kubo",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-kubo-uomo-zfcs024",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Kubo Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-kubo-woman-donna-zfcs025",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mandala",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mandala-unisex-zfcs041",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mantra",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mantra-unisex-zfcs043",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mega Ice Evo",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mega-ice-evo-uomo-zfcs031",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Miura",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-miura-uomo-zfcs010",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Miura VS",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-miura-vs-uomo-zfcs036",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Miura VS Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-miura-vs-woman-donna-zfcs037",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Miura Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-miura-woman-donna-zfcs011",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mythos",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mythos-unisex-zfcs001",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mythos Eco",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mythos-eco-uomo-zfcs006",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mythos Eco Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mythos-eco-woman-donna-zfcs007",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Mythos Lady",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-mythos-lady-donna-zfcs002",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Ondra Comp",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-ondra-comp-unisex-zfcs046",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Otaki",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-otaki-uomo-zfcs003",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Otaki Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-otaki-woman-donna-zfcs004",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-uomo-zfcs005",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama Lite",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-lite-uomo-zfcs152",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama Lite Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-lite-woman-donna-zfcs158",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama Vegan",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-vegan-uomo-zfcs032",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama Vegan Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-vegan-woman-donna-zfcs033",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Skwama Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-skwama-woman-donna-zfcs012",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Solution",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-solution-uomo-zfcs013",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Solution Comp",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-solution-comp-uomo-zfcs018",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Solution Comp Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-solution-comp-woman-donna-zfcs019",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Solution Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-solution-woman-donna-zfcs014",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantula",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantula-uomo-zfcs146",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantula Boulder",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantula-boulder-uomo-zfcs143",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantula Boulder Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantula-boulder-woman-donna-zfcs144",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantula Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantula-woman-donna-zfcs157",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantulace",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantulace-uomo-zfcs134",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Tarantulace Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tarantulace-woman-donna-zfcs135",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "TC Pro",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tc-pro-uomo-zfcs026",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Theory",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-theory-uomo-zfcs020",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "Theory Woman",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-theory-woman-donna-zfcs021",
+    "sourceUrl": "https://www.lasportiva.com/it/donna/scarpe/arrampicata"
+  },
+  {
+    "brand": "La Sportiva",
+    "name": "TX Setter",
+    "status": "Current",
+    "imageUrl": null,
+    "productUrl": "https://www.lasportiva.com/it/scarpette-arrampicata-tx-setter-unisex-zfcs161",
+    "sourceUrl": "https://www.lasportiva.com/it/uomo/scarpe/scarpette-arrampicata"
+  },
+  {
     "brand": "SCARPA",
     "name": "Blackbird",
     "status": "Current",
