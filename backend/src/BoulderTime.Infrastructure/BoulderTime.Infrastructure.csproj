@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Seeding/DemoPhotos/*.jpg" />
+    <EmbeddedResource Include="Seeding/climbing-shoes.json" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />

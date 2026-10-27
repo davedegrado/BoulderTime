@@ -69,11 +69,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IClock 
     public DbSet<BadgeAward> BadgeAwards => Set<BadgeAward>();
     public DbSet<ActivityDay> ActivityDays => Set<ActivityDay>();
     public DbSet<CompetitionPeriod> CompetitionPeriods => Set<CompetitionPeriod>();
+    public DbSet<Domain.Shoes.ClimbingShoe> ClimbingShoes => Set<Domain.Shoes.ClimbingShoe>();
+    public DbSet<Domain.Shoes.UserClimbingShoe> UserClimbingShoes => Set<Domain.Shoes.UserClimbingShoe>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+
+    public async Task InTransactionAsync(Func<CancellationToken, Task> work, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        await work(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

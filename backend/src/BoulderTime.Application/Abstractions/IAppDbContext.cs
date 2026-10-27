@@ -62,7 +62,12 @@ public interface IAppDbContext
     DbSet<BadgeAward> BadgeAwards { get; }
     DbSet<ActivityDay> ActivityDays { get; }
     DbSet<CompetitionPeriod> CompetitionPeriods { get; }
+    DbSet<Domain.Shoes.ClimbingShoe> ClimbingShoes { get; }
+    DbSet<Domain.Shoes.UserClimbingShoe> UserClimbingShoes { get; }
 
     /// <exception cref="Common.UniqueConstraintViolationException">A unique index was violated.</exception>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Runs several saves as one: all of them, or none if any fails.</summary>
+    Task InTransactionAsync(Func<CancellationToken, Task> work, CancellationToken cancellationToken = default);
 }

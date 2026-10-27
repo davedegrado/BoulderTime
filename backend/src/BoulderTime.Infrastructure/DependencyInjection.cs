@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(o => ConfigureDbContext(o, connectionString));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<DemoSeeder>();
+        services.AddScoped<ShoeCatalogSeeder>();
         AddStorage(services, configuration);
         if ((configuration["Geocoding:Provider"] ?? "Nominatim").Equals("None", StringComparison.OrdinalIgnoreCase))
             services.AddSingleton<IGeocoder, DisabledGeocoder>();

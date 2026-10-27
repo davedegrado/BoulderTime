@@ -2274,6 +2274,110 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                     b.ToTable("push_subscriptions", "bouldertime");
                 });
 
+            modelBuilder.Entity("BoulderTime.Domain.Shoes.ClimbingShoe", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("brand");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("image_url");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(170)
+                        .HasColumnType("character varying(170)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("ProductUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("product_url");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasMaxLength(170)
+                        .HasColumnType("character varying(170)")
+                        .HasColumnName("search_text");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_climbing_shoes");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_climbing_shoes_key");
+
+                    b.HasIndex("Brand", "Name")
+                        .HasDatabaseName("ix_climbing_shoes_brand_name");
+
+                    b.ToTable("climbing_shoes", "bouldertime");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Shoes.UserClimbingShoe", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("ShoeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shoe_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.HasKey("UserId", "ShoeId")
+                        .HasName("pk_user_climbing_shoes");
+
+                    b.HasIndex("ShoeId")
+                        .HasDatabaseName("ix_user_climbing_shoes_shoe_id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_climbing_shoes_one_primary")
+                        .HasFilter("is_primary");
+
+                    b.ToTable("user_climbing_shoes", "bouldertime");
+                });
+
             modelBuilder.Entity("BoulderTime.Domain.Staff.GymStaffMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3254,6 +3358,23 @@ namespace BoulderTime.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_push_subscriptions_users_user_id");
+                });
+
+            modelBuilder.Entity("BoulderTime.Domain.Shoes.UserClimbingShoe", b =>
+                {
+                    b.HasOne("BoulderTime.Domain.Shoes.ClimbingShoe", null)
+                        .WithMany()
+                        .HasForeignKey("ShoeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_climbing_shoes_climbing_shoes_shoe_id");
+
+                    b.HasOne("BoulderTime.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_climbing_shoes_users_user_id");
                 });
 
             modelBuilder.Entity("BoulderTime.Domain.Staff.GymStaffMember", b =>

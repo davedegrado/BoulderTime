@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<Badges.BadgeAwarder>();
         services.AddScoped<Badges.CompetitionTitles>();
         services.AddScoped<Badges.BadgeService>();
+        services.AddScoped<Shoes.ShoeService>();
         services.AddScoped<Badges.BadgeBackfill>();
         return services;
     }

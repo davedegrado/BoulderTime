@@ -12,12 +12,13 @@ namespace BoulderTime.Api.Cli;
 ///   dotnet run --project src/BoulderTime.Api -- revoke-platform-admin you@example.com
 ///   dotnet run --project src/BoulderTime.Api -- grant-badge SPECIAL_FOUNDER you@example.com
 ///   dotnet run --project src/BoulderTime.Api -- backfill-badges [--apply]
+///   dotnet run --project src/BoulderTime.Api -- seed-shoes [--update-metadata]
 /// </summary>
 public static class AdminCli
 {
     public static bool IsCommand(string[] args) =>
         args.Length > 0 && args[0] is "migrate" or "seed" or "dev-promote-all" or "grant-platform-admin" or "revoke-platform-admin" or "generate-push-keys"
-            or "grant-badge" or "backfill-badges";
+            or "grant-badge" or "backfill-badges" or "seed-shoes";
 
     public static async Task<int> RunAsync(WebApplication app, string[] args)
     {
@@ -42,9 +43,23 @@ public static class AdminCli
             }
 
             case "migrate":
+            {
                 await db.Database.MigrateAsync();
                 Console.WriteLine("Database is up to date.");
+                // The climbing-shoe catalogue follows the code (ADR-070): new models are added at each deploy, nothing
+                // already there is changed or removed.
+                var shoes = await scope.ServiceProvider.GetRequiredService<ShoeCatalogSeeder>().SeedAsync();
+                Console.WriteLine($"Climbing shoes: {shoes.Added} added, {shoes.Unchanged} already there.");
                 return 0;
+            }
+
+            case "seed-shoes":
+            {
+                // Adds what is missing; with --update-metadata also brings status, picture and product page in line.
+                var result = await scope.ServiceProvider.GetRequiredService<ShoeCatalogSeeder>().SeedAsync(updateMetadata: args.Contains("--update-metadata"));
+                Console.WriteLine($"Climbing shoes: {result.Added} added, {result.Updated} updated, {result.Unchanged} unchanged.");
+                return 0;
+            }
 
             case "seed":
                 var ownerIndex = Array.IndexOf(args, "--owner");
