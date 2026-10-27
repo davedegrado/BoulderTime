@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { renderLegal } from "@/pages/legal/LegalPage";
-import { PRIVACY_IT } from "@/pages/legal/privacy.it";
-import { TERMS_IT } from "@/pages/legal/terms.it";
-import { t } from "@/i18n/i18n";
+import { legalText } from "@/pages/legal/texts";
+import { activeLanguage, t } from "@/i18n/i18n";
 
 export type LegalDocument = "terms" | "privacy";
 
@@ -27,7 +26,8 @@ export function LegalSheet({ document, onClose }: { document: LegalDocument; onC
         <div className="legal-sheet__top">
           <button ref={close} type="button" className="icon-btn" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
         </div>
-        <div className="legal-sheet__body legal__body">{renderLegal(document === "terms" ? TERMS_IT : PRIVACY_IT)}</div>
+        {/* In the app's language: English is a courtesy translation that says the Italian prevails. */}
+        <div className="legal-sheet__body legal__body" lang={activeLanguage()}>{renderLegal(legalText(document, activeLanguage()))}</div>
       </div>
     </div>
   );

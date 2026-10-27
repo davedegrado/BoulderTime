@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { activeLanguage, LANGUAGES, translate, type Language } from "@/i18n/i18n";
+import { activeLanguage, translate, type Language } from "@/i18n/i18n";
+import { LanguageSwitch } from "@/pages/legal/LanguageSwitch";
 import { renderLegal } from "@/pages/legal/LegalPage";
 import { DELETION_EN, DELETION_IT } from "@/pages/legal/deletion";
 
@@ -19,42 +20,11 @@ export function DeletionPage() {
 
   return (
     <div className="page legal">
-      <div className="lang-switch" role="group" aria-label={tr("Language")}>
-        {LANGUAGES.map((l) => (
-          // Each language named in itself, so whoever needs it recognises it.
-          <button key={l.code} type="button" className="lang-switch__option" aria-pressed={language === l.code} lang={l.code}
-            onClick={() => setLanguage(l.code)}>
-            {l.code === "it" ? <FlagIT /> : <FlagGB />} {l.label}
-          </button>
-        ))}
-      </div>
+      <LanguageSwitch language={language} onChange={setLanguage} />
       <article className="card legal__body" lang={language}>{renderLegal(language === "it" ? DELETION_IT : DELETION_EN)}</article>
       <p className="legal__switch" lang={language}>
-        <Link to="/privacy">{tr("Read the privacy notice")}</Link> · <Link to="/profile">{tr("Go to your profile")}</Link>
+        <Link to={`/privacy?lang=${language}`}>{tr("Read the privacy notice")}</Link> · <Link to="/profile">{tr("Go to your profile")}</Link>
       </p>
     </div>
-  );
-}
-
-function FlagIT() {
-  return (
-    <svg className="lang-switch__flag" viewBox="0 0 3 2" aria-hidden>
-      <rect width="1" height="2" fill="#009246" />
-      <rect x="1" width="1" height="2" fill="#fff" />
-      <rect x="2" width="1" height="2" fill="#CE2B37" />
-    </svg>
-  );
-}
-
-function FlagGB() {
-  return (
-    <svg className="lang-switch__flag" viewBox="0 0 60 30" aria-hidden>
-      <clipPath id="flag-gb-clip"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" /></clipPath>
-      <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
-      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
-      <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#flag-gb-clip)" stroke="#C8102E" strokeWidth="4" />
-      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
-      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
-    </svg>
   );
 }

@@ -7,6 +7,8 @@ import { DeletionPage } from "@/pages/legal/DeletionPage";
 import { DELETION_EN, DELETION_IT } from "@/pages/legal/deletion";
 import { PRIVACY_IT } from "@/pages/legal/privacy.it";
 import { TERMS_IT } from "@/pages/legal/terms.it";
+import { PRIVACY_EN } from "@/pages/legal/privacy.en";
+import { TERMS_EN } from "@/pages/legal/terms.en";
 
 const show = (document: "privacy" | "terms") =>
   render(<I18nProvider initial="it"><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><LegalPage document={document} /></MemoryRouter></I18nProvider>);
@@ -45,6 +47,36 @@ describe("Privacy notice and terms", () => {
     expect(screen.getByRole("link", { name: "Leggi l'informativa sulla privacy" })).toHaveAttribute("href", "/privacy");
   });
 
+});
+
+describe("Privacy notice and terms in English", () => {
+  const open = (document: "privacy" | "terms", url = "/", initial: "it" | "en" = "en") =>
+    render(<I18nProvider initial={initial}><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={[url]}><LegalPage document={document} /></MemoryRouter></I18nProvider>);
+  const headings = (text: string) => text.split("\n").filter((l) => l.startsWith("#")).length;
+
+  it("open in the app's language, say the Italian prevails, and switch back to it", async () => {
+    open("privacy");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Privacy notice");
+    expect(screen.getByText(/the Italian version prevails/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /English/ })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByRole("button", { name: /Italiano/ }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Informativa sulla privacy");
+  });
+
+  it("follow ?lang= whatever the app's language", () => {
+    open("terms", "/termini?lang=en", "it");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Terms of use");
+  });
+
+  it("keep the same sections and facts as the Italian originals", () => {
+    expect(headings(PRIVACY_EN)).toBe(headings(PRIVACY_IT));
+    expect(headings(TERMS_EN)).toBe(headings(TERMS_IT));
+    for (const processor of ["Supabase", "Railway", "Cloudflare", "Resend", "MapTiler", "Firebase Cloud Messaging", "Apple Push Notification service"]) {
+      expect(PRIVACY_EN).toContain(processor);
+    }
+    for (const fact of ["7 days", "14", "2 years", "30 days", "support@bouldertime.com", "Profile → Account deletion"]) expect(PRIVACY_EN).toContain(fact);
+    for (const fact of ["14 years", "Zero tolerance", "Profile → Leaderboards", "Italian law"]) expect(TERMS_EN).toContain(fact);
+  });
 });
 
 describe("Account deletion page", () => {
