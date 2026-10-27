@@ -1436,4 +1436,5 @@ export const it: Record<string, string> = {
   "No recent activity to show": "Nessuna attività recente da mostrare",
   "1 request sent": "1 richiesta inviata",
   "{count} requests sent": "{count} richieste inviate",
+  "Choose the sector first to use the photo of its wall.": "Scegli prima il settore per usare la foto della sua parete.",
 };

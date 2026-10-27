@@ -103,7 +103,7 @@ export function ManageBoulders() {
       </div>
       {/* The one thing staff do most here, always under the thumb, however far down the list. */}
       {!removedView && !selecting && !noSetup && (
-        <Link to={`/manage/${gym.slug}/boulders/new`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
+        <Link to={`/manage/${gym.slug}/boulders/new${filters.sectorId ? `?sector=${filters.sectorId}` : ""}`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
       <FiltersPanel open={showFilters} filters={filters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} withStatus
         onChange={(next) => ((next.status === "REMOVED") !== removedView

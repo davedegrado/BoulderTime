@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGoBack } from "@/lib/navigation";
 import { AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ArrowLeft, Camera, Check, Crop, ImagePlus, Maximize, Minimize, Mountain, Plus, RotateCcw, Save, Trash2, Wand2 } from "lucide-react";
 import { useManagedGym } from "@/pages/manage/ManageLayout";
@@ -62,7 +62,9 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(initial?.photoUrl ?? null);
-  const [sectorId, setSectorId] = useState(initial?.sectorId ?? "");
+  // A new boulder starts in the sector the list was showing, when it showed one.
+  const [params] = useSearchParams();
+  const [sectorId, setSectorId] = useState(initial?.sectorId ?? params.get("sector") ?? "");
   const [holdColor, setHoldColor] = useState<HoldColor | "">(initial?.holdColor ?? "");
   const [grades, setGrades] = useState<Record<string, string>>(() =>
     Object.fromEntries((initial?.grades ?? []).map((g) => [g.gradeSystemId, g.gradeValueId])));
@@ -98,6 +100,10 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
   const activeSystems = useMemo(() => (systems.data ?? []).filter((s) => s.isActive), [systems.data]);
   const activeSectors = (sectors.data ?? []).filter((s) => s.isActive || s.id === initial?.sectorId);
+  // A sector asked for in the address that isn't (or no longer is) on offer is not chosen.
+  useEffect(() => {
+    if (!initial && sectorId && sectors.data && !activeSectors.some((x) => x.id === sectorId)) setSectorId("");
+  }, [sectors.data]);
   const sector = activeSectors.find((s) => s.id === sectorId);
   // The photo the boulder will be saved with: one just picked, the wall just chosen, or the one it has.
   const photoPath = file ? null : wall?.path ?? initial?.photoPath ?? null;
@@ -291,9 +297,22 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
       </div>
       {initial && <p className="field__hint">{t("Fix mistakes here. If the boulder was retraced, remove it and add a new one instead, so climbers' history stays accurate.")}</p>}
 
+      {/* The sector first: it decides which wall photo can be used and highlighted. */}
+      <SelectField label={t("Sector *")} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
+        options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
+
       {/* Photo */}
       <section className="editor__section" aria-labelledby="photo-label">
         <p id="photo-label" className="field__label">{t("Photo *")}</p>
+        {/* Above the picture, where it is seen without scrolling: the sector's wall, or what to do to be offered it. */}
+        {!sectorId && !preview && (sectors.data ?? []).some((x) => x.isActive && x.photoPath) && (
+          <p className="field__hint">{t("Choose the sector first to use the photo of its wall.")}</p>
+        )}
+        {wallOffer && (
+          <div className="photo-source">
+            <Button type="button" variant="secondary" icon={<Mountain aria-hidden />} onClick={chooseWall}>{t("Use the photo of {name}", { name: wallOffer.name })}</Button>
+          </div>
+        )}
         <button type="button" className={`photo-picker ${preview ? "has-photo" : ""} ${errors.photoPath ? "is-invalid" : ""}`} onClick={() => fileInput.current?.open()}>
           {preview ? <img src={preview} alt={t("Selected boulder")} /> : (
             <span className="photo-picker__empty"><Camera aria-hidden /><span>{t("Take or choose a photo")}</span></span>
@@ -301,11 +320,6 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
           {preview && <span className="photo-picker__change"><ImagePlus aria-hidden /> {t("Change")}</span>}
         </button>
         <MediaInput ref={fileInput} kind="image" accept="image/jpeg,image/png,image/webp,image/*" onFile={(f) => pickFile(f)} />
-        {wallOffer && (
-          <div className="photo-source">
-            <Button type="button" variant="secondary" icon={<Mountain aria-hidden />} onClick={chooseWall}>{t("Use the photo of {name}", { name: wallOffer.name })}</Button>
-          </div>
-        )}
         {wall && !thumb && <p className="field__hint">{t("Every boulder of this sector shares this photo: if you like, choose the part that shows this one for its cards.")}</p>}
         {errors.photoPath && <p className="field__error">{errors.photoPath}</p>}
       </section>
@@ -379,9 +393,6 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
 
       <TextField label={t("Name")} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} error={errors.name}
         hint={t("Optional. The name the setters gave it, shown on its card and page.")} />
-
-      <SelectField label={t("Sector *")} value={sectorId} onChange={(e) => setSectorId(e.target.value)} error={errors.sectorId}
-        options={[{ value: "", label: t("Choose a sector") }, ...activeSectors.map((s) => ({ value: s.id, label: s.name }))]} />
 
       {/* Official grades — one control per active system */}
       <section className="editor__section" aria-labelledby="grades-label">
