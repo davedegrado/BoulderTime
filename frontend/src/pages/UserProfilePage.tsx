@@ -24,6 +24,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { BlockAction } from "@/features/users/BlockAction";
 import { FriendButton, FriendsTab, supportsFriends } from "@/features/users/Friends";
 import { FeaturedBadges } from "@/features/badges/BadgeBits";
+import { ProfileShoes } from "@/features/shoes/ShoeBits";
 import { useUserBadges } from "@/features/badges/api";
 import { useFriendAction } from "@/features/users/friendsApi";
 import { errorMessage } from "@/lib/apiError";
@@ -205,7 +206,7 @@ function ProfileContent({ profile: p, sections, onCustomize }: { profile: Profil
           : tab === "friends" ? <FriendsTab profile={p} />
           : tab === "gyms" ? <GymsTab profile={p} />
           // Badges first: what the person chose to show (ADR-069). Nothing when they have none.
-          : blocks.length > 0 || hasBadges ? <div className="profile-overview"><FeaturedBadges userId={p.id} isMe={p.isMe} />{blocks}</div>
+          : blocks.length > 0 || hasBadges ? <div className="profile-overview"><FeaturedBadges userId={p.id} isMe={p.isMe} /><ProfileShoes userId={p.id} isMe={p.isMe} />{blocks}</div>
           : <EmptyState icon={<LayoutList />} title={p.isMe ? t("Nothing to show yet") : t("No activity yet")}
               action={onCustomize ? <Button variant="secondary" onClick={onCustomize}>{t("Customise profile")}</Button> : undefined} />}
       </div>

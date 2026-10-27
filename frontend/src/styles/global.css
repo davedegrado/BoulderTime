@@ -1920,3 +1920,29 @@ button.manage-head__back { background: transparent; }
 .profile-stats dd.profile-stats__month, .profile-overview .profile-stats dd.profile-stats__month { margin-top: 2px; font-size: var(--bt-text-xs); font-weight: 600; line-height: 1.2; }
 .stat__month { font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-success); }
 :root[data-theme="dark"] .stat__month { color: #6fd39a; }
+
+/* ---------- Climbing shoes (proposal) ---------- */
+.shoe-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.shoe-list > li + li { border-top: 1px solid var(--bt-line); }
+.shoe-row { display: flex; align-items: center; gap: var(--bt-3); padding: 8px 0; min-width: 0; }
+.profile-overview .shoe-list > li:first-child { padding-top: 0; }
+.profile-overview .shoe-list > li:last-child { padding-bottom: 0; }
+.shoe-thumb { flex: none; display: grid; place-items: center; border-radius: var(--bt-radius-sm); object-fit: contain; background: #fff; }
+.shoe-thumb--none { background: var(--bt-surface-2); color: var(--bt-ink-3); font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
+.shoe-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.shoe-row__brand { font-size: var(--bt-text-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bt-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shoe-row__name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shoe-row__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.shoe-primary { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--bt-radius-pill); background: var(--bt-orange-tint); color: var(--bt-orange-ink); font-size: var(--bt-text-xs); font-weight: 700; }
+.shoe-primary svg { width: 12px; height: 12px; fill: currentColor; }
+.shoe-row__old { padding: 2px 8px; border-radius: var(--bt-radius-pill); background: var(--bt-surface-2); color: var(--bt-ink-2); font-size: var(--bt-text-xs); font-weight: 600; }
+.shoe-row__actions { flex: none; display: flex; gap: 2px; }
+.shoe-star.is-on { color: var(--bt-orange); }
+.shoe-star.is-on svg { fill: currentColor; }
+.shoe-add { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; border: 1.5px solid var(--bt-line); border-radius: var(--bt-radius-pill); background: var(--bt-surface); color: var(--bt-ink); font: inherit; font-size: var(--bt-text-sm); font-weight: 700; cursor: pointer; }
+.shoe-add svg { width: 16px; height: 16px; }
+.shoe-add.is-on { border-color: transparent; background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+.shoe-invite { display: flex; align-items: center; gap: var(--bt-3); padding: 10px 12px; border: 1px dashed var(--bt-line); border-radius: var(--bt-radius-md); color: var(--bt-ink-2); font-size: var(--bt-text-sm); font-weight: 600; text-decoration: none; }
+.shoe-invite__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+.shoe-invite__icon svg { width: 18px; height: 18px; }
+.shoes-page .chips { margin-top: 2px; }

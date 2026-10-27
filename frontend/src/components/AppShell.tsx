@@ -44,8 +44,9 @@ export function AppShell() {
   const gymPage = useMatch("/gyms/:slug");
   const personPage = useMatch("/users/:id");
   const badgesPage = useMatch("/users/:id/badges");
+  const shoesPage = useMatch("/users/:id/shoes");
   const boulderPage = useMatch("/boulders/:id");
-  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage) || Boolean(boulderPage) || Boolean(badgesPage);
+  const detail = (Boolean(gymPage) && gymPage?.params.slug !== "suggest") || Boolean(personPage) || Boolean(boulderPage) || Boolean(badgesPage) || Boolean(shoesPage);
   // Signed-in people accept the terms before anything else; the legal pages themselves stay reachable.
   const onLegalPage = ["/privacy", "/termini", "/terms", "/delete-account"].includes(useLocation().pathname);
   const mustAccept = Boolean(session) && (me.data?.legalAcceptanceNeeded ?? false) && !onLegalPage;

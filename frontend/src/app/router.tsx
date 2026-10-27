@@ -18,6 +18,7 @@ import { ExplorePage } from "@/pages/ExplorePage";
 import { GymPage } from "@/pages/GymPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { FriendsPage } from "@/pages/FriendsPage";
+import { ShoesPage } from "@/pages/ShoesPage";
 import { BadgesPage } from "@/pages/BadgesPage";
 import { BoulderPage } from "@/pages/BoulderPage";
 import { ActivityPage } from "@/pages/ActivityPage";
@@ -106,6 +107,7 @@ export const router = createBrowserRouter([
       { path: "activity", element: <RequireAuth><ActivityPage /></RequireAuth> },
       { path: "users/:id", element: <UserProfilePage /> },
       { path: "users/:id/badges", element: <BadgesPage /> },
+      { path: "users/:id/shoes", element: <ShoesPage /> },
       { path: "friends", element: <RequireAuth><FriendsPage /></RequireAuth> },
       { path: "notifications", element: <RequireAuth><NotificationsPage /></RequireAuth> },
       { path: "notifications/settings", element: <RequireAuth><NotificationSettingsPage /></RequireAuth> },
