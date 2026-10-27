@@ -40,6 +40,16 @@ export function relativeDays(iso: string, now = Date.now()): string {
   return new Intl.RelativeTimeFormat(localeTag(), { numeric: "auto" }).format(days, "day");
 }
 
+/** "today", "yesterday", "3 days ago", "2 wk. ago", "4 mo. ago": how long ago, by calendar day, short to fit a line. */
+export function timeAgo(iso: string, now = new Date()): string {
+  const day = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.max(0, Math.round((day(now) - day(new Date(iso))) / 86_400_000));
+  const rtf = new Intl.RelativeTimeFormat(localeTag(), { numeric: "auto", style: "short" });
+  if (days < 7) return rtf.format(-days, "day");
+  if (days < 60) return rtf.format(-Math.floor(days / 7), "week");
+  return rtf.format(-Math.floor(days / 30), "month");
+}
+
 export function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
 }
