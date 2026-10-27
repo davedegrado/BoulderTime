@@ -88,6 +88,39 @@ public sealed class FollowAndActivityTests(PostgresFixture postgres) : IAsyncLif
     }
 
     [Fact]
+    public async Task Stats_count_this_month_for_tried_and_projects_beside_the_totals()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var oldSend = await w.BoulderAsync("6A");
+        var oldProject = await w.BoulderAsync("6B");
+        var newProject = await w.BoulderAsync("6C");
+        var tried = await w.BoulderAsync("7A");
+        var me = await _f.UserAsync();
+        await me.Client.PutAsJsonAsync($"/api/boulders/{oldSend.Id}/attempt", new { attempts = 3, completed = true });
+        await me.Client.PutAsync($"/api/boulders/{oldProject.Id}/project", null);
+        await me.Client.PutAsJsonAsync($"/api/boulders/{oldProject.Id}/attempt", new { attempts = 5, completed = false });
+        await me.Client.PutAsync($"/api/boulders/{newProject.Id}/project", null);
+        await me.Client.PutAsJsonAsync($"/api/boulders/{tried.Id}/attempt", new { attempts = 2, completed = false });
+        // The send and the first project belong to two months ago.
+        var past = DateTimeOffset.UtcNow.AddMonths(-2);
+        await _f.WithDbAsync(async db =>
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE bouldertime.boulder_attempts SET created_at = {past}, updated_at = {past}, completed_at = CASE WHEN completed THEN {past} END WHERE boulder_id IN ({oldSend.Id}, {oldProject.Id})");
+            return await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE bouldertime.boulder_projects SET created_at = {past} WHERE boulder_id = {oldProject.Id}");
+        });
+
+        var stats = (await (await me.Client.GetAsync($"/api/users/{me.Id}/profile")).ReadAsync<ProfileDto>())!.Stats;
+        stats.Completed.Should().Be(1);
+        stats.CompletedThisMonth.Should().Be(0);
+        stats.MarkedProjects.Should().Be(2);
+        stats.MarkedProjectsThisMonth.Should().Be(1, "only the project marked this month");
+        // Tried: everything tried is the sends plus what is still open (1 + 2); this month only the boulder tried now.
+        (stats.Completed + stats.Projects).Should().Be(3);
+        stats.TriedThisMonth.Should().Be(1);
+        stats.TotalAttempts.Should().Be(10);
+    }
+
+    [Fact]
     public async Task Home_shows_projects_and_fresh_untried_boulders_from_followed_gyms()
     {
         var w = await ClimbingWorld.CreateAsync(_f);
