@@ -258,6 +258,7 @@ export const it: Record<string, string> = {
   "Projects": "Progetti",
   "Project": "Progetto",
   "Sent this month": "Completati questo mese",
+  "+{count} this month": "+{count} questo mese",
   "Last 12 weeks": "Ultime 12 settimane",
   "Highest grades": "Gradi più alti",
   "Complete a boulder to see your highest grades.": "Completa un blocco per vedere i tuoi gradi più alti.",

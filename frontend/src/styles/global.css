@@ -1911,3 +1911,12 @@ button.manage-head__back { background: transparent; }
 .profile-overview .profile-block__head { align-items: center; }
 .profile-overview .hlist > li:first-child .hrow { padding-top: 2px; }
 .profile-overview .hlist > li:last-child .hrow { padding-bottom: 0; }
+/* Each number: the total large, its name, then this month's share. Four tiles, two to a row. */
+.profile-overview .profile-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-stats__item { flex-direction: column; justify-content: flex-start; }
+.profile-stats__item > dd:first-of-type { order: 1; }
+.profile-stats__item > dt { order: 2; }
+.profile-stats__item > .profile-stats__month { order: 3; }
+.profile-stats dd.profile-stats__month, .profile-overview .profile-stats dd.profile-stats__month { margin-top: 2px; font-size: var(--bt-text-xs); font-weight: 600; line-height: 1.2; }
+.stat__month { font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-success); }
+:root[data-theme="dark"] .stat__month { color: #6fd39a; }
