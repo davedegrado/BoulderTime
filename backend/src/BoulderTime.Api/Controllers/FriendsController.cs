@@ -40,6 +40,7 @@ public sealed class FriendsController(FriendshipService friends) : ControllerBas
 
     /// <summary>A person's friends, for whoever may see their profile's content.</summary>
     [HttpGet("api/users/{userId:guid}/friends")]
-    public Task<PagedResult<FriendDto>> Friends(Guid userId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken ct) =>
-        friends.FriendsOfAsync(userId, page, pageSize, ct);
+    /// <remarks><c>sort=activity</c> puts the most recently active first (1.1); without it, by name as always.</remarks>
+    public Task<PagedResult<FriendDto>> Friends(Guid userId, [FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery] string? sort, CancellationToken ct) =>
+        friends.FriendsOfAsync(userId, page, pageSize, ct, string.Equals(sort, "activity", StringComparison.OrdinalIgnoreCase) ? FriendSort.Activity : FriendSort.Name);
 }
