@@ -3,11 +3,21 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/auth/AuthProvider";
 import type { PagedResult } from "@/lib/paging";
 import type { FriendshipState, Profile } from "@/features/climbing/api";
+import type { BoulderGrade } from "@/features/boulders/api";
+import type { HoldColor } from "@/features/boulders/holdColors";
 
 /** Friendships (ADR-063). */
 export interface FriendPerson { userId: string; displayName: string; avatarUrl: string | null }
-export interface FriendRequest { person: FriendPerson; requestedAt: string }
-export interface Friend { person: FriendPerson; since: string }
+/** `mutualFriends`: friends in common, on the requests received (1.1); absent from older servers. */
+export interface FriendRequest { person: FriendPerson; requestedAt: string; mutualFriends?: number | null }
+/** A friend's latest send and their sends this month (1.1). */
+export interface FriendActivity { lastSendAt: string; boulderId: string; gymName: string; grade: BoulderGrade | null; holdColor: HoldColor; sentThisMonth: number }
+/**
+ * `activity`: null when they have no send or the viewer may not see it; absent (undefined) from older servers, which
+ * then show the name alone.
+ */
+export interface Friend { person: FriendPerson; since: string; activity?: FriendActivity | null }
+export type FriendSort = "activity" | "name";
 
 export interface PersonResult { person: FriendPerson; friendship: FriendshipState }
 
@@ -15,7 +25,7 @@ export const friendKeys = {
   requests: ["friends", "requests"] as const,
   sent: ["friends", "sent"] as const,
   search: (q: string) => ["friends", "search", q] as const,
-  of: (userId: string) => ["friends", "of", userId] as const,
+  of: (userId: string, sort: FriendSort = "name") => ["friends", "of", userId, sort] as const,
 };
 
 /** Shortest search the server answers. */
@@ -55,10 +65,11 @@ export function useFriendRequests() {
   });
 }
 
-export function useFriendsOf(userId: string, enabled = true) {
+/** A person's friends, a page at a time: by name, or the most recently active first (an older server ignores it). */
+export function useFriendsOf(userId: string, enabled = true, sort: FriendSort = "name") {
   return useInfiniteQuery({
-    queryKey: friendKeys.of(userId),
-    queryFn: ({ pageParam, signal }) => api.get<PagedResult<Friend>>(`/api/users/${userId}/friends?page=${pageParam}`, { signal }),
+    queryKey: friendKeys.of(userId, sort),
+    queryFn: ({ pageParam, signal }) => api.get<PagedResult<Friend>>(`/api/users/${userId}/friends?page=${pageParam}${sort === "activity" ? "&sort=activity" : ""}`, { signal }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     enabled,

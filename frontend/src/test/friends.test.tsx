@@ -179,7 +179,7 @@ describe("The Friends tab", () => {
     expect(screen.getByText("No friends yet")).toBeInTheDocument();
     await userEvent.click(within(asked).getByRole("button", { name: "Accept" }));
 
-    const list = await screen.findByRole("region", { name: "Friends" });
+    const list = await screen.findByRole("region", { name: /^Your friends/ });
     expect(within(list).getByRole("link", { name: /Luca Rossi/ })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Friend requests" })).not.toBeInTheDocument();
   });

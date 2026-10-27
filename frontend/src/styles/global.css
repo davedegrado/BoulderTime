@@ -1920,3 +1920,25 @@ button.manage-head__back { background: transparent; }
 .profile-stats dd.profile-stats__month, .profile-overview .profile-stats dd.profile-stats__month { margin-top: 2px; font-size: var(--bt-text-xs); font-weight: 600; line-height: 1.2; }
 .stat__month { font-size: var(--bt-text-xs); font-weight: 600; color: var(--bt-success); }
 :root[data-theme="dark"] .stat__month { color: #6fd39a; }
+
+/* ---------- Friends: boxes, each friend with what they climbed lately ---------- */
+.friends-box { padding: 12px 14px; background: var(--bt-surface); border: 1px solid var(--bt-line); border-radius: 16px; }
+.friends-box .profile-block__head { align-items: center; }
+.friends-box__count { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-3); }
+.friends-box__sort { flex-wrap: nowrap; gap: 6px; margin: 0; }
+.friends-box__sort .chip { min-height: 30px; padding: 0 10px; font-size: var(--bt-text-xs); }
+.friends-box__fold { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0; border: 0; border-top: 1px solid var(--bt-line); background: none; color: var(--bt-ink-2); font: inherit; font-size: var(--bt-text-sm); font-weight: 600; cursor: pointer; }
+.friends-box__fold:first-child { border-top: 0; }
+.friends-box__fold svg { width: 18px; height: 18px; color: var(--bt-ink-3); }
+.friend-row { color: inherit; text-decoration: none; }
+.friend-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.friend-row__last { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-2); }
+.friend-row__last .grade { flex: none; }
+.friend-row__where { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.friend-row__month { font-size: var(--bt-text-xs); color: var(--bt-ink-3); }
+.friend-row .list__chevron { flex: none; }
+.friends-page .friends-box + .friends-box, .friends-page .friends-box + .profile-block { margin-top: var(--bt-3); }
+/* A request: the name keeps its room, the buttons are compact. */
+.friends-box .people__person { min-width: 0; }
+.friends-box .people__actions .btn { min-height: 36px; padding: 0 12px; font-size: var(--bt-text-sm); }
+.friends-box .friend-row__month { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

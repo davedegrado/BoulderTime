@@ -1,15 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Check, UserCheck, UserMinus, UserPlus, UserX, Users, X } from "lucide-react";
+import { Check, ChevronRight, UserCheck, UserMinus, UserPlus, UserX, Users, X } from "lucide-react";
 import type { Profile } from "@/features/climbing/api";
-import { useFriendAction, useFriendRequests, useFriendsOf, type FriendAction, type FriendPerson } from "@/features/users/friendsApi";
+import { useFriendAction, useFriendRequests, useFriendsOf, type Friend, type FriendAction, type FriendPerson, type FriendSort } from "@/features/users/friendsApi";
+import { GradeBadge } from "@/features/boulders/BoulderBits";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { useToast } from "@/components/Toast";
 import { useAuth } from "@/auth/AuthProvider";
 import { errorMessage } from "@/lib/apiError";
-import { t } from "@/i18n/i18n";
+import { timeAgo } from "@/lib/format";
+import { plural, t } from "@/i18n/i18n";
 
 /** Whether the server knows friendships: older ones send no `friendship` on a profile, and then the app offers none. */
 export const supportsFriends = (p: Profile) => "friendship" in p;
@@ -106,18 +108,20 @@ function IncomingRequests() {
   return (
     <section className="profile-block" aria-labelledby="friend-requests-title">
       <h2 id="friend-requests-title" className="profile-block__title">{t("Friend requests")}</h2>
-      <ul className="people">{requests.data.map((r) => <RequestRow key={r.person.userId} person={r.person} />)}</ul>
+      <ul className="people">{requests.data.map((r) => <RequestRow key={r.person.userId} person={r.person} mutualFriends={r.mutualFriends} />)}</ul>
     </section>
   );
 }
 
-export function RequestRow({ person }: { person: FriendPerson }) {
+/** A request received: who, and how many friends you have in common (when the server says), to accept or decline. */
+export function RequestRow({ person, mutualFriends }: { person: FriendPerson; mutualFriends?: number | null }) {
   const action = useFriendAction(person.userId);
   const toast = useToast();
   const run = (a: FriendAction, done: string) => action.mutate(a, { onSuccess: () => toast.success(done), onError: (e) => toast.error(errorMessage(e)) });
   return (
     <li className="people__row">
-      <PersonLink person={person} />
+      <PersonLink person={person}
+        sub={mutualFriends ? plural(mutualFriends, "1 friend in common", "{count} friends in common") : undefined} />
       <span className="people__actions">
         <Button loading={action.isPending && action.variables === "accept"} disabled={action.isPending} onClick={() => run("accept", t("You're friends now"))}>{t("Accept")}</Button>
         <Button variant="ghost" aria-label={t("Decline {name}'s request", { name: person.displayName })} icon={<X aria-hidden />}
@@ -127,9 +131,19 @@ export function RequestRow({ person }: { person: FriendPerson }) {
   );
 }
 
+const SORT_KEY = "bt:friends-sort";
+const readSort = (): FriendSort => { try { return localStorage.getItem(SORT_KEY) === "name" ? "name" : "activity"; } catch { return "activity"; } };
+
+/**
+ * A person's friends, in a box: the most recently active first (or by name, the choice kept on this device), each with
+ * their latest send — the boulder's grade, the gym, how long ago — and how many boulders they completed this month.
+ */
 export function FriendList({ userId, isMe }: { userId: string; isMe: boolean }) {
-  const friends = useFriendsOf(userId);
+  const [sort, setSortState] = useState<FriendSort>(readSort);
+  const setSort = (next: FriendSort) => { setSortState(next); try { localStorage.setItem(SORT_KEY, next); } catch { /* kept for this visit only */ } };
+  const friends = useFriendsOf(userId, true, sort);
   const items = friends.data?.pages.flatMap((pg) => pg.items) ?? [];
+  const total = friends.data?.pages[0]?.total;
   if (friends.isPending) return <LoadingState label={t("Loading friends")} />;
   if (friends.isError) return <ErrorState error={friends.error} onRetry={() => friends.refetch()} />;
   if (items.length === 0) {
@@ -137,19 +151,53 @@ export function FriendList({ userId, isMe }: { userId: string; isMe: boolean }) 
       body={isMe ? t("Search for climbers by name in Friends, or open a profile and tap “Add friend”.") : undefined} />;
   }
   return (
-    <section className="profile-block" aria-labelledby="friends-title">
-      <h2 id="friends-title" className="profile-block__title">{t("Friends")}</h2>
-      <ul className="people">{items.map((f) => <li key={f.person.userId} className="people__row"><PersonLink person={f.person} /></li>)}</ul>
+    <section className="profile-block friends-box" aria-labelledby="friends-title">
+      <div className="profile-block__head">
+        <h2 id="friends-title" className="profile-block__title">{isMe ? t("Your friends") : t("Friends")}{total != null && <span className="friends-box__count"> · {total}</span>}</h2>
+        <div className="chips chips--light friends-box__sort" role="radiogroup" aria-label={t("Sort friends")}>
+          <button type="button" role="radio" aria-checked={sort === "activity"} className="chip" onClick={() => setSort("activity")}>{t("Activity")}</button>
+          <button type="button" role="radio" aria-checked={sort === "name"} className="chip" onClick={() => setSort("name")}>{t("A–Z")}</button>
+        </div>
+      </div>
+      <ul className="people">{items.map((f) => <FriendRow key={f.person.userId} friend={f} />)}</ul>
       {friends.hasNextPage && <Button variant="secondary" onClick={() => friends.fetchNextPage()} loading={friends.isFetchingNextPage}>{t("Show more")}</Button>}
     </section>
   );
 }
 
-export function PersonLink({ person }: { person: FriendPerson }) {
+/** One friend: photo and name, then what they climbed lately (when the server says, and the viewer may see it). */
+function FriendRow({ friend: { person, activity } }: { friend: Friend }) {
+  const a = activity;
+  return (
+    <li>
+      <Link to={`/users/${person.userId}`} className="people__row friend-row">
+        <Avatar name={person.displayName} url={person.avatarUrl} size={40} />
+        <span className="friend-row__text">
+          <span className="people__name">{person.displayName}</span>
+          {a ? (
+            <>
+              <span className="friend-row__last">
+                {a.grade && <GradeBadge grade={a.grade} size="sm" />}
+                <span className="friend-row__where">{t("at {gym} · {when}", { gym: a.gymName, when: timeAgo(a.lastSendAt) })}</span>
+              </span>
+              <span className="friend-row__month">{plural(a.sentThisMonth, "1 boulder this month", "{count} boulders this month")}</span>
+            </>
+          ) : a === null ? <span className="friend-row__month">{t("No recent activity to show")}</span> : null}
+        </span>
+        <ChevronRight className="list__chevron" aria-hidden />
+      </Link>
+    </li>
+  );
+}
+
+export function PersonLink({ person, sub }: { person: FriendPerson; sub?: string }) {
   return (
     <Link to={`/users/${person.userId}`} className="people__person">
       <Avatar name={person.displayName} url={person.avatarUrl} size={40} />
-      <span className="people__name">{person.displayName}</span>
+      <span className="friend-row__text">
+        <span className="people__name">{person.displayName}</span>
+        {sub && <span className="friend-row__month">{sub}</span>}
+      </span>
     </Link>
   );
 }

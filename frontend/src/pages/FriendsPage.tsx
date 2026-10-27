@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, UserCheck, UserPlus, UserX, Users } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, UserCheck, UserPlus, UserX, Users } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
 import { Button } from "@/components/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -11,11 +11,12 @@ import {
   type FriendAction, type FriendPerson, type PersonResult,
 } from "@/features/users/friendsApi";
 import { errorMessage } from "@/lib/apiError";
-import { t } from "@/i18n/i18n";
+import { plural, t } from "@/i18n/i18n";
 
 /**
- * Friends, from the tab bar (ADR-063): a search for climbers by name on top, then the requests waiting — received, to
- * accept or decline, and sent, to cancel — then your friends. While searching, the results take the page.
+ * Friends, from the tab bar (ADR-063): a search for climbers by name on top, then one box for the requests waiting —
+ * received, to accept or decline, and the ones sent folded into a line that opens them — then your friends with what
+ * each climbed lately. While searching, the results take the page.
  */
 export function FriendsPage() {
   const me = useCurrentUser();
@@ -34,8 +35,7 @@ export function FriendsPage() {
       <SearchField label={t("Search climbers")} placeholder={t("Search climbers by name")} value={query} onChange={setQuery} />
       {searching ? <SearchResults query={searched} typed={query.trim()} /> : (
         <>
-          <ReceivedRequests />
-          <SentRequests />
+          <Requests />
           {me.data && <FriendList userId={me.data.id} isMe />}
         </>
       )}
@@ -79,24 +79,32 @@ function ResultRow({ result: { person, friendship } }: { result: PersonResult })
   );
 }
 
-function ReceivedRequests() {
-  const requests = useFriendRequests();
-  if (!requests.data?.length) return null;
+/** The requests waiting, in one box: those received first; the ones you sent as a line that opens them. */
+function Requests() {
+  const received = useFriendRequests().data ?? [];
+  const sent = useSentFriendRequests().data ?? [];
+  const [showSent, setShowSent] = useState(false);
+  if (received.length === 0 && sent.length === 0) return null;
   return (
-    <section className="profile-block" aria-labelledby="received-title">
-      <h2 id="received-title" className="profile-block__title">{t("Requests received")}</h2>
-      <ul className="people">{requests.data.map((r) => <RequestRow key={r.person.userId} person={r.person} />)}</ul>
-    </section>
-  );
-}
-
-function SentRequests() {
-  const sent = useSentFriendRequests();
-  if (!sent.data?.length) return null;
-  return (
-    <section className="profile-block" aria-labelledby="sent-title">
-      <h2 id="sent-title" className="profile-block__title">{t("Requests sent")}</h2>
-      <ul className="people">{sent.data.map((r) => <SentRow key={r.person.userId} person={r.person} />)}</ul>
+    <section className="profile-block friends-box" aria-labelledby="received-title">
+      {received.length > 0 && (
+        <>
+          <div className="profile-block__head">
+            <h2 id="received-title" className="profile-block__title">{t("Requests received")}</h2>
+            <span className="friends-box__count">{received.length}</span>
+          </div>
+          <ul className="people">{received.map((r) => <RequestRow key={r.person.userId} person={r.person} mutualFriends={r.mutualFriends} />)}</ul>
+        </>
+      )}
+      {sent.length > 0 && (
+        <>
+          <button type="button" id={received.length === 0 ? "received-title" : undefined} className="friends-box__fold" aria-expanded={showSent} onClick={() => setShowSent((v) => !v)}>
+            <span>{plural(sent.length, "1 request sent", "{count} requests sent")}</span>
+            {showSent ? <ChevronDown aria-hidden /> : <ChevronRight aria-hidden />}
+          </button>
+          {showSent && <ul className="people">{sent.map((r) => <SentRow key={r.person.userId} person={r.person} />)}</ul>}
+        </>
+      )}
     </section>
   );
 }
