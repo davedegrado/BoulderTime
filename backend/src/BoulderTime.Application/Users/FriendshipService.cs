@@ -19,8 +19,17 @@ public enum FriendshipState
 }
 
 public sealed record FriendshipDto(FriendshipState State);
-public sealed record FriendRequestDto(PersonDto Person, DateTimeOffset RequestedAt);
-public sealed record FriendDto(PersonDto Person, DateTimeOffset Since);
+/// <param name="MutualFriends">Friends the viewer and this person have in common (1.1; only on the requests received).</param>
+public sealed record FriendRequestDto(PersonDto Person, DateTimeOffset RequestedAt, int? MutualFriends = null);
+/// <param name="Activity">What the friend climbed lately (1.1): null when they have no send, or when the viewer may not
+/// see their profile's content.</param>
+public sealed record FriendDto(PersonDto Person, DateTimeOffset Since, FriendActivityDto? Activity = null);
+/// <summary>A friend's latest send, and how many boulders they completed this month.</summary>
+/// <param name="Grade">The boulder's main grade, as on its card; null when it has none.</param>
+public sealed record FriendActivityDto(DateTimeOffset LastSendAt, Guid BoulderId, string GymName, BoulderGradeDto? Grade,
+    Domain.Boulders.HoldColor HoldColor, int SentThisMonth);
+/// <summary>How a list of friends is ordered: by name (as always), or the most recently active first.</summary>
+public enum FriendSort { Name = 0, Activity = 1 }
 /// <summary>Someone found by name, with the viewer's friendship with them, so the list can offer the right button.</summary>
 public sealed record PersonResultDto(PersonDto Person, FriendshipState Friendship);
 
@@ -30,7 +39,7 @@ public sealed record PersonResultDto(PersonDto Person, FriendshipState Friendshi
 /// and the other lists don't change. Blocking ends a friendship and is never revealed: a request to someone who blocked
 /// you looks sent like any other, and they never see it while the block lasts.
 /// </summary>
-public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BlockedPeople blocked, ProfileAccess access, IPushQueue push)
+public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser, IClock clock, BlockedPeople blocked, ProfileAccess access, IPushQueue push, BoulderReader reader)
 {
     /// <summary>Requests one person may send in a day: plenty for real use, too few to spam with.</summary>
     public const int RequestsPerDay = 30;
@@ -136,8 +145,21 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             .Join(db.Users, f => f.RequesterId, u => u.Id, (f, u) => new { u.Id, u.DisplayName, u.AvatarUrl, f.CreatedAt })
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
-        return rows.Select(x => new FriendRequestDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.CreatedAt)).ToList();
+        // Friends in common help to tell who is asking: a count only, never who they are.
+        var mine = await FriendIdsAsync(me, ct);
+        var askers = rows.Select(x => x.Id).ToList();
+        var theirs = await db.Friendships.AsNoTracking()
+            .Where(f => f.Status == FriendshipStatus.Accepted && (askers.Contains(f.UserLowId) || askers.Contains(f.UserHighId)))
+            .Select(f => new { f.UserLowId, f.UserHighId }).ToListAsync(ct);
+        int Mutual(Guid asker) => theirs.Count(f => (f.UserLowId == asker && mine.Contains(f.UserHighId) && !hidden.Contains(f.UserHighId))
+            || (f.UserHighId == asker && mine.Contains(f.UserLowId) && !hidden.Contains(f.UserLowId)));
+        return rows.Select(x => new FriendRequestDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.CreatedAt, Mutual(x.Id))).ToList();
     }
+
+    private async Task<HashSet<Guid>> FriendIdsAsync(Guid userId, CancellationToken ct) =>
+        (await db.Friendships.AsNoTracking()
+            .Where(f => f.Status == FriendshipStatus.Accepted && (f.UserLowId == userId || f.UserHighId == userId))
+            .Select(f => f.UserLowId == userId ? f.UserHighId : f.UserLowId).ToListAsync(ct)).ToHashSet();
 
     /// <summary>
     /// The requests the viewer sent that haven't been answered, newest first, leaving out suspended accounts and
@@ -196,22 +218,67 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
 
     /// <summary>
     /// A person's friends, for whoever may see the content of their profile: anyone for a public one, its owner and
-    /// friends for a private one; others get an empty page. People hidden from the viewer are left out.
+    /// friends for a private one; others get an empty page. People hidden from the viewer are left out. By name, as
+    /// always, or with <see cref="FriendSort.Activity"/> the most recently active first. Each friend's latest send comes
+    /// only when the viewer may see that friend's own profile content (their profile is public, or they are the viewer
+    /// or the viewer's friend), and only that activity orders the list, so the order never tells more than the rows.
     /// </summary>
-    public async Task<PagedResult<FriendDto>> FriendsOfAsync(Guid userId, int? page, int? pageSize, CancellationToken ct = default)
+    public async Task<PagedResult<FriendDto>> FriendsOfAsync(Guid userId, int? page, int? pageSize, CancellationToken ct = default, FriendSort sort = FriendSort.Name)
     {
         var user = await access.RequireVisibleAsync(userId, ct);
         var (p, size) = Paging.Normalize(page, pageSize, 30);
         if (!await access.CanSeeContentAsync(user, ct)) return new PagedResult<FriendDto>([], p, size, 0);
         var hidden = await blocked.ForViewerAsync(ct);
+        var me = currentUser.UserId;
+        var myFriends = me is { } m ? await FriendIdsAsync(m, ct) : [];
         var q = db.Friendships.AsNoTracking()
             .Where(f => f.Status == FriendshipStatus.Accepted && (f.UserLowId == userId || f.UserHighId == userId))
             .Select(f => new { Other = f.UserLowId == userId ? f.UserHighId : f.UserLowId, Since = f.AcceptedAt ?? f.CreatedAt })
             .Where(x => !hidden.Contains(x.Other))
-            .Join(db.Users, x => x.Other, u => u.Id, (x, u) => new { u.Id, u.DisplayName, u.AvatarUrl, x.Since });
+            .Join(db.Users, x => x.Other, u => u.Id, (x, u) => new
+            {
+                u.Id, u.DisplayName, u.AvatarUrl, x.Since,
+                Open = u.ProfileVisibility != ProfileVisibility.Private || u.Id == me || myFriends.Contains(u.Id),
+            })
+            .Select(x => new
+            {
+                x.Id, x.DisplayName, x.AvatarUrl, x.Since, x.Open,
+                LastSend = x.Open ? db.BoulderAttempts.Where(a => a.UserId == x.Id && a.Completed).Max(a => a.CompletedAt) : null,
+            });
         var total = await q.CountAsync(ct);
-        var rows = await q.OrderBy(x => x.DisplayName).ThenBy(x => x.Id).Skip((p - 1) * size).Take(size).ToListAsync(ct);
-        return new PagedResult<FriendDto>(rows.Select(x => new FriendDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.Since)).ToList(), p, size, total);
+        var ordered = sort == FriendSort.Activity
+            ? q.OrderBy(x => x.LastSend == null).ThenByDescending(x => x.LastSend).ThenBy(x => x.DisplayName).ThenBy(x => x.Id)
+            : q.OrderBy(x => x.DisplayName).ThenBy(x => x.Id);
+        var rows = await ordered.Skip((p - 1) * size).Take(size).ToListAsync(ct);
+        var activity = await ActivityOfAsync(rows.Where(r => r.Open && r.LastSend != null).Select(r => r.Id).ToList(), ct);
+        return new PagedResult<FriendDto>(rows.Select(x => new FriendDto(new PersonDto(x.Id, x.DisplayName, x.AvatarUrl), x.Since,
+            activity.GetValueOrDefault(x.Id))).ToList(), p, size, total);
+    }
+
+    /// <summary>For each person, their latest send (its boulder's main grade, holds and gym) and their sends this month.</summary>
+    private async Task<Dictionary<Guid, FriendActivityDto>> ActivityOfAsync(List<Guid> people, CancellationToken ct)
+    {
+        if (people.Count == 0) return [];
+        var now = clock.UtcNow;
+        var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var sends = await db.BoulderAttempts.AsNoTracking().Where(a => people.Contains(a.UserId) && a.Completed)
+            .GroupBy(a => a.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                Last = g.OrderByDescending(a => a.CompletedAt).Select(a => new { a.BoulderId, a.CompletedAt }).First(),
+                ThisMonth = g.Count(a => a.CompletedAt >= monthStart),
+            })
+            .ToListAsync(ct);
+        var boulderIds = sends.Select(s => s.Last.BoulderId).Distinct().ToList();
+        var boulders = await db.Boulders.AsNoTracking().Where(b => boulderIds.Contains(b.Id)).ToListAsync(ct);
+        var summaries = (await reader.SummariesAsync(boulders, ct)).ToDictionary(b => b.Id);
+        return sends.Where(s => summaries.ContainsKey(s.Last.BoulderId) && s.Last.CompletedAt != null)
+            .ToDictionary(s => s.UserId, s =>
+            {
+                var b = summaries[s.Last.BoulderId];
+                return new FriendActivityDto(s.Last.CompletedAt!.Value, b.Id, b.GymName, b.Grades.FirstOrDefault(), b.HoldColor, s.ThisMonth);
+            });
     }
 
     /// <summary>
