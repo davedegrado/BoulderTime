@@ -27,7 +27,10 @@ public sealed record ClimbHistoryItemDto(BoulderSummaryDto Boulder, int Attempts
 /// Projects the person chose, not yet completed, on boulders still on the wall (ADR-067). Added later: older apps don't
 /// read it.
 /// </param>
-public sealed record ClimbingStatsDto(int Completed, int Projects, int TotalAttempts, int CompletedThisMonth, int? MarkedProjects = null);
+/// <param name="TriedThisMonth">Boulders with something recorded this month, completed or not (1.1).</param>
+/// <param name="MarkedProjectsThisMonth">Of the open projects, those marked this month (1.1).</param>
+public sealed record ClimbingStatsDto(int Completed, int Projects, int TotalAttempts, int CompletedThisMonth, int? MarkedProjects = null,
+    int? TriedThisMonth = null, int? MarkedProjectsThisMonth = null);
 
 /// <summary>Highest completed grade within ONE grading system (grades from different systems are never compared).</summary>
 public sealed record HighestGradeDto(Guid GradeSystemId, string SystemName, GradeSystemType SystemType, string GymName, string Label, int Rank, string? ColorHex,
@@ -272,7 +275,11 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             await mine.CountAsync(a => !a.Completed && a.Attempts > 0, ct),
             await mine.SumAsync(a => a.Attempts, ct),
             await mine.CountAsync(a => a.Completed && a.CompletedAt >= monthStart, ct),
-            await OpenProjects(userId).CountAsync(ct));
+            await OpenProjects(userId).CountAsync(ct),
+            // Attempts are kept as one running total per boulder, so only the boulders can be counted by month, not the
+            // attempts: a boulder counts when its progress changed this month (an attempt added, a send).
+            await mine.CountAsync(a => (a.Completed || a.Attempts > 0) && (a.UpdatedAt >= monthStart || a.CompletedAt >= monthStart), ct),
+            await OpenProjects(userId).CountAsync(p => p.CreatedAt >= monthStart, ct));
     }
 
     internal async Task<IReadOnlyList<HighestGradeDto>> HighestGradesAsync(Guid userId, CancellationToken ct)
