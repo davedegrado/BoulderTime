@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { Link, Outlet, useParams } from "react-router-dom";
 import { ArrowLeft, Lock } from "lucide-react";
+import { useLeaveArea } from "@/lib/navigation";
 import { useGym, type GymDetail } from "@/features/gyms/api";
 import { atLeast } from "@/features/staff/roles";
 import { SubNav } from "@/components/SubNav";
@@ -24,6 +25,7 @@ export function useManagedGym(): ManageContextValue {
 export function ManageLayout() {
   const { slug = "" } = useParams();
   const gym = useGym(slug);
+  const leave = useLeaveArea();
 
   if (gym.isPending) return <LoadingState label={t("Loading gym")} />;
   if (gym.isError) {
@@ -50,7 +52,7 @@ export function ManageLayout() {
     <ManageContext.Provider value={{ gym: gym.data, role }}>
       <div className="page">
         <header className="manage-head">
-          <Link to={`/gyms/${slug}`} className="manage-head__back" aria-label={t("Back to gym page")}><ArrowLeft aria-hidden /></Link>
+          <button type="button" className="manage-head__back" aria-label={t("Back")} onClick={() => leave(`/gyms/${slug}`)}><ArrowLeft aria-hidden /></button>
           <GymAvatar name={gym.data.name} logoUrl={gym.data.logoUrl} size={44} />
           <div className="manage-head__text">
             <p className="manage-head__eyebrow">{t("Staff area")}</p>

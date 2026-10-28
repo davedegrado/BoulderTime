@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 /**
@@ -16,4 +16,27 @@ export function useGoBack() {
     if (key !== "default") navigate(-1);
     else navigate(fallback, { replace: true });
   }, [key, navigate]);
+}
+
+/** Where this entry sits in the session's history: React Router keeps it as `idx` in the history state. */
+function historyIndex(): number | null {
+  const idx = (window.history.state as { idx?: unknown } | null)?.idx;
+  return typeof idx === "number" ? idx : null;
+}
+
+/**
+ * "Back" out of an area made of several screens (the staff area and its tabs): to the screen the person was on before
+ * entering it, however many tabs they went through since, so that screen's own back doesn't lead into the area again.
+ * Call it in the area's layout, which stays mounted while its tabs change. Opened right inside the area, with nothing
+ * behind it, `fallback` replaces the current entry.
+ */
+export function useLeaveArea() {
+  const navigate = useNavigate();
+  const entry = useRef<number | null | undefined>(undefined);
+  if (entry.current === undefined) entry.current = historyIndex();
+  return useCallback((fallback: string) => {
+    const start = entry.current, now = historyIndex();
+    if (start != null && start > 0 && now != null && now >= start) navigate(-(now - start + 1));
+    else navigate(fallback, { replace: true });
+  }, [navigate]);
 }
