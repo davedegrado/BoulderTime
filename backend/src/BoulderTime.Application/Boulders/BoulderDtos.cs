@@ -35,7 +35,19 @@ public sealed record BoulderSummaryDto(
     /// <summary>The gym's logo, for lists that mix gyms (Home); null when the gym has none.</summary>
     string? GymLogoUrl = null,
     /// <summary>The viewer marked it as a project (ADR-067). Added later: older apps don't read it.</summary>
-    bool IsProject = false);
+    bool IsProject = false,
+    /// <summary>On the wall and set within <see cref="NewBoulders.Window"/>. Added later: older apps don't read it.</summary>
+    bool IsNew = false);
+
+/// <summary>What "new" means for a boulder: set in the last few days and still on the wall.</summary>
+public static class NewBoulders
+{
+    public static readonly TimeSpan Window = TimeSpan.FromDays(7);
+
+    public static DateTimeOffset Since(DateTimeOffset now) => now - Window;
+
+    public static bool Is(Boulder b, DateTimeOffset now) => b.Status == BoulderStatus.Active && b.CreatedAt >= Since(now);
+}
 
 public sealed record PersonDto(Guid UserId, string DisplayName, string? AvatarUrl);
 
@@ -106,13 +118,14 @@ public enum ProgressFilter { All, Untried, Projects, Completed, Marked }
 /// <param name="TagIds">Boulders carrying ALL of these tags (each one narrows, like every other filter).</param>
 /// <param name="Intensities">Boulders with ANY of these intensities; boulders without one are left out.</param>
 /// <param name="Name">Boulders whose name contains this text, whatever the case (boulders without a name never match).</param>
+/// <param name="IsNew">Only the new boulders (<see cref="NewBoulders"/>). Added later: older apps never send it.</param>
 /// <param name="Sort">How to order the list. None: newest set first (taken down: last taken down first), as always.</param>
 /// <param name="Order">Reverses a sort; each sort has its own natural direction when none is given.</param>
 public sealed record BoulderQuery(
     BoulderStatus? Status, Guid? SectorId, HoldColor? HoldColor, Guid? GradeValueId,
     ProgressFilter? Progress, int? MinRating, int? Page, int? PageSize,
     IReadOnlyList<Guid>? TagIds = null, IReadOnlyList<BoulderIntensity>? Intensities = null, string? Name = null,
-    BoulderSort? Sort = null, SortDirection? Order = null);
+    BoulderSort? Sort = null, SortDirection? Order = null, bool? IsNew = null);
 
 /// <summary>
 /// Orders a gym's boulder list. Sector follows the gym's own order of its sectors; points are what a send scores;

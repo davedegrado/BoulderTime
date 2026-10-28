@@ -8,7 +8,7 @@ namespace BoulderTime.Application.Boulders;
 /// Turns boulder entities into card DTOs (grades, gym and sector names, community rating, viewer progress) with a
 /// fixed number of queries regardless of list size. Shared by boulder lists, climbing history and Home.
 /// </summary>
-public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICurrentUser currentUser, Leaderboards.BoulderPoints points)
+public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICurrentUser currentUser, Leaderboards.BoulderPoints points, IClock clock)
 {
     public async Task<IReadOnlyList<BoulderSummaryDto>> SummariesAsync(IReadOnlyList<Boulder> boulders, CancellationToken ct)
     {
@@ -27,6 +27,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id)).Select(g => new { g.Id, g.Name, g.LogoUrl })
             .ToDictionaryAsync(g => g.Id, ct);
         var scales = await points.ForGymsAsync(gymIds, ct);
+        var now = clock.UtcNow;
 
         return boulders.Select(b => new BoulderSummaryDto(
             b.Id, b.GymId, gyms.GetValueOrDefault(b.GymId)?.Name ?? "", b.SectorId, SectorLabel(sectors.GetValueOrDefault(b.SectorId, ""), b),
@@ -36,7 +37,7 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
             b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl,
-            projects.Contains(b.Id)))
+            projects.Contains(b.Id), NewBoulders.Is(b, now)))
             .ToList();
     }
 

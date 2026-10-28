@@ -42,6 +42,11 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         var (page, size) = Paging.Normalize(q.Page, q.PageSize, 24);
         var query = db.Boulders.AsNoTracking().Where(b => b.GymId == gymId && b.Status == status);
         if (q.SectorId is { } sectorId) query = query.Where(b => b.SectorId == sectorId);
+        if (q.IsNew == true)
+        {
+            var since = NewBoulders.Since(clock.UtcNow);
+            query = query.Where(b => b.Status == BoulderStatus.Active && b.CreatedAt >= since);
+        }
         if (q.HoldColor is { } hold)
         {
             // An app that doesn't know every colour sees light blue as blue and wood as white, so it finds them there too.
