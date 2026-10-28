@@ -72,9 +72,31 @@ public sealed class FriendActivityTests(PostgresFixture postgres) : IAsyncLifeti
         b.Grade!.Label.Should().Be("6A");
         b.SentThisMonth.Should().Be(1);
         var a = byActivity.Items[1].Activity!;
-        a.BoulderId.Should().Be(other.Id, "the latest of Anna's sends");
+        a.BoulderId.Should().Be(other.Id, "Anna's latest session");
         a.SentThisMonth.Should().Be(0);
         byActivity.Items[2].Activity.Should().BeNull("Carla never sent anything");
+    }
+
+    [Fact]
+    public async Task A_friend_shows_the_hardest_boulder_of_their_latest_session_even_when_sent_first()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var hard = await w.BoulderAsync("7A");
+        var easy = await w.BoulderAsync("6A");
+        var older = await w.BoulderAsync("8A");
+        var me = await _f.UserAsync();
+        var anna = await Named("Anna");
+        await Befriend(me, anna);
+        var day = new DateTimeOffset(DateTimeOffset.UtcNow.Date.AddDays(-7), TimeSpan.Zero);
+        foreach (var b in new[] { hard, easy, older }) await Send(anna, b.Id);
+        await Backdate(anna.Id, hard.Id, day.AddHours(9));     // the hardest of the session, sent first
+        await Backdate(anna.Id, easy.Id, day.AddHours(16));    // the latest send
+        await Backdate(anna.Id, older.Id, day.AddHours(-12));  // harder still, but the session before
+
+        var a = (await FriendsOf(me, me.Id, "?sort=activity")).Items.Single().Activity!;
+        a.BoulderId.Should().Be(hard.Id);
+        a.Grade!.Label.Should().Be("7A");
+        a.LastSendAt.Should().Be(day.AddHours(16), "when the session ended, as the list is ordered by it");
     }
 
     [Fact]

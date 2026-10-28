@@ -10,7 +10,7 @@ import type { HoldColor } from "@/features/boulders/holdColors";
 export interface FriendPerson { userId: string; displayName: string; avatarUrl: string | null }
 /** `mutualFriends`: friends in common, on the requests received (1.1); absent from older servers. */
 export interface FriendRequest { person: FriendPerson; requestedAt: string; mutualFriends?: number | null }
-/** A friend's latest send and their sends this month (1.1). */
+/** The hardest boulder of a friend's latest session (`lastSendAt` is when it ended) and their sends this month (1.1). */
 export interface FriendActivity { lastSendAt: string; boulderId: string; gymName: string; grade: BoulderGrade | null; holdColor: HoldColor; sentThisMonth: number }
 /**
  * `activity`: null when they have no send or the viewer may not see it; absent (undefined) from older servers, which
