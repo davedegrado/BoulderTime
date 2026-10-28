@@ -1,33 +1,44 @@
-import { useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { PRIVACY_IT } from "@/pages/legal/privacy.it";
-import { TERMS_IT } from "@/pages/legal/terms.it";
-import { t } from "@/i18n/i18n";
+import { legalText } from "@/pages/legal/texts";
+import { LanguageSwitch } from "@/pages/legal/LanguageSwitch";
+import { activeLanguage, translate, type Language } from "@/i18n/i18n";
 
 /**
  * The privacy notice and the terms, rendered from Markdown-ish text kept in one place. Reachable without signing in,
- * because people need to read them before deciding to create an account. Account deletion has its own page
- * (DeletionPage), because it comes in two languages.
+ * because people need to read them before deciding to create an account. In the app's language, or the one named by
+ * ?lang=, and the reader can switch, as on the account deletion page: Italian is the original, English a courtesy
+ * translation that says the Italian prevails.
  */
 export function LegalPage({ document }: { document: "privacy" | "terms" }) {
   const { pathname, key } = useLocation();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const asked = params.get("lang");
+  const [language, setLanguage] = useState<Language>(asked === "it" || asked === "en" ? asked : activeLanguage());
   useEffect(() => window.scrollTo(0, 0), [pathname]);
+  // The page's language, for screen readers and hyphenation, while it is shown; the app's own afterwards.
+  useEffect(() => {
+    const before = window.document.documentElement.lang;
+    window.document.documentElement.lang = language;
+    return () => { window.document.documentElement.lang = before; };
+  }, [language]);
   // The page sits outside the app's navigation and the iPhone app has no back button: say how to get back.
   const cameFromApp = key !== "default";
+  const tr = (text: string) => translate(language, text);
 
-  const text = document === "privacy" ? PRIVACY_IT : TERMS_IT;
   return (
     <div className="page legal">
       {cameFromApp
-        ? <button type="button" className="legal__back" onClick={() => navigate(-1)}><ArrowLeft aria-hidden /> {t("Back")}</button>
-        : <Link className="legal__back" to="/"><ArrowLeft aria-hidden /> {t("BoulderTime home")}</Link>}
-      <article className="card legal__body">{renderLegal(text)}</article>
+        ? <button type="button" className="legal__back" onClick={() => navigate(-1)}><ArrowLeft aria-hidden /> {tr("Back")}</button>
+        : <Link className="legal__back" to="/"><ArrowLeft aria-hidden /> {tr("BoulderTime home")}</Link>}
+      <LanguageSwitch language={language} onChange={setLanguage} />
+      <article className="card legal__body" lang={language}>{renderLegal(legalText(document, language))}</article>
       <p className="legal__switch">
         {document === "privacy"
-          ? <Link to="/termini">{t("Read the terms of use")}</Link>
-          : <Link to="/privacy">{t("Read the privacy notice")}</Link>}
+          ? <Link to={`/termini${asked ? `?lang=${language}` : ""}`}>{tr("Read the terms of use")}</Link>
+          : <Link to={`/privacy${asked ? `?lang=${language}` : ""}`}>{tr("Read the privacy notice")}</Link>}
       </p>
     </div>
   );
