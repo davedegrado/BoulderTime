@@ -33,7 +33,8 @@ public sealed record LeaderboardDto(
 
 /// <summary>
 /// Per-gym leaderboards computed on read from completions (never stored). A completion counts in the period of its
-/// completion date, including boulders removed since. Grades are only compared within the gym's scales.
+/// completion date, including boulders taken down since — but not those the gym deleted for good, which leave the
+/// climbers' profiles and the leaderboards alike. Grades are only compared within the gym's scales.
 /// </summary>
 public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurrentUser currentUser, IClock clock, IClimbScoring scoring, BoulderPoints boulderPoints)
 {
@@ -119,7 +120,8 @@ public sealed class LeaderboardService(IAppDbContext db, GymAccess access, ICurr
         var sends = await db.BoulderAttempts.AsNoTracking()
             .Where(a => a.Completed && (from == null || a.CompletedAt >= from) && (to == null || a.CompletedAt < to))
             // The gym's trial boulders count for nobody: neither points, nor completions, nor the highest grade.
-            .Join(db.Boulders.Where(b => b.BetaTestAt == null), a => a.BoulderId, b => b.Id, (a, b) => new { a.UserId, a.BoulderId, a.CompletedAt, b.GymId })
+            // Nor do boulders the gym deleted for good: they are gone from the profiles, so from the points too.
+            .Join(db.Boulders.Where(b => b.BetaTestAt == null && b.Status != BoulderStatus.Deleted), a => a.BoulderId, b => b.Id, (a, b) => new { a.UserId, a.BoulderId, a.CompletedAt, b.GymId })
             .Where(x => x.GymId == gymId)
             .Join(db.Users, x => x.UserId, u => u.Id, (x, u) => new
             {
