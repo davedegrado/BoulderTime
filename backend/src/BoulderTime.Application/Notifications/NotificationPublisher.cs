@@ -53,26 +53,27 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock, IPushQ
     /// produces one notification per person instead of one per boulder. Someone who follows the sector but muted it
     /// gets nothing through the gym either.
     /// </summary>
-    public async Task BoulderCreatedAsync(Boulder boulder, Gym gym, Sector sector, string summary, Guid actorId, CancellationToken ct)
+    /// <param name="summary">The boulder in a few words, in the language asked for (<see cref="NotificationTexts.BoulderSummary"/>).</param>
+    public async Task BoulderCreatedAsync(Boulder boulder, Gym gym, Sector sector, Func<string, string> summary, Guid actorId, CancellationToken ct)
     {
         var sectorFollowers = await db.SectorFollows.Where(f => f.SectorId == sector.Id).Select(f => new { f.UserId, f.NotificationsEnabled }).ToListAsync(ct);
         var boulderLink = $"/boulders/{boulder.Id}";
         var gymLink = $"/gyms/{gym.Slug}";
 
         await PublishAsync(sectorFollowers.Where(f => f.NotificationsEnabled).Select(f => f.UserId), actorId, NotificationType.NewBouldersInSector,
-            lang => NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary, 1),
+            lang => NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary(lang), 1),
             RelatedEntityType.Boulder, boulder.Id, gym.Id, boulderLink,
             collapseKey: $"new-boulders:sector:{sector.Id}", ct,
-            collapsed: (lang, n) => (NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary, n), gymLink, RelatedEntityType.Sector, sector.Id));
+            collapsed: (lang, n) => (NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary(lang), n), gymLink, RelatedEntityType.Sector, sector.Id));
 
         var sectorFollowerIds = sectorFollowers.Select(f => f.UserId).ToHashSet();
         var gymAudience = (await db.GymFollows.Where(f => f.GymId == gym.Id && f.NotificationsEnabled).Select(f => f.UserId).ToListAsync(ct))
             .Where(u => !sectorFollowerIds.Contains(u));
         await PublishAsync(gymAudience, actorId, NotificationType.NewBouldersAtGym,
-            lang => NotificationTexts.NewBoulderAtGym(lang, gym.Name, sector.Name, summary, 1),
+            lang => NotificationTexts.NewBoulderAtGym(lang, gym.Name, sector.Name, summary(lang), 1),
             RelatedEntityType.Boulder, boulder.Id, gym.Id, boulderLink,
             collapseKey: $"new-boulders:gym:{gym.Id}", ct,
-            collapsed: (lang, n) => (NotificationTexts.NewBoulderAtGym(lang, gym.Name, sector.Name, summary, n), gymLink, RelatedEntityType.Gym, gym.Id));
+            collapsed: (lang, n) => (NotificationTexts.NewBoulderAtGym(lang, gym.Name, sector.Name, summary(lang), n), gymLink, RelatedEntityType.Gym, gym.Id));
     }
 
     public async Task BoulderUpdatedAsync(Boulder boulder, Gym gym, string sectorName, IReadOnlyList<NotificationTexts.BoulderChange> changes, Guid actorId, CancellationToken ct)

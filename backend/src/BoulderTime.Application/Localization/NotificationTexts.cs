@@ -1,3 +1,4 @@
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Notifications;
 
 namespace BoulderTime.Application.Localization;
@@ -36,6 +37,54 @@ public static class NotificationTexts
             $"{gymName} ha rimosso {removed} {(removed == 1 ? "blocco" : "blocchi")}. Presto arrivano quelli nuovi.")
         : new($"Sector {sectorName} has been retraced",
             $"{gymName} removed {removed} {(removed == 1 ? "boulder" : "boulders")}. Fresh problems are on the way.");
+
+    /// <summary>
+    /// A new boulder in a few words, in the reader's language: its grade in the gym's primary scale, if it has one, and
+    /// its holds — "6A · Blue holds", "6A · prese blu". A grade label BoulderTime generated (the colour preset's "Green",
+    /// "Green/Blue") is translated the way the app shows it; one the gym typed stays as typed.
+    /// </summary>
+    public static string BoulderSummary(string language, string? grade, HoldColor holds)
+    {
+        var holdsText = It(language) ? $"prese {ItalianHolds(holds)}" : $"{HoldColors.EnglishName(holds)} holds";
+        return grade is null ? holdsText : $"{(It(language) ? ItalianGradeLabel(grade) : grade)} · {holdsText}";
+    }
+
+    /// <summary>Hold colours as adjectives agreeing with "prese", as the app writes them.</summary>
+    private static string ItalianHolds(HoldColor color) => color switch
+    {
+        HoldColor.Red => "rosse",
+        HoldColor.Orange => "arancioni",
+        HoldColor.Yellow => "gialle",
+        HoldColor.Green => "verdi",
+        HoldColor.Blue => "blu",
+        HoldColor.Purple => "viola",
+        HoldColor.Pink => "rosa",
+        HoldColor.White => "bianche",
+        HoldColor.Black => "nere",
+        HoldColor.Grey => "grigie",
+        HoldColor.Brown => "marroni",
+        HoldColor.Mixed => "miste",
+        HoldColor.LightBlue => "azzurre",
+        HoldColor.Wood => "in legno",
+        _ => HoldColors.EnglishName(color).ToLowerInvariant(),
+    };
+
+    /// <summary>The colour grade preset's labels, as the app's data dictionary has them.</summary>
+    private static readonly Dictionary<string, string> ItalianGradeLabels = new(StringComparer.Ordinal)
+    {
+        ["White"] = "Bianco", ["Yellow"] = "Giallo", ["Green"] = "Verde", ["Blue"] = "Blu", ["Red"] = "Rosso",
+        ["Black"] = "Nero", ["Orange"] = "Arancione", ["Purple"] = "Viola", ["Pink"] = "Rosa", ["Grey"] = "Grigio",
+        ["Brown"] = "Marrone",
+    };
+
+    private static string ItalianGradeLabel(string label)
+    {
+        var text = label.Trim();
+        if (ItalianGradeLabels.TryGetValue(text, out var known)) return known;
+        // An in-between colour grade named after its two colours: "Green/Blue" is "Verde/Blu".
+        var parts = text.Split('/').Select(p => p.Trim()).ToArray();
+        return parts.Length > 1 && parts.All(ItalianGradeLabels.ContainsKey) ? string.Join("/", parts.Select(p => ItalianGradeLabels[p])) : label;
+    }
 
     public static NotificationText NewBoulderInSector(string language, string gymName, string sectorName, string summary, int count) => It(language)
         ? new(count == 1 ? $"Nuovo blocco in {sectorName}" : $"{count} nuovi blocchi in {sectorName}",

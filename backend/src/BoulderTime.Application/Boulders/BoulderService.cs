@@ -1,6 +1,7 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Gyms;
+using BoulderTime.Application.Localization;
 using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Staff;
 using Microsoft.EntityFrameworkCore;
@@ -254,15 +255,15 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
         foreach (var (systemId, valueId) in valid.Grades)
             db.BoulderGrades.Add(BoulderGrade.Official(boulder.Id, systemId, valueId, userId, clock.UtcNow));
 
-        // Notifications commit with the boulder. Summary: grade in the gym's primary system + hold colour, e.g. "6A · Blue holds".
+        // Notifications commit with the boulder. Summary: grade in the gym's primary system + hold colour.
         var sector = await db.Sectors.AsNoTracking().FirstAsync(x => x.Id == valid.SectorId, ct);
         var valueIds = valid.Grades.Select(g => g.ValueId).ToList();
         var primaryGrade = await db.GradeValues.AsNoTracking().Where(v => valueIds.Contains(v.Id))
             .Join(db.GradeSystems, v => v.GradeSystemId, s => s.Id, (v, s) => new { v.Label, s.SortOrder })
             .OrderBy(x => x.SortOrder).Select(x => x.Label).FirstOrDefaultAsync(ct);
-        var holds = HoldColors.EnglishName(valid.HoldColor);
-        var summary = primaryGrade is null ? $"{holds} holds" : $"{primaryGrade} · {holds} holds";
-        await notifications.BoulderCreatedAsync(boulder, gym, sector, summary, userId, ct);
+        // Worded per reader: an Italian climber reads "6A · prese blu" whatever language the setter uses.
+        await notifications.BoulderCreatedAsync(boulder, gym, sector,
+            lang => NotificationTexts.BoulderSummary(lang, primaryGrade, valid.HoldColor), userId, ct);
         await db.SaveChangesAsync(ct);
         return await GetAsync(boulder.Id, ct);
     }

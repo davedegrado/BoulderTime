@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using BoulderTime.Application.Common;
+using BoulderTime.Application.Localization;
 using BoulderTime.Application.Notifications;
+using BoulderTime.Domain.Boulders;
 using BoulderTime.Domain.Notifications;
 using BoulderTime.Tests.Boulders;
 using BoulderTime.Tests.Climbing;
@@ -43,6 +45,32 @@ public sealed class NewBoulderNotificationTests(PostgresFixture postgres) : IAsy
         collapsed[0].Link.Should().Be($"/gyms/{w.Gym.Slug}");
         (await InboxAsync(w.Staff)).Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task An_italian_follower_reads_the_new_boulder_in_italian_whatever_the_setter_s_language()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var italian = await _f.UserAsync(language: "it");
+        var english = await _f.UserAsync();
+        await italian.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/follow", new { });
+        await english.Client.PutAsJsonAsync($"/api/gyms/{w.Gym.Id}/follow", new { });
+
+        await w.BoulderAsync("6A");
+
+        var it = (await InboxAsync(italian)).Single();
+        it.Title.Should().Be("Nuovo blocco a Crimp Factory");
+        it.Body.Should().Be("Cave · 6A · prese blu");
+        (await InboxAsync(english)).Single().Body.Should().Be("Cave · 6A · Blue holds");
+    }
+
+    [Theory]
+    [InlineData("it", "Green", HoldColor.Pink, "Verde · prese rosa")]
+    [InlineData("it", "Green/Blue", HoldColor.LightBlue, "Verde/Blu · prese azzurre")]
+    [InlineData("it", "Parete Rossa", HoldColor.Wood, "Parete Rossa · prese in legno")]
+    [InlineData("it", null, HoldColor.Mixed, "prese miste")]
+    [InlineData("en", "Green", HoldColor.LightBlue, "Green · Light blue holds")]
+    public void The_summary_translates_what_boulder_time_named_and_leaves_what_the_gym_typed(string language, string? grade, HoldColor holds, string expected) =>
+        NotificationTexts.BoulderSummary(language, grade, holds).Should().Be(expected);
 
     [Fact]
     public async Task Gym_followers_get_a_gym_level_notice_and_nobody_gets_two_for_the_same_boulder()
