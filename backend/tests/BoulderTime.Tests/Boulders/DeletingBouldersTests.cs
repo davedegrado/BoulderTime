@@ -75,7 +75,7 @@ public sealed class DeletingBouldersTests(PostgresFixture postgres) : IAsyncLife
         history.Items.Select(i => i.Boulder.Id).Should().Equal(kept.Id);
         history.Total.Should().Be(1);
 
-        // The send itself stays in the database, with its grades: leaderboards and badges already earned don't change.
+        // The send itself stays in the database, with its grades: badges already earned don't change.
         (await _f.WithDbAsync(db => db.BoulderAttempts.CountAsync(a => a.UserId == climber.Id && a.BoulderId == boulder.Id && a.Completed))).Should().Be(1);
         (await _f.WithDbAsync(db => db.BoulderGrades.CountAsync(g => g.BoulderId == boulder.Id))).Should().BeGreaterThan(0);
     }

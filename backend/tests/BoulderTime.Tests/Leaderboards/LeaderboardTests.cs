@@ -76,6 +76,26 @@ public sealed class LeaderboardTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Boulders_deleted_for_good_score_nothing_any_more()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var deleted = await w.BoulderAsync("7C+");
+        var kept = await w.BoulderAsync("3");
+        var me = await _f.UserAsync();
+        await Send(me, deleted.Id);
+        await Send(me, kept.Id);
+        (await Board(_f.CreateClient(), w.Gym.Id, "POINTS", "ALL")).Entries.Single().Points.Should().Be(85);
+
+        await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders/remove", new { boulderIds = new[] { deleted.Id } });
+        (await w.Staff.Client.DeleteAsync($"/api/boulders/{deleted.Id}")).EnsureSuccessStatusCode();
+
+        var points = await Board(_f.CreateClient(), w.Gym.Id, "POINTS", "ALL");
+        points.Entries.Single().Points.Should().Be(10);
+        points.Entries.Single().Completed.Should().Be(1);
+        (await Board(_f.CreateClient(), w.Gym.Id, "HIGHEST", "ALL")).Entries.Single().Highest!.Label.Should().Be("3");
+    }
+
+    [Fact]
     public async Task Only_this_gyms_boulders_count_and_ties_share_a_position()
     {
         var w = await ClimbingWorld.CreateAsync(_f);
