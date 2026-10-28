@@ -59,9 +59,10 @@ public sealed class BetaTestTests(PostgresFixture postgres) : IAsyncLifetime
         (await Board(w.Gym.Id, "COMPLETED")).Entries.Should().ContainSingle(e => e.Climber.UserId == tester.Id && e.Completed == 1);
         (await Board(w.Gym.Id, "HIGHEST")).Entries.Should().ContainSingle(e => e.Highest!.Label == "6A");
 
-        // The testers keep them in their history, marked and without points; the boulder on the wall is as it was.
+        // The testers keep the trial boulders in their history, marked and without points; the boulder on the wall is as
+        // it was; the one the gym deleted is gone from the history, as every deleted boulder is.
         var history = (await (await tester.Client.GetAsync($"/api/users/{tester.Id}/history?filter=COMPLETED")).ReadAsync<PagedResult<ClimbHistoryItemDto>>())!;
-        history.Items.Should().HaveCount(3);
+        history.Items.Select(i => i.Boulder.Id).Should().BeEquivalentTo(new[] { kept.Id, trial.Id });
         var trialRow = history.Items.Single(i => i.Boulder.Id == trial.Id).Boulder;
         trialRow.SectorName.Should().Be("Cave · Betatest");
         trialRow.Points.Should().BeNull();

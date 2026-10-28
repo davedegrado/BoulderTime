@@ -45,31 +45,39 @@ public sealed class DeletingBouldersTests(PostgresFixture postgres) : IAsyncLife
     }
 
     [Fact]
-    public async Task Deleting_keeps_every_send_and_the_points_they_are_worth()
+    public async Task Deleting_keeps_the_sends_in_the_database_but_takes_the_boulder_out_of_the_climber_s_profile()
     {
         var world = await ClimbingWorld.CreateAsync(_f);
-        var boulder = await world.BoulderAsync("6A");
+        var boulder = await world.BoulderAsync("7A");
+        var kept = await world.BoulderAsync("6A");
         var climber = await _f.UserAsync();
         (await climber.Client.PutAsJsonAsync($"/api/boulders/{boulder.Id}/attempt", new { attempts = 3, completed = true })).EnsureSuccessStatusCode();
+        (await climber.Client.PutAsJsonAsync($"/api/boulders/{kept.Id}/attempt", new { attempts = 2, completed = true })).EnsureSuccessStatusCode();
         var before = (await (await climber.Client.GetAsync($"/api/users/{climber.Id}/profile")).ReadAsync<ProfileDto>())!;
-        before.Stats.Completed.Should().Be(1);
+        before.Stats.Completed.Should().Be(2);
+        before.HighestGrades.Single().Label.Should().Be("7A");
 
         await RemoveAsync(world.Staff, world.Gym.Id, boulder.Id);
+        // Only taken down: still in the profile, as always.
+        (await (await climber.Client.GetAsync($"/api/users/{climber.Id}/profile")).ReadAsync<ProfileDto>())!.Stats.Completed.Should().Be(2);
         (await world.Staff.Client.DeleteAsync($"/api/boulders/{boulder.Id}")).EnsureSuccessStatusCode();
 
-        // The one thing deletion must not touch.
+        // Deleted: gone from everything the profile shows — history, recent activity, numbers, grades, weeks, gyms.
         var after = (await (await climber.Client.GetAsync($"/api/users/{climber.Id}/profile")).ReadAsync<ProfileDto>())!;
         after.Stats.Completed.Should().Be(1);
-        after.Stats.TotalAttempts.Should().Be(3);
-        var history = (await (await climber.Client.GetAsync($"/api/users/{climber.Id}/history?filter=COMPLETED")).ReadAsync<PagedResult<ClimbHistoryItemDto>>())!;
-        history.Items.Should().HaveCount(1);
-        var kept = history.Items[0];
-        kept.Boulder.Id.Should().Be(boulder.Id);
-        kept.Boulder.Status.Should().Be(BoulderStatus.Deleted);
-        // Its grades survive too: the leaderboard scores a send by its grade, so losing them would zero it.
-        kept.Boulder.Grades.Select(g => g.Label).Should().Equal("6A");
-        // What it has lost is the photo — there is none left to point at.
-        kept.Boulder.PhotoUrl.Should().BeNull();
+        after.Stats.TotalAttempts.Should().Be(2);
+        after.Stats.CompletedThisMonth.Should().Be(1);
+        after.HighestGrades.Single().Label.Should().Be("6A");
+        after.RecentCompletions.Select(r => r.Boulder.Id).Should().Equal(kept.Id);
+        after.Weekly[^1].Completed.Should().Be(1);
+        after.ClimbedGyms!.Single().Completed.Should().Be(1);
+        var history = (await (await climber.Client.GetAsync($"/api/users/{climber.Id}/history")).ReadAsync<PagedResult<ClimbHistoryItemDto>>())!;
+        history.Items.Select(i => i.Boulder.Id).Should().Equal(kept.Id);
+        history.Total.Should().Be(1);
+
+        // The send itself stays in the database, with its grades: leaderboards and badges already earned don't change.
+        (await _f.WithDbAsync(db => db.BoulderAttempts.CountAsync(a => a.UserId == climber.Id && a.BoulderId == boulder.Id && a.Completed))).Should().Be(1);
+        (await _f.WithDbAsync(db => db.BoulderGrades.CountAsync(g => g.BoulderId == boulder.Id))).Should().BeGreaterThan(0);
     }
 
     [Fact]
