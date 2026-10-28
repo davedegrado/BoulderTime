@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Clapperboard, Building2, ImageDown, MailPlus, Plus, Settings2 } from "lucide-react";
+import { Clapperboard, Building2, FlaskConical, ImageDown, MailPlus, Plus, Settings2 } from "lucide-react";
 import { useAdminGyms, useInviteOwner, useSetGymStatus, type AdminGym } from "@/features/admin/api";
 import { CreateGymForm } from "@/pages/admin/CreateGymForm";
 import { SearchField } from "@/components/SearchField";
@@ -16,6 +16,7 @@ import { gymStatusLabel, type GymStatus } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
 import { VideoAllowanceCard } from "@/features/admin/VideoAllowanceCard";
 import { LighterPicturesCard } from "@/features/admin/LighterPicturesCard";
+import { BetaTestCard } from "@/features/admin/BetaTestCard";
 
 const STATUS_OPTIONS = () => [
   { value: "", label: t("All statuses") },
@@ -57,6 +58,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
   const [inviting, setInviting] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
   const [picturesOpen, setPicturesOpen] = useState(false);
+  const [betaOpen, setBetaOpen] = useState(false);
   const [email, setEmail] = useState("");
   const inviteError = inviteOwner.error instanceof ApiError ? inviteOwner.error.fieldError("email") : undefined;
 
@@ -80,6 +82,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
       {gym.ownerCount === 0 && <p className="notice notice--inline">{t("No owner yet — invite one so the gym can manage itself.")}</p>}
       {videoOpen && <VideoAllowanceCard gymId={gym.id} />}
       {picturesOpen && <LighterPicturesCard gymId={gym.id} gymSlug={gym.slug} />}
+      {betaOpen && <BetaTestCard gymId={gym.id} gymSlug={gym.slug} />}
       <div className="form__actions">
         <SelectField label={t("Status of {name}", { name: gym.name })} hideLabel value={gym.status} disabled={setStatus.isPending}
           options={STATUS_OPTIONS().slice(1)}
@@ -90,6 +93,7 @@ function AdminGymCard({ gym }: { gym: AdminGym }) {
         <Button variant="secondary" icon={<MailPlus aria-hidden />} onClick={() => setInviting((v) => !v)}>{t("Invite owner")}</Button>
         <Button variant="ghost" icon={<Clapperboard aria-hidden />} onClick={() => setVideoOpen((v) => !v)}>{t("Video allowance")}</Button>
         <Button variant="ghost" icon={<ImageDown aria-hidden />} onClick={() => setPicturesOpen((v) => !v)}>{t("Lighter pictures")}</Button>
+        <Button variant="ghost" icon={<FlaskConical aria-hidden />} aria-expanded={betaOpen} onClick={() => setBetaOpen((v) => !v)}>{t("Close the trial period")}</Button>
         <Link to={`/manage/${gym.slug}`} className="btn btn--ghost"><Settings2 aria-hidden /><span>{t("Manage")}</span></Link>
       </div>
       {inviting && (
