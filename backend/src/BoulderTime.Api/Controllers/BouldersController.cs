@@ -41,8 +41,8 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
     public Task<PagedResult<BoulderSummaryDto>> List(Guid gymId, [FromQuery] BoulderStatus? status, [FromQuery] Guid? sectorId,
         [FromQuery] string? holdColor, [FromQuery] Guid? gradeValueId, [FromQuery] ProgressFilter? progress, [FromQuery] int? minRating,
         [FromQuery] int? page, [FromQuery] int? pageSize, [FromQuery(Name = "tagId")] Guid[]? tagIds, [FromQuery(Name = "intensity")] BoulderIntensity[]? intensities,
-        [FromQuery] string? name, [FromQuery] BoulderSort? sort, [FromQuery] SortDirection? order, CancellationToken ct) =>
-        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, HoldColorFilter(holdColor), gradeValueId, progress, minRating, page, pageSize, tagIds, intensities, name, sort, order), ct);
+        [FromQuery] string? name, [FromQuery] BoulderSort? sort, [FromQuery] SortDirection? order, [FromQuery] bool? isNew, CancellationToken ct) =>
+        boulders.ListAsync(gymId, new BoulderQuery(status, sectorId, HoldColorFilter(holdColor), gradeValueId, progress, minRating, page, pageSize, tagIds, intensities, name, sort, order, isNew), ct);
 
     /// <summary>
     /// The hold colour of the list's filter, by its API name ("BLUE", "LIGHT_BLUE"). Read here rather than bound as an

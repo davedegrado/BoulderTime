@@ -58,13 +58,16 @@ public sealed class NotificationPublisher(IAppDbContext db, IClock clock, IPushQ
     {
         var sectorFollowers = await db.SectorFollows.Where(f => f.SectorId == sector.Id).Select(f => new { f.UserId, f.NotificationsEnabled }).ToListAsync(ct);
         var boulderLink = $"/boulders/{boulder.Id}";
-        var gymLink = $"/gyms/{gym.Slug}";
+        // Several new boulders open the gym's list showing just the new ones (of the sector, for its followers). Apps
+        // that don't know "new" read the rest of the link as before: the gym, or the gym narrowed to the sector.
+        var gymLink = $"/gyms/{gym.Slug}?new=1";
+        var sectorLink = $"/gyms/{gym.Slug}?sector={sector.Id}&new=1";
 
         await PublishAsync(sectorFollowers.Where(f => f.NotificationsEnabled).Select(f => f.UserId), actorId, NotificationType.NewBouldersInSector,
             lang => NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary(lang), 1),
             RelatedEntityType.Boulder, boulder.Id, gym.Id, boulderLink,
             collapseKey: $"new-boulders:sector:{sector.Id}", ct,
-            collapsed: (lang, n) => (NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary(lang), n), gymLink, RelatedEntityType.Sector, sector.Id));
+            collapsed: (lang, n) => (NotificationTexts.NewBoulderInSector(lang, gym.Name, sector.Name, summary(lang), n), sectorLink, RelatedEntityType.Sector, sector.Id));
 
         var sectorFollowerIds = sectorFollowers.Select(f => f.UserId).ToHashSet();
         var gymAudience = (await db.GymFollows.Where(f => f.GymId == gym.Id && f.NotificationsEnabled).Select(f => f.UserId).ToListAsync(ct))

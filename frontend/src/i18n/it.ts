@@ -1450,4 +1450,7 @@ export const it: Record<string, string> = {
   "{count} trial boulders in this gym now": "Ora {count} blocchi di prova in questa palestra",
   "1 beta tester": "1 beta tester",
   "{count} beta testers": "{count} beta tester",
+  "New": "Nuovo",
+  "New boulders only": "Solo i nuovi",
+  "New boulders": "Blocchi nuovi",
 };

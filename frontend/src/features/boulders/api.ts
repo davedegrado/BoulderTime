@@ -28,6 +28,8 @@ export interface BoulderSummary {
   id: string; gymId: string; gymName: string; sectorId: string; sectorName: string; photoUrl: string | null;
   holdColor: HoldColor; grades: BoulderGrade[]; status: BoulderStatus; createdAt: string; removedAt: string | null;
   rating: RatingSummary; viewer: ViewerProgress | null;
+  /** On the wall and set in the last week; missing from servers before it existed. */
+  isNew?: boolean;
   /** Staff's word on how intense it is, apart from the grade; null when not given. */
   intensity?: Intensity | null;
   tags?: BoulderTag[] | null;
@@ -76,6 +78,8 @@ export interface BoulderFilters {
   tagIds?: string[]; intensity?: Intensity[];
   /** Part of the boulder's name (advanced search). */
   name?: string;
+  /** Only the boulders set in the last week. */
+  isNew?: boolean;
 }
 
 export interface SaveBoulderInput {
@@ -113,7 +117,7 @@ export function useBoulders(gymId: string | undefined, filters: BoulderFilters, 
       const params = new URLSearchParams({ page: String(pageParam), pageSize: String(PAGE_SIZE) });
       for (const [k, v] of Object.entries(filters)) {
         if (Array.isArray(v)) for (const item of v) params.append(k === "tagIds" ? "tagId" : k, item);
-        else if (v) params.set(k, v);
+        else if (v) params.set(k, String(v));
       }
       if (sort) {
         params.set("sort", sort.sort);

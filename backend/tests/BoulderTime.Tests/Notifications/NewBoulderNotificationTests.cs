@@ -42,7 +42,7 @@ public sealed class NewBoulderNotificationTests(PostgresFixture postgres) : IAsy
         collapsed.Should().ContainSingle();
         collapsed[0].Count.Should().Be(5);
         collapsed[0].Title.Should().Be("5 new boulders in Cave");
-        collapsed[0].Link.Should().Be($"/gyms/{w.Gym.Slug}");
+        collapsed[0].Link.Should().Be($"/gyms/{w.Gym.Slug}?sector={w.Sector.Id}&new=1");
         (await InboxAsync(w.Staff)).Should().BeEmpty();
     }
 

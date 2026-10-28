@@ -134,11 +134,12 @@ export function BoulderRow({ boulder, to, selectable, selected, onToggle, onLong
   const state = showOwnState && !selectable ? ownState(boulder) : null;
   const label = [primary ? dataLabel(primary.label) : t("Ungraded"), boulder.sectorName, t("{colour} holds", { colour: holdColorName(boulder.holdColor) }),
     boulder.points != null ? plural(boulder.points, "Worth {count} point", "Worth {count} points") : null,
-    state && STATE_LABEL[state] ? t(STATE_LABEL[state]!) : null].filter(Boolean).join(", ");
+    state && STATE_LABEL[state] ? t(STATE_LABEL[state]!) : null, boulder.isNew ? t("New") : null].filter(Boolean).join(", ");
   const cells = (
     <>
       <span className="boulder-row__thumb">
         {boulder.photoUrl ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" draggable={false} /> : <MountainSnow aria-hidden />}
+        {boulder.isNew && !selectable && <span className="new-tag new-tag--row">{t("New")}</span>}
         {selectable && <span className={`boulder-row__check ${selected ? "is-on" : ""}`} aria-hidden><Check /></span>}
       </span>
       <span className="boulder-row__grade">

@@ -48,8 +48,8 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
           ? <img src={boulder.photoUrl} alt="" loading="lazy" decoding="async" draggable={false} />
           : <span className="boulder-card__gone" aria-hidden><MountainSnow /></span>}
         {/* Top left: the gym's logo where a list mixes gyms, whether the boulder is still on the wall, and whether it is
-            one of the climber's open projects (a completed project is just a send). */}
-        {(showGym || boulder.status !== "ACTIVE" || projectMark) && (
+            one of the climber's open projects (a completed project is just a send), and whether it is new. */}
+        {(showGym || boulder.status !== "ACTIVE" || projectMark || boulder.isNew) && (
           <span className="boulder-card__lead">
             {showGym && (
               <span className="boulder-card__gym" title={boulder.gymName}>
@@ -57,6 +57,7 @@ export function BoulderCard({ boulder, to, selectable, selected, onToggle, onLon
                 <span className="sr-only">{t("At {gym}", { gym: boulder.gymName })}</span>
               </span>
             )}
+            {boulder.isNew && <span className="new-tag">{t("New")}</span>}
             {boulder.status === "REMOVED" && <span className="boulder-card__ribbon">{t("Removed")}</span>}
             {boulder.status === "DELETED" && <span className="boulder-card__ribbon">{t("Deleted")}</span>}
             {projectMark && (

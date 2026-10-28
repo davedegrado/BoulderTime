@@ -4,7 +4,7 @@ import type { BoulderFilters as Filters, ProgressFilter } from "@/features/bould
 import { useAuth } from "@/auth/AuthProvider";
 import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
 import { useEffect, useState } from "react";
-import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
 import { SelectField } from "@/components/Fields";
 import { plural, t } from "@/i18n/i18n";
@@ -36,6 +36,9 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
 
   return (
     <div className="boulder-filters">
+      <button type="button" role="switch" aria-checked={!!filters.isNew} className="chip new-filter" onClick={() => set({ isNew: filters.isNew ? undefined : true })}>
+        <Sparkles aria-hidden /> {t("New boulders only")}
+      </button>
       <SelectField label={t("Sector")} value={filters.sectorId ?? ""} onChange={(e) => set({ sectorId: e.target.value || undefined })}
         options={[{ value: "", label: t("All sectors") }, ...sectors.filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
       <SelectField label={t("Grade")} value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
@@ -108,6 +111,7 @@ export interface ActiveFilter { id: string; label: string; clear: (f: Filters) =
 export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSystem[], tags: GymTag[] = []): ActiveFilter[] {
   const out: ActiveFilter[] = [];
   const drop = (key: keyof Filters) => (x: Filters) => ({ ...x, [key]: undefined });
+  if (f.isNew) out.push({ id: "isNew", label: t("New boulders"), clear: drop("isNew") });
   if (f.sectorId) out.push({ id: "sectorId", label: sectors.find((s) => s.id === f.sectorId)?.name ?? t("Sector"), clear: drop("sectorId") });
   if (f.gradeValueId) {
     const value = systems.flatMap((s) => s.values).find((v) => v.id === f.gradeValueId);

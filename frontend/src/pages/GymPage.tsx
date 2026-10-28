@@ -22,7 +22,7 @@ import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
 import { BoulderRow, SortMenu, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
 import { activeFilters, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
-import { Bell, BellRing, Heart, Megaphone, Mountain } from "lucide-react";
+import { Bell, BellRing, Check, Heart, Megaphone, Mountain, Plus } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
 import { AnnouncementCard } from "@/features/notifications/NotificationBits";
 import { OpeningHoursCard } from "@/features/gyms/openingHours";
@@ -47,6 +47,8 @@ export function GymPage() {
   const setTab = (t: Tab) => setParams(t === "boulders" ? {} : { tab: t }, { replace: true });
   // "?sector=…" opens the boulders of one sector: from the map, the sector list, or a notification about it.
   const sectorParam = params.get("sector");
+  // "?new=1" shows just the new boulders: a notification about several of them opens here.
+  const newParam = params.get("new") === "1";
   const cover = useRef<HTMLDivElement>(null);
   const name = useRef<HTMLHeadingElement>(null);
 
@@ -90,7 +92,7 @@ export function GymPage() {
       </div>
 
       <div className="page__pad">
-        {tab === "boulders" ? <BouldersTab key={sectorParam ?? "all"} gymId={g.id} initialSectorId={sectorParam} /> : tab === "sectors" ? <SectorsTab gym={g} onShowBoulders={(sectorId) => setParams({ sector: sectorId }, { replace: true })} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : tab === "ranking" ? <LeaderboardTab gymId={g.id} /> : <InfoTab gym={g} />}
+        {tab === "boulders" ? <BouldersTab key={`${sectorParam ?? "all"}${newParam ? ":new" : ""}`} gymId={g.id} initialSectorId={sectorParam} onlyNew={newParam} /> : tab === "sectors" ? <SectorsTab gym={g} onShowBoulders={(sectorId) => setParams({ sector: sectorId }, { replace: true })} /> : tab === "updates" ? <UpdatesTab gymId={g.id} /> : tab === "ranking" ? <LeaderboardTab gymId={g.id} /> : <InfoTab gym={g} />}
       </div>
     </div>
   );
@@ -110,23 +112,27 @@ function GymMenu({ gym }: { gym: GymDetail }) {
   return <ActionMenu items={items} />;
 }
 
+/**
+ * Follow as a button that says so, rather than a bell: "Follow", and "Following" once done (tap again to stop).
+ * Favourite stays a heart beside it, for the gyms followed.
+ */
 function GymFollowControls({ gym }: { gym: GymDetail }) {
   const { session } = useAuth();
   const follow = useFollowGym(gym);
   if (!session) {
     return (
-      <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="icon-btn icon-btn--outlined" aria-label={translate("Follow")} title={translate("Follow")}>
-        <Bell aria-hidden />
+      <Link to={`/sign-in?next=/gyms/${gym.slug}`} className="btn btn--primary follow-btn">
+        <Plus aria-hidden /> {translate("Follow")}
       </Link>
     );
   }
   const state = gym.follow ?? { isFollowing: false, isFavorite: false };
-  const followLabel = state.isFollowing ? translate("Stop following this gym") : translate("Follow this gym");
   return (
     <>
-      <button type="button" className={`icon-btn icon-btn--outlined ${state.isFollowing ? "is-following" : ""}`} aria-pressed={state.isFollowing}
-        aria-label={followLabel} title={followLabel} onClick={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })}>
-        {state.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
+      <button type="button" className={`btn follow-btn ${state.isFollowing ? "btn--secondary is-following" : "btn--primary"}`} aria-pressed={state.isFollowing}
+        title={state.isFollowing ? translate("Stop following this gym") : translate("Follow this gym")}
+        onClick={() => follow.mutate({ isFollowing: !state.isFollowing, isFavorite: false })}>
+        {state.isFollowing ? <Check aria-hidden /> : <Plus aria-hidden />} {state.isFollowing ? translate("Following") : translate("Follow")}
       </button>
       {state.isFollowing && (
         <button type="button" className={`icon-btn icon-btn--outlined fav-btn ${state.isFavorite ? "is-on" : ""}`} aria-pressed={state.isFavorite}
@@ -139,12 +145,14 @@ function GymFollowControls({ gym }: { gym: GymDetail }) {
   );
 }
 
-function BouldersTab({ gymId, initialSectorId }: { gymId: string; initialSectorId?: string | null }) {
+function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: string; initialSectorId?: string | null; onlyNew?: boolean }) {
   // Signed out there is no own state to show: no column for it.
   const signedIn = Boolean(useAuth().session);
   // A "?sector=…" link asks for that sector: filters kept from before only count when they're on the same one.
-  const [filters, setFilters] = useRememberedFilters(`bt:boulder-filters:${gymId}`, () => (initialSectorId ? { sectorId: initialSectorId } : {}),
-    (kept) => !initialSectorId || kept.sectorId === initialSectorId);
+  // A "?new=1" link asks for the new ones (of that sector, with one), whatever was filtered before.
+  const [filters, setFilters] = useRememberedFilters(`bt:boulder-filters:${gymId}`,
+    () => ({ ...(initialSectorId ? { sectorId: initialSectorId } : {}), ...(onlyNew ? { isNew: true } : {}) }),
+    (kept) => !onlyNew && (!initialSectorId || kept.sectorId === initialSectorId));
   const [showFilters, setShowFilters] = useState(false);
   const showingRemoved = filters.status === "REMOVED";
   const [sort, setSort] = useRememberedSort(`bt:boulder-sort:${gymId}`);
