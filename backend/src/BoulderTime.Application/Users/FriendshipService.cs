@@ -1,6 +1,7 @@
 using BoulderTime.Application.Abstractions;
 using BoulderTime.Application.Badges;
 using BoulderTime.Application.Boulders;
+using BoulderTime.Application.Climbing;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Localization;
 using BoulderTime.Domain.Users;
@@ -247,7 +248,7 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             .Select(x => new
             {
                 x.Id, x.DisplayName, x.AvatarUrl, x.Since, x.Open,
-                LastSend = x.Open ? db.BoulderAttempts.Where(a => a.UserId == x.Id && a.Completed).Max(a => a.CompletedAt) : null,
+                LastSend = x.Open ? db.BoulderAttempts.OnExistingBoulders(db).Where(a => a.UserId == x.Id && a.Completed).Max(a => a.CompletedAt) : null,
             });
         var total = await q.CountAsync(ct);
         var ordered = sort == FriendSort.Activity
@@ -268,7 +269,7 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
         if (people.Count == 0) return [];
         var now = clock.UtcNow;
         var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var sends = await db.BoulderAttempts.AsNoTracking().Where(a => people.Contains(a.UserId) && a.Completed)
+        var sends = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db).Where(a => people.Contains(a.UserId) && a.Completed)
             .GroupBy(a => a.UserId)
             .Select(g => new
             {
@@ -278,9 +279,9 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             })
             .ToListAsync(ct);
         // The sends of the last day and a half before each one's latest: their whole last day, whatever the time zone.
-        var recent = await db.BoulderAttempts.AsNoTracking()
+        var recent = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => people.Contains(a.UserId) && a.Completed && a.CompletedAt != null
-                && a.CompletedAt >= db.BoulderAttempts.Where(b => b.UserId == a.UserId && b.Completed).Max(b => b.CompletedAt) - SessionWindow)
+                && a.CompletedAt >= db.BoulderAttempts.OnExistingBoulders(db).Where(b => b.UserId == a.UserId && b.Completed).Max(b => b.CompletedAt) - SessionWindow)
             .Select(a => new { a.UserId, a.BoulderId, CompletedAt = a.CompletedAt!.Value })
             .ToListAsync(ct);
         var boulderIds = recent.Select(s => s.BoulderId).Distinct().ToList();

@@ -120,7 +120,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var (p, size) = Paging.Normalize(page, pageSize, 20);
         // A private profile's history is not anyone else's to read: an empty page, as for someone who logged nothing.
         if (!await access.CanSeeContentAsync(user, ct)) return new PagedResult<ClimbHistoryItemDto>([], p, size, 0);
-        var q = db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId);
+        var q = db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db).Where(a => a.UserId == userId);
         q = filter switch
         {
             HistoryFilter.Completed => q.Where(a => a.Completed),
@@ -152,7 +152,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .Where(x => x.g.Status == GymStatus.Active)
             .OrderByDescending(x => x.IsFavorite).ThenBy(x => x.g.Name)
             .Select(x => x.g).ToListAsync(ct);
-        var recent = await db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId && a.Completed)
+        var recent = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db).Where(a => a.UserId == userId && a.Completed)
             .OrderByDescending(a => a.CompletedAt).Take(6).ToListAsync(ct);
 
         return new ProfileDto(user.Id, user.DisplayName, user.AvatarUrl, user.CreatedAt, currentUser.UserId == userId,
@@ -182,7 +182,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var gymIds = follows.Select(x => x.g.Id).ToList();
 
         // Projects: tried but not sent, still on the wall — anywhere the climber has been.
-        var projects = await db.BoulderAttempts.AsNoTracking()
+        var projects = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && !a.Completed && a.Attempts > 0)
             .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { a.UpdatedAt, b })
             .Where(x => x.b.Status == BoulderStatus.Active)
@@ -196,13 +196,13 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
             .OrderByDescending(b => favoriteIds.Contains(b.GymId)).ThenByDescending(b => b.CreatedAt)
             .Take(8).ToListAsync(ct);
 
-        var recent = await db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId && a.Completed)
+        var recent = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db).Where(a => a.UserId == userId && a.Completed)
             .OrderByDescending(a => a.CompletedAt).Take(5).ToListAsync(ct);
 
         // The projects chosen (ADR-067): still on the wall, not completed, latest marked first.
         var marked = await OpenProjects(userId)
             .OrderByDescending(x => x.CreatedAt).Take(8).Select(x => x.Boulder).ToListAsync(ct);
-        var unmarkedTries = await db.BoulderAttempts.AsNoTracking()
+        var unmarkedTries = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && !a.Completed && a.Attempts > 0)
             .Where(a => !db.BoulderProjects.Any(p => p.UserId == userId && p.BoulderId == a.BoulderId))
             .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => b)
@@ -269,7 +269,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
     {
         var now = clock.UtcNow;
         var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var mine = db.BoulderAttempts.AsNoTracking().Where(a => a.UserId == userId);
+        var mine = db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db).Where(a => a.UserId == userId);
         return new ClimbingStatsDto(
             await mine.CountAsync(a => a.Completed, ct),
             await mine.CountAsync(a => !a.Completed && a.Attempts > 0, ct),
@@ -284,7 +284,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
 
     internal async Task<IReadOnlyList<HighestGradeDto>> HighestGradesAsync(Guid userId, CancellationToken ct)
     {
-        var rows = await db.BoulderAttempts.AsNoTracking()
+        var rows = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && a.Completed)
             .Join(db.BoulderGrades, a => a.BoulderId, g => g.BoulderId, (a, g) => g)
             .Where(g => g.Source == GradeSource.Staff)
@@ -316,7 +316,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
     /// </summary>
     internal async Task<IReadOnlyList<ClimbedGymDto>> ClimbedGymsAsync(Guid userId, CancellationToken ct)
     {
-        var sends = await db.BoulderAttempts.AsNoTracking()
+        var sends = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && a.Completed)
             .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { a.BoulderId, a.CompletedAt, b.GymId })
             .ToListAsync(ct);
@@ -325,7 +325,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id) && g.Status == GymStatus.Active).ToListAsync(ct);
         if (gyms.Count == 0) return [];
 
-        var grades = await db.BoulderAttempts.AsNoTracking()
+        var grades = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && a.Completed)
             .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { b.Id, b.GymId })
             .Join(db.BoulderGrades, x => x.Id, g => g.BoulderId, (x, g) => new { x.GymId, g })
@@ -359,7 +359,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
         var firstWeek = thisWeek.AddDays(-7 * (Weeks - 1));
         var from = new DateTimeOffset(firstWeek.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
-        var dates = await db.BoulderAttempts.AsNoTracking()
+        var dates = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && a.Completed && a.CompletedAt >= from)
             .Select(a => a.CompletedAt!.Value).ToListAsync(ct);
         return Enumerable.Range(0, Weeks).Select(i =>
@@ -393,7 +393,7 @@ public sealed class ActivityService(IAppDbContext db, ICurrentUser currentUser, 
     /// </summary>
     public async Task<FavoriteSectorDto?> FavoriteSectorAsync(Guid userId, CancellationToken ct = default)
     {
-        var top = await db.BoulderAttempts.AsNoTracking()
+        var top = await db.BoulderAttempts.AsNoTracking().OnExistingBoulders(db)
             .Where(a => a.UserId == userId && a.Completed)
             .Join(db.Boulders, a => a.BoulderId, b => b.Id, (a, b) => new { b.SectorId, b.GymId, a.CompletedAt })
             .Join(db.Gyms.Where(g => g.Status == GymStatus.Active), x => x.GymId, g => g.Id, (x, g) => x)
