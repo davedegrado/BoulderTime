@@ -1,4 +1,5 @@
 using BoulderTime.Application.Abstractions;
+using BoulderTime.Application.Badges;
 using BoulderTime.Application.Boulders;
 using BoulderTime.Application.Common;
 using BoulderTime.Application.Localization;
@@ -24,7 +25,10 @@ public sealed record FriendRequestDto(PersonDto Person, DateTimeOffset Requested
 /// <param name="Activity">What the friend climbed lately (1.1): null when they have no send, or when the viewer may not
 /// see their profile's content.</param>
 public sealed record FriendDto(PersonDto Person, DateTimeOffset Since, FriendActivityDto? Activity = null);
-/// <summary>A friend's latest send, and how many boulders they completed this month.</summary>
+/// <summary>
+/// The hardest boulder a friend sent in their latest session (the day of their latest send, which <paramref name="LastSendAt"/>
+/// is), and how many boulders they completed this month.
+/// </summary>
 /// <param name="Grade">The boulder's main grade, as on its card; null when it has none.</param>
 public sealed record FriendActivityDto(DateTimeOffset LastSendAt, Guid BoulderId, string GymName, BoulderGradeDto? Grade,
     Domain.Boulders.HoldColor HoldColor, int SentThisMonth);
@@ -219,7 +223,7 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
     /// <summary>
     /// A person's friends, for whoever may see the content of their profile: anyone for a public one, its owner and
     /// friends for a private one; others get an empty page. People hidden from the viewer are left out. By name, as
-    /// always, or with <see cref="FriendSort.Activity"/> the most recently active first. Each friend's latest send comes
+    /// always, or with <see cref="FriendSort.Activity"/> the most recently active first. Each friend's latest session comes
     /// only when the viewer may see that friend's own profile content (their profile is public, or they are the viewer
     /// or the viewer's friend), and only that activity orders the list, so the order never tells more than the rows.
     /// </summary>
@@ -255,7 +259,10 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             activity.GetValueOrDefault(x.Id))).ToList(), p, size, total);
     }
 
-    /// <summary>For each person, their latest send (its boulder's main grade, holds and gym) and their sends this month.</summary>
+    /// <summary>
+    /// For each person, the hardest boulder of their latest session (the Italian day of their latest send: its main
+    /// grade, holds and gym, the latest of them on a tie or when none is graded) and their sends this month.
+    /// </summary>
     private async Task<Dictionary<Guid, FriendActivityDto>> ActivityOfAsync(List<Guid> people, CancellationToken ct)
     {
         if (people.Count == 0) return [];
@@ -266,20 +273,37 @@ public sealed class FriendshipService(IAppDbContext db, ICurrentUser currentUser
             .Select(g => new
             {
                 UserId = g.Key,
-                Last = g.OrderByDescending(a => a.CompletedAt).Select(a => new { a.BoulderId, a.CompletedAt }).First(),
+                Last = g.Max(a => a.CompletedAt),
                 ThisMonth = g.Count(a => a.CompletedAt >= monthStart),
             })
             .ToListAsync(ct);
-        var boulderIds = sends.Select(s => s.Last.BoulderId).Distinct().ToList();
+        // The sends of the last day and a half before each one's latest: their whole last day, whatever the time zone.
+        var recent = await db.BoulderAttempts.AsNoTracking()
+            .Where(a => people.Contains(a.UserId) && a.Completed && a.CompletedAt != null
+                && a.CompletedAt >= db.BoulderAttempts.Where(b => b.UserId == a.UserId && b.Completed).Max(b => b.CompletedAt) - SessionWindow)
+            .Select(a => new { a.UserId, a.BoulderId, CompletedAt = a.CompletedAt!.Value })
+            .ToListAsync(ct);
+        var boulderIds = recent.Select(s => s.BoulderId).Distinct().ToList();
         var boulders = await db.Boulders.AsNoTracking().Where(b => boulderIds.Contains(b.Id)).ToListAsync(ct);
         var summaries = (await reader.SummariesAsync(boulders, ct)).ToDictionary(b => b.Id);
-        return sends.Where(s => summaries.ContainsKey(s.Last.BoulderId) && s.Last.CompletedAt != null)
-            .ToDictionary(s => s.UserId, s =>
-            {
-                var b = summaries[s.Last.BoulderId];
-                return new FriendActivityDto(s.Last.CompletedAt!.Value, b.Id, b.GymName, b.Grades.FirstOrDefault(), b.HoldColor, s.ThisMonth);
-            });
+        var result = new Dictionary<Guid, FriendActivityDto>();
+        foreach (var s in sends.Where(s => s.Last != null))
+        {
+            var day = ItalianTime.Day(s.Last!.Value);
+            var best = recent.Where(r => r.UserId == s.UserId && ItalianTime.Day(r.CompletedAt) == day && summaries.ContainsKey(r.BoulderId))
+                .Select(r => (Boulder: summaries[r.BoulderId], r.CompletedAt))
+                .OrderByDescending(x => x.Boulder.Grades.FirstOrDefault() is not null)
+                .ThenByDescending(x => x.Boulder.Grades.FirstOrDefault()?.Rank)
+                .ThenByDescending(x => x.CompletedAt)
+                .Select(x => x.Boulder)
+                .FirstOrDefault();
+            if (best is not null)
+                result[s.UserId] = new FriendActivityDto(s.Last.Value, best.Id, best.GymName, best.Grades.FirstOrDefault(), best.HoldColor, s.ThisMonth);
+        }
+        return result;
     }
+
+    private static readonly TimeSpan SessionWindow = TimeSpan.FromHours(36);
 
     /// <summary>
     /// How many friends the person has, leaving out people hidden from the viewer: the same people the list of friends
