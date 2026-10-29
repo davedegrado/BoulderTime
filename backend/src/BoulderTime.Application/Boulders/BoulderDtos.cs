@@ -37,7 +37,17 @@ public sealed record BoulderSummaryDto(
     /// <summary>The viewer marked it as a project (ADR-067). Added later: older apps don't read it.</summary>
     bool IsProject = false,
     /// <summary>On the wall and set within <see cref="NewBoulders.Window"/>. Added later: older apps don't read it.</summary>
-    bool IsNew = false);
+    bool IsNew = false,
+    /// <summary>
+    /// Highlighted on its sector's current photo, so its holds can be lit up there
+    /// (<c>GET /api/boulders/{id}/holds-on-sector-photo</c>). Added later: older apps don't read it.
+    /// </summary>
+    bool HoldsOnSectorPhoto = false,
+    /// <summary>
+    /// With <see cref="HoldsOnSectorPhoto"/>: how staff left the highlight (outline, how dark the black and white is),
+    /// the editor's own small JSON, so the sector's photo shows the holds the way the boulder's photo does.
+    /// </summary>
+    string? HoldsOnSectorPhotoLook = null);
 
 /// <summary>What "new" means for a boulder: set in the last few days and still on the wall.</summary>
 public static class NewBoulders

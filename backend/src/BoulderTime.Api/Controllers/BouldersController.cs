@@ -87,6 +87,19 @@ public sealed class BouldersController(BoulderService boulders, GradingService g
         return File(content, contentType);
     }
 
+    /// <summary>
+    /// Where a boulder's holds are on its sector's photo, for everyone who can see the gym: white where they are. Only
+    /// for a boulder highlighted on the sector's current photo (<see cref="BoulderSummaryDto.HoldsOnSectorPhoto"/>).
+    /// </summary>
+    [HttpGet("api/boulders/{boulderId:guid}/holds-on-sector-photo"), AllowAnonymous]
+    public async Task<IActionResult> HoldsOnSectorPhoto(Guid boulderId, CancellationToken ct)
+    {
+        var (content, contentType) = await boulders.HoldsOnSectorPhotoAsync(boulderId, ct);
+        // The mask changes only when staff highlight the boulder again, which gives it a new file and a new answer here.
+        Response.Headers.CacheControl = "public, max-age=3600";
+        return File(content, contentType);
+    }
+
     [HttpPut("api/boulders/{boulderId:guid}"), Authorize]
     public Task<BoulderDetailDto> Update(Guid boulderId, [FromBody] SaveBoulderRequest request, CancellationToken ct) =>
         boulders.UpdateAsync(boulderId, request, ct);

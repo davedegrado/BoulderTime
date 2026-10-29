@@ -629,6 +629,23 @@ public sealed class BoulderService(IAppDbContext db, GymAccess access, BoulderAc
     }
 
     /// <summary>
+    /// The mask of a boulder highlighted on its sector's current photo, for anyone who can see the gym: what lights its
+    /// holds up on that photo. Nothing for a boulder off the wall, highlighted on another photo, or not highlighted.
+    /// </summary>
+    public async Task<(byte[] Content, string ContentType)> HoldsOnSectorPhotoAsync(Guid boulderId, CancellationToken ct = default)
+    {
+        var found = await db.Boulders.AsNoTracking().Where(b => b.Id == boulderId && b.Status == BoulderStatus.Active)
+            .Join(db.Sectors, b => b.SectorId, s => s.Id, (b, s) => new { b.GymId, b.HighlightMaskPath, b.HighlightSourcePath, s.PhotoPath, s.IsActive })
+            .FirstOrDefaultAsync(ct) ?? throw new NotFoundException("Boulder", boulderId);
+        var gym = await db.Gyms.AsNoTracking().FirstAsync(g => g.Id == found.GymId, ct);
+        if (!gym.IsPubliclyVisible && await access.GetRoleAsync(found.GymId, ct) is null) throw new NotFoundException("Boulder", boulderId);
+        if (found.HighlightMaskPath is null || found.PhotoPath is null || found.HighlightSourcePath != found.PhotoPath)
+            throw new NotFoundException("Highlight", boulderId);
+        var bytes = await storage.ReadAsync(StorageBuckets.BoulderImages, found.HighlightMaskPath, ct) ?? throw new NotFoundException("Highlight", boulderId);
+        return (bytes, "image/png");
+    }
+
+    /// <summary>
     /// The highlight's original photo or its mask, handed to the gym's staff through the API so the app can go on
     /// editing it (reading the pixels of a public address isn't always allowed).
     /// </summary>
