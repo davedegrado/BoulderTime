@@ -17,7 +17,7 @@ vi.mock("@/lib/api", () => {
     if (!handler) throw new Error(`No mock for ${method} ${path}`);
     return handler(body);
   };
-  return { api: { get: call("GET"), post: call("POST"), put: call("PUT"), patch: call("PATCH"), delete: call("DELETE") } };
+  return { api: { get: call("GET"), post: call("POST"), put: call("PUT"), patch: call("PATCH"), delete: call("DELETE"), blob: call("BLOB") } };
 });
 
 import { GymPage } from "@/pages/GymPage";
@@ -49,7 +49,7 @@ describe("The sector map, for climbers", () => {
     renderAt("/gyms/crimp?tab=sectors", "/gyms/:slug", <GymPage />);
   }
 
-  it("draws the sectors on the plan, and a tap opens the sector with its boulders", async () => {
+  it("draws the sectors on the plan, and a tap opens the sector right under it, with its boulders", async () => {
     setup();
     const zone = await screen.findByRole("button", { name: "Sector Cave" });
     // The list stays under the map, with the counts and the bell.
@@ -57,21 +57,42 @@ describe("The sector map, for climbers", () => {
     expect(screen.getByRole("button", { name: "Unfollow Slab" })).toBeInTheDocument();
 
     await userEvent.click(zone);
-    const sheet = screen.getByRole("dialog", { name: "Cave" });
-    expect(within(sheet).getByText("Steep and dark")).toBeInTheDocument();
-    await userEvent.click(within(sheet).getByRole("button", { name: "See the boulders" }));
-
-    // The boulders tab, already narrowed to the sector, with the filter there to remove.
+    const panel = screen.getByRole("region", { name: "Cave" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(within(panel).getByText("Steep and dark")).toBeInTheDocument();
     await waitFor(() => expect(calls.some((c) => c.path.startsWith("/api/gyms/g1/boulders") && c.path.includes("sectorId=s1"))).toBe(true));
-    expect(await screen.findByRole("button", { name: "Remove filter Cave" })).toBeInTheDocument();
+    await userEvent.click(within(panel).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("region", { name: "Cave" })).not.toBeInTheDocument();
   });
 
-  it("follows a sector from its sheet, the same as from the list", async () => {
+  it("follows a sector from its panel, the same as from the list", async () => {
     setup();
     reply("PUT", "/api/sectors/s1/follow", undefined);
     await userEvent.click(await screen.findByRole("button", { name: /^Cave/ }));
-    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Follow" }));
+    await userEvent.click(within(screen.getByRole("region", { name: "Cave" })).getByRole("button", { name: "Follow" }));
     expect(calls.some((c) => c.method === "PUT" && c.path === "/api/sectors/s1/follow")).toBe(true);
+  });
+
+  it("lights up on the sector's photo the holds of a boulder highlighted on it, and opens any other", async () => {
+    reply("GET", "/api/gyms/crimp", gym);
+    reply("GET", "/api/gyms/g1/sectors", [{ ...sectors[0], imageUrl: "/wall.jpg" }, sectors[1]]);
+    reply("GET", "/api/gyms/g1/grade-systems", []);
+    const boulder = (id: string, over: object) => ({ id, gymId: "g1", gymName: "Crimp Factory", rating: { average: null, count: 0 }, viewer: null, sectorId: "s1", sectorName: "Cave", photoUrl: null, holdColor: "BLUE", grades: [], status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, ...over });
+    reply("GET", "/api/gyms/g1/boulders", { ...page, items: [boulder("b1", { name: "Lit", holdsOnSectorPhoto: true, holdsOnSectorPhotoLook: '{"color":"BLUE"}' }), boulder("b2", { name: "Elsewhere" })], total: 2 });
+    reply("BLOB", "/api/boulders/b1/holds-on-sector-photo", new Blob([new Uint8Array([1])], { type: "image/png" }));
+    renderAt("/gyms/crimp?tab=sectors", "/gyms/:slug", <GymPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Sector Cave" }));
+    const panel = screen.getByRole("region", { name: "Cave" });
+    expect(within(panel).getByRole("img", { name: "Photo of Cave" })).toBeInTheDocument();
+
+    const lit = await within(panel).findByRole("button", { name: "Light up the holds of Ungraded, Lit, Blue holds" });
+    await userEvent.click(lit);
+    expect(within(panel).getByRole("button", { name: "Ungraded, Lit, Blue holds: holds lit up on the photo" })).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => expect(calls.some((c) => c.method === "BLOB" && c.path === "/api/boulders/b1/holds-on-sector-photo")).toBe(true));
+    expect(within(panel).getByRole("link", { name: "Open Ungraded, Lit, Blue holds" })).toHaveAttribute("href", "/boulders/b1");
+    // Not highlighted on this photo: nothing to light up, it opens.
+    expect(within(panel).getByRole("link", { name: "Ungraded, Elsewhere, Blue holds" })).toHaveAttribute("href", "/boulders/b2");
+    expect(calls.some((c) => c.path === "/api/boulders/b2/holds-on-sector-photo")).toBe(false);
   });
 });
 

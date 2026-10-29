@@ -105,6 +105,61 @@ public sealed class HighlightTests(PostgresFixture postgres) : IAsyncLifetime
         Stored(wall).Should().BeTrue();
     }
 
+    private async Task<BoulderSummaryDto> InListAsync(ClimbingWorld w, Guid id) =>
+        (await (await _f.CreateClient().GetAsync($"/api/gyms/{w.Gym.Id}/boulders?sectorId={w.Sector.Id}")).ReadAsync<Application.Common.PagedResult<BoulderSummaryDto>>())!
+            .Items.Single(b => b.Id == id);
+
+    [Fact]
+    public async Task Everyone_can_light_up_on_the_sector_photo_the_holds_of_a_boulder_highlighted_on_it_and_only_those()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var wall = await WallAsync(w);
+        (await w.Staff.Client.PutAsJsonAsync($"/api/sectors/{w.Sector.Id}/photo", new { path = wall })).EnsureSuccessStatusCode();
+        var mask = await MaskAsync(w);
+        var onWall = (await (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders",
+            Body(w, await w.Staff.UploadPhotoAsync(_f, w.Gym), new { sourcePath = wall, maskPath = mask, settings = Settings }))).ReadAsync<BoulderDetailDto>())!;
+        var ownPhoto = (await (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders",
+            Body(w, await w.Staff.UploadPhotoAsync(_f, w.Gym), new { sourcePath = await w.Staff.UploadPhotoAsync(_f, w.Gym), maskPath = await MaskAsync(w), settings = Settings }))).ReadAsync<BoulderDetailDto>())!;
+        var plain = (await (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders",
+            Body(w, await w.Staff.UploadPhotoAsync(_f, w.Gym), null))).ReadAsync<BoulderDetailDto>())!;
+
+        // Highlighted on the sector's photo: said so in the list, with the choices staff made, and its mask for anyone.
+        var listed = await InListAsync(w, onWall.Id);
+        listed.HoldsOnSectorPhoto.Should().BeTrue();
+        listed.HoldsOnSectorPhotoLook.Should().Be(Settings);
+        var res = await _f.CreateClient().GetAsync($"/api/boulders/{onWall.Id}/holds-on-sector-photo");
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        res.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
+        (await res.Content.ReadAsByteArrayAsync()).Should().Equal(Png);
+
+        // On its own photo, or not highlighted at all: nothing to light up on the sector's.
+        foreach (var other in new[] { ownPhoto.Id, plain.Id })
+        {
+            var item = await InListAsync(w, other);
+            item.HoldsOnSectorPhoto.Should().BeFalse();
+            item.HoldsOnSectorPhotoLook.Should().BeNull();
+            (await _f.CreateClient().GetAsync($"/api/boulders/{other}/holds-on-sector-photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        // A new photo of the sector: the holds were on the old one.
+        (await w.Staff.Client.PutAsJsonAsync($"/api/sectors/{w.Sector.Id}/photo", new { path = await WallAsync(w) })).EnsureSuccessStatusCode();
+        (await InListAsync(w, onWall.Id)).HoldsOnSectorPhoto.Should().BeFalse();
+        (await _f.CreateClient().GetAsync($"/api/boulders/{onWall.Id}/holds-on-sector-photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await _f.CreateClient().GetAsync($"/api/boulders/{Guid.NewGuid()}/holds-on-sector-photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task A_boulder_taken_down_lights_nothing_up()
+    {
+        var w = await ClimbingWorld.CreateAsync(_f);
+        var wall = await WallAsync(w);
+        (await w.Staff.Client.PutAsJsonAsync($"/api/sectors/{w.Sector.Id}/photo", new { path = wall })).EnsureSuccessStatusCode();
+        var created = (await (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders",
+            Body(w, await w.Staff.UploadPhotoAsync(_f, w.Gym), new { sourcePath = wall, maskPath = await MaskAsync(w), settings = Settings }))).ReadAsync<BoulderDetailDto>())!;
+        (await w.Staff.Client.PostAsJsonAsync($"/api/gyms/{w.Gym.Id}/boulders/remove", new { boulderIds = new[] { created.Id }, notifyFollowers = false })).EnsureSuccessStatusCode();
+        (await _f.CreateClient().GetAsync($"/api/boulders/{created.Id}/holds-on-sector-photo")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     [Fact]
     public async Task Only_this_gyms_files_and_a_json_object_of_choices_are_accepted()
     {
