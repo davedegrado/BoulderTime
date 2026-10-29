@@ -1466,4 +1466,5 @@ export const it: Record<string, string> = {
   "{boulder}: holds lit up on the photo": "{boulder}: prese illuminate sulla foto",
   "Light up the holds of {boulder}": "Illumina le prese di {boulder}",
   "Open {boulder}": "Apri {boulder}",
+  "Other sectors": "Altri settori",
 };

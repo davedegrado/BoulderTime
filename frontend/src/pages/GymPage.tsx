@@ -228,6 +228,8 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
   // With a map, a sector opens right under it (photo, boulders, follow); without one, in a sheet as before.
   const mapped = !!plan && sectors.data.some((s) => s.zone);
   const open = sectors.data.find((s) => s.id === openId) ?? null;
+  const onMap = (s: Sector) => s.isActive && !!s.zone && s.zone.points.length >= 3;
+  const listed = mapped ? sectors.data.filter((s) => s.isActive && !onMap(s)) : sectors.data;
   const toggleFollow = (s: Sector) => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing });
 
   return (
@@ -248,8 +250,10 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
         <SectorPanel key={open.id} sector={open} signedIn={!!session} onToggleFollow={() => toggleFollow(open)} onClose={() => setOpenId(null)}
           onShowBoulders={() => { setOpenId(null); onShowBoulders(open.id); }} />
       )}
-      <ul className="list">
-        {sectors.data.map((s) => (
+      {/* With a map the sectors are chosen on it; the list is only for the ones not drawn there yet. */}
+      {mapped && listed.length > 0 && <h2 className="section__title sector-others">{translate("Other sectors")}</h2>}
+      {listed.length > 0 && <ul className="list">
+        {listed.map((s) => (
           <li key={s.id} className={`list__row ${s.isActive ? "" : "list__row--muted"}`}>
             <button type="button" className="sector-row" onClick={() => setOpenId(s.id)}>
               <span className="sector-mark" aria-hidden />
@@ -268,7 +272,7 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
             )}
           </li>
         ))}
-      </ul>
+      </ul>}
       {fullScreen && plan && <MapViewer plan={plan} sectors={sectors.data} onSelect={(s) => { setOpenId(s.id); if (mapped) setFullScreen(false); }} onClose={() => setFullScreen(false)} />}
       {open && !mapped && (
         <SectorSheet sector={open} signedIn={!!session} onClose={() => setOpenId(null)} onToggleFollow={() => toggleFollow(open)}

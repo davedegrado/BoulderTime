@@ -52,8 +52,9 @@ describe("The sector map, for climbers", () => {
   it("draws the sectors on the plan, and a tap opens the sector right under it, with its boulders", async () => {
     setup();
     const zone = await screen.findByRole("button", { name: "Sector Cave" });
-    // The list stays under the map, with the counts and the bell.
-    expect(screen.getByText("12 on the wall · 3 new")).toBeInTheDocument();
+    // Sectors drawn on the map are chosen there: only the one not drawn yet stays in a list, with its bell.
+    expect(screen.queryByText("12 on the wall · 3 new")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Other sectors" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unfollow Slab" })).toBeInTheDocument();
 
     await userEvent.click(zone);
@@ -65,12 +66,24 @@ describe("The sector map, for climbers", () => {
     expect(screen.queryByRole("region", { name: "Cave" })).not.toBeInTheDocument();
   });
 
-  it("follows a sector from its panel, the same as from the list", async () => {
+  it("follows a sector from its panel", async () => {
     setup();
     reply("PUT", "/api/sectors/s1/follow", undefined);
-    await userEvent.click(await screen.findByRole("button", { name: /^Cave/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Sector Cave" }));
     await userEvent.click(within(screen.getByRole("region", { name: "Cave" })).getByRole("button", { name: "Follow" }));
     expect(calls.some((c) => c.method === "PUT" && c.path === "/api/sectors/s1/follow")).toBe(true);
+  });
+
+  it("lists every sector, as before, when the gym has no map", async () => {
+    reply("GET", "/api/gyms/crimp", { ...gym, floorPlanUrl: null, floorPlanWidth: null, floorPlanHeight: null });
+    reply("GET", "/api/gyms/g1/sectors", sectors);
+    reply("GET", "/api/gyms/g1/grade-systems", []);
+    reply("GET", "/api/gyms/g1/boulders", page);
+    renderAt("/gyms/crimp?tab=sectors", "/gyms/:slug", <GymPage />);
+    expect(await screen.findByText("12 on the wall · 3 new")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Other sectors" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^Cave/ }));
+    expect(screen.getByRole("dialog", { name: "Cave" })).toBeInTheDocument();
   });
 
   it("lights up on the sector's photo the holds of a boulder highlighted on it, and opens any other", async () => {

@@ -1995,3 +1995,4 @@ div.sector-panel__row { display: flex; padding: 0; }
 .sector-panel__row.is-lit { border-color: var(--bt-orange); box-shadow: 0 0 0 2px var(--bt-orange); }
 .sector-panel__more { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
 .sector-panel__more svg { width: 16px; height: 16px; }
+.sector-others { margin: var(--bt-2) 0 0; }
