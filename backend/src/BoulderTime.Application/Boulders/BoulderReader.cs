@@ -22,7 +22,9 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
         var projects = await ProjectsAsync(ids, currentUser.UserId, ct);
 
         var sectorIds = boulders.Select(b => b.SectorId).Distinct().ToList();
-        var sectors = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+        var sectorRows = await db.Sectors.AsNoTracking().Where(s => sectorIds.Contains(s.Id)).Select(s => new { s.Id, s.Name, s.PhotoPath }).ToListAsync(ct);
+        var sectors = sectorRows.ToDictionary(s => s.Id, s => s.Name);
+        var sectorPhotos = sectorRows.ToDictionary(s => s.Id, s => s.PhotoPath);
         var gymIds = boulders.Select(b => b.GymId).Distinct().ToList();
         var gyms = await db.Gyms.AsNoTracking().Where(g => gymIds.Contains(g.Id)).Select(g => new { g.Id, g.Name, g.LogoUrl })
             .ToDictionaryAsync(g => g.Id, ct);
@@ -37,7 +39,9 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             b.Status, b.CreatedAt, b.RemovedAt, ratings.GetValueOrDefault(b.Id, NoRatings), viewer.GetValueOrDefault(b.Id),
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
             b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl,
-            projects.Contains(b.Id), NewBoulders.Is(b, now)))
+            projects.Contains(b.Id), NewBoulders.Is(b, now),
+            b.Status == BoulderStatus.Active && b.HighlightMaskPath is not null && b.HighlightSourcePath is not null
+                && b.HighlightSourcePath == sectorPhotos.GetValueOrDefault(b.SectorId)))
             .ToList();
     }
 

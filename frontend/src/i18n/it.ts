@@ -1457,4 +1457,13 @@ export const it: Record<string, string> = {
   "As it is": "Come la foto",
   "{value}% darker": "{value}% più scuro",
   "{value}% lighter": "{value}% più chiaro",
+  "Photo of {sector}": "Foto di {sector}",
+  "Finding the holds…": "Cerco le prese…",
+  "The holds of this boulder can't be shown on the photo.": "Le prese di questo blocco non si possono mostrare sulla foto.",
+  "Tap it again to see the whole wall.": "Toccalo di nuovo per vedere tutta la parete.",
+  "Tap a boulder to light its holds up on the photo.": "Tocca un blocco per illuminarne le prese sulla foto.",
+  "See all the boulders": "Vedi tutti i blocchi",
+  "{boulder}: holds lit up on the photo": "{boulder}: prese illuminate sulla foto",
+  "Light up the holds of {boulder}": "Illumina le prese di {boulder}",
+  "Open {boulder}": "Apri {boulder}",
 };

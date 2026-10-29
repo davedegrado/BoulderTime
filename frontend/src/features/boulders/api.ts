@@ -30,6 +30,8 @@ export interface BoulderSummary {
   rating: RatingSummary; viewer: ViewerProgress | null;
   /** On the wall and set in the last week; missing from servers before it existed. */
   isNew?: boolean;
+  /** Highlighted on its sector's current photo: its holds can be lit up there. */
+  holdsOnSectorPhoto?: boolean;
   /** Staff's word on how intense it is, apart from the grade; null when not given. */
   intensity?: Intensity | null;
   tags?: BoulderTag[] | null;

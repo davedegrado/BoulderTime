@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { copyText, shareLink, shareUrl } from "@/lib/share";
 import { useGym, useSectors, type GymDetail, type Sector } from "@/features/gyms/api";
 import { floorPlanOf, SectorMap, type FloorPlan } from "@/features/gyms/SectorMap";
+import { SectorPanel } from "@/features/gyms/SectorPanel";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Badge } from "@/components/Badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -224,15 +225,17 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
   if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title={translate("No sectors yet")} body={translate("This gym hasn't set up its sectors on BoulderTime.")} />;
 
   const plan = floorPlanOf(gym);
+  // With a map, a sector opens right under it (photo, boulders, follow); without one, in a sheet as before.
+  const mapped = !!plan && sectors.data.some((s) => s.zone);
   const open = sectors.data.find((s) => s.id === openId) ?? null;
   const toggleFollow = (s: Sector) => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing });
 
   return (
     <div className="stack">
       {/* The plan comes first when the gym has one; the list stays, for following and for whoever reads it better. */}
-      {plan && sectors.data.some((s) => s.zone) && (
+      {mapped && plan && (
         <section className="sector-map-card" aria-label={translate("Gym map")}>
-          <SectorMap plan={plan} sectors={sectors.data} onSelect={(s) => setOpenId(s.id)} />
+          <SectorMap plan={plan} sectors={sectors.data} onSelect={(s) => setOpenId(s.id)} highlightId={open?.id} />
           <div className="sector-map-card__foot">
             <p className="sector-map-card__hint">{translate("Tap a sector to see its boulders.")}</p>
             <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setFullScreen(true)} aria-label={translate("Enlarge the map")} title={translate("Enlarge the map")}>
@@ -240,6 +243,10 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
             </button>
           </div>
         </section>
+      )}
+      {mapped && open && (
+        <SectorPanel key={open.id} sector={open} signedIn={!!session} onToggleFollow={() => toggleFollow(open)} onClose={() => setOpenId(null)}
+          onShowBoulders={() => { setOpenId(null); onShowBoulders(open.id); }} />
       )}
       <ul className="list">
         {sectors.data.map((s) => (
@@ -262,8 +269,8 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
           </li>
         ))}
       </ul>
-      {fullScreen && plan && <MapViewer plan={plan} sectors={sectors.data} onSelect={(s) => setOpenId(s.id)} onClose={() => setFullScreen(false)} />}
-      {open && (
+      {fullScreen && plan && <MapViewer plan={plan} sectors={sectors.data} onSelect={(s) => { setOpenId(s.id); if (mapped) setFullScreen(false); }} onClose={() => setFullScreen(false)} />}
+      {open && !mapped && (
         <SectorSheet sector={open} signedIn={!!session} onClose={() => setOpenId(null)} onToggleFollow={() => toggleFollow(open)}
           onShowBoulders={() => { setOpenId(null); setFullScreen(false); onShowBoulders(open.id); }} />
       )}
