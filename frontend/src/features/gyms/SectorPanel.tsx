@@ -130,21 +130,21 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
  * highlighted on the sector's photo lights its holds up there when tapped, and offers to open it; any other opens
  * straight away.
  */
-export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowBoulders }: {
+export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowBoulders, litId, onLight }: {
   sector: Sector; signedIn: boolean; onToggleFollow: () => void; onClose: () => void; onShowBoulders: () => void;
+  /** The boulder whose holds are lit up, kept by the page so it is still lit on coming back to it. */
+  litId: string | null; onLight: (boulderId: string | null) => void;
 }) {
   const boulders = useBoulders(sector.gymId, { sectorId: sector.id }, { sort: "GRADE" });
   const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
   const total = boulders.data?.pages[0]?.total ?? 0;
-  const [litId, setLitId] = useState<string | null>(null);
   const lit = items.find((b) => b.id === litId) ?? null;
   const ref = useRef<HTMLElement>(null);
   const hasPhoto = !!sector.imageUrl;
   const onPhoto = hasPhoto ? items.filter((b) => b.holdsOnSectorPhoto).length : 0;
 
-  // Opened from the map: brought into view, with nothing lit yet.
+  // Opened from the map, or come back to: brought into view.
   useEffect(() => {
-    setLitId(null);
     ref.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }, [sector.id]);
 
@@ -176,7 +176,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
             {items.map((b) => (
               <li key={b.id}>
                 <PanelRow boulder={b} canLight={hasPhoto && !!b.holdsOnSectorPhoto} lit={b.id === litId}
-                  onLight={() => setLitId((id) => (id === b.id ? null : b.id))} />
+                  onLight={() => onLight(litId === b.id ? null : b.id)} />
               </li>
             ))}
           </ul>

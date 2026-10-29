@@ -74,6 +74,18 @@ describe("The sector map, for climbers", () => {
     expect(calls.some((c) => c.method === "PUT" && c.path === "/api/sectors/s1/follow")).toBe(true);
   });
 
+  it("comes back, after a boulder opened from it, to the same sector with the same boulder lit", async () => {
+    reply("GET", "/api/gyms/crimp", gym);
+    reply("GET", "/api/gyms/g1/sectors", [{ ...sectors[0], imageUrl: "/wall.jpg" }, sectors[1]]);
+    reply("GET", "/api/gyms/g1/grade-systems", []);
+    reply("GET", "/api/gyms/g1/boulders", { ...page, total: 1, items: [{ id: "b1", gymId: "g1", gymName: "Crimp Factory", rating: { average: null, count: 0 }, viewer: null, sectorId: "s1", sectorName: "Cave", photoUrl: null, holdColor: "BLUE", grades: [], status: "ACTIVE", createdAt: "2026-09-01T00:00:00Z", removedAt: null, name: "Lit", holdsOnSectorPhoto: true }] });
+    reply("BLOB", "/api/boulders/b1/holds-on-sector-photo", new Blob([new Uint8Array([1])], { type: "image/png" }));
+    // What the address keeps while the panel is in use, and so what "back" lands on.
+    renderAt("/gyms/crimp?tab=sectors&open=s1&lit=b1", "/gyms/:slug", <GymPage />);
+    const panel = await screen.findByRole("region", { name: "Cave" });
+    expect(await within(panel).findByRole("button", { name: "Ungraded, Lit, Blue holds: holds lit up on the photo" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("lists every sector, as before, when the gym has no map", async () => {
     reply("GET", "/api/gyms/crimp", { ...gym, floorPlanUrl: null, floorPlanWidth: null, floorPlanHeight: null });
     reply("GET", "/api/gyms/g1/sectors", sectors);

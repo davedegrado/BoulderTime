@@ -218,7 +218,18 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
   const sectors = useSectors(gym.id);
   const { session } = useAuth();
   const followSector = useFollowSector(gym.id);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // The sector open, and the boulder whose holds are lit up on its photo, live in the address: back from a boulder
+  // opened from the panel comes back to the same sector, with the same boulder lit.
+  const [params, setParams] = useSearchParams();
+  const openId = params.get("open");
+  const litId = params.get("lit");
+  const choose = (sectorId: string | null, boulderId: string | null = null) => setParams((p) => {
+    const next = new URLSearchParams(p);
+    if (sectorId) next.set("open", sectorId); else next.delete("open");
+    if (sectorId && boulderId) next.set("lit", boulderId); else next.delete("lit");
+    return next;
+  }, { replace: true });
+  const setOpenId = (sectorId: string | null) => choose(sectorId);
   const [fullScreen, setFullScreen] = useState(false);
   if (sectors.isPending) return <LoadingState label={translate("Loading sectors")} />;
   if (sectors.isError) return <ErrorState error={sectors.error} onRetry={() => sectors.refetch()} />;
@@ -248,6 +259,7 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
       )}
       {mapped && open && (
         <SectorPanel key={open.id} sector={open} signedIn={!!session} onToggleFollow={() => toggleFollow(open)} onClose={() => setOpenId(null)}
+          litId={litId} onLight={(boulderId) => choose(open.id, boulderId)}
           onShowBoulders={() => { setOpenId(null); onShowBoulders(open.id); }} />
       )}
       {/* With a map the sectors are chosen on it; the list is only for the ones not drawn there yet. */}
