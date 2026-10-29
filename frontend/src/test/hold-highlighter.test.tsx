@@ -69,7 +69,7 @@ describe("Highlighting the holds", () => {
     // Handed back to be kept with the boulder: the mask as a PNG and the choices, to go on from next time.
     const kept = onDone.mock.calls[0]![2];
     expect(kept.mask.type).toBe("image/png");
-    expect(JSON.parse(kept.settings)).toEqual({ color: "YELLOW", outline: { on: true, color: "red", level: 2 } });
+    expect(JSON.parse(kept.settings)).toEqual({ color: "YELLOW", outline: { on: true, color: "red", level: 2 }, backdrop: 0 });
     expect(cave.load).toHaveBeenCalledTimes(1);
   });
 
