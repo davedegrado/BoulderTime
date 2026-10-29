@@ -310,7 +310,7 @@ export function featherMask(mask: Uint8Array, width: number, height: number, rad
 }
 
 /** How far the backdrop can go towards black or white: never all the way, so the wall still reads behind the holds. */
-const BACKDROP_REACH = 0.75;
+export const BACKDROP_REACH = 0.75;
 
 /**
  * The grey of the backdrop, made darker (level below 0) or lighter (above 0), from -1 to 1; 0 leaves it as it is. Staff

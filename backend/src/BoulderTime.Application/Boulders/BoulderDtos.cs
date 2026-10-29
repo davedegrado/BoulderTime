@@ -42,7 +42,12 @@ public sealed record BoulderSummaryDto(
     /// Highlighted on its sector's current photo, so its holds can be lit up there
     /// (<c>GET /api/boulders/{id}/holds-on-sector-photo</c>). Added later: older apps don't read it.
     /// </summary>
-    bool HoldsOnSectorPhoto = false);
+    bool HoldsOnSectorPhoto = false,
+    /// <summary>
+    /// With <see cref="HoldsOnSectorPhoto"/>: how staff left the highlight (outline, how dark the black and white is),
+    /// the editor's own small JSON, so the sector's photo shows the holds the way the boulder's photo does.
+    /// </summary>
+    string? HoldsOnSectorPhotoLook = null);
 
 /// <summary>What "new" means for a boulder: set in the last few days and still on the wall.</summary>
 public static class NewBoulders

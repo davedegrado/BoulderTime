@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Check, ChevronRight, MountainSnow, Plus, Sparkles, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { BACKDROP_REACH, featherMask, outlineArea, outlineWidth } from "@/features/boulders/holdHighlight";
+import { OUTLINE_COLORS, readHighlightSettings } from "@/features/boulders/HoldHighlighter";
 import { useBoulders, type BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge, HoldIcon } from "@/features/boulders/BoulderBits";
 import { holdColorName } from "@/features/boulders/holdColors";
@@ -11,49 +13,95 @@ import { LoadingState, ErrorState } from "@/components/States";
 import { dataLabel } from "@/i18n/data";
 import { plural, t } from "@/i18n/i18n";
 
+/** What lights a boulder's holds up on the sector's photo: where its holds are, and its outline, as pictures to draw. */
+interface HoldsLook { holds: string; outline: string | null; backdrop: number }
+
+/** Turns a picture's pixels into a PNG address the page can use. */
+async function pngUrl(data: ImageData): Promise<string> {
+  const canvas = document.createElement("canvas");
+  canvas.width = data.width;
+  canvas.height = data.height;
+  canvas.getContext("2d")!.putImageData(data, 0, 0);
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no picture"))), "image/png"));
+  return URL.createObjectURL(blob);
+}
+
 /**
- * Where a boulder's holds are on its sector's photo, as a mask the browser can draw with: the API's black and white
- * picture turned into transparency (white holds, transparent wall). Read through the API rather than from storage so
- * its pixels can be read; kept for the session, a mask only changes with a new highlight.
+ * A boulder's holds as staff left them in "Highlight the holds": its own mask (read through the API, whose pixels can
+ * be read), softened at the edge as the saved photo is, and the outline they chose drawn from that same mask by the
+ * editor's own code — so the sector's photo shows the holds the way the boulder's photo does. Kept for the session.
  */
-const masks = new Map<string, Promise<string>>();
-function maskUrl(boulderId: string): Promise<string> {
-  let found = masks.get(boulderId);
+const looks = new Map<string, Promise<HoldsLook>>();
+function holdsLook(boulderId: string, settings: string | null | undefined): Promise<HoldsLook> {
+  const key = `${boulderId}|${settings ?? ""}`;
+  let found = looks.get(key);
   if (!found) {
     found = (async () => {
       const blob = await api.blob(`/api/boulders/${boulderId}/holds-on-sector-photo`);
       const bitmap = await createImageBitmap(blob);
+      const { width, height } = bitmap;
       const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("no canvas");
       ctx.drawImage(bitmap, 0, 0);
       bitmap.close?.();
-      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < img.data.length; i += 4) { img.data[i + 3] = img.data[i]!; img.data[i] = img.data[i + 1] = img.data[i + 2] = 255; }
-      ctx.putImageData(img, 0, 0);
-      const alpha = await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no mask"))), "image/png"));
-      return URL.createObjectURL(alpha);
+      const pixels = ctx.getImageData(0, 0, width, height).data;
+      const mask = new Uint8Array(width * height);
+      for (let p = 0; p < mask.length; p++) mask[p] = pixels[p * 4]! >= 128 ? 255 : 0;
+
+      // The holds: white where they keep their colour, the edge softened by a pixel like the saved photo's.
+      const soft = featherMask(mask, width, height, 1);
+      const holds = new ImageData(width, height);
+      for (let p = 0, i = 0; p < soft.length; p++, i += 4) { holds.data[i] = holds.data[i + 1] = holds.data[i + 2] = 255; holds.data[i + 3] = soft[p]!; }
+
+      // The outline, if staff kept it on: drawn by the editor over black and over white, which tells, pixel by pixel,
+      // how much of the line covers it and in what colour.
+      const chosen = readHighlightSettings(settings);
+      let outline: string | null = null;
+      if (chosen?.outline.on) {
+        const c = OUTLINE_COLORS.find((x) => x.key === chosen.outline.color) ?? OUTLINE_COLORS[0]!;
+        const style = { rgb: [...c.rgb] as [number, number, number], width: outlineWidth(chosen.outline.level, width, height) };
+        const onBlack = new Uint8ClampedArray(width * height * 4), onWhite = new Uint8ClampedArray(width * height * 4).fill(255);
+        outlineArea(onBlack, width, height, mask, 0, 0, width, height, style);
+        outlineArea(onWhite, width, height, mask, 0, 0, width, height, style);
+        const line = new ImageData(width, height);
+        for (let i = 0; i < onBlack.length; i += 4) {
+          const cover = 1 - (onWhite[i]! - onBlack[i]!) / 255;
+          if (cover <= 0) continue;
+          line.data[i] = onBlack[i]! / cover;
+          line.data[i + 1] = onBlack[i + 1]! / cover;
+          line.data[i + 2] = onBlack[i + 2]! / cover;
+          line.data[i + 3] = cover * 255;
+        }
+        outline = await pngUrl(line);
+      }
+      return { holds: await pngUrl(holds), outline, backdrop: (chosen?.backdrop ?? 0) / 100 };
     })();
-    found.catch(() => masks.delete(boulderId));
-    masks.set(boulderId, found);
+    found.catch(() => looks.delete(key));
+    looks.set(key, found);
   }
   return found;
 }
 
-function useHoldsMask(boulderId: string | null) {
-  return useQuery({ queryKey: ["holds-on-sector-photo", boulderId], queryFn: () => maskUrl(boulderId!), enabled: !!boulderId, staleTime: Infinity, retry: false });
+function useHoldsLook(boulder: BoulderSummary | null) {
+  return useQuery({
+    queryKey: ["holds-on-sector-photo", boulder?.id, boulder?.holdsOnSectorPhotoLook ?? null],
+    queryFn: () => holdsLook(boulder!.id, boulder!.holdsOnSectorPhotoLook),
+    enabled: !!boulder, staleTime: Infinity, retry: false,
+  });
 }
 
 /**
- * The sector's photo, and one boulder's holds lit up on it: the wall turns black and white and the holds keep their
- * colour, the same look as the boulder's own photo. The photo itself is never read, only shown twice — so it works
- * whatever the storage says about reading it.
+ * The sector's photo, and one boulder's holds lit up on it as on the boulder's own photo: the wall in black and white,
+ * as dark or light as staff set it, the holds in colour, the outline they chose. The photo itself is never read, only
+ * shown in layers — so it works whatever the storage says about reading it.
  */
 function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | null }) {
-  const mask = useHoldsMask(lit?.id ?? null);
-  const on = !!lit && !!mask.data;
+  const look = useHoldsLook(lit);
+  const on = !!lit && !!look.data;
+  const backdrop = look.data?.backdrop ?? 0;
   // The frame takes the photo's own proportions, so the holds drawn over it land exactly on the wall's.
   const [ratio, setRatio] = useState<number | null>(null);
   return (
@@ -61,16 +109,17 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
     <div className={`sector-photo ${on ? "is-lit" : ""}`}>
       <div className="sector-photo__frame" style={ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined}>
         <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-photo__wall"
+          style={on && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
           onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) setRatio(i.naturalWidth / i.naturalHeight); }} />
-        {/* The holds in colour over the black and white wall, with a glow around them that the mask shapes: they stand
-            out whatever their colour, black holds on a dark wall included. */}
+        {/* Lighter: the grey wall mixed with white, as the editor does. */}
+        {on && backdrop > 0 && <span className="sector-photo__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
         {on && (
-          <span className="sector-photo__glow" aria-hidden>
-            <img src={sector.imageUrl!} alt="" className="sector-photo__holds" style={{ WebkitMaskImage: `url(${mask.data})`, maskImage: `url(${mask.data})` }} />
-          </span>
+          <img src={sector.imageUrl!} alt="" aria-hidden className="sector-photo__holds"
+            style={{ WebkitMaskImage: `url(${look.data!.holds})`, maskImage: `url(${look.data!.holds})` }} />
         )}
-        {lit && mask.isPending && <span className="sector-photo__note" role="status">{t("Finding the holds…")}</span>}
-        {lit && mask.isError && <span className="sector-photo__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+        {on && look.data!.outline && <img src={look.data!.outline} alt="" aria-hidden className="sector-photo__outline" />}
+        {lit && look.isPending && <span className="sector-photo__note" role="status">{t("Finding the holds…")}</span>}
+        {lit && look.isError && <span className="sector-photo__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
       </div>
     </div>
   );

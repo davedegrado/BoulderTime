@@ -40,12 +40,17 @@ public sealed class BoulderReader(IAppDbContext db, IObjectStorage storage, ICur
             b.Intensity, tags.GetValueOrDefault(b.Id, []), completions.GetValueOrDefault(b.Id),
             b.Name, PointsOf(scales, b, grades.GetValueOrDefault(b.Id, [])), gyms.GetValueOrDefault(b.GymId)?.LogoUrl,
             projects.Contains(b.Id), NewBoulders.Is(b, now),
-            b.Status == BoulderStatus.Active && b.HighlightMaskPath is not null && b.HighlightSourcePath is not null
-                && b.HighlightSourcePath == sectorPhotos.GetValueOrDefault(b.SectorId)))
+            OnSectorPhoto(b, sectorPhotos.GetValueOrDefault(b.SectorId)),
+            OnSectorPhoto(b, sectorPhotos.GetValueOrDefault(b.SectorId)) ? b.HighlightSettings : null))
             .ToList();
     }
 
     public static readonly RatingSummaryDto NoRatings = new(null, 0);
+
+    /// <summary>On the wall and highlighted on its sector's current photo: its holds can be lit up there.</summary>
+    private static bool OnSectorPhoto(Boulder b, string? sectorPhotoPath) =>
+        b.Status == BoulderStatus.Active && b.HighlightMaskPath is not null && b.HighlightSourcePath is not null
+        && b.HighlightSourcePath == sectorPhotoPath;
 
     /// <summary>
     /// The same number the leaderboard adds up for a send of this boulder. None for a trial boulder: it scores nothing,

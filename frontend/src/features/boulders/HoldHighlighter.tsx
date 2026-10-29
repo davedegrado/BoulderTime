@@ -20,7 +20,7 @@ const UNDO_LIMIT = 12;
 const BRUSH_MIN = 6, BRUSH_MAX = 64, BRUSH_DEFAULT = 22;
 
 /** Colours for the outline: red first (it shows on white and on black walls alike), then a few for walls where it doesn't. */
-const OUTLINE_COLORS = [
+export const OUTLINE_COLORS = [
   { key: "red", hex: "#E0201B", rgb: [224, 32, 27], label: "Red line" },
   { key: "yellow", hex: "#FFD400", rgb: [255, 212, 0], label: "Yellow line" },
   { key: "white", hex: "#FFFFFF", rgb: [255, 255, 255], label: "White line" },

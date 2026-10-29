@@ -32,6 +32,8 @@ export interface BoulderSummary {
   isNew?: boolean;
   /** Highlighted on its sector's current photo: its holds can be lit up there. */
   holdsOnSectorPhoto?: boolean;
+  /** With it, how staff left the highlight (outline, black and white): the editor's settings. */
+  holdsOnSectorPhotoLook?: string | null;
   /** Staff's word on how intense it is, apart from the grade; null when not given. */
   intensity?: Intensity | null;
   tags?: BoulderTag[] | null;
