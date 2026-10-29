@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
-import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, MousePointerClick, Paintbrush, RotateCcw, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, CircleDashed, Eraser, Eye, Hand, Maximize, Moon, MousePointerClick, Paintbrush, RotateCcw, Sun, Undo2, Wand2, X, ZoomIn, ZoomOut } from "lucide-react";
 import { HOLD_COLORS, holdColorName, type HoldColor } from "@/features/boulders/holdColors";
 import { canDetect, compose, composeArea, detectHolds, featherMask, outlineArea, outlineReach, outlineWidth, paintStroke, removeAreaAt, selectHoldAt, type Area, type OutlineStyle } from "@/features/boulders/holdHighlight";
 import { BOULDER_PHOTO, decodeImage } from "@/features/boulders/imageResize";
@@ -51,18 +51,24 @@ function readOutline(): OutlineChoice {
  * A highlight saved with a boulder, to go on from where it was left: the original photo and the mask, fetched when
  * needed, and the choices that were made.
  */
-export interface HighlightResume { load: () => Promise<{ source: Blob; mask: Blob }>; color: HoldColor; outline: OutlineChoice | null }
+export interface HighlightResume { load: () => Promise<{ source: Blob; mask: Blob }>; color: HoldColor; outline: OutlineChoice | null; backdrop?: number }
 
 /** What is handed back with the finished picture, to be saved with the boulder: the mask, the choices, the photo used. */
 export interface HighlightResult { mask: Blob; settings: string; sourceId: string | null }
 
-/** The choices saved with a highlight, as the small JSON object the API keeps. */
-export const highlightSettings = (color: HoldColor, outline: OutlineChoice) => JSON.stringify({ color, outline });
+/**
+ * The choices saved with a highlight, as the small JSON object the API keeps. `backdrop`: how much darker (below 0) or
+ * lighter (above 0) the black and white part is, from -100 to 100; added later, so a value without it is 0.
+ */
+export const highlightSettings = (color: HoldColor, outline: OutlineChoice, backdrop = 0) => JSON.stringify({ color, outline, backdrop });
+
+/** The backdrop slider's range and step, as saved. */
+export const BACKDROP_MIN = -100, BACKDROP_MAX = 100, BACKDROP_STEP = 5;
 
 /** Reads them back; anything unexpected (an older or damaged value) gives null, and the editor starts afresh. */
-export function readHighlightSettings(json: string | null | undefined): { color: HoldColor; outline: OutlineChoice } | null {
+export function readHighlightSettings(json: string | null | undefined): { color: HoldColor; outline: OutlineChoice; backdrop: number } | null {
   try {
-    const v = JSON.parse(json ?? "null") as { color?: unknown; outline?: Partial<OutlineChoice> } | null;
+    const v = JSON.parse(json ?? "null") as { color?: unknown; outline?: Partial<OutlineChoice>; backdrop?: unknown } | null;
     if (!v || !HOLD_COLORS.some((c) => c.value === v.color)) return null;
     const o = v.outline ?? {};
     return {
@@ -72,6 +78,7 @@ export function readHighlightSettings(json: string | null | undefined): { color:
         color: OUTLINE_COLORS.some((c) => c.key === o.color) ? o.color! : OUTLINE_DEFAULT.color,
         level: o.level === 1 || o.level === 2 || o.level === 3 ? o.level : OUTLINE_DEFAULT.level,
       },
+      backdrop: typeof v.backdrop === "number" && Number.isFinite(v.backdrop) ? Math.max(BACKDROP_MIN, Math.min(BACKDROP_MAX, Math.round(v.backdrop))) : 0,
     };
   } catch { return null; }
 }
@@ -167,6 +174,10 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
   const [base, setBase] = useState<Size>({ w: 0, h: 0 });
   const [ring, setRing] = useState<Point | null>(null);
   const [outline, setOutline] = useState<OutlineChoice>(readOutline);
+  // How much darker or lighter the black and white part is, for this boulder: it starts as it always was.
+  const [backdrop, setBackdrop] = useState(resume?.backdrop ?? 0);
+  const backdropRef = useRef(backdrop);
+  backdropRef.current = backdrop;
 
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -231,7 +242,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
    * selection, and never drawn over a picture already outlined.
    */
   function render(w: NonNullable<typeof work.current>, x0: number, y0: number, x1: number, y1: number) {
-    composeArea(w.src.data, w.src.width, w.mask, w.out.data, x0, y0, x1, y1);
+    composeArea(w.src.data, w.src.width, w.mask, w.out.data, x0, y0, x1, y1, backdropRef.current / 100);
     const style = outlineStyle(w.src.width, w.src.height);
     if (style) outlineArea(w.out.data, w.src.width, w.src.height, w.mask, x0, y0, x1, y1, style);
   }
@@ -261,6 +272,13 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
     ctx.putImageData(w.out, 0, 0, x0, y0, x1 - x0, y1 - y0);
   }
   useEffect(() => { showOriginalRef.current = showOriginal; drawAll(); }, [showOriginal, phase.name]);
+  // A darker or lighter backdrop only redraws, once a frame however fast the slider moves.
+  const backdropFrame = useRef(0);
+  useEffect(() => {
+    window.cancelAnimationFrame(backdropFrame.current);
+    backdropFrame.current = window.requestAnimationFrame(() => drawAll());
+    return () => window.cancelAnimationFrame(backdropFrame.current);
+  }, [backdrop]);
   // A new colour, width or switching it off only redraws: the selection stays as it is.
   useEffect(() => {
     drawAll();
@@ -508,7 +526,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
       const { canvas: full, ctx, data } = pixelsOf(picture.image, WORK_SIDE);
       picture.release();
       const out = ctx.createImageData(full.width, full.height);
-      compose(data.data, full.width, full.height, featherMask(w.mask, w.src.width, w.src.height, 1), w.src.width, w.src.height, out.data);
+      compose(data.data, full.width, full.height, featherMask(w.mask, w.src.width, w.src.height, 1), w.src.width, w.src.height, out.data, backdropRef.current / 100);
       // The outline goes into the saved picture as it is shown, from the same mask. Both are made from the photo at the
       // same size, so the mask lies on the picture pixel for pixel.
       const style = outlineStyle(full.width, full.height);
@@ -521,7 +539,7 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
         saved.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Couldn't prepare the picture. Try again.")))), "image/jpeg", BOULDER_PHOTO.quality));
       // Kept with the boulder so the next edit starts from here: the mask as it is now, the colour, the outline.
       const mask = await maskToPng(w.mask, w.src.width, w.src.height);
-      onDone(blob, color, { mask, settings: highlightSettings(color, outlineRef.current), sourceId: resumed.current ? null : sourceId });
+      onDone(blob, color, { mask, settings: highlightSettings(color, outlineRef.current, backdropRef.current), sourceId: resumed.current ? null : sourceId });
     } catch (e) {
       setPhase({ name: "error", message: e instanceof Error && e.message ? e.message : t("Couldn't prepare the picture. Try again.") });
     }
@@ -624,6 +642,14 @@ export function HoldHighlighter({ sources, initialSourceId, initialColor, resume
               <span>{t("Brush size")}</span>
               <input type="range" min={BRUSH_MIN} max={BRUSH_MAX} step={1} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
               <span className="highlighter__dot" aria-hidden style={{ width: brush, height: brush }} />
+            </label>
+            <label className="cropper__zoom highlighter__size highlighter__backdrop">
+              <span>{t("Black and white")}</span>
+              <span className="highlighter__end" aria-hidden><Moon /></span>
+              <input type="range" min={BACKDROP_MIN} max={BACKDROP_MAX} step={BACKDROP_STEP} value={backdrop}
+                aria-valuetext={backdrop === 0 ? t("As it is") : backdrop < 0 ? t("{value}% darker", { value: -backdrop }) : t("{value}% lighter", { value: backdrop })}
+                onChange={(e) => setBackdrop(Number(e.target.value))} onDoubleClick={() => setBackdrop(0)} />
+              <span className="highlighter__end" aria-hidden><Sun /></span>
             </label>
             <div className="highlighter__row">
               <button type="button" className="highlighter__tool" onClick={undo} disabled={undoCount === 0}><Undo2 aria-hidden /> {t("Undo")}</button>

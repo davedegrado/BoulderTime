@@ -1954,3 +1954,7 @@ button.manage-head__back { background: transparent; }
 .new-filter { display: inline-flex; align-items: center; gap: 6px; grid-column: 1 / -1; justify-self: start; }
 .new-filter svg { width: 16px; height: 16px; }
 .new-filter[aria-checked="true"] { background: var(--bt-orange); border-color: var(--bt-orange); color: var(--bt-charcoal); }
+
+/* The black and white part, darker or lighter: a moon and a sun at the slider's ends. */
+.highlighter__backdrop .highlighter__end { display: grid; place-items: center; flex: none; color: var(--bt-ink-3); }
+.highlighter__backdrop .highlighter__end svg { width: 18px; height: 18px; }

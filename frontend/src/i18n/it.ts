@@ -1453,4 +1453,8 @@ export const it: Record<string, string> = {
   "New": "Nuovo",
   "New boulders only": "Solo i nuovi",
   "New boulders": "Blocchi nuovi",
+  "Black and white": "Bianco e nero",
+  "As it is": "Come la foto",
+  "{value}% darker": "{value}% più scuro",
+  "{value}% lighter": "{value}% più chiaro",
 };

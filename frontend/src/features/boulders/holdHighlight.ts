@@ -309,11 +309,25 @@ export function featherMask(mask: Uint8Array, width: number, height: number, rad
   return blur(blur(mask, true), false);
 }
 
+/** How far the backdrop can go towards black or white: never all the way, so the wall still reads behind the holds. */
+const BACKDROP_REACH = 0.75;
+
 /**
- * The result: each pixel between its grey (perceived brightness) and its own colour, as far as the mask says. `mask`
- * may be smaller than the photo (painted on a preview): it is read at the matching place, smoothly.
+ * The grey of the backdrop, made darker (level below 0) or lighter (above 0), from -1 to 1; 0 leaves it as it is. Staff
+ * darken it behind white holds and lighten it behind black ones, so the holds stand out.
  */
-export function compose(src: Uint8ClampedArray, width: number, height: number, mask: Uint8Array, maskWidth: number, maskHeight: number, out: Uint8ClampedArray) {
+export function backdropGrey(grey: number, level: number): number {
+  if (level < 0) return grey * (1 + Math.max(-1, level) * BACKDROP_REACH);
+  if (level > 0) return grey + (255 - grey) * Math.min(1, level) * BACKDROP_REACH;
+  return grey;
+}
+
+/**
+ * The result: each pixel between its grey (perceived brightness, made darker or lighter by `backdrop`) and its own
+ * colour, as far as the mask says. `mask` may be smaller than the photo (painted on a preview): it is read at the
+ * matching place, smoothly.
+ */
+export function compose(src: Uint8ClampedArray, width: number, height: number, mask: Uint8Array, maskWidth: number, maskHeight: number, out: Uint8ClampedArray, backdrop = 0) {
   const sx = maskWidth / width, sy = maskHeight / height;
   const same = maskWidth === width && maskHeight === height;
   for (let y = 0, i = 0; y < height; y++) {
@@ -330,7 +344,7 @@ export function compose(src: Uint8ClampedArray, width: number, height: number, m
         a = (top * (1 - fy) + bottom * fy) / 255;
       }
       const r = src[i]!, g = src[i + 1]!, b = src[i + 2]!;
-      const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+      const grey = backdropGrey(0.299 * r + 0.587 * g + 0.114 * b, backdrop);
       out[i] = grey + (r - grey) * a;
       out[i + 1] = grey + (g - grey) * a;
       out[i + 2] = grey + (b - grey) * a;
@@ -343,12 +357,12 @@ export function compose(src: Uint8ClampedArray, width: number, height: number, m
  * The result over one rectangle only (mask and photo the same size): what a brush stroke changed, redrawn without
  * going over the whole photo, so painting stays smooth on a phone at full resolution.
  */
-export function composeArea(src: Uint8ClampedArray, width: number, mask: Uint8Array, out: Uint8ClampedArray, x0: number, y0: number, x1: number, y1: number) {
+export function composeArea(src: Uint8ClampedArray, width: number, mask: Uint8Array, out: Uint8ClampedArray, x0: number, y0: number, x1: number, y1: number, backdrop = 0) {
   for (let y = y0; y < y1; y++) {
     for (let x = x0, i = (y * width + x0) * 4; x < x1; x++, i += 4) {
       const a = mask[y * width + x]! / 255;
       const r = src[i]!, g = src[i + 1]!, b = src[i + 2]!;
-      const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+      const grey = backdropGrey(0.299 * r + 0.587 * g + 0.114 * b, backdrop);
       out[i] = grey + (r - grey) * a;
       out[i + 1] = grey + (g - grey) * a;
       out[i + 2] = grey + (b - grey) * a;

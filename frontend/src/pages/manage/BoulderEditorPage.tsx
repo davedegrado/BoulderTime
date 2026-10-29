@@ -125,11 +125,11 @@ function BoulderEditor({ initial }: { initial?: ReturnType<typeof useBoulder>["d
   const savedChoices = readHighlightSettings(pendingHighlight?.result.settings ?? savedHighlight?.settings);
   const resume: HighlightResume | null = pendingHighlight && savedChoices
     ? {
-        color: pendingHighlight.color, outline: savedChoices.outline,
+        color: pendingHighlight.color, outline: savedChoices.outline, backdrop: savedChoices.backdrop,
         load: async () => ({ source: await originalOf(pendingHighlight.origin), mask: pendingHighlight.result.mask }),
       }
     : savedHighlight && savedChoices
-      ? { color: savedChoices.color, outline: savedChoices.outline, load: () => fetchHighlight(initial!.id) }
+      ? { color: savedChoices.color, outline: savedChoices.outline, backdrop: savedChoices.backdrop, load: () => fetchHighlight(initial!.id) }
       : null;
 
   async function originalOf(origin: HighlightOrigin): Promise<Blob> {
