@@ -1967,19 +1967,20 @@ button.manage-head__back { background: transparent; }
 .sector-panel .follow-btn { min-height: 40px; padding: 0 var(--bt-3); gap: 6px; font-size: var(--bt-text-sm); white-space: nowrap; }
 .sector-panel .follow-btn svg { width: 16px; height: 16px; stroke-width: 2.6; }
 .sector-panel__hint { margin: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-3); }
-.sector-photo { position: sticky; top: calc(var(--bt-sticky-top) + 56px); z-index: 2; display: flex; justify-content: center; margin: 0 calc(-1 * var(--bt-4)); padding: var(--bt-2) var(--bt-4); background: var(--bt-surface); }
-@media (min-width: 960px) { .sector-photo { top: 56px; } }
-.sector-photo__frame { position: relative; overflow: hidden; border-radius: var(--bt-radius-md); background: var(--bt-surface-2); line-height: 0; }
-.sector-photo__frame { width: 100%; margin: 0 auto; }
-.sector-photo__frame[style] { width: min(100%, calc(38vh * var(--ratio))); aspect-ratio: var(--ratio); }
-.sector-photo__frame img { display: block; width: 100%; height: auto; }
-.sector-photo__frame[style] img { height: 100%; object-fit: cover; }
-.sector-photo__wall { transition: filter 0.2s ease; }
-.sector-photo.is-lit .sector-photo__wall { filter: grayscale(1); }
-.sector-photo__lighten { position: absolute; inset: 0; background: #fff; pointer-events: none; }
-.sector-photo__holds, .sector-photo__outline { position: absolute; inset: 0; width: 100%; height: 100% !important; }
-.sector-photo__holds { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
-.sector-photo__note { position: absolute; left: 8px; bottom: 8px; padding: 4px 10px; border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.85); color: #fff; font-size: var(--bt-text-xs); font-weight: 600; line-height: 1.4; }
+.sector-panel__top { position: sticky; top: calc(var(--bt-sticky-top) + 56px); z-index: 2; display: flex; flex-direction: column; gap: var(--bt-3); margin: calc(-1 * var(--bt-4)) calc(-1 * var(--bt-4)) 0; padding: var(--bt-4) var(--bt-4) var(--bt-2); border-radius: var(--bt-radius-lg) var(--bt-radius-lg) 0 0; background: var(--bt-surface); }
+@media (min-width: 960px) { .sector-panel__top { top: 56px; } }
+.sector-wall { display: flex; justify-content: center; }
+.sector-wall__frame { position: relative; overflow: hidden; border-radius: var(--bt-radius-md); background: var(--bt-surface-2); line-height: 0; }
+.sector-wall__frame { width: 100%; margin: 0 auto; }
+.sector-wall__frame[style] { width: min(100%, calc(38vh * var(--ratio))); aspect-ratio: var(--ratio); }
+.sector-wall__frame img { display: block; width: 100%; height: auto; }
+.sector-wall__frame[style] img { height: 100%; object-fit: cover; }
+.sector-wall__wall { transition: filter 0.2s ease; }
+.sector-wall.is-lit .sector-wall__wall { filter: grayscale(1); }
+.sector-wall__lighten { position: absolute; inset: 0; background: #fff; pointer-events: none; }
+.sector-wall__holds, .sector-wall__outline { position: absolute; inset: 0; width: 100%; height: 100% !important; }
+.sector-wall__holds { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.sector-wall__note { position: absolute; left: 8px; bottom: 8px; padding: 4px 10px; border-radius: var(--bt-radius-pill); background: rgb(26 26 26 / 0.85); color: #fff; font-size: var(--bt-text-xs); font-weight: 600; line-height: 1.4; }
 .sector-panel__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .sector-panel__row { --row-cols: 48px 3.5rem minmax(0, 1fr) 28px 24px; text-decoration: none; color: inherit; }
 .sector-panel__name { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

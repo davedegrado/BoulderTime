@@ -106,20 +106,20 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
   const [ratio, setRatio] = useState<number | null>(null);
   return (
     // Stays in view while the list scrolls under it, so the holds of any boulder tapped show up where they are.
-    <div className={`sector-photo ${on ? "is-lit" : ""}`}>
-      <div className="sector-photo__frame" style={ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined}>
-        <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-photo__wall"
+    <div className={`sector-wall ${on ? "is-lit" : ""}`}>
+      <div className="sector-wall__frame" style={ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined}>
+        <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-wall__wall"
           style={on && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
           onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) setRatio(i.naturalWidth / i.naturalHeight); }} />
         {/* Lighter: the grey wall mixed with white, as the editor does. */}
-        {on && backdrop > 0 && <span className="sector-photo__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
+        {on && backdrop > 0 && <span className="sector-wall__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
         {on && (
-          <img src={sector.imageUrl!} alt="" aria-hidden className="sector-photo__holds"
+          <img src={sector.imageUrl!} alt="" aria-hidden className="sector-wall__holds"
             style={{ WebkitMaskImage: `url(${look.data!.holds})`, maskImage: `url(${look.data!.holds})` }} />
         )}
-        {on && look.data!.outline && <img src={look.data!.outline} alt="" aria-hidden className="sector-photo__outline" />}
-        {lit && look.isPending && <span className="sector-photo__note" role="status">{t("Finding the holds…")}</span>}
-        {lit && look.isError && <span className="sector-photo__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+        {on && look.data!.outline && <img src={look.data!.outline} alt="" aria-hidden className="sector-wall__outline" />}
+        {lit && look.isPending && <span className="sector-wall__note" role="status">{t("Finding the holds…")}</span>}
+        {lit && look.isError && <span className="sector-wall__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
       </div>
     </div>
   );
@@ -138,6 +138,8 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   const boulders = useBoulders(sector.gymId, { sectorId: sector.id }, { sort: "GRADE" });
   const items = boulders.data?.pages.flatMap((p) => p.items) ?? [];
   const total = boulders.data?.pages[0]?.total ?? 0;
+  // Known from the sector before its boulders arrive: never "no boulders" while they load.
+  const count = boulders.data ? total : sector.activeBoulders ?? 0;
   const lit = items.find((b) => b.id === litId) ?? null;
   const ref = useRef<HTMLElement>(null);
   const hasPhoto = !!sector.imageUrl;
@@ -151,13 +153,12 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
     const el = ref.current;
     if (!el) return;
     const page = el.closest<HTMLElement>(".page");
-    let moved = false;
-    const stop = () => { moved = true; };
     const below = () => {
       const tabs = document.querySelector<HTMLElement>(".tabs");
       return tabs ? tabs.offsetHeight + (parseFloat(getComputedStyle(tabs).top) || 0) + 8 : 8;
     };
-    // Room at the foot of the page, enough for the panel's top to reach its place however little follows it.
+    // Room at the foot of the page, enough for the panel's top to reach its place however little follows it yet.
+    // What arrives later (the photo, the boulders) only grows the page under the panel, so it never moves it.
     const fit = () => {
       if (!page) return;
       page.style.paddingBottom = "";
@@ -167,47 +168,37 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
       const need = Math.ceil(window.innerHeight - below() - nav - after);
       if (need > 0) page.style.paddingBottom = `${base + need}px`;
     };
-    const align = () => {
-      if (moved) return;
-      fit();
-      window.requestAnimationFrame(() => {
-        if (!moved && typeof window.scrollTo === "function")
-          window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - below(), behavior: "smooth" });
-      });
-    };
-    align();
-    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(align) : null;
+    fit();
+    // One move, smooth, straight to its place.
+    if (typeof window.scrollTo === "function")
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - below(), behavior: "smooth" });
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
     observer?.observe(el);
-    // Aligned while it settles, not for ever: after that a change in size (a boulder lit) leaves the page where it is.
-    const settled = window.setTimeout(() => observer?.disconnect(), 2500);
-    window.addEventListener("touchstart", stop, { passive: true });
-    window.addEventListener("wheel", stop, { passive: true });
     return () => {
       observer?.disconnect();
-      window.clearTimeout(settled);
       if (page) page.style.paddingBottom = "";
-      window.removeEventListener("touchstart", stop);
-      window.removeEventListener("wheel", stop);
     };
   }, [sector.id]);
 
   return (
     <section ref={ref} className="sector-panel" aria-labelledby="sector-panel-title">
-      <div className="sector-panel__head">
-        <div className="sector-panel__text">
-          <h2 id="sector-panel-title" className="section__title">{sector.name}</h2>
-          <p className="list__sub">{total > 0 ? plural(total, "1 on the wall", "{count} on the wall") : t("No boulders on the wall")}</p>
+      {/* Name, follow, close and the photo stay together at the top while the boulders scroll under them. */}
+      <div className="sector-panel__top">
+        <div className="sector-panel__head">
+          <div className="sector-panel__text">
+            <h2 id="sector-panel-title" className="section__title">{sector.name}</h2>
+            <p className="list__sub">{count > 0 ? plural(count, "1 on the wall", "{count} on the wall") : t("No boulders on the wall")}</p>
+          </div>
+          {signedIn && (
+            <button type="button" className={`btn follow-btn ${sector.isFollowing ? "btn--secondary is-following" : "btn--primary"}`} aria-pressed={sector.isFollowing} onClick={onToggleFollow}>
+              {sector.isFollowing ? <Check aria-hidden /> : <Plus aria-hidden />} {sector.isFollowing ? t("Following") : t("Follow")}
+            </button>
+          )}
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
         </div>
-        {signedIn && (
-          <button type="button" className={`btn follow-btn ${sector.isFollowing ? "btn--secondary is-following" : "btn--primary"}`} aria-pressed={sector.isFollowing} onClick={onToggleFollow}>
-            {sector.isFollowing ? <Check aria-hidden /> : <Plus aria-hidden />} {sector.isFollowing ? t("Following") : t("Follow")}
-          </button>
-        )}
-        <button type="button" className="icon-btn" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
+        {hasPhoto && <SectorPhoto sector={sector} lit={lit} />}
       </div>
       {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
-
-      {hasPhoto && <SectorPhoto sector={sector} lit={lit} />}
       {hasPhoto && onPhoto > 0 && (
         <p className="sector-panel__hint">{lit ? t("Tap it again to see the whole wall.") : t("Tap a boulder to light its holds up on the photo.")}</p>
       )}
