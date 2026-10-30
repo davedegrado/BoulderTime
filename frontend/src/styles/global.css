@@ -2010,15 +2010,19 @@ div.sector-panel__row { display: flex; padding: 0; }
 .sector-panel__more svg { width: 16px; height: 16px; }
 .sector-others { margin: var(--bt-2) 0 0; }
 
-/* Tablets and computers: the sector's photo large on the left, staying in view, and its boulders beside it. */
+/* Tablets and computers: the sector's photo large on the left and its boulders beside it, no taller than the photo
+   (they scroll there). The card ends just under the photo. */
+.sector-panel__side, .sector-panel__scroll { display: flex; flex-direction: column; gap: var(--bt-3); min-width: 0; }
 @media (min-width: 720px) {
   .sector-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--bt-5); row-gap: var(--bt-3); align-items: start; }
   .sector-panel__top { display: contents; }
   .sector-panel__head { grid-column: 1 / -1; }
-  .sector-panel > .sector-wall, .sector-panel__top > .sector-wall { grid-column: 1; grid-row: 2 / span 20; position: sticky; top: calc(var(--bt-sticky-top) + 64px); align-self: start; }
-  .sector-panel > :not(.sector-panel__top) { grid-column: 2; }
+  .sector-panel__top > .sector-wall { grid-column: 1; grid-row: 2; }
   .sector-wall__frame { margin: 0; }
-}
-@media (min-width: 960px) {
-  .sector-panel > .sector-wall, .sector-panel__top > .sector-wall { top: 64px; }
+  .sector-panel__side { grid-column: 2; grid-row: 2; }
+  /* With a photo, the row is as tall as the photo and the list scrolls inside it. */
+  .sector-panel--photo .sector-panel__side { position: relative; align-self: stretch; min-height: 240px; }
+  .sector-panel--photo .sector-panel__scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 2px 2px; }
+  /* No photo yet: the boulders take the whole width. */
+  .sector-panel:not(.sector-panel--photo) .sector-panel__side { grid-column: 1 / -1; }
 }
