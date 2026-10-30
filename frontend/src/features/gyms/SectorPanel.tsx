@@ -146,7 +146,10 @@ function WallLayers({ src, alt, look, size, onRatio, children }: {
 const SLACK = 160;
 
 /** The inline photo is kept small, so the boulders under it stay in sight; a tap shows it full screen. */
-const inlineHeight = () => Math.max(140, window.innerHeight * 0.26);
+const inlineHeight = () => (window.innerWidth >= WIDE ? Math.max(320, window.innerHeight - 220) : Math.max(140, window.innerHeight * 0.26));
+
+/** From this width (a tablet, a computer) the sector's photo sits large on the left and its boulders on the right. */
+const WIDE = 720;
 
 /**
  * The picture at the panel's top: the sector's photo, with the chosen boulder's holds lit up on it when it was
