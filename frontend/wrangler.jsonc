@@ -9,5 +9,8 @@
     // Any path the person opens directly (/gyms/crimp, /activity, a shared boulder link) must load the app,
     // which then routes on the client. Without this, deep links would 404.
     "not_found_handling": "single-page-application"
-  }
+  },
+  // Branch previews (`npx wrangler preview`, run by the builds of branches other than main) need this block, even
+  // empty; the production deploy (`npx wrangler deploy`) ignores it.
+  "previews": {}
 }
