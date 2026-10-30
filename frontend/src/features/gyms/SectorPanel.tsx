@@ -248,6 +248,8 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   const onWall = (b: BoulderSummary) => hasPhoto && !!b.holdsOnSectorPhoto;
   const canPick = (b: BoulderSummary) => onWall(b) || !!b.photoUrl;
   const pickable = items.some(canPick);
+  // Whether there is a photo at the top: the sector's, or the chosen boulder's own.
+  const hasTop = hasPhoto || (!!lit && !onWall(lit) && !!lit.photoUrl);
 
   // Opened from the map, or come back to: always the same place — its name right under the gym's tabs, the photo
   // under it. The photo and the boulders arrive a moment later and push things about, so the panel is aligned again
@@ -317,7 +319,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   }, [sector.id]);
 
   return (
-    <section ref={ref} className="sector-panel" aria-labelledby="sector-panel-title">
+    <section ref={ref} className={`sector-panel${hasTop ? " sector-panel--photo" : ""}`} aria-labelledby="sector-panel-title">
       {/* Name, follow, close and the photo stay together at the top while the boulders scroll under them. */}
       <div className="sector-panel__top">
         <div className="sector-panel__head">
@@ -334,26 +336,31 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
         </div>
         <TopPhoto sector={sector} chosen={lit} onWall={!!lit && onWall(lit)} />
       </div>
-      {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
-      {pickable && (
-        <p className="sector-panel__hint">{lit ? (hasPhoto ? t("Tap it again to see the whole wall.") : t("Tap it again to hide its photo.")) : t("Tap a boulder to see it up here; the arrow opens it.")}</p>
-      )}
+      {/* Beside the photo on a wide screen, no taller than it: the boulders scroll there, as under it on a phone. */}
+      <div className="sector-panel__side">
+        <div className="sector-panel__scroll">
+          {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
+          {pickable && (
+            <p className="sector-panel__hint">{lit ? (hasPhoto ? t("Tap it again to see the whole wall.") : t("Tap it again to hide its photo.")) : t("Tap a boulder to see it up here; the arrow opens it.")}</p>
+          )}
 
-      {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
-        : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
-        : items.length > 0 && (
-          <ul className="sector-panel__list">
-            {items.map((b) => (
-              <li key={b.id}>
-                <PanelRow boulder={b} canPick={canPick(b)} onWall={onWall(b)} lit={b.id === litId}
-                  onLight={() => onLight(litId === b.id ? null : b.id)} showOwnState={signedIn} />
-              </li>
-            ))}
-          </ul>
-        )}
-      {total > items.length && (
-        <button type="button" className="text-btn sector-panel__more" onClick={onShowBoulders}>{t("See all the boulders")} <ChevronRight aria-hidden /></button>
-      )}
+          {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
+            : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
+            : items.length > 0 && (
+              <ul className="sector-panel__list">
+                {items.map((b) => (
+                  <li key={b.id}>
+                    <PanelRow boulder={b} canPick={canPick(b)} onWall={onWall(b)} lit={b.id === litId}
+                      onLight={() => onLight(litId === b.id ? null : b.id)} showOwnState={signedIn} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          {total > items.length && (
+            <button type="button" className="text-btn sector-panel__more" onClick={onShowBoulders}>{t("See all the boulders")} <ChevronRight aria-hidden /></button>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
