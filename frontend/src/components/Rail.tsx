@@ -26,10 +26,15 @@ export function Rail({ children, label }: { children: ReactNode; label?: string 
     return () => ro.disconnect();
   }, [measure]);
 
+  // The fades are drawn over the row, not cut out of it with a mask: Safari on older iPads and iPhones stops painting
+  // the cards of a masked row while it scrolls, leaving empty boxes.
   return (
-    <div ref={ref} className={`rail ${edges.start ? "" : "rail--fade-start"} ${edges.end ? "" : "rail--fade-end"}`}
-      onScroll={measure} role={label ? "region" : undefined} aria-label={label}>
-      {children}
+    <div className="rail-wrap">
+      <div ref={ref} className="rail" onScroll={measure} role={label ? "region" : undefined} aria-label={label}>
+        {children}
+      </div>
+      {!edges.start && <span className="rail-wrap__fade rail-wrap__fade--start" aria-hidden />}
+      {!edges.end && <span className="rail-wrap__fade rail-wrap__fade--end" aria-hidden />}
     </div>
   );
 }

@@ -1106,11 +1106,12 @@ button, .btn, a.btn, .tabs__tab, .chip { touch-action: manipulation; }
 .boulders-toolbar__end { margin-left: auto; }
 
 /* Card rows (Home): cards stop in line with the page margin, and the side with more to see fades out. */
-.rail { scroll-padding-inline: var(--bt-4); --rail-fade-start: #000; --rail-fade-end: #000;
-  -webkit-mask-image: linear-gradient(to right, var(--rail-fade-start) 0, #000 var(--bt-4), #000 calc(100% - 48px), var(--rail-fade-end) 100%);
-  mask-image: linear-gradient(to right, var(--rail-fade-start) 0, #000 var(--bt-4), #000 calc(100% - 48px), var(--rail-fade-end) 100%); }
-.rail--fade-start { --rail-fade-start: transparent; }
-.rail--fade-end { --rail-fade-end: transparent; }
+.rail { scroll-padding-inline: var(--bt-4); }
+.rail-wrap { position: relative; --rail-bleed: var(--bt-4); }
+@media (min-width: 720px) { .rail-wrap { --rail-bleed: 0px; } }
+.rail-wrap__fade { position: absolute; top: 0; bottom: 4px; pointer-events: none; }
+.rail-wrap__fade--start { left: calc(-1 * var(--rail-bleed)); width: max(var(--rail-bleed), 16px); background: linear-gradient(to right, var(--bt-light), transparent); }
+.rail-wrap__fade--end { right: calc(-1 * var(--rail-bleed)); width: 48px; background: linear-gradient(to left, var(--bt-light), transparent); }
 
 /* Choosing the card picture: a still frame shaped like the cards, the photo moving under it. */
 .cropper { position: fixed; inset: 0; z-index: 130; display: flex; flex-direction: column; background: #0d0d0d; color: #fff; padding: var(--bt-safe-top) 0 var(--bt-safe-bottom); }
@@ -2008,3 +2009,16 @@ div.sector-panel__row { display: flex; padding: 0; }
 .sector-panel__more { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
 .sector-panel__more svg { width: 16px; height: 16px; }
 .sector-others { margin: var(--bt-2) 0 0; }
+
+/* Tablets and computers: the sector's photo large on the left, staying in view, and its boulders beside it. */
+@media (min-width: 720px) {
+  .sector-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--bt-5); row-gap: var(--bt-3); align-items: start; }
+  .sector-panel__top { display: contents; }
+  .sector-panel__head { grid-column: 1 / -1; }
+  .sector-panel > .sector-wall, .sector-panel__top > .sector-wall { grid-column: 1; grid-row: 2 / span 20; position: sticky; top: calc(var(--bt-sticky-top) + 64px); align-self: start; }
+  .sector-panel > :not(.sector-panel__top) { grid-column: 2; }
+  .sector-wall__frame { margin: 0; }
+}
+@media (min-width: 960px) {
+  .sector-panel > .sector-wall, .sector-panel__top > .sector-wall { top: 64px; }
+}
