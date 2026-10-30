@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Check, ChevronRight, MountainSnow, Plus, Sparkles, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -143,9 +143,52 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   const hasPhoto = !!sector.imageUrl;
   const onPhoto = hasPhoto ? items.filter((b) => b.holdsOnSectorPhoto).length : 0;
 
-  // Opened from the map, or come back to: brought into view.
-  useEffect(() => {
-    ref.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  // Opened from the map, or come back to: always the same place — its name right under the gym's tabs, the photo
+  // under it. The photo and the boulders arrive a moment later and push things about, so the panel is aligned again
+  // as it grows, until the person scrolls by themselves; and the page keeps enough room under it to get there even
+  // when the sector is short (no photo, no boulders).
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const page = el.closest<HTMLElement>(".page");
+    let moved = false;
+    const stop = () => { moved = true; };
+    const below = () => {
+      const tabs = document.querySelector<HTMLElement>(".tabs");
+      return tabs ? tabs.offsetHeight + (parseFloat(getComputedStyle(tabs).top) || 0) + 8 : 8;
+    };
+    // Room at the foot of the page, enough for the panel's top to reach its place however little follows it.
+    const fit = () => {
+      if (!page) return;
+      page.style.paddingBottom = "";
+      const base = parseFloat(getComputedStyle(page).paddingBottom) || 0;
+      const nav = document.querySelector<HTMLElement>(".app-shell__nav")?.offsetHeight ?? 0;
+      const after = document.documentElement.scrollHeight - (el.getBoundingClientRect().top + window.scrollY);
+      const need = Math.ceil(window.innerHeight - below() - nav - after);
+      if (need > 0) page.style.paddingBottom = `${base + need}px`;
+    };
+    const align = () => {
+      if (moved) return;
+      fit();
+      window.requestAnimationFrame(() => {
+        if (!moved && typeof window.scrollTo === "function")
+          window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - below(), behavior: "smooth" });
+      });
+    };
+    align();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(align) : null;
+    observer?.observe(el);
+    // Aligned while it settles, not for ever: after that a change in size (a boulder lit) leaves the page where it is.
+    const settled = window.setTimeout(() => observer?.disconnect(), 2500);
+    window.addEventListener("touchstart", stop, { passive: true });
+    window.addEventListener("wheel", stop, { passive: true });
+    return () => {
+      observer?.disconnect();
+      window.clearTimeout(settled);
+      if (page) page.style.paddingBottom = "";
+      window.removeEventListener("touchstart", stop);
+      window.removeEventListener("wheel", stop);
+    };
   }, [sector.id]);
 
   return (
