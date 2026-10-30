@@ -1467,4 +1467,5 @@ export const it: Record<string, string> = {
   "Light up the holds of {boulder}": "Illumina le prese di {boulder}",
   "Open {boulder}": "Apri {boulder}",
   "Other sectors": "Altri settori",
+  "Show the photo full screen": "Mostra la foto a tutto schermo",
 };

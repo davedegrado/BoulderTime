@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Check, ChevronRight, MountainSnow, Plus, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Maximize2, MountainSnow, Plus, Sparkles, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { BACKDROP_REACH, featherMask, outlineArea, outlineWidth } from "@/features/boulders/holdHighlight";
@@ -94,20 +95,11 @@ function useHoldsLook(boulder: BoulderSummary | null) {
 }
 
 /**
- * The sector's photo, and one boulder's holds lit up on it as on the boulder's own photo: the wall in black and white,
- * as dark or light as staff set it, the holds in colour, the outline they chose. The photo itself is never read, only
- * shown in layers — so it works whatever the storage says about reading it.
+ * A size for a picture of these proportions in a box: as wide as the box, no taller than `maxHeight()`, in pixels —
+ * so every layer drawn over the photo (the holds, their outline) lands exactly on the wall's. Left to the browser, a
+ * flex box could stretch it to other proportions (Safari did), cropping the photo under a mask that is not.
  */
-function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | null }) {
-  const look = useHoldsLook(lit);
-  const on = !!lit && !!look.data;
-  const backdrop = look.data?.backdrop ?? 0;
-  // The frame is sized here, in pixels, to the photo's own proportions — as wide as there is room for, as tall as a
-  // part of the screen — so every layer drawn over it (the holds, their outline) lands exactly on the wall's. Left to
-  // the browser, a flex box could stretch it to other proportions (Safari did), cropping the photo under a mask that
-  // is not.
-  const box = useRef<HTMLDivElement>(null);
-  const [ratio, setRatio] = useState<number | null>(null);
+function useFitted(box: React.RefObject<HTMLElement>, ratio: number | null, maxHeight: () => number) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   useLayoutEffect(() => {
     const el = box.current;
@@ -115,7 +107,7 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
     const measure = () => {
       const room = el.clientWidth;
       if (!room) return;
-      const h = Math.min(room / ratio, window.innerHeight * 0.38);
+      const h = Math.min(room / ratio, maxHeight());
       setSize({ w: Math.round(h * ratio), h: Math.round(h) });
     };
     measure();
@@ -123,23 +115,84 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
     observer?.observe(el);
     window.addEventListener("resize", measure);
     return () => { observer?.disconnect(); window.removeEventListener("resize", measure); };
-  }, [ratio]);
+  }, [box, ratio, maxHeight]);
+  return size;
+}
+
+/** The wall, and over it the lit boulder's holds as staff left them, at a size given in pixels. */
+function WallLayers({ sector, look, size, onRatio, children }: {
+  sector: Sector; look: HoldsLook | null; size: { w: number; h: number } | null; onRatio: (ratio: number) => void; children?: React.ReactNode;
+}) {
+  const backdrop = look?.backdrop ?? 0;
+  return (
+    <div className="sector-wall__frame" style={size ? { width: size.w, height: size.h } : undefined}>
+      <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-wall__wall"
+        style={look && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
+        onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) onRatio(i.naturalWidth / i.naturalHeight); }} />
+      {/* Lighter: the grey wall mixed with white, as the editor does. */}
+      {look && backdrop > 0 && <span className="sector-wall__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
+      {look && (
+        <img src={sector.imageUrl!} alt="" aria-hidden className="sector-wall__holds"
+          style={{ WebkitMaskImage: `url(${look.holds})`, maskImage: `url(${look.holds})` }} />
+      )}
+      {look?.outline && <img src={look.outline} alt="" aria-hidden className="sector-wall__outline" />}
+      {children}
+    </div>
+  );
+}
+
+/** The inline photo is kept small, so the boulders under it stay in sight; a tap shows it full screen. */
+const inlineHeight = () => Math.max(140, window.innerHeight * 0.26);
+
+/**
+ * The sector's photo, and one boulder's holds lit up on it as on the boulder's own photo: the wall in black and white,
+ * as dark or light as staff set it, the holds in colour, the outline they chose. The photo itself is never read, only
+ * shown in layers — so it works whatever the storage says about reading it.
+ */
+function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | null }) {
+  const look = useHoldsLook(lit);
+  const shown = lit && look.data ? look.data : null;
+  const [ratio, setRatio] = useState<number | null>(null);
+  const [big, setBig] = useState(false);
+  const box = useRef<HTMLButtonElement>(null);
+  const size = useFitted(box, ratio, inlineHeight);
   return (
     // Stays in view while the list scrolls under it, so the holds of any boulder tapped show up where they are.
-    <div ref={box} className={`sector-wall ${on ? "is-lit" : ""}`}>
-      <div className="sector-wall__frame" style={size ? ({ width: size.w, height: size.h } as CSSProperties) : undefined}>
-        <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-wall__wall"
-          style={on && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
-          onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) setRatio(i.naturalWidth / i.naturalHeight); }} />
-        {/* Lighter: the grey wall mixed with white, as the editor does. */}
-        {on && backdrop > 0 && <span className="sector-wall__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
-        {on && (
-          <img src={sector.imageUrl!} alt="" aria-hidden className="sector-wall__holds"
-            style={{ WebkitMaskImage: `url(${look.data!.holds})`, maskImage: `url(${look.data!.holds})` }} />
-        )}
-        {on && look.data!.outline && <img src={look.data!.outline} alt="" aria-hidden className="sector-wall__outline" />}
-        {lit && look.isPending && <span className="sector-wall__note" role="status">{t("Finding the holds…")}</span>}
-        {lit && look.isError && <span className="sector-wall__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+    <>
+      <button ref={box} type="button" className={`sector-wall ${shown ? "is-lit" : ""}`} onClick={() => setBig(true)}
+        aria-label={t("Show the photo full screen")}>
+        <WallLayers sector={sector} look={shown} size={size} onRatio={setRatio}>
+          <span className="sector-wall__enlarge" aria-hidden><Maximize2 /></span>
+          {lit && look.isPending && <span className="sector-wall__note" role="status">{t("Finding the holds…")}</span>}
+          {lit && look.isError && <span className="sector-wall__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+        </WallLayers>
+      </button>
+      {/* Over everything, the tab bar included: opened outside the panel, whose sticky top would keep it under. */}
+      {big && createPortal(<WallViewer sector={sector} look={shown} ratio={ratio} onClose={() => setBig(false)} />, document.body)}
+    </>
+  );
+}
+
+/** The sector's photo full screen, with the same holds lit up, fitted to the screen whole. */
+function WallViewer({ sector, look, ratio, onClose }: { sector: Sector; look: HoldsLook | null; ratio: number | null; onClose: () => void }) {
+  const stage = useRef<HTMLDivElement>(null);
+  const [own, setOwn] = useState<number | null>(ratio);
+  const fullHeight = useCallback(() => stage.current?.clientHeight ?? window.innerHeight, []);
+  const size = useFitted(stage, own, fullHeight);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
+  }, [onClose]);
+  return (
+    <div className={`photo-viewer wall-viewer ${look ? "is-lit" : ""}`} role="dialog" aria-modal="true" aria-label={t("Photo of {sector}", { sector: sector.name })}>
+      <div className="viewer__top">
+        <button type="button" className="viewer__close" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
+      </div>
+      <div ref={stage} className="wall-viewer__stage" onClick={onClose}>
+        <WallLayers sector={sector} look={look} size={size} onRatio={setOwn} />
       </div>
     </div>
   );
