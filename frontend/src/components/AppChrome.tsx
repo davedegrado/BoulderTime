@@ -75,6 +75,9 @@ export function RouteAnnouncer() {
   }, []);
 
   useEffect(() => {
+    // The same screen with a new address (a tab, a filter, a sector opened): it is where the page already is, kept
+    // now, since no scrolling may follow before the person moves on — and back would find nothing to return to.
+    if (navigationType === "REPLACE") rememberScroll(location.key, window.scrollY);
     let frame = 0;
     const save = () => {
       window.cancelAnimationFrame(frame);
@@ -82,7 +85,7 @@ export function RouteAnnouncer() {
     };
     window.addEventListener("scroll", save, { passive: true });
     return () => { window.removeEventListener("scroll", save); window.cancelAnimationFrame(frame); };
-  }, [location.key]);
+  }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const changedScreen = lastPath.current !== location.pathname;

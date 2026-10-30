@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigationType } from "react-router-dom";
 import { Check, ChevronRight, Maximize2, MountainSnow, Plus, Sparkles, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -159,7 +159,7 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
   return (
     // Stays in view while the list scrolls under it, so the holds of any boulder tapped show up where they are.
     <>
-      <button ref={box} type="button" className={`sector-wall ${shown ? "is-lit" : ""}`} onClick={() => setBig(true)}
+      <button ref={box} type="button" className={`sector-wall ${lit ? "is-lit" : ""}`} onClick={() => setBig(true)}
         aria-label={t("Show the photo full screen")}>
         <WallLayers sector={sector} look={shown} size={size} onRatio={setRatio}>
           <span className="sector-wall__enlarge" aria-hidden><Maximize2 /></span>
@@ -215,6 +215,8 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   const count = boulders.data ? total : sector.activeBoulders ?? 0;
   const lit = items.find((b) => b.id === litId) ?? null;
   const ref = useRef<HTMLElement>(null);
+  // Back from a boulder opened here, the page comes back already in place rather than moving to it.
+  const comingBack = useNavigationType() === "POP";
   const hasPhoto = !!sector.imageUrl;
   const onPhoto = hasPhoto ? items.filter((b) => b.holdsOnSectorPhoto).length : 0;
 
@@ -230,25 +232,49 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
       const tabs = document.querySelector<HTMLElement>(".tabs");
       return tabs ? tabs.offsetHeight + (parseFloat(getComputedStyle(tabs).top) || 0) + 8 : 8;
     };
-    // Room at the foot of the page, enough for the panel's top to reach its place however little follows it yet.
-    // What arrives later (the photo, the boulders) only grows the page under the panel, so it never moves it.
+    // Room at the foot of the page, enough for the panel's top to reach its place however short the panel gets: an
+    // empty sector shrinks when "Loading boulders" goes, and a page that gets shorter than the move needs stops it
+    // halfway (Safari does). While it settles the room counts only the panel's top (name and photo); once settled it
+    // shrinks to what the page really needs.
+    // The room is only ever set to its new value, never taken away to be measured again: a page that got shorter for
+    // an instant would stop the move under way.
+    const top = el.querySelector<HTMLElement>(".sector-panel__top");
+    const base = page ? parseFloat(getComputedStyle(page).paddingBottom) || 0 : 0;
+    let extra = 0;
+    let settling = true;
     const fit = () => {
       if (!page) return;
-      page.style.paddingBottom = "";
-      const base = parseFloat(getComputedStyle(page).paddingBottom) || 0;
       const nav = document.querySelector<HTMLElement>(".app-shell__nav")?.offsetHeight ?? 0;
-      const after = document.documentElement.scrollHeight - (el.getBoundingClientRect().top + window.scrollY);
-      const need = Math.ceil(window.innerHeight - below() - nav - after);
-      if (need > 0) page.style.paddingBottom = `${base + need}px`;
+      const panelTop = el.getBoundingClientRect().top + window.scrollY;
+      const content = document.documentElement.scrollHeight - extra;
+      const after = content - panelTop - (settling ? el.offsetHeight - (top?.offsetHeight ?? 0) : 0);
+      const need = Math.max(0, Math.ceil(window.innerHeight - below() - nav - after));
+      if (need === extra) return;
+      extra = need;
+      page.style.paddingBottom = need > 0 ? `${base + need}px` : "";
     };
+    const target = () => el.getBoundingClientRect().top + window.scrollY - below();
+    let moved = false;
+    const stop = () => { moved = true; };
     fit();
-    // One move, smooth, straight to its place.
-    if (typeof window.scrollTo === "function")
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - below(), behavior: "smooth" });
+    // One move, straight to its place: smooth when the sector is chosen, at once when coming back to it (back from a
+    // boulder), so the page doesn't show its top first.
+    if (typeof window.scrollTo === "function") window.scrollTo({ top: target(), behavior: comingBack ? "auto" : "smooth" });
     const observer = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
     observer?.observe(el);
+    window.addEventListener("touchstart", stop, { passive: true });
+    window.addEventListener("wheel", stop, { passive: true });
+    // Settled: if something still stopped the move short and the person hasn't taken over, put it in place.
+    const settle = window.setTimeout(() => {
+      settling = false;
+      if (!moved && typeof window.scrollTo === "function" && Math.abs(window.scrollY - target()) > 2) window.scrollTo({ top: target(), behavior: "auto" });
+      fit();
+    }, 900);
     return () => {
       observer?.disconnect();
+      window.clearTimeout(settle);
+      window.removeEventListener("touchstart", stop);
+      window.removeEventListener("wheel", stop);
       if (page) page.style.paddingBottom = "";
     };
   }, [sector.id]);
