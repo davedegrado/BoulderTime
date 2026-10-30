@@ -102,12 +102,32 @@ function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | nu
   const look = useHoldsLook(lit);
   const on = !!lit && !!look.data;
   const backdrop = look.data?.backdrop ?? 0;
-  // The frame takes the photo's own proportions, so the holds drawn over it land exactly on the wall's.
+  // The frame is sized here, in pixels, to the photo's own proportions — as wide as there is room for, as tall as a
+  // part of the screen — so every layer drawn over it (the holds, their outline) lands exactly on the wall's. Left to
+  // the browser, a flex box could stretch it to other proportions (Safari did), cropping the photo under a mask that
+  // is not.
+  const box = useRef<HTMLDivElement>(null);
   const [ratio, setRatio] = useState<number | null>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el || !ratio) return;
+    const measure = () => {
+      const room = el.clientWidth;
+      if (!room) return;
+      const h = Math.min(room / ratio, window.innerHeight * 0.38);
+      setSize({ w: Math.round(h * ratio), h: Math.round(h) });
+    };
+    measure();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(el);
+    window.addEventListener("resize", measure);
+    return () => { observer?.disconnect(); window.removeEventListener("resize", measure); };
+  }, [ratio]);
   return (
     // Stays in view while the list scrolls under it, so the holds of any boulder tapped show up where they are.
-    <div className={`sector-wall ${on ? "is-lit" : ""}`}>
-      <div className="sector-wall__frame" style={ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined}>
+    <div ref={box} className={`sector-wall ${on ? "is-lit" : ""}`}>
+      <div className="sector-wall__frame" style={size ? ({ width: size.w, height: size.h } as CSSProperties) : undefined}>
         <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-wall__wall"
           style={on && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
           onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) setRatio(i.naturalWidth / i.naturalHeight); }} />
