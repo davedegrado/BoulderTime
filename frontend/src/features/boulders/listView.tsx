@@ -114,9 +114,9 @@ export function ViewToggle({ value, onChange }: { value: BoulderView; onChange: 
 
 /** The climber's own state of a boulder: completed, an open project, tried (not a project), or never tried. */
 type OwnState = "done" | "project" | "tried" | "untried";
-const ownState = (b: BoulderSummary): OwnState =>
+export const ownState = (b: BoulderSummary): OwnState =>
   b.viewer?.completed ? "done" : b.isProject ? "project" : (b.viewer?.attempts ?? 0) > 0 ? "tried" : "untried";
-const STATE_LABEL: Record<OwnState, string | null> = { done: "You completed this", project: "Your project", tried: "Tried, not completed", untried: null };
+export const STATE_LABEL: Record<OwnState, string | null> = { done: "You completed this", project: "Your project", tried: "Tried, not completed", untried: null };
 
 /**
  * One boulder as a row of a compact list: the same places in every row, whatever the boulder has — picture, grade,

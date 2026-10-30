@@ -1989,14 +1989,17 @@ button.manage-head__back { background: transparent; }
 .sector-panel__name { font-size: var(--bt-text-sm); font-weight: 600; color: var(--bt-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sector-panel__go { width: 18px; height: 18px; color: var(--bt-ink-3); justify-self: end; }
 div.sector-panel__row { display: flex; padding: 0; }
-.sector-panel__pick { display: grid; flex: 1; min-width: 0; grid-template-columns: 48px 3.5rem minmax(0, 1fr) 28px 24px; align-items: center; column-gap: var(--bt-2); padding: 8px 0 8px 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.sector-panel__pick { display: grid; flex: 1; min-width: 0; grid-template-columns: 48px 3.5rem minmax(0, 1fr) 28px; align-items: center; column-gap: var(--bt-2); padding: 8px 0 8px 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .sector-panel__pick > * { min-width: 0; }
 .sector-panel__open { display: grid; place-items: center; flex: none; width: 40px; color: var(--bt-ink-3); }
 .sector-panel__open svg { width: 18px; height: 18px; }
-.sector-panel__lamp { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: var(--bt-ink-3); }
-.sector-panel__lamp svg { width: 16px; height: 16px; }
-.sector-panel__lamp.is-on { background: var(--bt-orange); color: var(--bt-charcoal); }
 .sector-panel__row.is-lit { border-color: var(--bt-orange); box-shadow: 0 0 0 2px var(--bt-orange); }
+/* The own-state bar, kept when the row is lit; rows that light up keep its room inside their button. */
+.sector-panel__row--pick.boulder-row--done .sector-panel__pick, .sector-panel__row--pick.boulder-row--project .sector-panel__pick,
+.sector-panel__row--pick.boulder-row--tried .sector-panel__pick, .sector-panel__row--pick.boulder-row--untried .sector-panel__pick { padding-left: 13px; }
+.sector-panel__row.is-lit.boulder-row--done { box-shadow: inset 5px 0 0 var(--bt-success), 0 0 0 2px var(--bt-orange); }
+.sector-panel__row.is-lit.boulder-row--project { box-shadow: inset 5px 0 0 var(--bt-orange), 0 0 0 2px var(--bt-orange); }
+.sector-panel__row.is-lit.boulder-row--tried { box-shadow: inset 5px 0 0 #F5C400, 0 0 0 2px var(--bt-orange); }
 .sector-panel__more { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
 .sector-panel__more svg { width: 16px; height: 16px; }
 .sector-others { margin: var(--bt-2) 0 0; }

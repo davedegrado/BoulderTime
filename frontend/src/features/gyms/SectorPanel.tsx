@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigationType } from "react-router-dom";
-import { Check, ChevronRight, Maximize2, MountainSnow, Plus, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Maximize2, MountainSnow, Plus, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { BACKDROP_REACH, featherMask, outlineArea, outlineWidth } from "@/features/boulders/holdHighlight";
 import { OUTLINE_COLORS, readHighlightSettings } from "@/features/boulders/HoldHighlighter";
 import { useBoulders, type BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge, HoldIcon } from "@/features/boulders/BoulderBits";
+import { ownState, STATE_LABEL } from "@/features/boulders/listView";
 import { holdColorName } from "@/features/boulders/holdColors";
 import type { Sector } from "@/features/gyms/api";
 import { LoadingState, ErrorState } from "@/components/States";
@@ -309,7 +310,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
             {items.map((b) => (
               <li key={b.id}>
                 <PanelRow boulder={b} canLight={hasPhoto && !!b.holdsOnSectorPhoto} lit={b.id === litId}
-                  onLight={() => onLight(litId === b.id ? null : b.id)} />
+                  onLight={() => onLight(litId === b.id ? null : b.id)} showOwnState={signedIn} />
               </li>
             ))}
           </ul>
@@ -322,8 +323,13 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
 }
 
 /** One boulder of the panel: a tap lights its holds up (when it can), and the arrow opens it. */
-function PanelRow({ boulder, canLight, lit, onLight }: { boulder: BoulderSummary; canLight: boolean; lit: boolean; onLight: () => void }) {
+function PanelRow({ boulder, canLight, lit, onLight, showOwnState }: {
+  boulder: BoulderSummary; canLight: boolean; lit: boolean; onLight: () => void; showOwnState: boolean;
+}) {
   const primary = boulder.grades[0];
+  // The climber's own state as a bar on the row's left edge, as in the gym's list of boulders.
+  const state = showOwnState ? ownState(boulder) : null;
+  const stateClass = state ? ` boulder-row--${state}` : "";
   const holds = t("{colour} holds", { colour: holdColorName(boulder.holdColor) });
   const name = boulder.name?.trim() || null;
   const cells = (
@@ -335,15 +341,14 @@ function PanelRow({ boulder, canLight, lit, onLight }: { boulder: BoulderSummary
       <span className="boulder-row__grade">{primary ? <GradeBadge grade={primary} size="sm" /> : <span className="boulder-row__none" aria-hidden>–</span>}</span>
       <span className="sector-panel__name">{name ?? holds}</span>
       <span className="boulder-row__holds" aria-hidden><HoldIcon color={boulder.holdColor} /></span>
-      {canLight && <span className={`sector-panel__lamp ${lit ? "is-on" : ""}`} aria-hidden><Sparkles /></span>}
     </>
   );
-  const label = [primary ? dataLabel(primary.label) : t("Ungraded"), name, holds].filter(Boolean).join(", ");
+  const label = [primary ? dataLabel(primary.label) : t("Ungraded"), name, holds, state && STATE_LABEL[state] ? t(STATE_LABEL[state]!) : null].filter(Boolean).join(", ");
   if (!canLight) {
-    return <Link to={`/boulders/${boulder.id}`} className="boulder-row sector-panel__row" aria-label={label}>{cells}<ChevronRight aria-hidden className="sector-panel__go" /></Link>;
+    return <Link to={`/boulders/${boulder.id}`} className={`boulder-row sector-panel__row${stateClass}`} aria-label={label}>{cells}<ChevronRight aria-hidden className="sector-panel__go" /></Link>;
   }
   return (
-    <div className={`boulder-row sector-panel__row ${lit ? "is-lit" : ""}`}>
+    <div className={`boulder-row sector-panel__row sector-panel__row--pick${stateClass} ${lit ? "is-lit" : ""}`}>
       <button type="button" className="sector-panel__pick" aria-pressed={lit} onClick={onLight}
         aria-label={lit ? t("{boulder}: holds lit up on the photo", { boulder: label }) : t("Light up the holds of {boulder}", { boulder: label })}>
         {cells}
