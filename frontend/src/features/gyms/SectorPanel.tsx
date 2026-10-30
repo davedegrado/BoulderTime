@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { BACKDROP_REACH, featherMask, outlineArea, outlineWidth } from "@/features/boulders/holdHighlight";
 import { OUTLINE_COLORS, readHighlightSettings } from "@/features/boulders/HoldHighlighter";
-import { useBoulders, type BoulderSummary } from "@/features/boulders/api";
+import { useBoulder, useBoulders, type BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge, HoldIcon } from "@/features/boulders/BoulderBits";
 import { ownState, STATE_LABEL } from "@/features/boulders/listView";
 import { holdColorName } from "@/features/boulders/holdColors";
@@ -120,20 +120,20 @@ function useFitted(box: React.RefObject<HTMLElement>, ratio: number | null, maxH
   return size;
 }
 
-/** The wall, and over it the lit boulder's holds as staff left them, at a size given in pixels. */
-function WallLayers({ sector, look, size, onRatio, children }: {
-  sector: Sector; look: HoldsLook | null; size: { w: number; h: number } | null; onRatio: (ratio: number) => void; children?: React.ReactNode;
+/** A photo, and over it the lit boulder's holds as staff left them (on the sector's photo only), at a size in pixels. */
+function WallLayers({ src, alt, look, size, onRatio, children }: {
+  src: string; alt: string; look: HoldsLook | null; size: { w: number; h: number } | null; onRatio: (ratio: number) => void; children?: React.ReactNode;
 }) {
   const backdrop = look?.backdrop ?? 0;
   return (
     <div className="sector-wall__frame" style={size ? { width: size.w, height: size.h } : undefined}>
-      <img src={sector.imageUrl!} alt={t("Photo of {sector}", { sector: sector.name })} className="sector-wall__wall"
+      <img src={src} alt={alt} className="sector-wall__wall"
         style={look && backdrop < 0 ? { filter: `grayscale(1) brightness(${1 + backdrop * BACKDROP_REACH})` } : undefined}
         onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) onRatio(i.naturalWidth / i.naturalHeight); }} />
       {/* Lighter: the grey wall mixed with white, as the editor does. */}
       {look && backdrop > 0 && <span className="sector-wall__lighten" aria-hidden style={{ opacity: backdrop * BACKDROP_REACH }} />}
       {look && (
-        <img src={sector.imageUrl!} alt="" aria-hidden className="sector-wall__holds"
+        <img src={src} alt="" aria-hidden className="sector-wall__holds"
           style={{ WebkitMaskImage: `url(${look.holds})`, maskImage: `url(${look.holds})` }} />
       )}
       {look?.outline && <img src={look.outline} alt="" aria-hidden className="sector-wall__outline" />}
@@ -142,40 +142,61 @@ function WallLayers({ sector, look, size, onRatio, children }: {
   );
 }
 
+/** Room kept under an open panel beyond what reaching its place needs (see the panel's room). */
+const SLACK = 160;
+
 /** The inline photo is kept small, so the boulders under it stay in sight; a tap shows it full screen. */
 const inlineHeight = () => Math.max(140, window.innerHeight * 0.26);
 
 /**
- * The sector's photo, and one boulder's holds lit up on it as on the boulder's own photo: the wall in black and white,
- * as dark or light as staff set it, the holds in colour, the outline they chose. The photo itself is never read, only
- * shown in layers — so it works whatever the storage says about reading it.
+ * The picture at the panel's top: the sector's photo, with the chosen boulder's holds lit up on it when it was
+ * highlighted there; or, for a boulder whose photo is its own, that photo in its place, said so. The photo itself is
+ * never read, only shown in layers — so it works whatever the storage says about reading it.
  */
-function SectorPhoto({ sector, lit }: { sector: Sector; lit: BoulderSummary | null }) {
-  const look = useHoldsLook(lit);
-  const shown = lit && look.data ? look.data : null;
+function TopPhoto({ sector, chosen, onWall }: { sector: Sector; chosen: BoulderSummary | null; onWall: boolean }) {
+  const look = useHoldsLook(onWall ? chosen : null);
+  // A boulder's own photo: its full one, from its page's data (the list only has its card picture, shown meanwhile).
+  const own = useBoulder(chosen && !onWall ? chosen.id : undefined);
+  const ownPhoto = chosen && !onWall ? own.data?.photoUrl ?? chosen.photoUrl : null;
+  const src = ownPhoto ?? sector.imageUrl;
+  if (!src) return null;
+  const alt = ownPhoto ? t("Photo of the boulder") : t("Photo of {sector}", { sector: sector.name });
+  const shown = onWall && chosen && look.data ? look.data : null;
+  return (
+    <FramedPhoto key={src} src={src} alt={alt} look={shown} grey={onWall && !!chosen}>
+      {ownPhoto && <span className="sector-wall__tag">{t("Photo of the boulder")}</span>}
+      {onWall && chosen && look.isPending && <span className="sector-wall__note" role="status">{t("Finding the holds…")}</span>}
+      {onWall && chosen && look.isError && <span className="sector-wall__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+    </FramedPhoto>
+  );
+}
+
+/** One photo at the panel's top, sized to its own proportions; a tap shows it full screen. */
+function FramedPhoto({ src, alt, look, grey, children }: { src: string; alt: string; look: HoldsLook | null; grey: boolean; children?: React.ReactNode }) {
   const [ratio, setRatio] = useState<number | null>(null);
   const [big, setBig] = useState(false);
   const box = useRef<HTMLButtonElement>(null);
   const size = useFitted(box, ratio, inlineHeight);
   return (
-    // Stays in view while the list scrolls under it, so the holds of any boulder tapped show up where they are.
+    // Stays in view while the list scrolls under it, so whatever boulder is tapped shows up there.
     <>
-      <button ref={box} type="button" className={`sector-wall ${lit ? "is-lit" : ""}`} onClick={() => setBig(true)}
+      <button ref={box} type="button" className={`sector-wall ${grey ? "is-lit" : ""}`} onClick={() => setBig(true)}
         aria-label={t("Show the photo full screen")}>
-        <WallLayers sector={sector} look={shown} size={size} onRatio={setRatio}>
+        <WallLayers src={src} alt={alt} look={look} size={size} onRatio={setRatio}>
           <span className="sector-wall__enlarge" aria-hidden><Maximize2 /></span>
-          {lit && look.isPending && <span className="sector-wall__note" role="status">{t("Finding the holds…")}</span>}
-          {lit && look.isError && <span className="sector-wall__note" role="status">{t("The holds of this boulder can't be shown on the photo.")}</span>}
+          {children}
         </WallLayers>
       </button>
       {/* Over everything, the tab bar included: opened outside the panel, whose sticky top would keep it under. */}
-      {big && createPortal(<WallViewer sector={sector} look={shown} ratio={ratio} onClose={() => setBig(false)} />, document.body)}
+      {big && createPortal(<WallViewer src={src} alt={alt} look={look} grey={grey} ratio={ratio} onClose={() => setBig(false)} />, document.body)}
     </>
   );
 }
 
-/** The sector's photo full screen, with the same holds lit up, fitted to the screen whole. */
-function WallViewer({ sector, look, ratio, onClose }: { sector: Sector; look: HoldsLook | null; ratio: number | null; onClose: () => void }) {
+/** A photo full screen, with the same holds lit up, fitted to the screen whole. */
+function WallViewer({ src, alt, look, grey, ratio, onClose }: {
+  src: string; alt: string; look: HoldsLook | null; grey: boolean; ratio: number | null; onClose: () => void;
+}) {
   const stage = useRef<HTMLDivElement>(null);
   const [own, setOwn] = useState<number | null>(ratio);
   const fullHeight = useCallback(() => stage.current?.clientHeight ?? window.innerHeight, []);
@@ -188,12 +209,12 @@ function WallViewer({ sector, look, ratio, onClose }: { sector: Sector; look: Ho
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
   }, [onClose]);
   return (
-    <div className={`photo-viewer wall-viewer ${look ? "is-lit" : ""}`} role="dialog" aria-modal="true" aria-label={t("Photo of {sector}", { sector: sector.name })}>
+    <div className={`photo-viewer wall-viewer ${grey ? "is-lit" : ""}`} role="dialog" aria-modal="true" aria-label={alt}>
       <div className="viewer__top">
         <button type="button" className="viewer__close" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
       </div>
       <div ref={stage} className="wall-viewer__stage" onClick={onClose}>
-        <WallLayers sector={sector} look={look} size={size} onRatio={setOwn} />
+        <WallLayers src={src} alt={alt} look={look} size={size} onRatio={setOwn} />
       </div>
     </div>
   );
@@ -219,7 +240,11 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   // Back from a boulder opened here, the page comes back already in place rather than moving to it.
   const comingBack = useNavigationType() === "POP";
   const hasPhoto = !!sector.imageUrl;
-  const onPhoto = hasPhoto ? items.filter((b) => b.holdsOnSectorPhoto).length : 0;
+  // A tap shows the boulder at the top: its holds lit up on the sector's photo when it was highlighted there, its own
+  // photo otherwise. Only a boulder with neither (no photo at all) just opens.
+  const onWall = (b: BoulderSummary) => hasPhoto && !!b.holdsOnSectorPhoto;
+  const canPick = (b: BoulderSummary) => onWall(b) || !!b.photoUrl;
+  const pickable = items.some(canPick);
 
   // Opened from the map, or come back to: always the same place — its name right under the gym's tabs, the photo
   // under it. The photo and the boulders arrive a moment later and push things about, so the panel is aligned again
@@ -243,14 +268,21 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
     const base = page ? parseFloat(getComputedStyle(page).paddingBottom) || 0 : 0;
     let extra = 0;
     let settling = true;
+    // The one moment the room may shrink after settling: right then, to what the page really needs.
+    let resized = false;
     const fit = () => {
       if (!page) return;
       const nav = document.querySelector<HTMLElement>(".app-shell__nav")?.offsetHeight ?? 0;
       const panelTop = el.getBoundingClientRect().top + window.scrollY;
       const content = document.documentElement.scrollHeight - extra;
       const after = content - panelTop - (settling ? el.offsetHeight - (top?.offsetHeight ?? 0) : 0);
-      const need = Math.max(0, Math.ceil(window.innerHeight - below() - nav - after));
-      if (need === extra) return;
+      // Plus a margin, so that the panel getting a little shorter (a hint going from two lines to one, a photo
+      // briefly smaller) never makes the page shorter than where the person is, which would pull it up.
+      const need = Math.max(0, Math.ceil(window.innerHeight - below() - nav - after)) + SLACK;
+      // Once settled the room only grows: a photo at the top briefly shorter (one boulder's replacing another's) must
+      // not make the page shorter under the person, which would pull it up.
+      if (need === extra || (!settling && !resized && need < extra)) return;
+      resized = false;
       extra = need;
       page.style.paddingBottom = need > 0 ? `${base + need}px` : "";
     };
@@ -269,6 +301,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
     const settle = window.setTimeout(() => {
       settling = false;
       if (!moved && typeof window.scrollTo === "function" && Math.abs(window.scrollY - target()) > 2) window.scrollTo({ top: target(), behavior: "auto" });
+      resized = true;
       fit();
     }, 900);
     return () => {
@@ -296,11 +329,11 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
           )}
           <button type="button" className="icon-btn" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
         </div>
-        {hasPhoto && <SectorPhoto sector={sector} lit={lit} />}
+        <TopPhoto sector={sector} chosen={lit} onWall={!!lit && onWall(lit)} />
       </div>
       {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
-      {hasPhoto && onPhoto > 0 && (
-        <p className="sector-panel__hint">{lit ? t("Tap it again to see the whole wall.") : t("Tap a boulder to light its holds up on the photo.")}</p>
+      {pickable && (
+        <p className="sector-panel__hint">{lit ? (hasPhoto ? t("Tap it again to see the whole wall.") : t("Tap it again to hide its photo.")) : t("Tap a boulder to see it up here; the arrow opens it.")}</p>
       )}
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
@@ -309,7 +342,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
           <ul className="sector-panel__list">
             {items.map((b) => (
               <li key={b.id}>
-                <PanelRow boulder={b} canLight={hasPhoto && !!b.holdsOnSectorPhoto} lit={b.id === litId}
+                <PanelRow boulder={b} canPick={canPick(b)} onWall={onWall(b)} lit={b.id === litId}
                   onLight={() => onLight(litId === b.id ? null : b.id)} showOwnState={signedIn} />
               </li>
             ))}
@@ -322,9 +355,9 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
   );
 }
 
-/** One boulder of the panel: a tap lights its holds up (when it can), and the arrow opens it. */
-function PanelRow({ boulder, canLight, lit, onLight, showOwnState }: {
-  boulder: BoulderSummary; canLight: boolean; lit: boolean; onLight: () => void; showOwnState: boolean;
+/** One boulder of the panel: a tap shows it at the top (its holds on the wall, or its own photo), and the arrow opens it. */
+function PanelRow({ boulder, canPick, onWall, lit, onLight, showOwnState }: {
+  boulder: BoulderSummary; canPick: boolean; onWall: boolean; lit: boolean; onLight: () => void; showOwnState: boolean;
 }) {
   const primary = boulder.grades[0];
   // The climber's own state as a bar on the row's left edge, as in the gym's list of boulders.
@@ -344,13 +377,15 @@ function PanelRow({ boulder, canLight, lit, onLight, showOwnState }: {
     </>
   );
   const label = [primary ? dataLabel(primary.label) : t("Ungraded"), name, holds, state && STATE_LABEL[state] ? t(STATE_LABEL[state]!) : null].filter(Boolean).join(", ");
-  if (!canLight) {
+  if (!canPick) {
     return <Link to={`/boulders/${boulder.id}`} className={`boulder-row sector-panel__row${stateClass}`} aria-label={label}>{cells}<ChevronRight aria-hidden className="sector-panel__go" /></Link>;
   }
   return (
     <div className={`boulder-row sector-panel__row sector-panel__row--pick${stateClass} ${lit ? "is-lit" : ""}`}>
       <button type="button" className="sector-panel__pick" aria-pressed={lit} onClick={onLight}
-        aria-label={lit ? t("{boulder}: holds lit up on the photo", { boulder: label }) : t("Light up the holds of {boulder}", { boulder: label })}>
+        aria-label={onWall
+          ? (lit ? t("{boulder}: holds lit up on the photo", { boulder: label }) : t("Light up the holds of {boulder}", { boulder: label }))
+          : (lit ? t("{boulder}: its photo shown", { boulder: label }) : t("Show the photo of {boulder}", { boulder: label }))}>
         {cells}
       </button>
       <Link to={`/boulders/${boulder.id}`} className="sector-panel__open" aria-label={t("Open {boulder}", { boulder: label })}><ChevronRight aria-hidden /></Link>

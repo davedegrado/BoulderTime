@@ -1468,4 +1468,9 @@ export const it: Record<string, string> = {
   "Open {boulder}": "Apri {boulder}",
   "Other sectors": "Altri settori",
   "Show the photo full screen": "Mostra la foto a tutto schermo",
+  "Photo of the boulder": "Foto del blocco",
+  "Tap it again to hide its photo.": "Toccalo di nuovo per nascondere la sua foto.",
+  "Tap a boulder to see it up here; the arrow opens it.": "Tocca un blocco per vederlo qui sopra; la freccia lo apre.",
+  "{boulder}: its photo shown": "{boulder}: foto mostrata",
+  "Show the photo of {boulder}": "Mostra la foto di {boulder}",
 };
