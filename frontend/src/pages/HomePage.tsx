@@ -1,7 +1,7 @@
 import { Rail } from "@/components/Rail";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Compass, Heart, Plus, ShieldCheck, Target, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Compass, Heart, Target, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { useCurrentUser } from "@/features/users/api";
 import { useHome, type HomeGym } from "@/features/climbing/api";
@@ -15,7 +15,6 @@ import { errorMessage } from "@/lib/apiError";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
 import { GymAvatar } from "@/components/GymAvatar";
 import { Logo } from "@/components/Logo";
-import { roleLabel } from "@/lib/format";
 import { plural, t } from "@/i18n/i18n";
 import { GymBadges } from "@/features/gyms/GymBadges";
 
@@ -149,39 +148,6 @@ function SignedInHome() {
         </section>
       )}
 
-      {(user.staffGyms.length > 0 || user.isPlatformAdmin) && (
-        <section aria-labelledby="work-title" className="section">
-          <h2 id="work-title" className="section__title">{t("Gyms you manage")}</h2>
-          <ul className="list">
-            {user.staffGyms.map((g) => (
-              <li key={g.gymId}>
-                <Link to={`/manage/${g.slug}`} className="list__row list__row--link">
-                  <GymAvatar name={g.name} logoUrl={g.logoUrl} size={36} />
-                  <div className="list__main">
-                    <p className="list__title">{g.name}</p>
-                    <p className="list__sub">{roleLabel[g.role]} · {g.city}</p>
-                  </div>
-                  <ChevronRight className="list__chevron" aria-hidden />
-                </Link>
-              </li>
-            ))}
-            {user.isPlatformAdmin && (
-              <li>
-                <Link to="/admin" className="list__row list__row--link">
-                  <span className="list__badge-icon"><ShieldCheck aria-hidden /></span>
-                  <div className="list__main">
-                    <p className="list__title">{t("BoulderTime admin")}</p>
-                    <p className="list__sub">{t("Gyms, suggestions and users")}</p>
-                  </div>
-                  <ChevronRight className="list__chevron" aria-hidden />
-                </Link>
-              </li>
-            )}
-          </ul>
-        </section>
-      )}
-
-      <Link to="/gyms/suggest" className="btn btn--ghost"><Plus aria-hidden /><span>{t("Suggest a gym")}</span></Link>
     </div>
   );
 }
