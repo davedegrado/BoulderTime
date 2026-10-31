@@ -2026,3 +2026,45 @@ div.sector-panel__row { display: flex; padding: 0; }
   /* No photo yet: the boulders take the whole width. */
   .sector-panel:not(.sector-panel--photo) .sector-panel__side { grid-column: 1 / -1; }
 }
+
+/* ---------- Boulder list: compact toolbar, quick filters, and the filter and sort sheets ---------- */
+.tool-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 var(--bt-3); flex-shrink: 0; white-space: nowrap; }
+.tool-btn svg { width: 16px; height: 16px; flex: none; }
+.filter-toggle.is-active { border-color: var(--bt-orange); background: var(--bt-orange-tint); color: var(--bt-orange-ink); }
+/* A narrow phone keeps everything on one row (staff have one more button): the two buttons go down to their icons. */
+@media (max-width: 389px) { .boulders-toolbar--one .tool-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .boulders-toolbar--one .tool-btn { padding: 0 10px; } }
+@media (max-width: 439px) { .boulders-toolbar--staff .tool-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .boulders-toolbar--staff .tool-btn { padding: 0 10px; } }
+.boulders-toolbar--one .boulders-toolbar__count { min-width: 3.5em; }
+.quick-filters { display: flex; align-items: center; gap: var(--bt-2); flex-wrap: wrap; }
+.quick-filters__status { flex: 1 1 220px; max-width: 360px; margin-bottom: 0; }
+.quick-filters .new-filter { min-height: 38px; }
+
+.options-sheet-backdrop { z-index: 125; }
+.options-sheet { max-height: min(88vh, 760px); padding: var(--bt-2) 0 0; gap: 0; }
+.options-sheet__grip { align-self: center; width: 40px; height: 5px; margin-bottom: var(--bt-2); border-radius: 3px; background: var(--bt-line); }
+.options-sheet__head { display: flex; align-items: center; justify-content: space-between; gap: var(--bt-2); padding: 0 var(--bt-4) var(--bt-2); }
+.options-sheet__head .section__title { margin: 0; }
+.options-sheet__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: var(--bt-4); padding: var(--bt-2) var(--bt-4) var(--bt-4); }
+.options-sheet__foot { display: flex; gap: var(--bt-2); padding: var(--bt-3) var(--bt-4) calc(var(--bt-3) + var(--bt-safe-bottom)); border-top: 1px solid var(--bt-line); background: var(--bt-surface); }
+.options-sheet__foot .btn { flex: 1; }
+.options-sheet__foot .btn--secondary { flex: 0 0 auto; padding: 0 var(--bt-5); }
+.options-sheet__group { display: flex; flex-direction: column; gap: var(--bt-2); }
+.options-sheet__group .segmented { margin-bottom: 0; }
+.options-sheet .boulder-filters { grid-template-columns: 1fr; }
+.options-sheet .boulder-filters .field:first-child { grid-column: auto; }
+.options-sheet .advanced-search__body .boulder-filters { grid-template-columns: 1fr 1fr; }
+.toggle-row__icon { width: 16px; height: 16px; vertical-align: -2px; color: var(--bt-orange); }
+@media (min-width: 720px) {
+  .options-sheet-backdrop { align-items: center; justify-content: center; }
+  .options-sheet { max-width: 520px; border-radius: var(--bt-radius-lg); }
+  .options-sheet__grip { display: none; }
+  .options-sheet__head { padding-top: var(--bt-2); }
+}
+
+.radio-list { display: flex; flex-direction: column; gap: 2px; }
+.radio-list + .radio-list { padding-top: var(--bt-3); border-top: 1px solid var(--bt-line); }
+.radio-row { display: flex; align-items: center; gap: var(--bt-3); min-height: 46px; padding: 0 var(--bt-2); border: 0; border-radius: var(--bt-radius-md); background: none; color: var(--bt-ink); font: inherit; font-size: var(--bt-text-md, 1rem); text-align: left; cursor: pointer; }
+.radio-row:active { background: var(--bt-surface-2); }
+.radio-row__dot { flex: none; width: 22px; height: 22px; border: 2px solid var(--bt-line); border-radius: 50%; box-sizing: border-box; }
+.radio-row[aria-checked="true"] .radio-row__dot { border: 6px solid var(--bt-orange); }
+.radio-row__hint { margin-left: auto; color: var(--bt-ink-3); font-size: var(--bt-text-sm); }

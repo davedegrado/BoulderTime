@@ -1,9 +1,11 @@
 import type { Sector } from "@/features/gyms/api";
 import type { GradeSystem } from "@/features/grading/api";
-import type { BoulderFilters as Filters, ProgressFilter } from "@/features/boulders/api";
+import { useBoulders, type BoulderFilters as Filters, type ProgressFilter } from "@/features/boulders/api";
+import type { BoulderSort } from "@/features/boulders/listView";
 import { useAuth } from "@/auth/AuthProvider";
 import { holdLabel, HOLD_COLORS, type HoldColor } from "@/features/boulders/holdColors";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { SearchField } from "@/components/SearchField";
 import { SelectField } from "@/components/Fields";
@@ -36,9 +38,6 @@ export function BoulderFiltersBar({ filters, onChange, sectors, systems, tags = 
 
   return (
     <div className="boulder-filters">
-      <button type="button" role="switch" aria-checked={!!filters.isNew} className="chip new-filter" onClick={() => set({ isNew: filters.isNew ? undefined : true })}>
-        <Sparkles aria-hidden /> {t("New boulders only")}
-      </button>
       <SelectField label={t("Sector")} value={filters.sectorId ?? ""} onChange={(e) => set({ sectorId: e.target.value || undefined })}
         options={[{ value: "", label: t("All sectors") }, ...sectors.filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))]} />
       <SelectField label={t("Grade")} value={filters.gradeValueId ?? ""} onChange={(e) => set({ gradeValueId: e.target.value || undefined })} options={gradeOptions} />
@@ -111,7 +110,6 @@ export interface ActiveFilter { id: string; label: string; clear: (f: Filters) =
 export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSystem[], tags: GymTag[] = []): ActiveFilter[] {
   const out: ActiveFilter[] = [];
   const drop = (key: keyof Filters) => (x: Filters) => ({ ...x, [key]: undefined });
-  if (f.isNew) out.push({ id: "isNew", label: t("New boulders"), clear: drop("isNew") });
   if (f.sectorId) out.push({ id: "sectorId", label: sectors.find((s) => s.id === f.sectorId)?.name ?? t("Sector"), clear: drop("sectorId") });
   if (f.gradeValueId) {
     const value = systems.flatMap((s) => s.values).find((v) => v.id === f.gradeValueId);
@@ -128,52 +126,120 @@ export function activeFilters(f: Filters, sectors: Sector[], systems: GradeSyste
   return out;
 }
 
-/** The "Filters" button: the filters wait behind it, and it counts the ones in use. */
-export function FiltersToggle({ open, count, onToggle }: { open: boolean; count: number; onToggle: () => void }) {
+/** The "Filters" button: the filters wait behind it, in a sheet, and it counts the ones in use. */
+export function FiltersButton({ count, onClick }: { count: number; onClick: () => void }) {
   return (
-    <button type="button" className={`chip filter-toggle ${count ? "is-active" : ""}`} aria-expanded={open} aria-controls="boulder-filters" onClick={onToggle}>
-      <SlidersHorizontal aria-hidden /> {t("Filters")}{count > 0 && <span className="filter-toggle__count">{count}</span>}
+    <button type="button" className={`chip tool-btn filter-toggle ${count ? "is-active" : ""}`} aria-haspopup="dialog" onClick={onClick}
+      aria-label={count ? t("Filters ({count} in use)", { count }) : t("Filters")}>
+      <SlidersHorizontal aria-hidden /> <span className="tool-btn__label">{t("Filters")}</span>{count > 0 && <span className="filter-toggle__count">{count}</span>}
     </button>
   );
 }
 
 /**
- * The filters when opened, then the ones in use as chips that remove them (shown open or closed). With `withStatus`
- * the panel also chooses between the boulders on the wall and those taken down, at its top (a view more than a
- * filter, so "clear" keeps it), and offers to clear the filters.
+ * Under the toolbar, always in reach: on the wall or taken down (a view more than a filter), and only the new ones.
+ * `activeStatus` is how the list asks for the boulders on the wall (the gym's page leaves it out, staff ask for it).
  */
-export function FiltersPanel({ open, filters, onChange, sectors, systems, tags = [], withStatus = false }: Props & { open: boolean; withStatus?: boolean }) {
-  const active = activeFilters(filters, sectors, systems, tags);
+export function QuickFilters({ filters, onChange, activeStatus }: { filters: Filters; onChange: (f: Filters) => void; activeStatus?: "ACTIVE" }) {
   const removed = filters.status === "REMOVED";
   return (
-    <>
-      {open && (
-        <div id="boulder-filters" className="filter-panel">
-          {withStatus && (
-            <div className="segmented" role="radiogroup" aria-label={t("Boulder status")}>
-              <button type="button" role="radio" aria-checked={!removed} className="segmented__option" onClick={() => onChange({ ...filters, status: undefined })}>{t("On the wall")}</button>
-              <button type="button" role="radio" aria-checked={removed} className="segmented__option" onClick={() => onChange({ ...filters, status: "REMOVED" })}>{t("Taken down")}</button>
-            </div>
-          )}
-          <BoulderFiltersBar filters={filters} onChange={(f) => onChange({ ...f, status: filters.status })} sectors={sectors} systems={systems} tags={tags} />
-          {withStatus && active.length > 0 && (
-            <button type="button" className="text-btn filter-panel__reset" onClick={() => onChange({ status: filters.status })}>{t("Clear filters")}</button>
-          )}
+    <div className="quick-filters">
+      <div className="segmented quick-filters__status" role="radiogroup" aria-label={t("Boulder status")}>
+        <button type="button" role="radio" aria-checked={!removed} className="segmented__option" onClick={() => removed && onChange({ ...filters, status: activeStatus })}>{t("On the wall")}</button>
+        <button type="button" role="radio" aria-checked={removed} className="segmented__option" onClick={() => !removed && onChange({ ...filters, status: "REMOVED", isNew: undefined })}>{t("Taken down")}</button>
+      </div>
+      {!removed && (
+        <button type="button" role="switch" aria-checked={!!filters.isNew} className="chip new-filter" onClick={() => onChange({ ...filters, isNew: filters.isNew ? undefined : true })}>
+          <Sparkles aria-hidden /> {t("New boulders only")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The filters in use as chips, each removing just itself. */
+export function ActiveFilters({ filters, onChange, sectors, systems, tags = [] }: Props) {
+  const active = activeFilters(filters, sectors, systems, tags);
+  if (active.length === 0) return null;
+  return (
+    <ul className="active-filters" aria-label={t("Filters in use")}>
+      {active.map((a) => (
+        <li key={a.id}>
+          <button type="button" className="active-filter" onClick={() => onChange(a.clear(filters))} aria-label={t("Remove filter {name}", { name: a.label })}>
+            {a.label} <X aria-hidden />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A sheet rising from the bottom of the screen (centred on a wide one), closed by its X, Escape or a tap outside. */
+export function BottomSheet({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
+  }, [onClose]);
+  return createPortal(
+    <div className="sheet-backdrop options-sheet-backdrop" onClick={onClose}>
+      <div className="sheet options-sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        <span className="options-sheet__grip" aria-hidden />
+        <div className="options-sheet__head">
+          <h2 className="section__title">{title}</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={t("Close")}><X aria-hidden /></button>
+        </div>
+        <div className="options-sheet__body">{children}</div>
+        {footer && <div className="options-sheet__foot">{footer}</div>}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Every filter in a sheet, chosen together and applied with one tap that says how many boulders they leave. The
+ * choices are a draft until then: closing the sheet keeps the list as it was. "Clear" keeps the status (a view, not a
+ * filter). The count is asked of the server as the draft changes.
+ */
+export function FilterSheet({ gymId, sort, filters, onApply, onClose, sectors, systems, tags = [], activeStatus }: {
+  gymId: string; sort?: BoulderSort; filters: Filters; onApply: (f: Filters) => void; onClose: () => void; sectors: Sector[]; systems: GradeSystem[];
+  tags?: GymTag[]; activeStatus?: "ACTIVE";
+}) {
+  const [draft, setDraft] = useState<Filters>(filters);
+  const removed = draft.status === "REMOVED";
+  // The same request the list makes once applied, so applying shows it at once.
+  const preview = useBoulders(gymId, draft, sort);
+  const n = preview.data?.pages[0]?.total;
+  return (
+    <BottomSheet title={t("Filters")} onClose={onClose} footer={
+      <>
+        <button type="button" className="btn btn--secondary" onClick={() => setDraft({ status: draft.status })}>{t("Clear")}</button>
+        <button type="button" className="btn btn--primary" onClick={() => { onApply(draft); onClose(); }}>
+          {n == null ? t("Show boulders") : plural(n, "Show 1 boulder", "Show {count} boulders")}
+        </button>
+      </>
+    }>
+      <div className="options-sheet__group">
+        <p className="field__label">{t("Boulder status")}</p>
+        <div className="segmented" role="radiogroup" aria-label={t("Boulder status")}>
+          <button type="button" role="radio" aria-checked={!removed} className="segmented__option" onClick={() => setDraft({ ...draft, status: activeStatus })}>{t("On the wall")}</button>
+          <button type="button" role="radio" aria-checked={removed} className="segmented__option" onClick={() => setDraft({ ...draft, status: "REMOVED", isNew: undefined })}>{t("Taken down")}</button>
+        </div>
+      </div>
+      {!removed && (
+        <div className="toggle-row">
+          <div className="toggle-row__text"><span className="list__title"><Sparkles aria-hidden className="toggle-row__icon" /> {t("New boulders only")}</span></div>
+          <button type="button" role="switch" aria-checked={!!draft.isNew} aria-label={t("New boulders only")} className={`switch ${draft.isNew ? "is-on" : ""}`}
+            onClick={() => setDraft({ ...draft, isNew: draft.isNew ? undefined : true })}>
+            <span className="switch__thumb" />
+          </button>
         </div>
       )}
-      {active.length > 0 && (
-        <ul className="active-filters" aria-label={t("Filters in use")}>
-          {active.map((a) => (
-            <li key={a.id}>
-              <button type="button" className="active-filter" onClick={() => onChange(a.clear(filters))}
-                aria-label={t("Remove filter {name}", { name: a.label })}>
-                {a.label} <X aria-hidden />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+      <BoulderFiltersBar filters={draft} onChange={(f) => setDraft({ ...f, status: draft.status })} sectors={sectors} systems={systems} tags={tags} />
+    </BottomSheet>
   );
 }
 

@@ -56,7 +56,7 @@ describe("Boulder list (climber)", () => {
     // The filters wait behind one button, so the boulders are on the first screen.
     expect(screen.queryByRole("combobox", { name: "Grade" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Filters" }));
-    expect(screen.getByRole("combobox", { name: "Grade" })).toBeInTheDocument();
+    expect(within(screen.getByRole("dialog", { name: "Filters" })).getByRole("combobox", { name: "Grade" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Your progress" })).toBeInTheDocument();
     // Hold colour, rating and intensity wait behind "Advanced search".
     expect(screen.queryByRole("combobox", { name: "Hold colour" })).not.toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("Boulder list (climber)", () => {
     expect(screen.getByRole("combobox", { name: "Intensity" })).toBeInTheDocument();
   });
 
-  it("switches between boulders on the wall and taken down inside the filters, with the controls on one row", async () => {
+  it("switches between boulders on the wall and taken down right under the toolbar, with the controls on one row", async () => {
     reply("GET", "/api/gyms/crimp", gym);
     reply("GET", "/api/gyms/g1/sectors", sectors);
     reply("GET", "/api/gyms/g1/grade-systems", systems);
@@ -74,18 +74,17 @@ describe("Boulder list (climber)", () => {
     renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
 
     expect(await screen.findByText("2 on the wall")).toBeInTheDocument();
-    // One row: the count, the filters, the order and the view; on the wall / taken down lives in the filters.
+    // One row: the count, the filters, the order and the view; on the wall / taken down right under it.
     const row = screen.getByText("2 on the wall").closest(".boulders-toolbar")!;
     expect(within(row as HTMLElement).getByRole("button", { name: "Filters" })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("button", { name: /^Sort: / })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("radiogroup", { name: "Show as" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Boulder status" })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
-    await userEvent.click(screen.getByRole("radio", { name: "Taken down" }));
+    const status = screen.getByRole("radiogroup", { name: "Boulder status" });
+    await userEvent.click(within(status).getByRole("radio", { name: "Taken down" }));
     await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
-    // It shows as one filter in use, so the reader knows the list isn't the usual one.
-    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
+    expect(within(status).getByRole("radio", { name: "Taken down" })).toHaveAttribute("aria-checked", "true");
   });
 
   it("shows the filters in use as chips that remove them", async () => {
@@ -97,7 +96,10 @@ describe("Boulder list (climber)", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
-    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
+    // A draft until applied: the button says how many boulders it leaves, and applying closes the sheet.
+    await userEvent.click(await screen.findByRole("button", { name: /^Show 1 boulder$/ }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters (1 in use)" })).toBeInTheDocument();
     expect(calls.some((c) => c.path.includes("sectorId=s1"))).toBe(true);
 
     await userEvent.click(screen.getByRole("button", { name: "Remove filter Cave" }));
@@ -112,6 +114,7 @@ describe("Boulder list (climber)", () => {
     const first = renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
     await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
+    await userEvent.click(await screen.findByRole("button", { name: /^Show 1 boulder$/ }));
     first.unmount();
 
     calls.length = 0;
@@ -226,8 +229,9 @@ describe("Staff boulder management", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Filters" }));
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sector" }), "s1");
-    await userEvent.click(screen.getByRole("button", { name: /Filters\s*1/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Show 1 boulder$/ }));
     expect(screen.queryByRole("combobox", { name: "Sector" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters (1 in use)" })).toBeInTheDocument();
     // Closed, the filter in use still shows, and removes itself.
     await userEvent.click(screen.getByRole("button", { name: "Remove filter Cave" }));
     expect(screen.queryByRole("button", { name: "Remove filter Cave" })).not.toBeInTheDocument();
@@ -250,7 +254,7 @@ describe("Staff boulder management", () => {
     expect(document.querySelectorAll(".boulder-card__sent")).toHaveLength(0);
   });
 
-  it("has the gym page's one-row toolbar, plus Select; taken down is among the filters and ends a selection", async () => {
+  it("has the gym page's one-row toolbar, plus Select; taken down, under it, ends a selection", async () => {
     setupManage();
     reply("GET", "/api/gyms/g1/boulders", page([boulder("b1"), boulder("b2")]));
     renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
@@ -268,14 +272,13 @@ describe("Staff boulder management", () => {
     await userEvent.click(screen.getAllByRole("button", { pressed: false }).find((b) => b.classList.contains("boulder-card"))!);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const status = screen.getByRole("radiogroup", { name: "Boulder status" });
     // "On the wall" again changes nothing: the selection stays.
-    await userEvent.click(screen.getByRole("radio", { name: "On the wall" }));
+    await userEvent.click(within(status).getByRole("radio", { name: "On the wall" }));
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: "Taken down" }));
+    await userEvent.click(within(status).getByRole("radio", { name: "Taken down" }));
     await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
     expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Filters\s*1/ })).toBeInTheDocument();
   });
 
   it("requires photo, sector and hold colour before saving, but not a grade", async () => {

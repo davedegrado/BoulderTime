@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDownUp, ArrowUpDown, Check, ChevronDown, LayoutGrid, List, MountainSnow } from "lucide-react";
+import { ArrowUpDown, Check, LayoutGrid, List, MountainSnow } from "lucide-react";
+import { BottomSheet } from "@/features/boulders/BoulderFilters";
 import type { BoulderSummary } from "@/features/boulders/api";
 import { GradeBadge, HoldIcon } from "@/features/boulders/BoulderBits";
 import { holdColorName } from "@/features/boulders/holdColors";
@@ -50,55 +51,61 @@ export function useBoulderView() {
   return [view, setView] as const;
 }
 
-/** The sort as a compact drop-down, and a button that turns the order round. */
-export function SortControl({ value, onChange, removed }: { value: BoulderSort; onChange: (s: BoulderSort) => void; removed: boolean }) {
+/** The "Sort" button: it names the order in use, and opens the sheet to change it. */
+export function SortButton({ value, removed, onClick }: { value: BoulderSort; removed: boolean; onClick: () => void }) {
   const current = sortFor(value, removed);
-  const reversed = (current.order ?? NATURAL[current.sort]) !== NATURAL[current.sort];
+  const label = t("Sort: {by}", { by: t(SORT_LABEL[current.sort]) });
   return (
-    <div className="sort-control">
-      <label className="chip-select">
-        <span className="sr-only">{t("Sort by")}</span>
-        <select value={current.sort} onChange={(e) => onChange({ sort: e.target.value as BoulderSortKey })}>
-          {SORTS.filter((s) => s !== "REMOVED" || removed).map((s) => <option key={s} value={s}>{t(SORT_LABEL[s])}</option>)}
-        </select>
-        <ChevronDown aria-hidden />
-      </label>
-      <button type="button" className={`icon-btn icon-btn--outlined icon-btn--sm ${reversed ? "is-on" : ""}`} aria-pressed={reversed}
-        aria-label={t("Reverse the order")} title={t("Reverse the order")}
-        onClick={() => onChange({ sort: current.sort, order: reversed ? undefined : (NATURAL[current.sort] === "ASC" ? "DESC" : "ASC") })}>
-        <ArrowDownUp aria-hidden />
-      </button>
-    </div>
+    <button type="button" className="chip tool-btn" aria-haspopup="dialog" aria-label={label} title={label} onClick={onClick}>
+      <ArrowUpDown aria-hidden /> <span className="tool-btn__label">{t("Sort")}</span>
+    </button>
   );
 }
 
 /**
- * The sort as one compact button, for a toolbar that has to fit one row on a phone: it opens the same choice as
- * {@link SortControl} (what to sort by, and the reversed order). The button names the current order for screen readers.
+ * What to sort by and in which direction, in a sheet, applied together. Choosing what to sort by starts from its
+ * natural direction (most points first, newest first…); the direction can then be turned round. "Date taken down" is
+ * only offered for the boulders taken down.
  */
-export function SortMenu({ value, onChange, removed }: { value: BoulderSort; onChange: (s: BoulderSort) => void; removed: boolean }) {
-  const [open, setOpen] = useState(false);
-  const current = sortFor(value, removed);
-  const label = t("Sort: {by}", { by: t(SORT_LABEL[current.sort]) });
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+export function SortSheet({ value, removed, onApply, onClose }: { value: BoulderSort; removed: boolean; onApply: (s: BoulderSort) => void; onClose: () => void }) {
+  const start = sortFor(value, removed);
+  const [by, setBy] = useState<BoulderSortKey>(start.sort);
+  const [dir, setDir] = useState<SortDirection>(start.order ?? NATURAL[start.sort]);
+  const choose = (key: BoulderSortKey) => { setBy(key); setDir(NATURAL[key]); };
   return (
-    <div className="sort-menu">
-      <button type="button" className={`icon-btn icon-btn--outlined icon-btn--sm ${open ? "is-on" : ""}`} aria-label={label} title={label}
-        aria-expanded={open} aria-controls="boulder-sort" onClick={() => setOpen((v) => !v)}>
-        <ArrowUpDown aria-hidden />
+    <BottomSheet title={t("Sort by")} onClose={onClose} footer={
+      <button type="button" className="btn btn--primary btn--block" onClick={() => { onApply({ sort: by, order: dir === NATURAL[by] ? undefined : dir }); onClose(); }}>
+        {t("Apply")}
       </button>
-      {open && (
-        <div className="sort-menu__panel" id="boulder-sort">
-          <SortControl value={value} onChange={onChange} removed={removed} />
-        </div>
-      )}
-    </div>
+    }>
+      <div className="radio-list" role="radiogroup" aria-label={t("Sort by")}>
+        {SORTS.filter((s) => s !== "REMOVED" || removed).map((s) => (
+          <button key={s} type="button" role="radio" aria-checked={by === s} className="radio-row" onClick={() => choose(s)}>
+            <span className="radio-row__dot" aria-hidden /> {t(SORT_LABEL[s])}
+          </button>
+        ))}
+      </div>
+      <div className="radio-list" role="radiogroup" aria-label={t("Direction")}>
+        <p className="field__label">{t("Direction")}</p>
+        {(["ASC", "DESC"] as const).map((d) => (
+          <button key={d} type="button" role="radio" aria-checked={dir === d} className="radio-row" onClick={() => setDir(d)}>
+            <span className="radio-row__dot" aria-hidden /> {d === "ASC" ? t("Ascending") : t("Descending")}
+            <span className="radio-row__hint">{directionHint(by, d)}</span>
+          </button>
+        ))}
+      </div>
+    </BottomSheet>
   );
+}
+
+/** What each direction means for each order, said plainly beside it. */
+function directionHint(by: BoulderSortKey, dir: SortDirection): string {
+  switch (by) {
+    case "SECTOR": return dir === "ASC" ? t("in the gym's order") : t("in reverse order");
+    case "POINTS": return dir === "ASC" ? t("fewest points first") : t("most points first");
+    case "GRADE": return dir === "ASC" ? t("easiest first") : t("hardest first");
+    default: return dir === "ASC" ? t("oldest first") : t("newest first");
+  }
 }
 
 export function ViewToggle({ value, onChange }: { value: BoulderView; onChange: (v: BoulderView) => void }) {
