@@ -263,6 +263,14 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
       const tabs = document.querySelector<HTMLElement>(".tabs");
       return tabs ? tabs.offsetHeight + (parseFloat(getComputedStyle(tabs).top) || 0) + 8 : 8;
     };
+    // The panel's top (name and photo) stays right under the gym's tabs, measured rather than guessed: with a gap the
+    // boulders would show through it as they scroll by, and the tabs' height changes with the phone and its safe area.
+    const stick = () => {
+      const tabs = document.querySelector<HTMLElement>(".tabs");
+      if (tabs) el.style.setProperty("--panel-stick", `${tabs.offsetHeight + (parseFloat(getComputedStyle(tabs).top) || 0)}px`);
+    };
+    stick();
+    window.addEventListener("resize", stick);
     // Room at the foot of the page, enough for the panel's top to reach its place however short the panel gets: an
     // empty sector shrinks when "Loading boulders" goes, and a page that gets shorter than the move needs stops it
     // halfway (Safari does). While it settles the room counts only the panel's top (name and photo); once settled it
@@ -315,6 +323,7 @@ export function SectorPanel({ sector, signedIn, onToggleFollow, onClose, onShowB
       window.removeEventListener("touchstart", stop);
       window.removeEventListener("wheel", stop);
       if (page) page.style.paddingBottom = "";
+      window.removeEventListener("resize", stick);
     };
   }, [sector.id]);
 
