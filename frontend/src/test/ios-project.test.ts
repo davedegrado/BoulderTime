@@ -24,6 +24,11 @@ function plistString(plist: string, key: string): string | null {
  * by the system, and App Review rejects it.
  */
 describe("What the iOS app must declare", () => {
+  it("stays upright on iPhone: sideways the page would sit under the Dynamic Island", () => {
+    const iphone = infoPlist.match(/<key>UISupportedInterfaceOrientations<\/key>\s*<array>([\s\S]*?)<\/array>/)?.[1] ?? "";
+    expect([...iphone.matchAll(/<string>([^<]+)<\/string>/g)].map((m) => m[1])).toEqual(["UIInterfaceOrientationPortrait"]);
+  });
+
   it("doesn't lift a link into iOS's preview on a long press (holding a boulder's card selects it)", async () => {
     const { default: config } = await import("../../capacitor.config");
     expect(config.ios?.allowsLinkPreview).toBe(false);
