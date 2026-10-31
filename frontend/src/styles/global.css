@@ -31,7 +31,7 @@ svg { flex-shrink: 0; }
 .topbar {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; justify-content: space-between;
-  height: calc(56px + var(--bt-safe-top)); padding: 0 var(--bt-4); padding-top: var(--bt-safe-top);
+  height: calc(48px + var(--bt-safe-top)); padding: 0 var(--bt-4); padding-top: var(--bt-safe-top);
   background: var(--bt-chrome); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--bt-line);
 }
@@ -1511,7 +1511,7 @@ button.manage-head__back { background: transparent; }
 
 /* ---------- Detail pages: a gym, a person (ADR-061, ADR-062) ---------- */
 /* On a phone the logo bar gives way to the page's own header: back, the page's "…" menu, and its name once scrolled. */
-:root { --bt-sticky-top: calc(56px + var(--bt-safe-top)); --bt-detail-h: calc(52px + var(--bt-safe-top)); }
+:root { --bt-sticky-top: calc(48px + var(--bt-safe-top)); --bt-detail-h: calc(52px + var(--bt-safe-top)); }
 @media (max-width: 959px) {
   .shell--detail .topbar { display: none; }
   .shell--detail { --bt-sticky-top: var(--bt-detail-h); }

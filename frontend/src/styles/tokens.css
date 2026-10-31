@@ -73,7 +73,7 @@
 
   /* Layout */
   --bt-sidebar-w: 248px;
-  --bt-tabbar-h: 64px;
+  --bt-tabbar-h: 56px;
   --bt-content-max: 1080px;
 
   --bt-focus: 0 0 0 3px var(--bt-light), 0 0 0 5px var(--bt-orange);
