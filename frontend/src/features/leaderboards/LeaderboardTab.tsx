@@ -15,6 +15,7 @@ import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
 import { Toggle } from "@/features/notifications/NotificationBits";
 import { useToast } from "@/components/Toast";
+import { useHideStaffTools } from "@/lib/climberView";
 import { errorMessage } from "@/lib/apiError";
 
 const METRICS: LeaderboardMetric[] = ["POINTS", "COMPLETED", "HIGHEST"];
@@ -88,7 +89,8 @@ export function LeaderboardTab({ gymId }: { gymId: string }) {
   const board = useLeaderboard(gymId, metric, period);
   // Staff of this gym can flag results that look implausible. BoulderTime decides; the gym never excludes anyone.
   const me = useCurrentUser();
-  const isStaff = (me.data?.staffGyms ?? []).some((g) => g.gymId === gymId) || (me.data?.isPlatformAdmin ?? false);
+  const hideStaff = useHideStaffTools();
+  const isStaff = !hideStaff && ((me.data?.staffGyms ?? []).some((g) => g.gymId === gymId) || (me.data?.isPlatformAdmin ?? false));
   const [reporting, setReporting] = useState<LeaderboardEntry | null>(null);
   const report = useReportClimber(gymId);
   const toast = useToast();

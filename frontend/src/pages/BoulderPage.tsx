@@ -21,6 +21,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import { activeLanguage, plural, t } from "@/i18n/i18n";
+import { useHideStaffTools } from "@/lib/climberView";
 import type { BoulderGrade, RatingSummary } from "@/features/boulders/api";
 
 /**
@@ -36,6 +37,7 @@ export function BoulderPage() {
   const { session } = useAuth();
   const follow = useFollowBoulder(id ?? "");
   const [viewing, setViewing] = useState(false);
+  const hideStaff = useHideStaffTools();
 
   if (boulder.isPending) return <div className="page page--flush boulder-page"><DetailHeader /><LoadingState label={t("Loading boulder")} /></div>;
   if (boulder.isError) {
@@ -61,7 +63,7 @@ export function BoulderPage() {
           {b.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />}
         </button>
       )}
-      {b.viewerRole && (
+      {b.viewerRole && !hideStaff && (
         <Link to={`/manage/${b.gymSlug}/boulders/${b.id}/edit`} className="round-btn" aria-label={t("Edit")} title={t("Edit")}>
           <Pencil aria-hidden />
         </Link>

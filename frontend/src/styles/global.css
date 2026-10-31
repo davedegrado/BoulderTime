@@ -2065,3 +2065,4 @@ div.sector-panel__row { display: flex; padding: 0; }
 .radio-row__dot { flex: none; width: 22px; height: 22px; border: 2px solid var(--bt-line); border-radius: 50%; box-sizing: border-box; }
 .radio-row[aria-checked="true"] .radio-row__dot { border: 6px solid var(--bt-orange); }
 .radio-row__hint { margin-left: auto; color: var(--bt-ink-3); font-size: var(--bt-text-sm); }
+.list__row > .toggle-row { flex: 1; min-width: 0; }
