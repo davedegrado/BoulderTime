@@ -1492,4 +1492,5 @@ export const it: Record<string, string> = {
   "newest first": "dal più recente",
   "See gyms as a climber": "Vedi le palestre come un arrampicatore",
   "Leaves the staff's buttons out of gyms and boulders, to see them as climbers do. The staff area stays here.": "Nasconde i pulsanti dello staff in palestre e blocchi, per vederli come li vede chi arrampica. L'area staff resta qui.",
+  "Opens as a climber sees it": "Si apre come la vede chi arrampica",
 };

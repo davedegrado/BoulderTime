@@ -14,6 +14,7 @@ import { plural, t } from "@/i18n/i18n";
 import { AcceptLegalPage } from "@/pages/legal/AcceptLegalPage";
 import { SuspendedPage } from "@/pages/SuspendedPage";
 import { PushPrompt } from "@/features/notifications/PushPrompt";
+import { useHideStaffTools } from "@/lib/climberView";
 import { NewBadgeNotice } from "@/features/badges/NewBadgeNotice";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; requiresAuth: boolean }
@@ -38,6 +39,7 @@ export function AppShell() {
   const items = NAV().filter((i) => session || !i.requiresAuth);
   const staffGyms = me.data?.staffGyms ?? [];
   const isAdmin = me.data?.isPlatformAdmin ?? false;
+  const hideStaff = useHideStaffTools();
   const unread = useUnreadCount().data?.unread ?? 0;
   const friendRequests = useFriendRequests().data?.length ?? 0;
   // A gym's, a person's and a boulder's page carry their own compact header (back and actions): no logo bar on top.
@@ -82,7 +84,7 @@ export function AppShell() {
           <nav className="sidebar__nav" aria-label={t("Manage")}>
             <p className="sidebar__heading">{t("Manage")}</p>
             {staffGyms.map((g) => (
-              <NavLink key={g.gymId} to={`/manage/${g.slug}`} className="sidebar__link">
+              <NavLink key={g.gymId} to={hideStaff ? `/gyms/${g.slug}` : `/manage/${g.slug}`} className="sidebar__link">
                 <GymAvatar name={g.name} logoUrl={g.logoUrl} size={24} />
                 <span className="sidebar__text">{g.name}</span>
               </NavLink>
