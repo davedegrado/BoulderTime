@@ -105,11 +105,12 @@ export function ProfilePage() {
           <ul className="list">
             {user.staffGyms.map((g) => (
               <li key={g.gymId}>
-                <Link to={`/manage/${g.slug}`} className="list__row list__row--link">
+                {/* Seen as a climber, a gym opens on its own page, as a climber finds it; the staff area waits for the switch to go off. */}
+                <Link to={climberView && user.isPlatformAdmin ? `/gyms/${g.slug}` : `/manage/${g.slug}`} className="list__row list__row--link">
                   <GymAvatar name={g.name} logoUrl={g.logoUrl} size={40} />
                   <div className="list__main">
                     <p className="list__title">{g.name}</p>
-                    <p className="list__sub">{roleLabel[g.role]}</p>
+                    <p className="list__sub">{climberView && user.isPlatformAdmin ? t("Opens as a climber sees it") : roleLabel[g.role]}</p>
                   </div>
                   <ChevronRight className="list__chevron" aria-hidden />
                 </Link>
