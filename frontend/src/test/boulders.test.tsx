@@ -66,7 +66,7 @@ describe("Boulder list (climber)", () => {
     expect(screen.getByRole("combobox", { name: "Intensity" })).toBeInTheDocument();
   });
 
-  it("switches between boulders on the wall and taken down right under the toolbar, with the controls on one row", async () => {
+  it("switches between boulders on the wall and taken down in the filters, with the controls on one row", async () => {
     reply("GET", "/api/gyms/crimp", gym);
     reply("GET", "/api/gyms/g1/sectors", sectors);
     reply("GET", "/api/gyms/g1/grade-systems", systems);
@@ -74,17 +74,22 @@ describe("Boulder list (climber)", () => {
     renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
 
     expect(await screen.findByText("2 on the wall")).toBeInTheDocument();
-    // One row: the count, the filters, the order and the view; on the wall / taken down right under it.
+    // One row: the count, the filters, the order and the view; on the wall / taken down lives in the filters.
     const row = screen.getByText("2 on the wall").closest(".boulders-toolbar")!;
     expect(within(row as HTMLElement).getByRole("button", { name: "Filters" })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("button", { name: /^Sort: / })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("radiogroup", { name: "Show as" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Boulder status" })).not.toBeInTheDocument();
 
-    const status = screen.getByRole("radiogroup", { name: "Boulder status" });
-    await userEvent.click(within(status).getByRole("radio", { name: "Taken down" }));
+    expect(screen.queryByRole("radiogroup", { name: "Boulder status" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("radio", { name: "Taken down" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Show / }));
     await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
-    expect(within(status).getByRole("radio", { name: "Taken down" })).toHaveAttribute("aria-checked", "true");
+    // Shown among the filters in use, so the list never looks like the usual one; and taken away from there.
+    expect(screen.getByRole("button", { name: "Filters (1 in use)" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove filter Taken down" }));
+    await waitFor(() => expect(calls.at(-1)!.path).not.toContain("status=REMOVED"));
   });
 
   it("shows the filters in use as chips that remove them", async () => {
@@ -254,7 +259,7 @@ describe("Staff boulder management", () => {
     expect(document.querySelectorAll(".boulder-card__sent")).toHaveLength(0);
   });
 
-  it("has the gym page's one-row toolbar, plus Select; taken down, under it, ends a selection", async () => {
+  it("has the gym page's one-row toolbar, plus Select; taken down, chosen in the filters, ends a selection", async () => {
     setupManage();
     reply("GET", "/api/gyms/g1/boulders", page([boulder("b1"), boulder("b2")]));
     renderAt("/manage/crimp/boulders", "/manage/:slug", <ManageLayout />, <Route path="boulders" element={<ManageBoulders />} />);
@@ -272,11 +277,13 @@ describe("Staff boulder management", () => {
     await userEvent.click(screen.getAllByRole("button", { pressed: false }).find((b) => b.classList.contains("boulder-card"))!);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
 
-    const status = screen.getByRole("radiogroup", { name: "Boulder status" });
-    // "On the wall" again changes nothing: the selection stays.
-    await userEvent.click(within(status).getByRole("radio", { name: "On the wall" }));
+    // Applying with "on the wall" still chosen changes nothing: the selection stays.
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Show / }));
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    await userEvent.click(within(status).getByRole("radio", { name: "Taken down" }));
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("radio", { name: "Taken down" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Show / }));
     await waitFor(() => expect(calls.some((c) => c.path.includes("status=REMOVED"))).toBe(true));
     expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
   });

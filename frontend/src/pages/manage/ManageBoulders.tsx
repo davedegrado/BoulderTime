@@ -10,7 +10,7 @@ import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
 import { BoulderRow, SortButton, SortSheet, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { ActiveFilters, activeFilters, boulderCount, FiltersButton, FilterSheet, QuickFilters } from "@/features/boulders/BoulderFilters";
+import { ActiveFilters, boulderCount, FiltersButton, FilterSheet, filtersInUse } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -101,7 +101,7 @@ export function ManageBoulders() {
             <CheckSquare aria-hidden />
           </button>
         )}
-        <FiltersButton count={activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []).length} onClick={() => setSheet("filters")} />
+        <FiltersButton count={filtersInUse(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? [])} onClick={() => setSheet("filters")} />
         <SortButton value={sort} removed={removedView} onClick={() => setSheet("sort")} />
         <ViewToggle value={view} onChange={setView} />
       </div>
@@ -109,8 +109,7 @@ export function ManageBoulders() {
       {!removedView && !selecting && !noSetup && (
         <Link to={`/manage/${gym.slug}/boulders/new${filters.sectorId ? `?sector=${filters.sectorId}` : ""}`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
-      <QuickFilters filters={filters} onChange={applyFilters} activeStatus="ACTIVE" />
-      <ActiveFilters filters={filters} onChange={applyFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      <ActiveFilters filters={filters} onChange={applyFilters} activeStatus="ACTIVE" sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
       {sheet === "filters" && (
         <FilterSheet gymId={gym.id} sort={sortFor(sort, removedView)} filters={filters} onApply={applyFilters} onClose={() => setSheet(null)} activeStatus="ACTIVE"
           sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />

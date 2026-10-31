@@ -46,15 +46,13 @@ describe("New boulders", () => {
     expect(screen.getAllByText("New")).toHaveLength(1);
     expect(boulderCalls()[0]).not.toContain("isNew");
 
-    // Right under the toolbar, one tap away; and in the filters' sheet too.
-    const quick = screen.getByRole("switch", { name: /New boulders only/ });
-    await userEvent.click(quick);
-    await waitFor(() => expect(boulderCalls().at(-1)).toContain("isNew=true"));
-    expect(quick).toHaveAttribute("aria-checked", "true");
-    await userEvent.click(quick);
-    await waitFor(() => expect(boulderCalls().at(-1)).not.toContain("isNew"));
     await userEvent.click(screen.getByRole("button", { name: "Filters" }));
-    expect(within(screen.getByRole("dialog", { name: "Filters" })).getByRole("switch", { name: "New boulders only" })).toHaveAttribute("aria-checked", "false");
+    await userEvent.click(within(screen.getByRole("dialog", { name: "Filters" })).getByRole("switch", { name: "New boulders only" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Show / }));
+    await waitFor(() => expect(boulderCalls().at(-1)).toContain("isNew=true"));
+    const inUse = screen.getByRole("list", { name: "Filters in use" });
+    await userEvent.click(within(inUse).getByRole("button", { name: "Remove filter New boulders" }));
+    await waitFor(() => expect(boulderCalls().at(-1)).not.toContain("isNew"));
   });
 
   it("are what a notification about several of them opens, whatever was filtered before", async () => {

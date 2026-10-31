@@ -137,29 +137,24 @@ export function FiltersButton({ count, onClick }: { count: number; onClick: () =
 }
 
 /**
- * Under the toolbar, always in reach: on the wall or taken down (a view more than a filter), and only the new ones.
+ * The chips for the two choices that change which list it is, not just narrow it: the boulders taken down, and only
+ * the new ones. They live in the filters' sheet; once chosen they show here, so the list never looks like the usual one.
  * `activeStatus` is how the list asks for the boulders on the wall (the gym's page leaves it out, staff ask for it).
  */
-export function QuickFilters({ filters, onChange, activeStatus }: { filters: Filters; onChange: (f: Filters) => void; activeStatus?: "ACTIVE" }) {
-  const removed = filters.status === "REMOVED";
-  return (
-    <div className="quick-filters">
-      <div className="segmented quick-filters__status" role="radiogroup" aria-label={t("Boulder status")}>
-        <button type="button" role="radio" aria-checked={!removed} className="segmented__option" onClick={() => removed && onChange({ ...filters, status: activeStatus })}>{t("On the wall")}</button>
-        <button type="button" role="radio" aria-checked={removed} className="segmented__option" onClick={() => !removed && onChange({ ...filters, status: "REMOVED", isNew: undefined })}>{t("Taken down")}</button>
-      </div>
-      {!removed && (
-        <button type="button" role="switch" aria-checked={!!filters.isNew} className="chip new-filter" onClick={() => onChange({ ...filters, isNew: filters.isNew ? undefined : true })}>
-          <Sparkles aria-hidden /> {t("New boulders only")}
-        </button>
-      )}
-    </div>
-  );
+function viewChips(f: Filters, activeStatus?: "ACTIVE"): ActiveFilter[] {
+  const out: ActiveFilter[] = [];
+  if (f.status === "REMOVED") out.push({ id: "status", label: t("Taken down"), clear: (x) => ({ ...x, status: activeStatus }) });
+  if (f.isNew) out.push({ id: "isNew", label: t("New boulders"), clear: (x) => ({ ...x, isNew: undefined }) });
+  return out;
 }
 
+/** How many filters are in use, for the "Filters" button: those two choices included. */
+export const filtersInUse = (f: Filters, sectors: Sector[], systems: GradeSystem[], tags: GymTag[] = []) =>
+  viewChips(f).length + activeFilters(f, sectors, systems, tags).length;
+
 /** The filters in use as chips, each removing just itself. */
-export function ActiveFilters({ filters, onChange, sectors, systems, tags = [] }: Props) {
-  const active = activeFilters(filters, sectors, systems, tags);
+export function ActiveFilters({ filters, onChange, sectors, systems, tags = [], activeStatus }: Props & { activeStatus?: "ACTIVE" }) {
+  const active = [...viewChips(filters, activeStatus), ...activeFilters(filters, sectors, systems, tags)];
   if (active.length === 0) return null;
   return (
     <ul className="active-filters" aria-label={t("Filters in use")}>

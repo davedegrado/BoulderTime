@@ -2035,9 +2035,6 @@ div.sector-panel__row { display: flex; padding: 0; }
 @media (max-width: 389px) { .boulders-toolbar--one .tool-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .boulders-toolbar--one .tool-btn { padding: 0 10px; } }
 @media (max-width: 439px) { .boulders-toolbar--staff .tool-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .boulders-toolbar--staff .tool-btn { padding: 0 10px; } }
 .boulders-toolbar--one .boulders-toolbar__count { min-width: 3.5em; }
-.quick-filters { display: flex; align-items: center; gap: var(--bt-2); flex-wrap: wrap; }
-.quick-filters__status { flex: 1 1 220px; max-width: 360px; margin-bottom: 0; }
-.quick-filters .new-filter { min-height: 38px; }
 
 .options-sheet-backdrop { z-index: 125; }
 .options-sheet { max-height: min(88vh, 760px); padding: var(--bt-2) 0 0; gap: 0; }

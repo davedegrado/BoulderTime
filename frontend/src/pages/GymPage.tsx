@@ -21,7 +21,7 @@ import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
 import { BoulderRow, SortButton, SortSheet, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { ActiveFilters, activeFilters, boulderCount, FiltersButton, FilterSheet, QuickFilters } from "@/features/boulders/BoulderFilters";
+import { ActiveFilters, boulderCount, FiltersButton, FilterSheet, filtersInUse } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Check, Heart, Megaphone, Mountain, Plus } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
@@ -168,7 +168,6 @@ function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: strin
   // filters are too narrow, and "clear filters" must not throw the reader back to the other tab.
   const { status: _status, ...narrowing } = filters;
   const filtered = Object.values(narrowing).some(Boolean);
-  const active = activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []);
 
   return (
     <div className="stack">
@@ -176,11 +175,10 @@ function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: strin
       {/* One row on a phone: how many, the filters (where "taken down" now lives too), the order and the view. */}
       <div className="boulders-toolbar boulders-toolbar--one">
         <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, showingRemoved) : null}</span>
-        <FiltersButton count={active.length} onClick={() => setSheet("filters")} />
+        <FiltersButton count={filtersInUse(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? [])} onClick={() => setSheet("filters")} />
         <SortButton value={sort} removed={showingRemoved} onClick={() => setSheet("sort")} />
         <ViewToggle value={view} onChange={setView} />
       </div>
-      <QuickFilters filters={filters} onChange={setFilters} />
       <ActiveFilters filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
       {sheet === "filters" && (
         <FilterSheet gymId={gymId} sort={sortFor(sort, showingRemoved)} filters={filters} onApply={setFilters} onClose={() => setSheet(null)}
