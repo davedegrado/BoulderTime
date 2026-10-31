@@ -9,8 +9,8 @@ import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { DeleteBoulderButton } from "@/features/boulders/DeleteBoulderButton";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
-import { BoulderRow, SortMenu, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { activeFilters, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { BoulderRow, SortButton, SortSheet, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
+import { ActiveFilters, boulderCount, FiltersButton, FilterSheet, filtersInUse } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmptyState, ErrorState, LoadingState } from "@/components/States";
@@ -26,7 +26,7 @@ export function ManageBoulders() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastRemoval, setLastRemoval] = useState<RemoveResult | null>(null);
   const [notifyFollowers, setNotifyFollowers] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
+  const [sheet, setSheet] = useState<"filters" | "sort" | null>(null);
   const [sort, setSort] = useRememberedSort(`bt:manage-boulder-sort:${gym.id}`);
   const [view, setView] = useBoulderView();
   const sectors = useSectors(gym.id);
@@ -52,6 +52,11 @@ export function ManageBoulders() {
       onError: (e) => toast.error(errorMessage(e)),
     });
   }
+
+  /** New filters: moving between the boulders on the wall and those taken down is a different list (see below). */
+  const applyFilters = (next: typeof filters) => ((next.status === "REMOVED") !== removedView
+    ? switchView(next.status === "REMOVED" ? "REMOVED" : "ACTIVE", next)
+    : setFilters({ ...next, status: filters.status }));
 
   /** On the wall or taken down: a different list, so a selection or a removal notice from the other one goes. */
   function switchView(status: "ACTIVE" | "REMOVED", next = filters) {
@@ -89,26 +94,27 @@ export function ManageBoulders() {
 
       {/* As on the gym's page — how many, the filters (on the wall or taken down among them), the order, the view — with
           the button to select boulders. */}
-      <div className="boulders-toolbar boulders-toolbar--one">
+      <div className="boulders-toolbar boulders-toolbar--one boulders-toolbar--staff">
         <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, removedView) : null}</span>
         {!removedView && !selecting && items.length > 0 && (
           <button type="button" className="icon-btn icon-btn--outlined icon-btn--sm" onClick={() => setSelecting(true)} aria-label={t("Select")} title={t("Select")}>
             <CheckSquare aria-hidden />
           </button>
         )}
-        <FiltersToggle open={showFilters} count={activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []).length + (removedView ? 1 : 0)}
-          onToggle={() => setShowFilters((v) => !v)} />
-        <SortMenu value={sort} onChange={setSort} removed={removedView} />
+        <FiltersButton count={filtersInUse(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? [])} onClick={() => setSheet("filters")} />
+        <SortButton value={sort} removed={removedView} onClick={() => setSheet("sort")} />
         <ViewToggle value={view} onChange={setView} />
       </div>
       {/* The one thing staff do most here, always under the thumb, however far down the list. */}
       {!removedView && !selecting && !noSetup && (
         <Link to={`/manage/${gym.slug}/boulders/new${filters.sectorId ? `?sector=${filters.sectorId}` : ""}`} className="fab" aria-label={t("New boulder")} title={t("New boulder")}><Plus aria-hidden /></Link>
       )}
-      <FiltersPanel open={showFilters} filters={filters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} withStatus
-        onChange={(next) => ((next.status === "REMOVED") !== removedView
-          ? switchView(next.status === "REMOVED" ? "REMOVED" : "ACTIVE", next)
-          : setFilters({ ...next, status: filters.status }))} />
+      <ActiveFilters filters={filters} onChange={applyFilters} activeStatus="ACTIVE" sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      {sheet === "filters" && (
+        <FilterSheet gymId={gym.id} sort={sortFor(sort, removedView)} filters={filters} onApply={applyFilters} onClose={() => setSheet(null)} activeStatus="ACTIVE"
+          sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      )}
+      {sheet === "sort" && <SortSheet value={sort} removed={removedView} onApply={setSort} onClose={() => setSheet(null)} />}
 
       {boulders.isPending ? <LoadingState label={t("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />

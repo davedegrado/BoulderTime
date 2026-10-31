@@ -58,16 +58,24 @@ describe("The gym's boulder list", () => {
     await screen.findAllByRole("link", { name: /grade 6A/i });
     expect(boulderCalls()[0]).toContain("sort=SECTOR");
 
-    // The order is one compact button on the toolbar row; it opens the same choice as before.
+    // The order is one button on the toolbar row; it opens a sheet with what to sort by and the direction.
     await userEvent.click(screen.getByRole("button", { name: "Sort: Sector" }));
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort by" }), "POINTS");
+    const sheet = screen.getByRole("dialog", { name: "Sort by" });
+    // There is no sorting by hold colour: it says nothing useful about a boulder. "Date taken down" only for those.
+    const by = within(sheet).getByRole("radiogroup", { name: "Sort by" });
+    expect(within(by).getAllByRole("radio").map((o) => o.textContent?.trim())).toEqual(["Sector", "Points", "Grade", "Date set"]);
+    // Choosing what to sort by starts from its natural direction: most points first.
+    await userEvent.click(within(by).getByRole("radio", { name: "Points" }));
+    const direction = within(sheet).getByRole("radiogroup", { name: "Direction" });
+    expect(within(direction).getByRole("radio", { name: /Descending/ })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Apply" }));
     await waitFor(() => expect(boulderCalls().at(-1)).toContain("sort=POINTS"));
     expect(boulderCalls().at(-1)).not.toContain("order=");
-    await userEvent.click(screen.getByRole("button", { name: "Reverse the order" }));
+    // Turned round, it asks for the other direction.
+    await userEvent.click(screen.getByRole("button", { name: "Sort: Points" }));
+    await userEvent.click(screen.getByRole("radio", { name: /Ascending/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Apply" }));
     await waitFor(() => expect(boulderCalls().at(-1)).toContain("order=ASC"));
-    // There is no sorting by hold colour: it says nothing useful about a boulder.
-    const options = within(screen.getByRole("combobox", { name: "Sort by" })).getAllByRole("option").map((o) => o.textContent);
-    expect(options).toEqual(["Sector", "Points", "Grade", "Date set"]);
   });
 
   it("shows a compact list with the same places in every row, and keeps the sort when switching", async () => {
@@ -75,7 +83,8 @@ describe("The gym's boulder list", () => {
     const { container } = renderAt("/gyms/crimp", "/gyms/:slug", <GymPage />);
     await screen.findAllByRole("link", { name: /grade 6A/i });
     await userEvent.click(screen.getByRole("button", { name: "Sort: Sector" }));
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Sort by" }), "GRADE");
+    await userEvent.click(screen.getByRole("radio", { name: "Grade" }));
+    await userEvent.click(screen.getByRole("button", { name: "Apply" }));
     await userEvent.click(screen.getByRole("radio", { name: "List" }));
 
     const rows = container.querySelectorAll(".boulder-row");
@@ -106,7 +115,7 @@ describe("The gym's boulder list", () => {
     expect(rows[1]!.querySelector(".boulder-row__thumb svg")).not.toBeNull();
 
     await userEvent.click(screen.getByRole("radio", { name: "Cards" }));
-    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveValue("GRADE");
+    expect(screen.getByRole("button", { name: "Sort: Grade" })).toBeInTheDocument();
     expect(localStorage.getItem("bt:boulder-view")).toBe('"grid"');
   });
 });

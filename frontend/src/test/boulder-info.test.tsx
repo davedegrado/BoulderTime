@@ -25,7 +25,7 @@ vi.mock("@/lib/api", () => {
 
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { CompletionsLine } from "@/features/climbing/Completions";
-import { FiltersPanel, activeFilters } from "@/features/boulders/BoulderFilters";
+import { BoulderFiltersBar, activeFilters } from "@/features/boulders/BoulderFilters";
 import { FavoriteSectorCard } from "@/features/climbing/FavoriteSector";
 import { ManageLayout } from "@/pages/manage/ManageLayout";
 import { ManageTags } from "@/pages/manage/ManageTags";
@@ -98,7 +98,7 @@ describe("Filtering by tags and intensity", () => {
   it("searches by name once typing pauses, and shows it among the filters in use", async () => {
     let filters: BoulderFilters = {};
     const onChange = vi.fn((f: BoulderFilters) => { filters = f; });
-    render(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
+    render(<BoulderFiltersBar filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
     await userEvent.click(screen.getByRole("button", { name: /Advanced search/ }));
     await userEvent.type(screen.getByRole("searchbox", { name: "Boulder name" }), "fess");
     await waitFor(() => expect(filters).toEqual({ name: "fess" }));
@@ -109,14 +109,14 @@ describe("Filtering by tags and intensity", () => {
   it("adds every tag chosen and removes them one at a time", async () => {
     let filters: BoulderFilters = {};
     const onChange = vi.fn((f: BoulderFilters) => { filters = f; });
-    const { rerender } = render(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
+    const { rerender } = render(<BoulderFiltersBar filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
     // Tags wait behind "Advanced search", closed until asked for.
     expect(screen.queryByRole("button", { name: "Placca" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Advanced search/ }));
     await userEvent.click(screen.getByRole("button", { name: "Placca" }));
-    rerender(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
+    rerender(<BoulderFiltersBar filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
     await userEvent.click(screen.getByRole("button", { name: "Tecnico" }));
-    rerender(<FiltersPanel open filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
+    rerender(<BoulderFiltersBar filters={filters} onChange={onChange} sectors={[]} systems={[]} tags={tags} />);
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Intensity" }), "HIGH");
     expect(filters).toEqual({ tagIds: ["t1", "t2"], intensity: ["HIGH"] });
 

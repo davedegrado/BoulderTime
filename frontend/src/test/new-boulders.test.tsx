@@ -46,8 +46,9 @@ describe("New boulders", () => {
     expect(screen.getAllByText("New")).toHaveLength(1);
     expect(boulderCalls()[0]).not.toContain("isNew");
 
-    await userEvent.click(screen.getByRole("button", { name: /Filters/ }));
-    await userEvent.click(screen.getByRole("switch", { name: "New boulders only" }));
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    await userEvent.click(within(screen.getByRole("dialog", { name: "Filters" })).getByRole("switch", { name: "New boulders only" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Show / }));
     await waitFor(() => expect(boulderCalls().at(-1)).toContain("isNew=true"));
     const inUse = screen.getByRole("list", { name: "Filters in use" });
     await userEvent.click(within(inUse).getByRole("button", { name: "Remove filter New boulders" }));

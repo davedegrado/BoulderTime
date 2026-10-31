@@ -20,8 +20,8 @@ import { useGradeSystems } from "@/features/grading/api";
 import { useGymTags } from "@/features/boulders/tags";
 import { BoulderCard } from "@/features/boulders/BoulderCard";
 import { useRememberedFilters } from "@/features/boulders/rememberedFilters";
-import { BoulderRow, SortMenu, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
-import { activeFilters, boulderCount, FiltersPanel, FiltersToggle } from "@/features/boulders/BoulderFilters";
+import { BoulderRow, SortButton, SortSheet, sortFor, useBoulderView, useRememberedSort, ViewToggle } from "@/features/boulders/listView";
+import { ActiveFilters, boulderCount, FiltersButton, FilterSheet, filtersInUse } from "@/features/boulders/BoulderFilters";
 import { Button } from "@/components/Button";
 import { Bell, BellRing, Check, Heart, Megaphone, Mountain, Plus } from "lucide-react";
 import { useAnnouncements } from "@/features/notifications/api";
@@ -154,7 +154,7 @@ function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: strin
   const [filters, setFilters] = useRememberedFilters(`bt:boulder-filters:${gymId}`,
     () => ({ ...(initialSectorId ? { sectorId: initialSectorId } : {}), ...(onlyNew ? { isNew: true } : {}) }),
     (kept) => !onlyNew && (!initialSectorId || kept.sectorId === initialSectorId));
-  const [showFilters, setShowFilters] = useState(false);
+  const [sheet, setSheet] = useState<"filters" | "sort" | null>(null);
   const showingRemoved = filters.status === "REMOVED";
   const [sort, setSort] = useRememberedSort(`bt:boulder-sort:${gymId}`);
   const [view, setView] = useBoulderView();
@@ -168,7 +168,6 @@ function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: strin
   // filters are too narrow, and "clear filters" must not throw the reader back to the other tab.
   const { status: _status, ...narrowing } = filters;
   const filtered = Object.values(narrowing).some(Boolean);
-  const active = activeFilters(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? []);
 
   return (
     <div className="stack">
@@ -176,11 +175,16 @@ function BouldersTab({ gymId, initialSectorId, onlyNew = false }: { gymId: strin
       {/* One row on a phone: how many, the filters (where "taken down" now lives too), the order and the view. */}
       <div className="boulders-toolbar boulders-toolbar--one">
         <span className="section__meta boulders-toolbar__count">{!boulders.isPending && !boulders.isError && items.length > 0 ? boulderCount(total, showingRemoved) : null}</span>
-        <FiltersToggle open={showFilters} count={active.length + (showingRemoved ? 1 : 0)} onToggle={() => setShowFilters((v) => !v)} />
-        <SortMenu value={sort} onChange={setSort} removed={showingRemoved} />
+        <FiltersButton count={filtersInUse(filters, sectors.data ?? [], systems.data ?? [], tags.data ?? [])} onClick={() => setSheet("filters")} />
+        <SortButton value={sort} removed={showingRemoved} onClick={() => setSheet("sort")} />
         <ViewToggle value={view} onChange={setView} />
       </div>
-      <FiltersPanel open={showFilters} filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} withStatus />
+      <ActiveFilters filters={filters} onChange={setFilters} sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      {sheet === "filters" && (
+        <FilterSheet gymId={gymId} sort={sortFor(sort, showingRemoved)} filters={filters} onApply={setFilters} onClose={() => setSheet(null)}
+          sectors={sectors.data ?? []} systems={systems.data ?? []} tags={tags.data ?? []} />
+      )}
+      {sheet === "sort" && <SortSheet value={sort} removed={showingRemoved} onApply={setSort} onClose={() => setSheet(null)} />}
       {boulders.isPending ? <LoadingState label={translate("Loading boulders")} />
         : boulders.isError ? <ErrorState error={boulders.error} onRetry={() => boulders.refetch()} />
         : items.length === 0 ? (
