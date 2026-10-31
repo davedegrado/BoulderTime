@@ -86,7 +86,7 @@ describe("The sector map, for climbers", () => {
     expect(await within(panel).findByRole("button", { name: "Ungraded, Lit, Blue holds: holds lit up on the photo" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("lists every sector, as before, when the gym has no map", async () => {
+  it("lists every sector when the gym has no map, and a tap opens the sector's panel", async () => {
     reply("GET", "/api/gyms/crimp", { ...gym, floorPlanUrl: null, floorPlanWidth: null, floorPlanHeight: null });
     reply("GET", "/api/gyms/g1/sectors", sectors);
     reply("GET", "/api/gyms/g1/grade-systems", []);
@@ -94,8 +94,11 @@ describe("The sector map, for climbers", () => {
     renderAt("/gyms/crimp?tab=sectors", "/gyms/:slug", <GymPage />);
     expect(await screen.findByText("12 on the wall · 3 new")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Other sectors" })).not.toBeInTheDocument();
+    // A tap opens the same panel as from a map: its boulders right there, no sheet to go through.
     await userEvent.click(screen.getByRole("button", { name: /^Cave/ }));
-    expect(screen.getByRole("dialog", { name: "Cave" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Cave" })).toBeInTheDocument();
+    await waitFor(() => expect(calls.some((c) => c.path.startsWith("/api/gyms/g1/boulders") && c.path.includes("sectorId=s1"))).toBe(true));
   });
 
   it("lights up on the sector's photo the holds of a boulder highlighted on it, and opens any other", async () => {

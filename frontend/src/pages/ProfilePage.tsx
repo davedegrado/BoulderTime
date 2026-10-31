@@ -23,6 +23,8 @@ import { PrivacySettings } from "@/features/profile/PrivacySettings";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import { PasswordSection } from "@/features/users/PasswordSection";
 import { DeleteAccountSection } from "@/features/users/DeleteAccountSection";
+import { Toggle } from "@/features/notifications/NotificationBits";
+import { setClimberView, useClimberViewSwitch } from "@/lib/climberView";
 import { BlockedList } from "@/features/users/BlockedList";
 
 /** As long as the server takes (User.BioMaxLength). */
@@ -31,6 +33,7 @@ const BIO_MAX = 160;
 export function ProfilePage() {
   const { session, signOut } = useAuth();
   const me = useCurrentUser();
+  const climberView = useClimberViewSwitch();
   const update = useUpdateProfile();
   const { language, setLanguage } = useI18n();
   const profile = useProfile(me.data?.id);
@@ -119,6 +122,12 @@ export function ProfilePage() {
                   <div className="list__main"><p className="list__title">{t("BoulderTime admin")}</p></div>
                   <ChevronRight className="list__chevron" aria-hidden />
                 </Link>
+              </li>
+            )}
+            {user.isPlatformAdmin && (
+              <li className="list__row">
+                <Toggle checked={climberView} onChange={setClimberView} label={t("See gyms as a climber")}
+                  description={t("Leaves the staff's buttons out of gyms and boulders, to see them as climbers do. The staff area stays here.")} />
               </li>
             )}
           </ul>

@@ -30,6 +30,7 @@ import { OpeningHoursCard } from "@/features/gyms/openingHours";
 import { LeaderboardTab } from "@/features/leaderboards/LeaderboardTab";
 import { useFollowGym, useFollowSector } from "@/features/climbing/api";
 import { useAuth } from "@/auth/AuthProvider";
+import { useHideStaffTools } from "@/lib/climberView";
 import { t, plural, t as translate } from "@/i18n/i18n";
 import { GymBadges } from "@/features/gyms/GymBadges";
 import { FacebookIcon, InstagramIcon } from "@/components/BrandIcons";
@@ -102,13 +103,14 @@ export function GymPage() {
 /** Share, copy the link and, for the gym's own staff, manage it. Follow and favourite keep their own buttons. */
 function GymMenu({ gym }: { gym: GymDetail }) {
   const toast = useToast();
+  const hideStaff = useHideStaffTools();
   const url = shareUrl(`/gyms/${gym.slug}`);
   const said = (r: "shared" | "copied" | "failed") =>
     r === "copied" ? toast.success(translate("Link copied")) : r === "failed" ? toast.error(translate("Couldn't copy the link")) : undefined;
   const items: ActionMenuItem[] = [
     { label: translate("Share gym"), icon: <Share2 aria-hidden />, onSelect: () => void shareLink(gym.name, url).then(said) },
     { label: translate("Copy link"), icon: <Copy aria-hidden />, onSelect: () => void copyText(url).then((ok) => said(ok ? "copied" : "failed")) },
-    ...(gym.viewerRole ? [{ kind: "link" as const, label: translate("Manage gym"), icon: <Settings2 aria-hidden />, to: `/manage/${gym.slug}` }] : []),
+    ...(gym.viewerRole && !hideStaff ? [{ kind: "link" as const, label: translate("Manage gym"), icon: <Settings2 aria-hidden />, to: `/manage/${gym.slug}` }] : []),
   ];
   return <ActionMenu items={items} />;
 }
@@ -222,6 +224,7 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
   const sectors = useSectors(gym.id);
   const { session } = useAuth();
   const followSector = useFollowSector(gym.id);
+  const hideStaff = useHideStaffTools();
   // The sector open, and the boulder whose holds are lit up on its photo, live in the address: back from a boulder
   // opened from the panel comes back to the same sector, with the same boulder lit.
   const [params, setParams] = useSearchParams();
@@ -240,11 +243,13 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
   if (sectors.data.length === 0) return <EmptyState icon={<Layers />} title={translate("No sectors yet")} body={translate("This gym hasn't set up its sectors on BoulderTime.")} />;
 
   const plan = floorPlanOf(gym);
-  // With a map, a sector opens right under it (photo, boulders, follow); without one, in a sheet as before.
+  // A sector opens in the same panel (photo, boulders, follow) whether it was chosen on the map or in the list.
   const mapped = !!plan && sectors.data.some((s) => s.zone);
   const open = sectors.data.find((s) => s.id === openId) ?? null;
   const onMap = (s: Sector) => s.isActive && !!s.zone && s.zone.points.length >= 3;
-  const listed = mapped ? sectors.data.filter((s) => s.isActive && !onMap(s)) : sectors.data;
+  // Seen as a climber (BoulderTime's admins), hidden sectors are left out as a climber's list leaves them out.
+  const visible = hideStaff ? sectors.data.filter((s) => s.isActive) : sectors.data;
+  const listed = mapped ? visible.filter((s) => s.isActive && !onMap(s)) : visible;
   const toggleFollow = (s: Sector) => followSector.mutate({ sectorId: s.id, follow: !s.isFollowing });
 
   return (
@@ -261,7 +266,7 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
           </div>
         </section>
       )}
-      {mapped && open && (
+      {open && (
         <SectorPanel key={open.id} sector={open} signedIn={!!session} onToggleFollow={() => toggleFollow(open)} onClose={() => setOpenId(null)}
           litId={litId} onLight={(boulderId) => choose(open.id, boulderId)}
           onShowBoulders={() => { setOpenId(null); onShowBoulders(open.id); }} />
@@ -290,10 +295,6 @@ function SectorsTab({ gym, onShowBoulders }: { gym: GymDetail; onShowBoulders: (
         ))}
       </ul>}
       {fullScreen && plan && <MapViewer plan={plan} sectors={sectors.data} onSelect={(s) => { setOpenId(s.id); if (mapped) setFullScreen(false); }} onClose={() => setFullScreen(false)} />}
-      {open && !mapped && (
-        <SectorSheet sector={open} signedIn={!!session} onClose={() => setOpenId(null)} onToggleFollow={() => toggleFollow(open)}
-          onShowBoulders={() => { setOpenId(null); setFullScreen(false); onShowBoulders(open.id); }} />
-      )}
     </div>
   );
 }
@@ -304,37 +305,6 @@ function sectorCounts(s: Sector): string {
   if (active === 0) return translate("No boulders on the wall");
   const base = boulderCount(active, false);
   return (s.newThisWeek ?? 0) > 0 ? `${base} · ${plural(s.newThisWeek ?? 0, "1 new", "{count} new")}` : base;
-}
-
-/** One sector, from the plan or the list: what is on it, its boulders, and following it. */
-function SectorSheet({ sector, signedIn, onClose, onShowBoulders, onToggleFollow }: {
-  sector: Sector; signedIn: boolean; onClose: () => void; onShowBoulders: () => void; onToggleFollow: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet sector-sheet" role="dialog" aria-modal="true" aria-labelledby="sector-sheet-title" onClick={(e) => e.stopPropagation()}>
-        <div className="sector-sheet__head">
-          <h2 id="sector-sheet-title" className="section__title">{sector.name}</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label={translate("Close")}><X aria-hidden /></button>
-        </div>
-        <p className="list__sub">{sectorCounts(sector)}</p>
-        {sector.description && <p className="sector-sheet__text">{sector.description}</p>}
-        <div className="sector-sheet__actions">
-          <Button icon={<Mountain aria-hidden />} onClick={onShowBoulders}>{translate("See the boulders")}</Button>
-          {signedIn && (
-            <Button variant="secondary" icon={sector.isFollowing ? <BellRing aria-hidden /> : <Bell aria-hidden />} onClick={onToggleFollow} aria-pressed={sector.isFollowing}>
-              {sector.isFollowing ? translate("Following") : translate("Follow")}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 /**
