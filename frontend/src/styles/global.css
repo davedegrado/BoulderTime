@@ -1968,8 +1968,8 @@ button.manage-head__back { background: transparent; }
 .sector-panel .follow-btn { min-height: 40px; padding: 0 var(--bt-3); gap: 6px; font-size: var(--bt-text-sm); white-space: nowrap; }
 .sector-panel .follow-btn svg { width: 16px; height: 16px; stroke-width: 2.6; }
 .sector-panel__hint { margin: 0; font-size: var(--bt-text-sm); color: var(--bt-ink-3); }
-.sector-panel__top { position: sticky; top: calc(var(--bt-sticky-top) + 56px); z-index: 2; display: flex; flex-direction: column; gap: var(--bt-3); margin: calc(-1 * var(--bt-4)) calc(-1 * var(--bt-4)) 0; padding: var(--bt-4) var(--bt-4) var(--bt-2); border-radius: var(--bt-radius-lg) var(--bt-radius-lg) 0 0; background: var(--bt-surface); }
-@media (min-width: 960px) { .sector-panel__top { top: 56px; } }
+.sector-panel__top { position: sticky; top: var(--panel-stick, calc(var(--bt-sticky-top) + 56px)); z-index: 2; display: flex; flex-direction: column; gap: var(--bt-3); margin: calc(-1 * var(--bt-4)) calc(-1 * var(--bt-4)) 0; padding: var(--bt-4) var(--bt-4) var(--bt-2); border-radius: var(--bt-radius-lg) var(--bt-radius-lg) 0 0; background: var(--bt-surface); }
+@media (min-width: 960px) { .sector-panel__top { top: var(--panel-stick, 56px); } }
 .sector-wall { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .sector-wall__enlarge { position: absolute; right: 8px; bottom: 8px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: rgb(26 26 26 / 0.7); color: #fff; line-height: 0; }
 .sector-wall__enlarge svg { width: 16px; height: 16px; }
